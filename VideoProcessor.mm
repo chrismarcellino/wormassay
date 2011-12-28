@@ -141,7 +141,8 @@ debugVideoFrameCompletion:(void (^)(IplImageObject *image))callback;
         // It is important to base all statistics on the elapsed time so that the results are independent of hardware
         // performance.
         if (_processingState == ProcessingStateTrackingMotion && [_wellCameraSourceIdentifier isEqual:sourceIdentifier]) {
-            if (_lastTrackingPlateFrame) {      printf("##### time %f  ", presentationTime);
+            if (_lastTrackingPlateFrame) {
+                calculateEdgePixelsForWellsFromImages([videoFrame image], _trackingWellCircles, [debugImage image]);
                 std::vector<int> movedPixelCounts = calculateMovedPixelsForWellsFromImages([_lastTrackingPlateFrame image],
                                                                                            [videoFrame image],
                                                                                            _trackingWellCircles,
@@ -166,13 +167,13 @@ debugVideoFrameCompletion:(void (^)(IplImageObject *image))callback;
                 int radius = cvRound(circlesToDraw[i][2]);
                 // Draw the circle outline
                 CvScalar color = (_processingState == ProcessingStateNoPlate) ? 
-                        CV_RGB(255, 0, 0) :
-                        ((_processingState == ProcessingStatePlateFirstFrameIdentified) ? CV_RGB(255, 255, 0) : CV_RGB(0, 255, 0));
+                        CV_RGBA(255, 0, 0, 255) :
+                        ((_processingState == ProcessingStatePlateFirstFrameIdentified) ? CV_RGBA(255, 255, 0, 255) : CV_RGBA(0, 255, 0, 255));
                 cvCircle([debugImage image], center, radius, color, 3, 8, 0);
                 
                 // Draw the well labels
                 if (_processingState == ProcessingStateTrackingMotion) {
-                    CvPoint textPoint = cvPoint(center.x - radius, center.y - radius);
+                    CvPoint textPoint = cvPoint(center.x - radius, center.y - 0.9 * radius);
                     cvPutText([debugImage image],
                               wellIdentifierStringForIndex(i, circlesToDraw.size()).c_str(),
                               textPoint,

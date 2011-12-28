@@ -41,8 +41,13 @@ extern std::vector<int> calculateMovedPixelsForWellsFromImages(IplImage *plateIm
                                                                const std::vector<cv::Vec3f> &circles,
                                                                IplImage *debugImage);
 
+// Calculates the number of connected-component filled edge pixels in the image. This can be used to determine well occupancy. 
+extern std::vector<int> calculateEdgePixelsForWellsFromImages(IplImage *plateImage, const std::vector<cv::Vec3f> &circles, IplImage *debugImage);
+
 // Returns a font with drawing size proportional to the image provided with respect to normalizedScale.
 extern CvFont fontForNormalizedScale(double normalizedScale, IplImage *image);
+
+#define CV_RGBA( r, g, b, a )  cvScalar( (b), (g), (r), (a) )
 
 #ifdef __cplusplus
 }
