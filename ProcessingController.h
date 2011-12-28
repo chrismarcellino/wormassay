@@ -18,8 +18,8 @@
 + (ProcessingController *)sharedInstance;
 
 // Caller is responsible for calling cvReleaseImage() on debugFrame. Block will be called on an arbitrary thread. 
-- (void)processVideoFrameTakingOwnership:(IplImage *)videoFrame
-                    fromSourceIdentifier:(NSString *)sourceIdentifier
+- (void)processVideoFrame:(IplImage *)videoFrame
+     fromSourceIdentifier:(NSString *)sourceIdentifier
 debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))block;
 
 - (void)logFormat:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2);

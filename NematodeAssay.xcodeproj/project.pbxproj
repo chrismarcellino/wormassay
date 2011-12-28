@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		210D6E9E134BAC5300BCD6F1 /* ProcessingController.m in Sources */ = {isa = PBXBuildFile; fileRef = 210D6E9D134BAC5300BCD6F1 /* ProcessingController.m */; };
+		210D6E9E134BAC5300BCD6F1 /* ProcessingController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 210D6E9D134BAC5300BCD6F1 /* ProcessingController.mm */; };
 		21426FAF134683DB00AF78E5 /* VideoSourceController.m in Sources */ = {isa = PBXBuildFile; fileRef = 21426FAE134683DA00AF78E5 /* VideoSourceController.m */; };
 		2180AC681346BB99008AF87B /* DocumentController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2180AC671346BB99008AF87B /* DocumentController.m */; };
 		218DD5281345253D000B6475 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD5271345253D000B6475 /* libz.dylib */; };
@@ -120,7 +120,7 @@
 /* Begin PBXFileReference section */
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		210D6E9C134BAC5300BCD6F1 /* ProcessingController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessingController.h; sourceTree = SOURCE_ROOT; };
-		210D6E9D134BAC5300BCD6F1 /* ProcessingController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProcessingController.m; sourceTree = SOURCE_ROOT; };
+		210D6E9D134BAC5300BCD6F1 /* ProcessingController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ProcessingController.mm; sourceTree = SOURCE_ROOT; };
 		21426FAD134683DA00AF78E5 /* VideoSourceController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoSourceController.h; sourceTree = SOURCE_ROOT; };
 		21426FAE134683DA00AF78E5 /* VideoSourceController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VideoSourceController.m; sourceTree = SOURCE_ROOT; };
 		215AB44812CEC7130047B13F /* opencv.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = opencv.hpp; path = ThirdParty/OpenCV/include/opencv2/opencv.hpp; sourceTree = "<group>"; };
@@ -476,12 +476,12 @@
 			children = (
 				218DD55D1345445B000B6475 /* NematodeAssayAppDelegate.h */,
 				218DD55E1345445B000B6475 /* NematodeAssayAppDelegate.m */,
+				210D6E9C134BAC5300BCD6F1 /* ProcessingController.h */,
+				210D6E9D134BAC5300BCD6F1 /* ProcessingController.mm */,
 				2180AC661346BB99008AF87B /* DocumentController.h */,
 				2180AC671346BB99008AF87B /* DocumentController.m */,
 				21426FAD134683DA00AF78E5 /* VideoSourceController.h */,
 				21426FAE134683DA00AF78E5 /* VideoSourceController.m */,
-				210D6E9C134BAC5300BCD6F1 /* ProcessingController.h */,
-				210D6E9D134BAC5300BCD6F1 /* ProcessingController.m */,
 				21CC725A1348CA5F001146DA /* BitmapOpenGLView.h */,
 				21CC725B1348CA5F001146DA /* BitmapOpenGLView.m */,
 			);
@@ -680,7 +680,7 @@
 				21CC722E134836BC001146DA /* IplImageConversionUtilities.cpp in Sources */,
 				21CC725C1348CA5F001146DA /* BitmapOpenGLView.m in Sources */,
 				21EBDA25134AD32300736245 /* ImageProcessing.cpp in Sources */,
-				210D6E9E134BAC5300BCD6F1 /* ProcessingController.m in Sources */,
+				210D6E9E134BAC5300BCD6F1 /* ProcessingController.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

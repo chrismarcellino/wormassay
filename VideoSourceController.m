@@ -344,7 +344,7 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
 {
     _frameDropCount++;
     if (_frameDropCount == 1 || _frameDropCount % 10 == 0) {
-        NSLog(@"Device %@ dropped %llu total frames", _sourceIdentifier, (unsigned long long)frameDropCount);
+        NSLog(@"Device %@ dropped %llu total frames", _sourceIdentifier, (unsigned long long)_frameDropCount);
     }
 }
 
@@ -356,19 +356,20 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
 
     [[ProcessingController sharedInstance] processVideoFrame:iplImage
                                         fromSourceIdentifier:_sourceIdentifier
-                    debugVideoFrameCompletionTakingOwnership:^{
-                        // Draw the output images. The OpenGL view must take ownership of the images.
-                        NSAssert(debugImage->width * debugImage->nChannels == debugImage->widthStep, @"packed images are required");
-                        BitmapDrawingData drawingData = {
-                            debugImage->imageData,
-                            debugImage->width,
-                            debugImage->height,
-                            GL_BGRA,
-                            GL_UNSIGNED_BYTE,
-                            releaseIplImage,
-                            debugImage };
-                        [_bitmapOpenGLView drawBitmapTexture:&drawingData];
-                    }];
+                    debugVideoFrameCompletionTakingOwnership:^(IplImage *debugFrame) {
+        // Draw the output images. The OpenGL view must take ownership of the images.
+        NSAssert(debugFrame->width * debugFrame->nChannels == debugFrame->widthStep, @"packed images are required");
+        BitmapDrawingData drawingData = {
+            debugFrame->imageData,
+            debugFrame->width,
+            debugFrame->height,
+            GL_BGRA,
+            GL_UNSIGNED_BYTE,
+            releaseIplImage,
+            debugFrame
+        };
+        [_bitmapOpenGLView drawBitmapTexture:&drawingData];
+    }];
 }
 
 static void releaseIplImage(void *baseAddress, void *context)
