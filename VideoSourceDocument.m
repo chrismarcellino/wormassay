@@ -282,7 +282,7 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
         }
     } else {
         // To play the movie, it must be in the view hiearchy
-        _movieInvisibleWindow = [[NSWindow alloc] init];
+        _movieInvisibleWindow = [[NSWindow alloc] initWithContentRect:[_movieView frame] styleMask:0 backing:NSBackingStoreBuffered defer:NO];
         [_movieInvisibleWindow setContentView:_movieView];
         [_movieView play:self];
         success = YES;

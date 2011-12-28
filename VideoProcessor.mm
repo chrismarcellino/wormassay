@@ -154,11 +154,20 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         }
         
         // If this processor detected a barcode, draw it on the debug image
+        NSMutableString *barcodeAndOrTimeText = [NSMutableString string];
         if (_lastBarcodeThisProcessor && _lastBarcodeThisProcessorRepeatCount >= BarcodeRepeatSuccessCount) {
-            // Draw the movement text
+            [barcodeAndOrTimeText appendString:_lastBarcodeThisProcessor];
+            [barcodeAndOrTimeText appendString:@" "];
+        }
+        // Print the tracked time on the debug image
+        if (_processingState == ProcessingStateTrackingMotion) {
+            unsigned elapsed = [videoFrame presentationTime] - [_plateData startPresentationTime];
+            [barcodeAndOrTimeText appendFormat:@"%u:%02u", elapsed / 60, elapsed % 60];
+        }
+        if ([barcodeAndOrTimeText length] > 0) {
             CvFont font = fontForNormalizedScale(3.5, [debugFrame image]);
             CvPoint point = cvPoint(10, [debugFrame image]->height - 10);
-            cvPutText([debugFrame image], [_lastBarcodeThisProcessor UTF8String], point, &font, CV_RGBA(232, 0, 217, 255));
+            cvPutText([debugFrame image], [barcodeAndOrTimeText UTF8String], point, &font, CV_RGBA(232, 0, 217, 255));
         }
         
         // Analyze tracked images synchronously (at frame rate), so that we drop frames if we can't keep up.
@@ -190,7 +199,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
             }
             [_assayAnalyzer didEndFrameProcessing:videoFrame plateData:_plateData];
             
-            // Print the stats in the wells averaged over the last 30 seconds (to limit computational complexity)
+            // Print the results in the wells averaged over the last 30 seconds (to limit computational complexity)
             CvFont wellFont = fontForNormalizedScale(0.75, [debugFrame image]);
             for (size_t i = 0; i < _trackingWellCircles.size(); i++) {
                 double mean, stddev;
