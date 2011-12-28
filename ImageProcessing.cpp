@@ -158,7 +158,7 @@ bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vect
     
     // Take the set of all circles whose centers are approximately colinear with other circles along axis aligned lines
     // in both dimensions. Discard all others.
-    int colinearityThreshold = maxRadius / 2;
+    int colinearityThreshold = maxRadius / 4;
     
     bool allColinearCirclesFound = true;
     
