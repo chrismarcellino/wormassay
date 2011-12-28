@@ -91,7 +91,7 @@ bool findWellCircles(IplImage *inputImage, std::vector<Circle> &circles, int wel
     std::vector<Circle> bestCircles;
     
     for (size_t i = 0; i < wellCounts.size(); i++) {
-        if (findWellCirclesForPlateCount(inputImage, wellCounts[i], circles, &score)) {
+        if (findWellCirclesForPlateCount(inputImage, wellCounts[i], circles, 0, &score)) {
             return true;
         }
         
@@ -110,7 +110,7 @@ bool findWellCircles(IplImage *inputImage, std::vector<Circle> &circles, int wel
     return false;
 }
 
-bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vector<Circle> &circlesVec, float *score)
+bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vector<Circle> &circlesVec, int expectedRadius, float *score)
 {
     // Convert the input image to grayscale
     IplImage *grayInputImage = cvCreateImage(cvGetSize(inputImage), IPL_DEPTH_8U, 1);
@@ -121,7 +121,7 @@ bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vect
     getPlateConfigurationForWellCount(wellCount, rows, columns);
     int smallerImageDimension = MIN(inputImage->width, inputImage->height);
     int largerImageDimension = MAX(inputImage->width, inputImage->height);
-    int errorTolerance = 0.20;      // 20%, see below
+    float errorTolerance = 0.20;      // 20%, see below
     
     // Notes on assumptions made for well dimensions:
     // Microtiter plates are 120 mm x 80 mm, which is a 3:2 ratio. We assume that the plate will
@@ -145,10 +145,15 @@ bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vect
     // where the error tolerance is at least 14%.
     //
     // The minimum distance between well centers is just double the minimum radius calculated above, since wells cannot overlap.
-    
-    int maxRadius = smallerImageDimension / (2.0 * rows) * (1.0 + errorTolerance);
-    int minRadius = 0.75 * 0.5 * largerImageDimension / (2.0 * columns) / (1.0 + errorTolerance);
-    
+    int maxRadius, minRadius;
+    if (expectedRadius <= 0) {
+        maxRadius = smallerImageDimension / (2.0 * rows) * (1.0 + errorTolerance);
+        minRadius = 0.75 * 0.5 * largerImageDimension / (2.0 * columns) / (1.0 + errorTolerance);    
+    } else {
+        maxRadius = expectedRadius * (1.0 + errorTolerance);
+        minRadius = expectedRadius / (1.0 + errorTolerance);
+    }
+        
     // Find all circles using the Hough transform. The seq returns contains Vec3fs, whose elements are (x-center, y-center, radius) triples.
     CvMemStorage* storage = cvCreateMemStorage();
     CvSeq* circles = cvHoughCircles(grayInputImage,

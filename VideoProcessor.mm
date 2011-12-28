@@ -31,6 +31,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     
     ProcessingState _processingState;
     int _wellCountHint;
+    int _wellRadiusHint;
     NSTimeInterval _firstWellFrameTime;
     NSTimeInterval _lastBarcodeScanTime;
     NSTimeInterval _lastFrameTime;
@@ -168,6 +169,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     
     // Get instance variables while holding _queue for thread-safety
     int wellCountHint = _wellCountHint;
+    int wellRadiusHint = _wellRadiusHint;
     bool searchAllPlateSizes = _processingState == ProcessingStateNoPlate;
     
     // Perform the calculation on a concurrent queue so that we don't block the current thread
@@ -178,7 +180,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         if (searchAllPlateSizes) {
             plateFound = findWellCircles([videoFrame image], wellCircles, wellCountHint);
         } else {
-            plateFound = findWellCirclesForPlateCount([videoFrame image], wellCountHint, wellCircles);
+            plateFound = findWellCirclesForPlateCount([videoFrame image], wellCountHint, wellCircles, wellRadiusHint);
         }
         
         // Process and store the results when holding _queue
@@ -192,6 +194,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                 // If we've found a plate, store the well count to improve the performance of future searches
                 if (plateFound) {
                     _wellCountHint = wellCircles.size();
+                    _wellRadiusHint = wellCircles[0].radius;
                 }
                 
                 switch (_processingState) {

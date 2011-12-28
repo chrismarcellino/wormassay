@@ -35,20 +35,6 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     
     // Create our NSDocumentController subclass first
     [[[DocumentController alloc] init] autorelease];
-}
-
-- (void)applicationDidFinishLaunching:(NSNotification *)aNotification
-{
-    // Register for camera notifications and create windows for each camera
-    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-    [center addObserver:self selector:@selector(captureDevicesChanged) name:QTCaptureDeviceWasConnectedNotification object:nil];
-    [center addObserver:self selector:@selector(captureDevicesChanged) name:QTCaptureDeviceWasDisconnectedNotification object:nil];
-    
-    // Register for defaults changes
-    [[NSUserDefaultsController sharedUserDefaultsController] addObserver:self
-                                                              forKeyPath:[@"values." stringByAppendingString:IgnoreBuiltInCamerasUserDefaultsKey]
-                                                                 options:0
-                                                                 context:NULL];
     
     // Create the logging window and associate it with the VideoProcessorController
     NSRect screenFrame = [[NSScreen mainScreen] visibleFrame];
@@ -90,6 +76,20 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     // Log welcome message
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
     RunLog(@"%@ version %@ launched.", [infoDictionary objectForKey:(id)kCFBundleNameKey], [infoDictionary objectForKey:(id)kCFBundleVersionKey]);
+}
+
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification
+{
+    // Register for camera notifications and create windows for each camera
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center addObserver:self selector:@selector(captureDevicesChanged) name:QTCaptureDeviceWasConnectedNotification object:nil];
+    [center addObserver:self selector:@selector(captureDevicesChanged) name:QTCaptureDeviceWasDisconnectedNotification object:nil];
+    
+    // Register for defaults changes
+    [[NSUserDefaultsController sharedUserDefaultsController] addObserver:self
+                                                              forKeyPath:[@"values." stringByAppendingString:IgnoreBuiltInCamerasUserDefaultsKey]
+                                                                 options:0
+                                                                 context:NULL];
     
     [self loadCaptureDevices];
 }
