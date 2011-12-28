@@ -34,17 +34,10 @@
     return [[[NSOpenGLPixelFormat alloc] initWithAttributes:attributes] autorelease];
 }
 
-static uint8_t emptyColor[] = { 0, 1, 0, 1 };
-
 - (id)initWithFrame:(NSRect)frameRect pixelFormat:(NSOpenGLPixelFormat *)format
 {
     if ((self = [super initWithFrame:frameRect pixelFormat:format])) {
         [self setCanDrawConcurrently:YES];
-        
-        // Create a black texture
-        _lastDrawingData.baseAddress = emptyColor;
-        _lastDrawingData.width = _lastDrawingData.height = 1;
-        _lastDrawingData.glPixelFormat = GL_BGRA;
     }
     
     return self;
@@ -93,10 +86,12 @@ static uint8_t emptyColor[] = { 0, 1, 0, 1 };
     
     // If we're changing sizes or formats, or if we've never draw before,
     // we need to set the texture data anew
-    if (drawingData->width != _lastDrawingData.width ||
+    if (!drawingData->baseAddress) {
+        glClearColor(0, 0, 1, 1);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ACCUM_BUFFER_BIT);
+    } else if (drawingData->width != _lastDrawingData.width ||
         drawingData->height != _lastDrawingData.height ||
-        drawingData->glPixelFormat != _lastDrawingData.glPixelFormat ||
-        drawingData->baseAddress == emptyColor) {
+        drawingData->glPixelFormat != _lastDrawingData.glPixelFormat) {
         
         // Set the texture image
         glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
@@ -161,6 +156,7 @@ static uint8_t emptyColor[] = { 0, 1, 0, 1 };
     CGLUnlockContext(glContext);
 }
 
+// requires lock
 - (void)freeDrawingData
 {
     if (_lastDrawingData.freeCallback) {
@@ -189,13 +185,11 @@ static uint8_t emptyColor[] = { 0, 1, 0, 1 };
     NSOpenGLContext *context = [self openGLContext];
     CGLContextObj glContext = [context CGLContextObj];
     CGLLockContext(glContext);
-    CGLSetCurrentContext(glContext);
     
     [super reshape];
     _viewport = [self bounds];
     [context update];
     
-    CGLSetCurrentContext(NULL);
     CGLUnlockContext(glContext);
     
     [self setNeedsDisplay:YES];

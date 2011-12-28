@@ -10,6 +10,7 @@
 #import "BitmapOpenGLView.h"
 #import "IplImageConversionUtilities.hpp"
 #import "opencv2/core/core_c.h"
+#import <QuartzCore/QuartzCore.h>   //XXXXXXXXX
 
 NSString *const CaptureDeviceScheme = @"capturedevice";
 static NSPoint LastCascadePoint = { 0.0, 0.0 };
@@ -293,7 +294,6 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 - (void)processVideoFrame:(CVPixelBufferRef)videoFrame presentationTime:(QTTime)presentationTime
 {
     // XXX IF ONLY NEED GRAYSCALE, CAN REQUEST YUV NATIVE FORMAT
-    
     IplImage *iplImage = CreateIplImageFromCVPixelBuffer(videoFrame, 4);
     
     assert(iplImage->width * 4 == iplImage->widthStep);     // XXXX TODO ADD CONVERTER
