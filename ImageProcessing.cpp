@@ -12,6 +12,8 @@
 #import <math.h>
 #import <dispatch/dispatch.h>
 
+static const float MovedPixelPlateMovingProportionThreshold = 0.02;
+
 static int sortCircleCentersByAxis(const void* a, const void* b, void* userdata);
 static int sortCirclesInRowMajorOrder(const void* a, const void* b, void* userdata);
 static inline CvRect boundingSquareForCircle(cv::Vec3f circle);
@@ -315,7 +317,7 @@ void drawWellCirclesAndLabelsOnDebugImage(std::vector<cv::Vec3f> circles, CvScal
                       wellIdentifierStringForIndex(i, circles.size()).c_str(),
                       textPoint,
                       &wellFont,
-                      cvScalar(255, 255, 0));
+                      CV_RGBA(0, 255, 255, 255));
         }
     }
 }
@@ -353,7 +355,7 @@ std::vector<float> calculateMovedPixelsProportionForWellsFromImages(IplImage *pl
     std::vector<float> movedPixelProportions;
     movedPixelProportions.reserve(circles.size());
     
-    if (proportionPlateMoved < 0.02) {      // Don't perform well calculations if the plate itself is moving
+    if (proportionPlateMoved < MovedPixelPlateMovingProportionThreshold) {      // Don't perform well calculations if the plate itself is moving
         // Create a circle mask with bits in the circle on
         float radius = circles[0][2];
         IplImage *circleMask = cvCreateImage(cvSize(radius * 2, radius * 2), IPL_DEPTH_8U, 1);
@@ -385,6 +387,15 @@ std::vector<float> calculateMovedPixelsProportionForWellsFromImages(IplImage *pl
             cvReleaseImage(&subimage);
         }
         cvReleaseImage(&circleMask);
+    } else {
+        // Draw the movement text
+        CvFont wellFont = fontForNormalizedScale(3.5, debugImage);
+        cvPutText(debugImage,
+                  "CAMERA OR PLATE MOVING",
+                  cvPoint(debugImage->width * 0.1, debugImage->height * 0.55),
+                  &wellFont,
+                  CV_RGBA(232, 0, 217, 255));
+
     }
     
     cvReleaseImage(&deltaThreshold);
@@ -478,6 +489,6 @@ CvFont fontForNormalizedScale(double normalizedScale, IplImage *image)
 {
     double fontScale = MIN(image->width, image->height) / 1080.0 * normalizedScale;
     CvFont font;
-    cvInitFont(&font, CV_FONT_HERSHEY_DUPLEX, fontScale, fontScale, 0, 1);
+    cvInitFont(&font, CV_FONT_HERSHEY_DUPLEX, fontScale, fontScale, 0, fontScale);
     return font;
 }

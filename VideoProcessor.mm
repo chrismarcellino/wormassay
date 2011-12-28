@@ -98,14 +98,26 @@
         // Create a copy of the frame to draw debugging info on, which we will send back
         IplImageObject *debugImage = [videoFrame copy];
         
+        // First, draw debugging well circles and labels on each frame so that they appear underneath other drawing
+        if (_shouldScanForWells) {
+            CvScalar circleColor = _processingState == ProcessingStateNoPlate ? CV_RGBA(255, 0, 0, 255) :
+            (_processingState == ProcessingStatePlateFirstFrameIdentified ? CV_RGBA(255, 255, 0, 255) : CV_RGBA(0, 255, 0, 255));
+            drawWellCirclesAndLabelsOnDebugImage(_processingState == ProcessingStateNoPlate ? _lastCircles : _trackingWellCircles,
+                                                 circleColor,
+                                                 _processingState == ProcessingStateTrackingMotion,
+                                                 [debugImage image]);
+        }
+        
         // Record statistics on the tracked image synchronously (at frame rate), so that we drop frames if we can't keep up.
         // It is important to base all statistics on the elapsed time so that the results are independent of hardware
         // performance.
         if (_processingState == ProcessingStateTrackingMotion) {
             if (_lastFrame) {
-                // XXX calculate and store stats (don't do the first every frame?)
-                calculateCannyEdgePixelProportionForWellsFromImages([videoFrame image], _trackingWellCircles, [debugImage image]);
-                std::vector<float> movedPixelCounts = calculateMovedPixelsProportionForWellsFromImages([_lastFrame image],
+                // XXX calculate and store stats
+                std::vector<float> occupancyProportions = calculateCannyEdgePixelProportionForWellsFromImages([videoFrame image],
+                                                                                                              _trackingWellCircles,
+                                                                                                              [debugImage image]);
+                std::vector<float> movedProportions = calculateMovedPixelsProportionForWellsFromImages([_lastFrame image],
                                                                                                        [videoFrame image],
                                                                                                        _trackingWellCircles,
                                                                                                        [debugImage image]);
@@ -115,17 +127,7 @@
             [_lastFrame release];
             _lastFrame = [videoFrame retain];
         }
-        
-        // Draw debugging well circles and labels on each frame
-        if (_shouldScanForWells) {
-            CvScalar circleColor = _processingState == ProcessingStateNoPlate ? CV_RGBA(255, 0, 0, 255) :
-                (_processingState == ProcessingStatePlateFirstFrameIdentified ? CV_RGBA(255, 255, 0, 255) : CV_RGBA(0, 255, 0, 255));
-            drawWellCirclesAndLabelsOnDebugImage(_processingState == ProcessingStateNoPlate ? _lastCircles : _trackingWellCircles,
-                                                 circleColor,
-                                                 _processingState == ProcessingStateTrackingMotion,
-                                                 [debugImage image]);
-        }
-        
+                
         // Dispatch the debug image asynchronously to increase parallelism 
         dispatch_async(_debugFrameCallbackQueue, ^{
             callback(debugImage);
