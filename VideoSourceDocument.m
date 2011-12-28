@@ -433,7 +433,7 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
 {
     // Reuse the context for performance reasons
     if (!_ciContext) {
-        _ciContext = [[CIContext contextWithCGLContext:NULL pixelFormat:NULL colorSpace:NULL options:nil] retain];
+        _ciContext = [[CIContext contextWithCGContext:NULL options:nil] retain];
     }
     
     VideoFrame *frame = [[VideoFrame alloc] initByCopyingCIImage:image

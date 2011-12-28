@@ -14,7 +14,7 @@
 #import "ArrayTableView.h"
 
 static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
-static NSString *const EmailRecipieintsKey = @"EmailRecipieints";
+static NSString *const NotificationEmailRecipientsKey = @"NotificationEmailRecipients";
 
 static NSString *const RunOutputFolderPathKey = @"RunOutputFolderPath";
 static NSString *const SortableLoggingDateFormat = @"yyyy-MM-dd HH:mm zzz";
@@ -153,20 +153,50 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
     return path;
 }
 
-- (NSString *)videoFolderPathCreatingIfNecessary:(BOOL)create
-{
-    NSFileManager *fileManager = create ? [[NSFileManager alloc] init] : nil;
-    NSString *videoFolder = [[self runOutputFolderPath] stringByAppendingPathComponent:@"Videos"];
-    if (create && ![fileManager fileExistsAtPath:videoFolder]) {
-        [fileManager createDirectoryAtPath:videoFolder withIntermediateDirectories:YES attributes:nil error:NULL];
-    }
-    [fileManager release];
-    return videoFolder;
-}
-
 - (void)setRunOutputFolderPath:(NSString *)path
 {
-    [[NSUserDefaults standardUserDefaults] setObject:path forKey:RunOutputFolderPathKey];
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setObject:path forKey:RunOutputFolderPathKey];
+    [defaults synchronize];
+}
+
+static void createFolderIfNecessary(NSString *path)
+{
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    if (![fileManager fileExistsAtPath:path]) {
+        [fileManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL];
+    }
+    [fileManager release];
+}
+
+- (NSString *)runOutputFolderPathCreatingIfNecessary:(BOOL)create
+{
+    NSString *folder = [self runOutputFolderPath];
+    if (create) {
+        createFolderIfNecessary(folder);
+    }
+    return folder;
+}
+
+- (NSString *)videoFolderPathCreatingIfNecessary:(BOOL)create
+{
+    NSString *folder = [[self runOutputFolderPath] stringByAppendingPathComponent:@"Videos"];
+    if (create) {
+        createFolderIfNecessary(folder);
+    }
+    return folder;
+}
+
+- (NSString *)notificationEmailRecipients
+{
+    return [[NSUserDefaults standardUserDefaults] stringForKey:NotificationEmailRecipientsKey];
+}
+
+- (void)setNotificationEmailRecipients:(NSString *)recipients
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setObject:recipients forKey:NotificationEmailRecipientsKey];
+    [defaults synchronize];
 }
 
 - (void)addVideoProcessor:(VideoProcessor *)videoProcessor
@@ -357,8 +387,8 @@ stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
 - (void)emailRecentResults
 {
     dispatch_async(_queue, ^{
-        NSString *recipients = [[[NSUserDefaults standardUserDefaults] stringForKey:EmailRecipieintsKey]
-                                stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        NSString *recipients = [self notificationEmailRecipients];
+        recipients = [recipients stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
         
         if ([_filesToEmail count] > 0 && recipients && [recipients length] > 0) {
             NSBundle *mainBundle = [NSBundle mainBundle];
@@ -516,6 +546,8 @@ static NSString *outputPathForInputJobPath(NSString *inputPath)
                 _conversionTask = [[NSTask alloc] init];
                 [_conversionTask setLaunchPath:[self conversionToolPath]];
                 
+                // Start a conversion job to convert H.264 using x264 into an MP4 container.
+                // Use a ratefactor of 22 and multithread automatically.
                 NSArray *arguments = [NSArray arrayWithObjects:@"-i", inputPath,
                                       @"-vcodec", @"libx264", @"-f", @"mp4", @"-crf", @"22", @"-threads", @"0", @"-y", outputPath, nil];
                 [_conversionTask setArguments:arguments];

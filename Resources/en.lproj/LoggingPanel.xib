@@ -41,7 +41,7 @@
 				<int key="NSWindowStyleMask">29</int>
 				<int key="NSWindowBacking">2</int>
 				<string key="NSWindowRect">{{0, 0}, {1000, 170}}</string>
-				<int key="NSWTFlags">-1605893120</int>
+				<int key="NSWTFlags">-532151296</int>
 				<string key="NSWindowTitle">Window</string>
 				<string key="NSWindowClass">NSPanel</string>
 				<nil key="NSViewClass"/>
@@ -566,16 +566,31 @@
 					<string key="className">WormAssayAppDelegate</string>
 					<string key="superclassName">NSObject</string>
 					<dictionary class="NSMutableDictionary" key="actions">
+						<string key="browseForRunOutputFolderPath:">id</string>
+						<string key="openMail:">id</string>
 						<string key="openRunOutputFolder:">id</string>
 						<string key="showLoggingAndNotificationSettings:">id</string>
+						<string key="testEmailNotifications:">id</string>
 					</dictionary>
 					<dictionary class="NSMutableDictionary" key="actionInfosByName">
+						<object class="IBActionInfo" key="browseForRunOutputFolderPath:">
+							<string key="name">browseForRunOutputFolderPath:</string>
+							<string key="candidateClassName">id</string>
+						</object>
+						<object class="IBActionInfo" key="openMail:">
+							<string key="name">openMail:</string>
+							<string key="candidateClassName">id</string>
+						</object>
 						<object class="IBActionInfo" key="openRunOutputFolder:">
 							<string key="name">openRunOutputFolder:</string>
 							<string key="candidateClassName">id</string>
 						</object>
 						<object class="IBActionInfo" key="showLoggingAndNotificationSettings:">
 							<string key="name">showLoggingAndNotificationSettings:</string>
+							<string key="candidateClassName">id</string>
+						</object>
+						<object class="IBActionInfo" key="testEmailNotifications:">
+							<string key="name">testEmailNotifications:</string>
 							<string key="candidateClassName">id</string>
 						</object>
 					</dictionary>
