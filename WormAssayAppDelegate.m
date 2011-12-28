@@ -237,9 +237,10 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
 
 - (IBAction)showLoggingAndNotificationSettings:(id)sender
 {
-    NSWindowController *windowController = [[NSWindowController alloc] initWithWindowNibName:@"LoggingAndNotifications"];
-    [windowController showWindow:sender];
-    [windowController release];
+    if (!_loggingAndNotificationWindowController) {
+        _loggingAndNotificationWindowController = [[NSWindowController alloc] initWithWindowNibName:@"LoggingAndNotifications"];
+    }
+    [_loggingAndNotificationWindowController showWindow:sender];
 }
 
 @end
