@@ -98,8 +98,6 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
                     [[NSAlert alertWithError:error] runModal];
                 }
             }
-                
-            [url release];
         }
     }
     
