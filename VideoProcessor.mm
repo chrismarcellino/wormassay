@@ -16,6 +16,7 @@
 #import <QTKit/QTKit.h>
 #import "zxing/common/GreyscaleLuminanceSource.h"
 #import "zxing/MultiFormatReader.h"
+#import "zxing/BarcodeFormat.h"
 #import "zxing/DecodeHints.h"
 #import "zxing/common/HybridBinarizer.h"
 #import "zxing/ReaderException.h"
@@ -413,6 +414,10 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
         // Search for barcodes
         zxing::Ref<zxing::MultiFormatReader> reader(new zxing::MultiFormatReader());
         zxing::DecodeHints hints;
+        hints.addFormat(zxing::BarcodeFormat_QR_CODE);
+        hints.addFormat(zxing::BarcodeFormat_DATA_MATRIX);
+        hints.addFormat(zxing::BarcodeFormat_CODE_128);
+        hints.addFormat(zxing::BarcodeFormat_CODE_39);
         hints.setTryHarder(true);           // rotate images in search of barcodes, etc.
         NSString *text;
         try {
