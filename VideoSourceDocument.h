@@ -30,8 +30,9 @@ extern BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device);
     QTCaptureDecompressedVideoOutput *_captureDecompressedVideoOutput;
     
     QTMovie *_movie;
-    dispatch_queue_t _movieQueue;
-    dispatch_source_t _movieFrameExtractTimer;
+    NSWindow *_movieInvisibleWindow;
+    QTMovieView *_movieView;
+    CIContext *_ciContext;
     
     VideoProcessor *_processor;
     BitmapOpenGLView *_bitmapOpenGLView;

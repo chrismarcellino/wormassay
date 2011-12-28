@@ -47,6 +47,7 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
 
 - (void)adjustWindowSizing;
 - (void)processVideoFrame:(VideoFrame *)image;
+- (void)movieDidEnd;
 
 @end
 
@@ -112,11 +113,21 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
                                     [NSNumber numberWithBool:NO], QTMovieOpenAsyncOKAttribute,
                                     nil];
         _movie = [[QTMovie alloc] initWithAttributes:attributes error:outError];
-        _movieQueue = dispatch_queue_create("file-frame-extract", NULL);
         [attributes release];
-        
-        _sourceIdentifier = [[absoluteURL path] retain];
-        RunLog(@"Opened file \"%@\".", _sourceIdentifier);
+        if (_movie) {
+            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(movieDidEnd) name:QTMovieDidEndNotification object:_movie];
+            
+            NSRect frame = NSZeroRect;
+            frame.size = [[_movie attributeForKey:QTMovieNaturalSizeAttribute] sizeValue];
+            _movieView = [[QTMovieView alloc] initWithFrame:frame];
+            [_movieView setMovie:_movie];
+            [_movieView setControllerVisible:NO];
+            [_movieView setPreservesAspectRatio:YES];
+            [_movieView setDelegate:self];
+            
+            _sourceIdentifier = [[absoluteURL path] retain];
+            RunLog(@"Opened file \"%@\".", _sourceIdentifier);
+        }
     }
     
     if (!_captureDevice && !_movie) {
@@ -141,13 +152,11 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
     [_captureDeviceInput release];
     [_captureDecompressedVideoOutput release];
     
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:QTMovieDidEndNotification object:_movie];
     [_movie release];
-    if (_movieQueue) {
-        dispatch_release(_movieQueue);
-    }
-    if (_movieFrameExtractTimer) {
-        dispatch_release(_movieFrameExtractTimer);
-    }
+    [_movieInvisibleWindow release];
+    [_movieView release];
+    [_ciContext release];
     
     [_processor release];
     [_bitmapOpenGLView release];
@@ -272,66 +281,11 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
             }
         }
     } else {
-        // Calculate a representative retrievable frame time delta. Note that some formats have time scales that vary (which isn't a concern here).
-        [_movie gotoBeginning];
-        QTTime firstFrameTime = [_movie currentTime];
-        [_movie stepForward];
-        QTTime secondFrameTime = [_movie currentTime];
-        [_movie gotoBeginning];
-        NSTimeInterval frameDuration = 0.0;
-        NSTimeInterval firstFrameTimeInterval, secondFrameTimeInterval;
-        if (QTGetTimeInterval(firstFrameTime, &firstFrameTimeInterval) && QTGetTimeInterval(secondFrameTime, &secondFrameTimeInterval)) {
-            frameDuration = secondFrameTimeInterval - firstFrameTimeInterval;
-            // For still images (or single frame movies), simulate 30p
-            NSTimeInterval movieDuration;
-            if (QTGetTimeInterval([_movie duration], &movieDuration) && movieDuration <= frameDuration) {
-                frameDuration = 1.0 / 30.0;
-            }
-        }
-        
-        if (frameDuration > 0.0) {
-            success = YES;
-            [_movie detachFromCurrentThread];
-            
-            NSDictionary *attributes = [[NSDictionary alloc] initWithObjectsAndKeys:
-                                        QTMovieFrameImageTypeCGImageRef, QTMovieFrameImageType,
-                                        nil];
-            
-            _movieFrameExtractTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, _movieQueue);
-            dispatch_source_set_event_handler(_movieFrameExtractTimer, ^{
-                NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-                // Migrate the movie to this thread
-                [QTMovie enterQTKitOnThread];
-                [_movie attachToCurrentThread];
-                
-                // Capture a frame
-                NSError *error = nil;
-                QTTime currentFrameTime = [_movie currentTime];
-                CGImageRef videoFrame = (CGImageRef)[_movie frameImageAtTime:currentFrameTime withAttributes:attributes error:&error];
-                if (error) {
-                    RunLog(@"Video frame decode error: %@", error);
-                }
-                if (videoFrame) {
-                    // Use CPU time for presentation time since the video will loop
-                    VideoFrame *image = [[VideoFrame alloc] initByCopyingCGImage:videoFrame resultChannelCount:4 presentationTime:CACurrentMediaTime()];
-                    [self processVideoFrame:image];
-                    [image release];
-                }
-                
-                // Step forward and loop if we are at the end
-                [_movie stepForward];
-                if (QTTimeCompare(currentFrameTime, [_movie currentTime]) == NSEqualToComparison) {
-                    [_movie gotoBeginning];
-                }
-                
-                [_movie detachFromCurrentThread];
-                [QTMovie exitQTKitOnThread];
-                [pool release];
-            });
-            dispatch_source_set_timer(_movieFrameExtractTimer, 0, frameDuration * NSEC_PER_SEC, 0);
-            dispatch_resume(_movieFrameExtractTimer);
-            [attributes release];
-        }
+        // To play the movie, it must be in the view hiearchy
+        _movieInvisibleWindow = [[NSWindow alloc] init];
+        [_movieInvisibleWindow setContentView:_movieView];
+        [_movieView play:self];
+        success = YES;
     }
     
     NSAssert(!_processor, @"processor already exists");
@@ -342,6 +296,7 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
     return success;
 }
 
+// Called on main thread
 - (void)close
 {
     // Work around AppKit calling close twice in succession
@@ -352,13 +307,13 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
         
         [_captureSession stopRunning];
         [_captureDecompressedVideoOutput setDelegate:nil];
-        if (_movieFrameExtractTimer) {
-            dispatch_source_cancel(_movieFrameExtractTimer);
-        }
+        [_movieView pause:self];
+        [_movieView setDelegate:nil];
     }
     [super close];
 }
 
+// Called on a background thread by the capture output
 - (void)captureOutput:(QTCaptureOutput *)captureOutput
   didOutputVideoFrame:(CVImageBufferRef)videoFrame
      withSampleBuffer:(QTSampleBuffer *)sampleBuffer
@@ -419,6 +374,27 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
        fromConnection:(QTCaptureConnection *)connection
 {
     [_processor noteVideoFrameWasDropped];
+}
+
+// Called on a background thread when using a pre-recorded movie file
+- (CIImage *)view:(QTMovieView *)view willDisplayImage:(CIImage *)image
+{
+    // Reuse the context for performance reasons
+    if (!_ciContext) {
+        _ciContext = [[CIContext contextWithCGLContext:NULL pixelFormat:NULL colorSpace:NULL options:nil] retain];
+    }
+    
+    VideoFrame *frame = [[VideoFrame alloc] initByCopyingCIImage:image usingCIContext:_ciContext resultChannelCount:4 presentationTime:CACurrentMediaTime()];
+    [self processVideoFrame:frame];
+    return nil;
+}
+
+- (void)movieDidEnd
+{
+    RunLog(@"Movie ended.");
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self close];
+    });
 }
 
 // This method will be called on a background thread. It will not be called again until the current call returns.

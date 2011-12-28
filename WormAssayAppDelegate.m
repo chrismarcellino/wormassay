@@ -95,7 +95,6 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
            [mainBundle objectForInfoDictionaryKey:(id)kCFBundleVersionKey],
            formattedDataSize(freeSpace),
            percentFree);
-    RunLog(@"VLC can be used to view the video files recorded when assaying using a HDV or DV camera. Download it at http://www.videolan.org/vlc/.");
 }
 
 - (void)menuNeedsUpdate:(NSMenu *)menu

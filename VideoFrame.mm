@@ -95,6 +95,24 @@ static inline void premultiplyImage(IplImage *img, bool reverse);
     return [self initWithIplImageTakingOwnership:iplImage presentationTime:presentationTime];
 }
 
+- (id)initByCopyingCIImage:(CIImage *)ciImage usingCIContext:(CIContext *)context resultChannelCount:(int)outChannels presentationTime:(NSTimeInterval)presentationTime
+{
+    NSAssert(outChannels == 4, @"only 4 channels supported");
+    
+    CGRect extent = [ciImage extent];
+    IplImage *iplImage = cvCreateImage(cvSize(extent.size.width, extent.size.height), IPL_DEPTH_8U, outChannels);
+    
+    extern CIFormat kCIFormatBGRA8;         // Once this is available in a header, remove this forward declaration
+    [context render:ciImage
+           toBitmap:iplImage->imageData
+           rowBytes:iplImage->widthStep
+             bounds:extent
+             format:kCIFormatBGRA8
+         colorSpace:NULL];
+    
+    return [self initWithIplImageTakingOwnership:iplImage presentationTime:presentationTime];    
+}
+
 - (id)initByCopyingCGImage:(CGImageRef)cgImage resultChannelCount:(int)outChannels presentationTime:(NSTimeInterval)presentationTime
 {
     CvSize size = cvSize(CGImageGetWidth(cgImage), CGImageGetHeight(cgImage));

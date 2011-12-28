@@ -405,8 +405,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         BOOL longEnough = trackingDuration >= [_assayAnalyzer minimumTimeIntervalProcessedToReportData] &&
                             [_plateData sampleCount] > [_assayAnalyzer minimumSamplesProcessedToReportData];
         if (longEnough) {
-            RunLog(@"Ended tracking after %.3f seconds (%.1f fps, %.0f%% dropped)",
-                   trackingDuration, [_plateData averageFramesPerSecond], [_plateData droppedFrameProportion] * 100);
+            RunLog(@"Ended tracking after %.3f seconds (%.1f fps)", trackingDuration, [_plateData averageFramesPerSecond]);
         } else {
             RunLog(@"Ignoring truncated run of %.3f seconds", trackingDuration);
         }

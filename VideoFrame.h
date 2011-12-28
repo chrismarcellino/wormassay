@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreVideo/CoreVideo.h>
+#import <QuartzCore/QuartzCore.h>
 #import <ApplicationServices/ApplicationServices.h>
 #import "opencv2/core/core_c.h"
 
@@ -20,6 +21,7 @@
 - (id)initWithIplImageTakingOwnership:(IplImage *)image presentationTime:(NSTimeInterval)presentationTime;
 
 - (id)initByCopyingCVPixelBuffer:(CVPixelBufferRef)cvPixelBuffer resultChannelCount:(int)outChannels presentationTime:(NSTimeInterval)presentationTime;
+- (id)initByCopyingCIImage:(CIImage *)ciImage usingCIContext:(CIContext *)context resultChannelCount:(int)outChannels presentationTime:(NSTimeInterval)presentationTime;
 - (id)initByCopyingCGImage:(CGImageRef)cgImage resultChannelCount:(int)outChannels presentationTime:(NSTimeInterval)presentationTime;
 
 @property(readonly) IplImage *image;
