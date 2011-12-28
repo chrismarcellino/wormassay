@@ -29,7 +29,8 @@ extern bool getPlateConfigurationForWellCount(int wellCount, int &rows, int &col
 extern std::string wellIdentifierStringForIndex(int index, int wellCount);
 
 // Returns true if the circles found correspond to the intended plate configuration. Well circles are returned in 
-// row major order, as (x-center, y-center, radius) triples. The first version determines the well count automatically. 
+// row major order, as (x-center, y-center, radius) triples. The first version determines the well count automatically.
+// The second provides a lower latency to failure when the number of wells expected is known. 
 extern bool findWellCircles(IplImage* inputImage, std::vector<Circle> &circles, int wellCountHint = 0);
 extern bool findWellCirclesForPlateCount(IplImage* inputImage, int wellCount, std::vector<Circle> &circlesVec, int expectedRadius = 0);
 

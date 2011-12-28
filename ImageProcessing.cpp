@@ -140,7 +140,7 @@ bool findWellCirclesForPlateCount(IplImage* inputImage, int wellCount, std::vect
     IplImage* grayInputImage = cvCreateImage(cvGetSize(inputImage), IPL_DEPTH_8U, 1);
     cvCvtColor(inputImage, grayInputImage, CV_BGRA2GRAY);
     
-    double score = 1.0;
+    double score = -1.0;
     bool result = _findWellCirclesForPlateCountUsingGrayscaleImage(grayInputImage, wellCount, circlesVec, score, expectedRadius);
     cvReleaseImage(&grayInputImage);
     

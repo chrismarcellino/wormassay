@@ -9,16 +9,16 @@
 #import <Foundation/Foundation.h>
 #import <OpenGL/gl.h>
 
-@class IplImageObject;
+@class VideoFrame;
 
 // Methods are thread-safe (AppKit superclass methods are not necessarily)
 @interface BitmapOpenGLView : NSOpenGLView {
     // All protected by the context lock
-    IplImageObject *_lastImage;
+    VideoFrame *_lastImage;
     GLuint _imageTexture;
     NSRect _viewport;
 }
 
-- (void)renderImage:(IplImageObject *)image;
+- (void)renderImage:(VideoFrame *)image;
 
 @end

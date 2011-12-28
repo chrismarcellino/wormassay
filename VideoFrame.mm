@@ -1,25 +1,27 @@
 //
-//  IplImageObject.m
+//  VideoFrame.m
 //  WormAssay
 //
 //  Created by Chris Marcellino on 4/10/11.
 //  Copyright 2011 Regents of the University of California. All rights reserved.
 //
 
-#import "IplImageObject.h"
+#import "VideoFrame.h"
 #import "opencv2/opencv.hpp"
 
 static inline void premultiplyImage(IplImage *img, bool reverse);
 
-@implementation IplImageObject
+@implementation VideoFrame
 
 @synthesize image = _image;
+@synthesize presentationTime = _presentationTime;
 
-- (id)initWithIplImageTakingOwnership:(IplImage *)image
+- (id)initWithIplImageTakingOwnership:(IplImage *)image presentationTime:(NSTimeInterval)presentationTime
 {
     if ((self = [super init])) {
         NSAssert(image, @"image is required");
         _image = image;
+        _presentationTime = presentationTime;
     }
     return self;
 }
@@ -32,10 +34,10 @@ static inline void premultiplyImage(IplImage *img, bool reverse);
 
 - (id)copyWithZone:(NSZone *)zone
 {
-    return [[[self class] alloc] initWithIplImageTakingOwnership:cvCloneImage(_image)];
+    return [[[self class] alloc] initWithIplImageTakingOwnership:cvCloneImage(_image) presentationTime:_presentationTime];
 }
 
-- (id)initByCopyingCVPixelBuffer:(CVPixelBufferRef)cvPixelBuffer resultChannelCount:(int)outChannels
+- (id)initByCopyingCVPixelBuffer:(CVPixelBufferRef)cvPixelBuffer resultChannelCount:(int)outChannels presentationTime:(NSTimeInterval)presentationTime
 {
     CVPixelBufferLockBaseAddress(cvPixelBuffer, kCVPixelBufferLock_ReadOnly);    
     
@@ -90,10 +92,10 @@ static inline void premultiplyImage(IplImage *img, bool reverse);
     
     CVPixelBufferUnlockBaseAddress(cvPixelBuffer, kCVPixelBufferLock_ReadOnly);
     
-    return [self initWithIplImageTakingOwnership:iplImage];
+    return [self initWithIplImageTakingOwnership:iplImage presentationTime:presentationTime];
 }
 
-- (id)initByCopyingCGImage:(CGImageRef)cgImage resultChannelCount:(int)outChannels
+- (id)initByCopyingCGImage:(CGImageRef)cgImage resultChannelCount:(int)outChannels presentationTime:(NSTimeInterval)presentationTime
 {
     CvSize size = cvSize(CGImageGetWidth(cgImage), CGImageGetHeight(cgImage));
     // CG can only write into 4 byte aligned bitmaps. We'll convert it later for 3 channels.
@@ -138,7 +140,7 @@ static inline void premultiplyImage(IplImage *img, bool reverse);
         iplImage = temp;
     }
     
-    return [self initWithIplImageTakingOwnership:iplImage];
+    return [self initWithIplImageTakingOwnership:iplImage presentationTime:presentationTime];
 }
 
 static inline void premultiplyImage(IplImage *img, bool reverse)

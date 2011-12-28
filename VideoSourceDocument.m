@@ -12,7 +12,7 @@
 #import "BitmapOpenGLView.h"
 #import "VideoProcessorController.h"
 #import "VideoProcessor.h"
-#import "IplImageObject.h"
+#import "VideoFrame.h"
 
 NSString *const CaptureDeviceScheme = @"capturedevice";
 NSString *const CaptureDeviceFileType = @"dyn.capturedevice";
@@ -46,7 +46,7 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
 @interface VideoSourceDocument ()
 
 - (void)adjustWindowSizing;
-- (void)processVideoFrame:(IplImageObject *)image presentationTime:(NSTimeInterval)presentationTime;
+- (void)processVideoFrame:(VideoFrame *)image;
 
 @end
 
@@ -310,8 +310,9 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
                     RunLog(@"Video frame decode error: %@", error);
                 }
                 if (videoFrame) {
-                    IplImageObject *image = [[IplImageObject alloc] initByCopyingCGImage:videoFrame resultChannelCount:4];
-                    [self processVideoFrame:image presentationTime:CACurrentMediaTime()];       // use CPU time since the video will loop
+                    // Use CPU time for presentation time since the video will loop
+                    VideoFrame *image = [[VideoFrame alloc] initByCopyingCGImage:videoFrame resultChannelCount:4 presentationTime:CACurrentMediaTime()];
+                    [self processVideoFrame:image];
                     [image release];
                 }
                 
@@ -339,7 +340,7 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
     // Work around AppKit calling close twice in succession
     if (!_closeCalled) {
         _closeCalled = YES;
-        RunLog(@"Closing removed device/file: %@", _sourceIdentifier);
+        RunLog(@"Closing %@: %@", _captureDevice ? @"removed device" : @"file", _sourceIdentifier);
         [[VideoProcessorController sharedInstance] removeVideoProcessor:_processor];
         
         [_captureSession stopRunning];
@@ -397,13 +398,12 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
             [self adjustWindowSizing];
         });
     } else {
-        IplImageObject *image = [[IplImageObject alloc] initByCopyingCVPixelBuffer:(CVPixelBufferRef)videoFrame resultChannelCount:4];
-        
-        NSTimeInterval presentationTimeInterval;
-        if (!QTGetTimeInterval([sampleBuffer presentationTime], &presentationTimeInterval)) {
-            presentationTimeInterval = CACurrentMediaTime();
+        NSTimeInterval presentationTime;
+        if (!QTGetTimeInterval([sampleBuffer presentationTime], &presentationTime)) {
+            presentationTime = CACurrentMediaTime();
         }
-        [self processVideoFrame:image presentationTime:presentationTimeInterval];
+        VideoFrame *image = [[VideoFrame alloc] initByCopyingCVPixelBuffer:(CVPixelBufferRef)videoFrame resultChannelCount:4 presentationTime:presentationTime];
+        [self processVideoFrame:image];
         [image release];
     }
 }
@@ -417,9 +417,9 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
 
 // This method will be called on a background thread. It will not be called again until the current call returns.
 // Interviening frames may be dropped if the video is a live capture device source. 
-- (void)processVideoFrame:(IplImageObject *)image presentationTime:(NSTimeInterval)presentationTime
+- (void)processVideoFrame:(VideoFrame *)image
 {
-    [_processor processVideoFrame:image presentationTime:presentationTime debugFrameCallback:^(IplImageObject *image) {
+    [_processor processVideoFrame:image debugFrameCallback:^(VideoFrame *image) {
         [_bitmapOpenGLView renderImage:image];
     }];
 }

@@ -9,7 +9,7 @@
 #import "BitmapOpenGLView.h"
 #import <OpenGL/glu.h>
 #import "opencv2/core/core_c.h"
-#import "IplImageObject.h"
+#import "VideoFrame.h"
 
 
 @implementation BitmapOpenGLView
@@ -72,7 +72,7 @@
     CGLUnlockContext(glContext);
 }
 
-- (void)renderImage:(IplImageObject *)image
+- (void)renderImage:(VideoFrame *)image
 {
     IplImage *iplImage = image ? [image image] : [_lastImage image];
     

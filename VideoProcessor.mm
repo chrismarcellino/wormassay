@@ -8,7 +8,7 @@
 
 #import "VideoProcessor.h"
 #import "ImageProcessing.hpp"
-#import "IplImageObject.h"
+#import "VideoFrame.h"
 #import "PlateData.h"
 #import "VideoProcessorController.h"   // for RunLog()
 #import "zxing/common/GreyscaleLuminanceSource.h"
@@ -37,14 +37,14 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     NSTimeInterval _lastBarcodeScanTime;
     
     PlateData *_plateData;
-    IplImageObject *_lastFrame;     // when tracking
+    VideoFrame *_lastFrame;     // when tracking
     std::vector<Circle> _trackingWellCircles;    // circles used for tracking
     std::vector<Circle> _lastCircles;   // for debugging
     NSString *_lastBarcodeThisProcessor;
 }
 
-- (void)performWellDeterminationCalculationAsyncWithFrame:(IplImageObject *)videoFrame presentationTime:(NSTimeInterval)presentationTime;
-- (void)performBarcodeReadingAsyncWithFrame:(IplImageObject *)videoFrame presentationTime:(NSTimeInterval)presentationTime;
+- (void)performWellDeterminationCalculationAsyncWithFrame:(VideoFrame *)videoFrame;
+- (void)performBarcodeReadingAsyncWithFrame:(VideoFrame *)videoFrame;
 
 - (void)resetCaptureStateAndReportResults;
 - (void)beginRecordingVideo;
@@ -94,9 +94,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     });
 }
 
-- (void)processVideoFrame:(IplImageObject *)videoFrame
-         presentationTime:(NSTimeInterval)presentationTime
-       debugFrameCallback:(void (^)(IplImageObject *image))callback
+- (void)processVideoFrame:(VideoFrame *)videoFrame debugFrameCallback:(void (^)(VideoFrame *image))callback
 {
     // This method is synchronous so that we don't enqueue frames faster than they should be processed. QT will drop the overflow.
     dispatch_sync(_queue, ^{
@@ -106,16 +104,16 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         
         // If we're not already processing an image for wells, and no other processor has a plate, schedule an async processing
         if (!_scanningForWells && _shouldScanForWells) {
-            [self performWellDeterminationCalculationAsyncWithFrame:videoFrame presentationTime:presentationTime];
+            [self performWellDeterminationCalculationAsyncWithFrame:videoFrame];
         }
         
         // Always look for barcodes since another camera might have a plate
-        if (!_scanningForBarcodes && _lastBarcodeScanTime < presentationTime - BarcodeScanningPeriod) {
-            [self performBarcodeReadingAsyncWithFrame:videoFrame presentationTime:presentationTime];
+        if (!_scanningForBarcodes && _lastBarcodeScanTime < [videoFrame presentationTime] - BarcodeScanningPeriod) {
+            [self performBarcodeReadingAsyncWithFrame:videoFrame];
         }
         
         // Create a copy of the frame to draw debugging info on, which we will send back
-        IplImageObject *debugImage = [videoFrame copy];
+        VideoFrame *debugImage = [videoFrame copy];
         
         // First, draw debugging well circles and labels on each frame so that they appear underneath other drawing
         if (_shouldScanForWells) {
@@ -144,16 +142,17 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                 std::vector<double> occupancyFractions = calculateCannyEdgePixelProportionForWellsFromImages([videoFrame image],
                                                                                                              _trackingWellCircles,
                                                                                                              [debugImage image]);
+                NSTimeInterval delta = [videoFrame presentationTime] - [_lastFrame presentationTime];
                 std::vector<double> normalizedMovedFractions = calculateMovedWellFractionPerSecondForWellsFromImages([_lastFrame image],
                                                                                                                      [videoFrame image],
-                                                                                                                     presentationTime - [_plateData lastPresentationTime],
+                                                                                                                     delta,
                                                                                                                      _trackingWellCircles,
                                                                                                                      [debugImage image]);
                 // If we were able to get stats, add them to the plate data
                 if (normalizedMovedFractions.size() > 0) {
                     [_plateData addFrameOccupancyFractions:&*occupancyFractions.begin()
                                   normalizedMovedFractions:&*normalizedMovedFractions.begin()
-                                        atPresentationTime:presentationTime];
+                                        atPresentationTime:[videoFrame presentationTime]];
                 }
                 
                 // Print the stats in the wells averaged over the last 10 seconds to limit computational complexity
@@ -186,7 +185,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 }
 
 // requires _queue to be held
-- (void)performWellDeterminationCalculationAsyncWithFrame:(IplImageObject *)videoFrame presentationTime:(NSTimeInterval)presentationTime
+- (void)performWellDeterminationCalculationAsyncWithFrame:(VideoFrame *)videoFrame
 {
     _scanningForWells = YES;
     
@@ -225,7 +224,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                         if (plateFound) {
                             _processingState = ProcessingStatePlateFirstFrameIdentified;
                             _trackingWellCircles = wellCircles;     // store the first circles as the baseline for the second set
-                            _firstWellFrameTime = presentationTime;
+                            _firstWellFrameTime = [videoFrame presentationTime];
                         }
                         break;
                         
@@ -234,14 +233,14 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                             // If the second identification yields matching results as the first, and they are spread by at least
                             // 250 ms, begin motion tracking and video recording
                             if (plateSequentialCirclesAppearSameAndStationary(_trackingWellCircles, wellCircles) &&
-                                presentationTime - _firstWellFrameTime >= 0.250) {
+                                [videoFrame presentationTime] - _firstWellFrameTime >= 0.250) {
                                 _processingState = ProcessingStateTrackingMotion;
                                 _trackingWellCircles = wellCircles; // store the second set as the baseline for all remaining sets
                                 _lastBarcodeScanTime = PresentationTimeDistantPast;     // Now that plate is in place, immediately retry barcode capture
                                 
                                 // Create plate data and set start time
                                 NSAssert(!_plateData, @"plate data already exists");
-                                _plateData = [[PlateData alloc] initWithWellCount:wellCircles.size() startPresentationTime:presentationTime];
+                                _plateData = [[PlateData alloc] initWithWellCount:wellCircles.size() startPresentationTime:[videoFrame presentationTime]];
                                 // Begin recording video
                                 [self beginRecordingVideo];
                             } else {
@@ -268,7 +267,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 }
 
 // requires _queue to be held
-- (void)performBarcodeReadingAsyncWithFrame:(IplImageObject *)videoFrame presentationTime:(NSTimeInterval)presentationTime
+- (void)performBarcodeReadingAsyncWithFrame:(VideoFrame *)videoFrame
 {
     _scanningForBarcodes = YES;
     
@@ -305,11 +304,11 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         // Process and store the results when holding _queue
         dispatch_async(_queue, ^{
             _scanningForBarcodes = NO;
-            _lastBarcodeScanTime = presentationTime;
+            _lastBarcodeScanTime = [videoFrame presentationTime];
             [_lastBarcodeThisProcessor release];
             _lastBarcodeThisProcessor = [text retain];
             if (text) {
-                [_delegate videoProcessor:self didCaptureBarcodeText:text atTime:presentationTime];
+                [_delegate videoProcessor:self didCaptureBarcodeText:text atTime:[videoFrame presentationTime]];
             }
         });
         
@@ -336,7 +335,6 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     _firstWellFrameTime = PresentationTimeDistantPast;
     _lastBarcodeScanTime = PresentationTimeDistantPast;
     _trackingWellCircles.clear();
-    _lastCircles.clear();
 }
 
 - (void)beginRecordingVideo

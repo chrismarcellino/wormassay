@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "opencv2/core/core_c.h"
 
-@class IplImageObject;
+@class VideoFrame;
 @class PlateData;
 @protocol VideoProcessorDelegate;
 
@@ -31,9 +31,7 @@ typedef enum {
 - (void)setShouldScanForWells:(BOOL)shouldScanForWells;
 
 // Synchronously processes a video frame (e.g. at frame rate)
-- (void)processVideoFrame:(IplImageObject *)videoFrame
-         presentationTime:(NSTimeInterval)presentationTime
-       debugFrameCallback:(void (^)(IplImageObject *image))callback;    // callback will be called on a background queue
+- (void)processVideoFrame:(VideoFrame *)videoFrame debugFrameCallback:(void (^)(VideoFrame *image))callback;    // callback will be called on a background queue
 
 - (void)noteVideoFrameWasDropped;
 
