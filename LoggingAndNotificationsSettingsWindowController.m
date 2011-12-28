@@ -47,7 +47,7 @@
 - (IBAction)testEmailNotifications:(id)sender
 {
     NSString *recipients = [[VideoProcessorController sharedInstance] notificationEmailRecipients];
-    NSString *body = [NSString stringWithFormat:@"This is a test email message sent by %@.",
+    NSString *body = [NSString stringWithFormat:NSLocalizedString(@"This is a test email message sent by %@.", nil),
                       [[NSBundle mainBundle] objectForInfoDictionaryKey:(id)kCFBundleNameKey]];
     [Emailer sendMailMessageToRecipients:recipients subject:@"Test message" body:body attachmentPaths:nil];
 }

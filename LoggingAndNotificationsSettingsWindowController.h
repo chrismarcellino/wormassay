@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 
-@interface LoggingAndNotificationsSettingsWindowController : NSWindowController
+@interface LoggingAndNotificationsSettingsWindowController : NSWindowController <NSWindowDelegate>
 
 - (IBAction)browseForRunOutputFolderPath:(id)sender;
 - (IBAction)openMail:(id)sender;
