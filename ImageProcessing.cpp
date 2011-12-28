@@ -13,8 +13,7 @@
 #import <dispatch/dispatch.h>
 
 static const float MovedPixelPlateMovingProportionThreshold = 0.02;
-static const float WellEdgeFindingInsetProportion = 0.85;
-static const float WellEdgeFindingSecondInsetProportion = 0.7;
+static const float WellEdgeFindingInsetProportion = 0.7;
 
 static std::vector<Circle> convertCvVec3fSeqToCircleVector(CvSeq *seq);
 static int sortCircleCentersByAxis(const void* a, const void* b, void* userdata);
@@ -430,10 +429,6 @@ std::vector<float> calculateCannyEdgePixelProportionForWellsFromImages(IplImage 
     IplImage *invertedCircleMask = cvCreateImage(cvSize(radius * 2, radius * 2), IPL_DEPTH_8U, 1);
     fastFillImage(invertedCircleMask, 255);
     cvCircle(invertedCircleMask, cvPoint(radius, radius), radius * WellEdgeFindingInsetProportion, cvRealScalar(0), CV_FILLED);
-    // Create the second mask to prevent use of pixels from edges found where the first mask cut the image
-    IplImage *insetInvertedCircleMask = cvCreateImage(cvSize(radius * 2, radius * 2), IPL_DEPTH_8U, 1);
-    fastFillImage(insetInvertedCircleMask, 255);
-    cvCircle(insetInvertedCircleMask, cvPoint(radius, radius), radius * WellEdgeFindingSecondInsetProportion, cvRealScalar(0), CV_FILLED);
     
     // Iterate through each well and get edge images for each serially
     IplImage** subimages = (IplImage **)malloc(circles.size() * sizeof(IplImage*));
@@ -450,16 +445,13 @@ std::vector<float> calculateCannyEdgePixelProportionForWellsFromImages(IplImage 
     IplImage** edges = (IplImage **)malloc(circles.size() * sizeof(IplImage*));
     float* edgePixelPorportions = (float*)malloc(circles.size() * sizeof(float));
     dispatch_apply(circles.size(), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(size_t i){ 
-        // Mask the plate image, turning pixels outside the circle black
-        cvSet(subimages[i], cvRealScalar(0), invertedCircleMask);
-        
         // Find edges in the image
         IplImage *cannyEdges = cvCreateImage(cvGetSize(subimages[i]), IPL_DEPTH_8U, 1);
         cvCanny(subimages[i], cannyEdges, 50, 150);
         edges[i] = cvCreateImage(cvGetSize(subimages[i]), IPL_DEPTH_8U, 1);
         
-        // Mask off the edge pixels that were created by the abrupt boundary at the circular mask and spurious well edge cells
-        cvSet(cannyEdges, cvRealScalar(0), insetInvertedCircleMask);
+        // Mask off the edge pixels that correspond to the wells
+        cvSet(cannyEdges, cvRealScalar(0), invertedCircleMask);
         
         // Dilate the edge image
         cvDilate(cannyEdges, edges[i]);
@@ -488,7 +480,6 @@ std::vector<float> calculateCannyEdgePixelProportionForWellsFromImages(IplImage 
     free(edgePixelPorportions);
     free(subimages);
     free(edges);
-    cvReleaseImage(&insetInvertedCircleMask);
     cvReleaseImage(&invertedCircleMask);
     
     return vector;
