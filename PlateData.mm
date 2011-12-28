@@ -200,6 +200,7 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
                            scanID:(NSString *)scanID
       withAdditionalRawDataOutput:(NSMutableDictionary *)rawColumnIDsToCSVStrings
                      analyzerName:(NSString *)analyzerName
+                 columnMajorOrder:(BOOL)columnMajorOrder
 {
     @synchronized(self) {
         NSMutableString *output = [NSMutableString string];
@@ -236,7 +237,16 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
         [dateFormatter release];
         
         // Write stats for each well
-        for (size_t well = 0; well < _valuesByWellAndDataColumn.size(); well++) {
+        for (size_t i = 0; i < _valuesByWellAndDataColumn.size(); i++) {
+            size_t well;
+            if (columnMajorOrder) {
+                int rows, columns;
+                getPlateConfigurationForWellCount(_valuesByWellAndDataColumn.size(), rows, columns);
+                well = (i % rows) * columns + i / rows;
+            } else {
+                well = i;
+            }
+            
             NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
             
             // Output the plate-well ID

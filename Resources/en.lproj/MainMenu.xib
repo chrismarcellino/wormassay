@@ -773,6 +773,14 @@
 										</array>
 									</object>
 								</object>
+								<object class="NSMenuItem" id="356449551">
+									<reference key="NSMenu" ref="433591544"/>
+									<string key="NSTitle">Output in Column-Major Order</string>
+									<string key="NSKeyEquiv"/>
+									<int key="NSMnemonicLoc">2147483647</int>
+									<reference key="NSOnImage" ref="1033313550"/>
+									<reference key="NSMixedImage" ref="310636482"/>
+								</object>
 							</array>
 						</object>
 					</object>
@@ -1324,6 +1332,22 @@
 						<reference key="destination" ref="132288011"/>
 					</object>
 					<int key="connectionID">570</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBBindingConnection" key="connection">
+						<string key="label">value: values.OutputInColumnMajorOrder</string>
+						<reference key="source" ref="356449551"/>
+						<reference key="destination" ref="176727960"/>
+						<object class="NSNibBindingConnector" key="connector">
+							<reference key="NSSource" ref="356449551"/>
+							<reference key="NSDestination" ref="176727960"/>
+							<string key="NSLabel">value: values.OutputInColumnMajorOrder</string>
+							<string key="NSBinding">value</string>
+							<string key="NSKeyPath">values.OutputInColumnMajorOrder</string>
+							<int key="NSNibBindingConnectorVersion">2</int>
+						</object>
+					</object>
+					<int key="connectionID">573</int>
 				</object>
 			</array>
 			<object class="IBMutableOrderedSet" key="objectRecords">
@@ -1909,6 +1933,7 @@
 							<reference ref="517408328"/>
 							<reference ref="250333088"/>
 							<reference ref="66700025"/>
+							<reference ref="356449551"/>
 						</array>
 						<reference key="parent" ref="503703545"/>
 					</object>
@@ -1993,6 +2018,11 @@
 						<int key="objectID">562</int>
 						<reference key="object" ref="416621879"/>
 						<reference key="parent" ref="690626892"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">572</int>
+						<reference key="object" ref="356449551"/>
+						<reference key="parent" ref="433591544"/>
 					</object>
 				</array>
 			</object>
@@ -2165,6 +2195,7 @@
 				<string key="57.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<integer value="1" key="57.ImportedFromIB2"/>
 				<string key="57.editorWindowContentRectSynchronizationRect">{{23, 794}, {245, 183}}</string>
+				<string key="572.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="58.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<integer value="1" key="58.ImportedFromIB2"/>
 				<string key="72.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -2194,7 +2225,7 @@
 			<nil key="activeLocalization"/>
 			<dictionary class="NSMutableDictionary" key="localizations"/>
 			<nil key="sourceID"/>
-			<int key="maxID">571</int>
+			<int key="maxID">573</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<array class="NSMutableArray" key="referencedPartialClassDescriptions">

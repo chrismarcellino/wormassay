@@ -384,7 +384,8 @@ stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
                 NSString *runOutput = [plateData csvOutputForPlateID:plateID
                                                               scanID:scanID
                                          withAdditionalRawDataOutput:rawOutputDictionary
-                                                        analyzerName:[[self currentAssayAnalyzerClass] analyzerName]];
+                                                        analyzerName:[[self currentAssayAnalyzerClass] analyzerName]
+                                                    columnMajorOrder:[[NSUserDefaults standardUserDefaults] boolForKey:@"OutputInColumnMajorOrder"]];
                 
                 NSString *folder = [self runOutputFolderPath];
                 NSString *runOutputPath = [folder stringByAppendingPathComponent:
