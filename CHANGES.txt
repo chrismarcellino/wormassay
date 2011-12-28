@@ -1,9 +1,9 @@
 Version 1.0
 ------------
+Bump version number to 1.0 to reflect manuscript publication and application release (the algorithms are numerically equivalent to the versions in 0.15). 
 Make project and build settings Xcode 4.2 compatible.
 Reverse Optical Flow vector calculation direction (from prev. frame to current frame, to current frame to prev. frame, to make blue edge outline correspond to worm better. This will have no effect on data or noise.)
 Fix free space display in console.
-Bump version number to 1.0 to reflect manuscript publication and application release (the algorithms are numerically equivalent to the versions in 0.20). 
 
 Version 0.31
 ------------
@@ -19,4 +19,10 @@ Limit UVC (i.e. barcode camera) resolution for best performance/computability; h
 
 Version 0.20
 ------------
-Both luminance difference and optical flow algorithms implemented and focused validation against human assay completed.
+Add support for column major ordering (an Options menu setting).
+Improve plate jostling detection performance. 
+Ensure that at least 100 ms elapses between frames analyzed by optical flow so that sensitivity does not vary with hardware performance (on future faster hardware.)
+
+Version 0.15
+------------
+First completely functional revision. Both luminance difference and optical flow algorithms implemented and focused validation against human assay completed.
