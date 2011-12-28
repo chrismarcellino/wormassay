@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		210D6E9E134BAC5300BCD6F1 /* ProcessingController.m in Sources */ = {isa = PBXBuildFile; fileRef = 210D6E9D134BAC5300BCD6F1 /* ProcessingController.m */; };
 		21426FAF134683DB00AF78E5 /* VideoSourceController.m in Sources */ = {isa = PBXBuildFile; fileRef = 21426FAE134683DA00AF78E5 /* VideoSourceController.m */; };
 		2180AC681346BB99008AF87B /* DocumentController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2180AC671346BB99008AF87B /* DocumentController.m */; };
 		218DD5281345253D000B6475 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD5271345253D000B6475 /* libz.dylib */; };
@@ -71,7 +72,7 @@
 		21E778D812D322A9006C1554 /* tables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB46D12CEC72B0047B13F /* tables.cpp */; };
 		21E778D912D322A9006C1554 /* accum.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB49A12CEC7800047B13F /* accum.cpp */; };
 		21E778DA12D322A9006C1554 /* approx.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB49B12CEC7800047B13F /* approx.cpp */; };
-		21E778DB12D322A9006C1554 /* canny.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB49C12CEC7800047B13F /* canny.cpp */; };
+		21E778DB12D322A9006C1554 /* canny.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB49C12CEC7800047B13F /* canny.cpp */; settings = {COMPILER_FLAGS = "-O3"; }; };
 		21E778DC12D322A9006C1554 /* color.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB49D12CEC7800047B13F /* color.cpp */; };
 		21E778DD12D322A9006C1554 /* contours.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB49E12CEC7800047B13F /* contours.cpp */; };
 		21E778DE12D322A9006C1554 /* convhull.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB49F12CEC7800047B13F /* convhull.cpp */; };
@@ -87,7 +88,7 @@
 		21E778E812D322A9006C1554 /* geometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB4AA12CEC7800047B13F /* geometry.cpp */; };
 		21E778E912D322A9006C1554 /* grabcut.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB4AB12CEC7800047B13F /* grabcut.cpp */; };
 		21E778EA12D322A9006C1554 /* histogram.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB4AC12CEC7800047B13F /* histogram.cpp */; };
-		21E778EB12D322A9006C1554 /* hough.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB4AD12CEC7800047B13F /* hough.cpp */; };
+		21E778EB12D322A9006C1554 /* hough.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB4AD12CEC7800047B13F /* hough.cpp */; settings = {COMPILER_FLAGS = "-O3"; }; };
 		21E778EC12D322A9006C1554 /* imgwarp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB4AE12CEC7800047B13F /* imgwarp.cpp */; };
 		21E778ED12D322A9006C1554 /* inpaint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB4AF12CEC7800047B13F /* inpaint.cpp */; };
 		21E778EE12D322A9006C1554 /* kdtree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB4B012CEC7800047B13F /* kdtree.cpp */; };
@@ -113,11 +114,14 @@
 		21E7790212D322A9006C1554 /* undistort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB4C512CEC7800047B13F /* undistort.cpp */; };
 		21E7790312D322A9006C1554 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB4C612CEC7800047B13F /* utils.cpp */; };
 		21E7790512D322A9006C1554 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 215AB59712CECC190047B13F /* Accelerate.framework */; };
+		21EBDA25134AD32300736245 /* ImageProcessing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21EBDA24134AD32300736245 /* ImageProcessing.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		21426FAD134683DA00AF78E5 /* VideoSourceController.h */ = {isa = PBXFileReference; fileEncoding = 4; path = VideoSourceController.h; sourceTree = SOURCE_ROOT; };
+		210D6E9C134BAC5300BCD6F1 /* ProcessingController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessingController.h; sourceTree = SOURCE_ROOT; };
+		210D6E9D134BAC5300BCD6F1 /* ProcessingController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProcessingController.m; sourceTree = SOURCE_ROOT; };
+		21426FAD134683DA00AF78E5 /* VideoSourceController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoSourceController.h; sourceTree = SOURCE_ROOT; };
 		21426FAE134683DA00AF78E5 /* VideoSourceController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VideoSourceController.m; sourceTree = SOURCE_ROOT; };
 		215AB44812CEC7130047B13F /* opencv.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = opencv.hpp; path = ThirdParty/OpenCV/include/opencv2/opencv.hpp; sourceTree = "<group>"; };
 		215AB44F12CEC72B0047B13F /* core.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = core.hpp; sourceTree = "<group>"; };
@@ -222,13 +226,16 @@
 		218DD57513455374000B6475 /* Worm.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Worm.icns; sourceTree = "<group>"; };
 		21CC72051347EDD4001146DA /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		21CC722C134836BC001146DA /* IplImageConversionUtilities.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IplImageConversionUtilities.cpp; sourceTree = SOURCE_ROOT; };
-		21CC722D134836BC001146DA /* IplImageConversionUtilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = IplImageConversionUtilities.hpp; sourceTree = SOURCE_ROOT; };
+		21CC722D134836BC001146DA /* IplImageConversionUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IplImageConversionUtilities.h; sourceTree = SOURCE_ROOT; };
 		21CC724813484A79001146DA /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		21CC725A1348CA5F001146DA /* BitmapOpenGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BitmapOpenGLView.h; sourceTree = SOURCE_ROOT; };
 		21CC725B1348CA5F001146DA /* BitmapOpenGLView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BitmapOpenGLView.m; sourceTree = SOURCE_ROOT; };
 		21CC725D1348D40B001146DA /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		21E7790912D322A9006C1554 /* libOpenCV.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libOpenCV.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		21E779A012D323D6006C1554 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
+		21EBDA23134AD32300736245 /* ImageProcessing.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageProcessing.h; sourceTree = SOURCE_ROOT; };
+		21EBDA24134AD32300736245 /* ImageProcessing.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ImageProcessing.cpp; sourceTree = SOURCE_ROOT; };
+		21EBDA37134AE0F000736245 /* NematodeAssay-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NematodeAssay-Prefix.pch"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -473,11 +480,23 @@
 				2180AC671346BB99008AF87B /* DocumentController.m */,
 				21426FAD134683DA00AF78E5 /* VideoSourceController.h */,
 				21426FAE134683DA00AF78E5 /* VideoSourceController.m */,
+				210D6E9C134BAC5300BCD6F1 /* ProcessingController.h */,
+				210D6E9D134BAC5300BCD6F1 /* ProcessingController.m */,
 				21CC725A1348CA5F001146DA /* BitmapOpenGLView.h */,
 				21CC725B1348CA5F001146DA /* BitmapOpenGLView.m */,
-				21CC722D134836BC001146DA /* IplImageConversionUtilities.hpp */,
-				21CC722C134836BC001146DA /* IplImageConversionUtilities.cpp */,
 			);
+			path = NematodeAssay;
+			sourceTree = "<group>";
+		};
+		21EBDA26134AD3BA00736245 /* Image Processing */ = {
+			isa = PBXGroup;
+			children = (
+				21CC722D134836BC001146DA /* IplImageConversionUtilities.h */,
+				21CC722C134836BC001146DA /* IplImageConversionUtilities.cpp */,
+				21EBDA23134AD32300736245 /* ImageProcessing.h */,
+				21EBDA24134AD32300736245 /* ImageProcessing.cpp */,
+			);
+			name = "Image Processing";
 			path = NematodeAssay;
 			sourceTree = "<group>";
 		};
@@ -493,6 +512,7 @@
 			isa = PBXGroup;
 			children = (
 				21A96B7912D1696D002E1DC6 /* NematodeAssay */,
+				21EBDA26134AD3BA00736245 /* Image Processing */,
 				29B97315FDCFA39411CA2CEA /* Other Sources */,
 				21FA749512CD579300D11B6D /* Third Party */,
 				2161366312CD7BFD006687D3 /* Resources */,
@@ -506,6 +526,7 @@
 			isa = PBXGroup;
 			children = (
 				218DD55A13454411000B6475 /* main.m */,
+				21EBDA37134AE0F000736245 /* NematodeAssay-Prefix.pch */,
 			);
 			name = "Other Sources";
 			sourceTree = "<group>";
@@ -658,6 +679,8 @@
 				2180AC681346BB99008AF87B /* DocumentController.m in Sources */,
 				21CC722E134836BC001146DA /* IplImageConversionUtilities.cpp in Sources */,
 				21CC725C1348CA5F001146DA /* BitmapOpenGLView.m in Sources */,
+				21EBDA25134AD32300736245 /* ImageProcessing.cpp in Sources */,
+				210D6E9E134BAC5300BCD6F1 /* ProcessingController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -779,7 +802,6 @@
 		21E7790712D322A9006C1554 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				FRAMEWORK_SEARCH_PATHS = "${SDK_DIR}/System/Library/Frameworks/Accelerate.framework/Frameworks";
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
@@ -793,7 +815,6 @@
 		21E7790812D322A9006C1554 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				FRAMEWORK_SEARCH_PATHS = "${SDK_DIR}/System/Library/Frameworks/Accelerate.framework/Frameworks";
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
@@ -807,8 +828,11 @@
 		C01FCF4F08A954540054247B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_ENABLE_SSE3_EXTENSIONS = YES;
+				GCC_ENABLE_SUPPLEMENTAL_SSE3_INSTRUCTIONS = YES;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
 				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
@@ -824,9 +848,12 @@
 		C01FCF5008A954540054247B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEPLOYMENT_POSTPROCESSING = YES;
 				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_ENABLE_SSE3_EXTENSIONS = YES;
+				GCC_ENABLE_SUPPLEMENTAL_SSE3_INSTRUCTIONS = YES;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
 				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;

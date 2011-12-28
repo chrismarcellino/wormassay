@@ -13,7 +13,7 @@ typedef struct {
     void *baseAddress;         // packed pixels
     size_t width;
     size_t height;
-    GLenum glPixelFormat;       // e.g. GL_BGRA
+    GLenum glPixelFormat;       // e.g. GL_BGRA or GL_LUMINANCE
     GLenum glPixelType;         // e.g. GL_UNSIGNED_BYTE
     void (*freeCallback)(void *baseAddress, void *context);     // May be NULL. Will be called from any thread.
     void *context;

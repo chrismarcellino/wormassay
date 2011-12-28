@@ -9,6 +9,7 @@
 #import "NematodeAssayAppDelegate.h"
 #import "VideoSourceController.h"
 #import "DocumentController.h"
+#import "ProcessingController.h"
 #import <QTKit/QTKit.h>
 
 static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCameras";
@@ -34,13 +35,13 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
     
     // Create our NSDocumentController subclass first
     [[[DocumentController alloc] init] autorelease];
-    
-    // Get the capture system started as early as possible so we can try to avoid resolution changes
-    [QTCaptureDevice inputDevices];
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
+    // Get the capture system started as early as possible so we can try to avoid unsightly resolution changes
+    [QTCaptureDevice inputDevices];
+    
     // Register for camera notifications and create windows for each camera
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center addObserver:self selector:@selector(captureDevicesChanged) name:QTCaptureDeviceWasConnectedNotification object:nil];
@@ -53,8 +54,6 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
                                                                  context:NULL];
     
     [self loadCaptureDevices];
-    
-    // XX TILE WINDOWS
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context

@@ -29,14 +29,15 @@ extern NSString *UniqueIDForCaptureDeviceURL(NSURL *url);
     QTMovie *_movie;
     dispatch_queue_t _movieFrameExtractQueue;
     dispatch_source_t _movieFrameExtractTimer;
-    QTTime _nextExtractTime;
     
     BitmapOpenGLView *_bitmapOpenGLView;
-    NSUInteger frameDropCount;
+    NSUInteger _frameDropCount;
+    NSString *_sourceIdentifier;
 }
 
 @property(nonatomic, readonly) QTCaptureDevice *captureDevice;
 @property(nonatomic, readonly) QTMovie *movie;
+@property(nonatomic, readonly) NSString *sourceIdentifier;      // unique and suitable for logging
 
 - (NSSize)lastKnownResolution;
 

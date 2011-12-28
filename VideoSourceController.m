@@ -7,9 +7,10 @@
 //
 
 #import "VideoSourceController.h"
-#import "BitmapOpenGLView.h"
-#import "IplImageConversionUtilities.hpp"
 #import "opencv2/core/core_c.h"
+#import "BitmapOpenGLView.h"
+#import "ProcessingController.h"
+#import "IplImageConversionUtilities.h"
 
 NSString *const CaptureDeviceScheme = @"capturedevice";
 NSString *const CaptureDeviceFileType = @"dyn.capturedevice";
@@ -53,8 +54,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 
 + (NSArray *)readableTypes
 {
-    //return [[QTMovie movieFileTypes:QTIncludeCommonTypes] arrayByAddingObject:CaptureDeviceFileType];
-    return [NSArray arrayWithObjects:CaptureDeviceFileType, @"public.movie", nil];
+    return [NSArray arrayWithObjects:CaptureDeviceFileType, @"public.movie", @"public.image", nil];
 }
 
 + (NSArray *)writableTypes
@@ -80,6 +80,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 
 - (id)initWithContentsOfURL:(NSURL *)absoluteURL ofType:(NSString *)typeName error:(NSError **)outError
 {
+    // Create either a QTCaptureDevice or QTMovie and store a unique but human readable identifier for it
     NSString *captureDeviceUniqueID = UniqueIDForCaptureDeviceURL(absoluteURL);
     if (captureDeviceUniqueID) {
         if (captureDeviceUniqueID) {
@@ -90,8 +91,10 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
                 *outError = [NSError errorWithDomain:NSCocoaErrorDomain code:0 userInfo:userInfo];
             }
         }
+        
+        _sourceIdentifier = [[NSString alloc] initWithFormat:@"\"%@\" (%@)", [_captureDevice localizedDisplayName], captureDeviceUniqueID];
     } else if ([absoluteURL isFileURL]) {
-        _movieFrameExtractQueue = dispatch_queue_create("movie frame extract queue", NULL);
+        _movieFrameExtractQueue = dispatch_queue_create("Movie frame extraction queue", NULL);
         NSDictionary *attributes = [[NSDictionary alloc] initWithObjectsAndKeys:
                                     absoluteURL, QTMovieURLAttribute,
                                     [NSNumber numberWithBool:YES], QTMovieOpenForPlaybackAttribute,
@@ -99,6 +102,8 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
                                     nil];
         _movie = [[QTMovie alloc] initWithAttributes:attributes error:outError];
         [attributes release];
+        
+        _sourceIdentifier = [[absoluteURL relativeString] copy];
     }
     
     if (_captureDevice) {
@@ -145,6 +150,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
     }
     
     [_bitmapOpenGLView release];
+    [_sourceIdentifier release];
     [super dealloc];
 }
 
@@ -261,12 +267,13 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
             }
         }
     } else {
-        // Start frame grab of video at time scale rate to simulate live processing
-        QTTime duration = [[_movie attributeForKey:QTMovieDurationAttribute] QTTimeValue];
-        QTTime start = { 0, duration.timeScale, 0 };
-
         // Ensure that we are able to read at least one frame
-        NSDictionary *attributes = [[NSDictionary alloc] initWithObjectsAndKeys:QTMovieFrameImageTypeCGImageRef, QTMovieFrameImageType, nil];
+        NSDictionary *attributes = [[NSDictionary alloc] initWithObjectsAndKeys:
+                                    QTMovieFrameImageTypeCGImageRef, QTMovieFrameImageType,
+                                    [NSNumber numberWithBool:NO], QTMovieFrameImageSingleField,
+                                    [NSNumber numberWithBool:NO], QTMovieFrameImageHighQuality,
+                                    [NSNumber numberWithBool:NO], QTMovieFrameImageDeinterlaceFields,
+                                    nil];
         success = [_movie frameImageAtTime:[_movie currentTime] withAttributes:attributes error:outError] != nil;
         
         if (success) {
@@ -279,29 +286,30 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
                 [QTMovie enterQTKitOnThread];
                 [_movie attachToCurrentThread];
                 
+                // Capture a frame
                 NSError *error = nil;
-                CGImageRef videoFrame = (CGImageRef)[_movie frameImageAtTime:[_movie currentTime] withAttributes:attributes error:&error];
+                QTTime currentFrameTime = [_movie currentTime];
+                CGImageRef videoFrame = (CGImageRef)[_movie frameImageAtTime:currentFrameTime withAttributes:attributes error:&error];
                 if (error) {
                     NSLog(@"Video frame decode error: %@", error);
                 }
                 if (videoFrame) {
                     IplImage *iplImage = CreateIplImageFromCGImage(videoFrame, 4);
-                    [self processVideoFrame:iplImage presentationTime:_nextExtractTime];
+                    [self processVideoFrame:iplImage presentationTime:currentFrameTime];
+                    cvReleaseImage(&iplImage);
                 }
-                QTTime increment = { 1, duration.timeScale, 0 };
-                QTTimeIncrement(_nextExtractTime, increment);
                 
-                // Loop back to the begining if past the end
-                QTTimeRange range = { start, duration };
-                if (!QTTimeInTimeRange(increment, range)) {
-                    _nextExtractTime = start;
+                // Step forward and loop if we are at the end
+                [_movie stepForward];
+                if (QTTimeCompare(currentFrameTime, [_movie currentTime]) == NSEqualToComparison) {
+                    [_movie gotoBeginning];
                 }
                 
                 [_movie detachFromCurrentThread];
                 [QTMovie exitQTKitOnThread];
                 [pool release];
             });
-            dispatch_source_set_timer(_movieFrameExtractTimer, 0, NSEC_PER_SEC * 1000ull / duration.timeScale, 0);
+            dispatch_source_set_timer(_movieFrameExtractTimer, 0, 1.0 / 29.97 * NSEC_PER_SEC, 0);       // XXX hardcoded assumption
             dispatch_resume(_movieFrameExtractTimer);
         }
         [attributes release];
@@ -311,9 +319,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 }
 
 - (void)close
-{
-    // XXX Tear down analysis machinery
-    
+{  
     [_captureSession stopRunning];
     [_captureDecompressedVideoOutput setDelegate:nil];
     if (_movieFrameExtractTimer) {
@@ -329,15 +335,16 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 {
     IplImage *iplImage = CreateIplImageFromCVPixelBuffer((CVPixelBufferRef)videoFrame, 4);
     [self processVideoFrame:iplImage presentationTime:[sampleBuffer presentationTime]];
+    cvReleaseImage(&iplImage);
 }
 
 - (void)captureOutput:(QTCaptureOutput *)captureOutput
 didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
        fromConnection:(QTCaptureConnection *)connection
 {
-    frameDropCount++;
-    if (frameDropCount == 1 || frameDropCount % 10 == 0) {
-        NSLog(@"Device \"%@\" dropped %llu total frames", [_captureDevice localizedDisplayName], (unsigned long long)frameDropCount);
+    _frameDropCount++;
+    if (_frameDropCount == 1 || _frameDropCount % 10 == 0) {
+        NSLog(@"Device %@ dropped %llu total frames", _sourceIdentifier, (unsigned long long)frameDropCount);
     }
 }
 
@@ -346,10 +353,22 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
 - (void)processVideoFrame:(IplImage *)iplImage presentationTime:(QTTime)presentationTime
 {
     NSAssert(iplImage->width * iplImage->nChannels == iplImage->widthStep, @"packed images are required");
-    BitmapDrawingData drawingData = { iplImage->imageData, iplImage->width, iplImage->height, GL_BGRA, GL_UNSIGNED_BYTE, releaseIplImage, iplImage };
-    [_bitmapOpenGLView drawBitmapTexture:&drawingData];
-    
-    // XXX Analyze video and pass data back to a master controller
+
+    [[ProcessingController sharedInstance] processVideoFrame:iplImage
+                                        fromSourceIdentifier:_sourceIdentifier
+                    debugVideoFrameCompletionTakingOwnership:^{
+                        // Draw the output images. The OpenGL view must take ownership of the images.
+                        NSAssert(debugImage->width * debugImage->nChannels == debugImage->widthStep, @"packed images are required");
+                        BitmapDrawingData drawingData = {
+                            debugImage->imageData,
+                            debugImage->width,
+                            debugImage->height,
+                            GL_BGRA,
+                            GL_UNSIGNED_BYTE,
+                            releaseIplImage,
+                            debugImage };
+                        [_bitmapOpenGLView drawBitmapTexture:&drawingData];
+                    }];
 }
 
 static void releaseIplImage(void *baseAddress, void *context)

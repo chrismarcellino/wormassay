@@ -190,7 +190,7 @@
 								</object>
 								<object class="NSMenuItem" id="722745758">
 									<reference key="NSMenu" ref="720053764"/>
-									<string key="NSTitle">Open…</string>
+									<string key="NSTitle">Open for Testing…</string>
 									<string key="NSKeyEquiv">o</string>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
@@ -844,7 +844,7 @@
 			<object class="NSCustomObject" id="739804602">
 				<string key="NSClassName">NSFontManager</string>
 			</object>
-			<object class="NSUserDefaultsController" id="984241505">
+			<object class="NSUserDefaultsController" id="176727960">
 				<bool key="NSSharedInstance">YES</bool>
 			</object>
 		</array>
@@ -1254,10 +1254,10 @@
 					<object class="IBBindingConnection" key="connection">
 						<string key="label">value: values.IgnoreBuiltInCameras</string>
 						<reference key="source" ref="136013487"/>
-						<reference key="destination" ref="984241505"/>
+						<reference key="destination" ref="176727960"/>
 						<object class="NSNibBindingConnector" key="connector">
 							<reference key="NSSource" ref="136013487"/>
-							<reference key="NSDestination" ref="984241505"/>
+							<reference key="NSDestination" ref="176727960"/>
 							<string key="NSLabel">value: values.IgnoreBuiltInCameras</string>
 							<string key="NSBinding">value</string>
 							<string key="NSKeyPath">values.IgnoreBuiltInCameras</string>
@@ -1912,7 +1912,7 @@
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">540</int>
-						<reference key="object" ref="984241505"/>
+						<reference key="object" ref="176727960"/>
 						<reference key="parent" ref="0"/>
 					</object>
 				</array>
