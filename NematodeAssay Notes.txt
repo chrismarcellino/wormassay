@@ -1,0 +1,64 @@
+ordered tasks:
+IMPROVE ? MOTION/EDGE ALGO?
+LOGGING/OUTPUT SYSTEM
+FIX 480p video accuracy
+
+
+DIFFERENCE ALGORITHM IN WELLS
+==============================
+***** LUM DELTA *VS* PER CHANNEL DELTA *VS* EDGE MOVEMENT ENERGY FUNCTION (idea is to edge->gaussian->lum)
+*ALSO MUST MEASURE EDGE CONTENT IN WELL FOR WELL EMPTY/OCCUPIED CALCULATION
+CAPTURE DATA FOR EVERY FRAME DELTA normalized (plus time delta) and post process statistically
+Encode time of day in UTC and local time in data and video file name
+
+REPORTING
+==========
+REPORT    ("MOVING PLATE/CAMERA") WHEN THAT OCCURS __DURING__ A READ
+log n seconds (nn frames) captured
+REPORT RAW DATA IN SEPARATE FILE
+
+MISC
+=====
+HELP UI WITH GOOD/BAD EXAMPLES OF HEIGHT, FOCAL LENGTH, FRAME FILL, LIGHTING (With don't show this again, which happens automatically after 3 tries). Also recommend DV (4:3) mode: Approx 1.55 Megapixels (1440 x 1080)
+
+LIVE DEBUG TEXT AND LOGGING FOR WORM AREA AND dA/dS
+Prevent sleep, prevent quit, prevent time machine, etc.
+ALERT ON LAUNCH IF HARDWARE HAS WEAK RAM OR CPU**
+SHOW SYSTEM ALERTS MODALLY self dismiss that don't stop progress but speak and play alarm sound every 5 seconds
+
+MODAL MSALERTS (auto dismiss countdown)
+=============
+DISK SPACE 90% FULL
+"PLATE EMPTY OR LIGHTING ERROR" (adjust lighting, backing)
+
+Allow choice of save location, but fall back and default to Documents/$BinaryName
+
+WARN ON EXIT IF NOT IDLE
+EMAIL SETTINGS
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+HYPOTHETICAL PAPER
+====================
+state machine flow chart (make OO)
+cite: Canny, Motion sensing, coloring from Rahul's slide, OpenGL Rectangle ARB, Firewire, Kasar Binarization, Active Seg
+describe whole system, e.g. division, motion, drawing, real time preview,
+plate independent well dertmination
+negative conditions (glare, lighting, backdrop, distance/focal length)
+empty wells
+zero configuration pre-run

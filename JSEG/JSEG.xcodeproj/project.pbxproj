@@ -1,0 +1,283 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		21264FFE1354A94A00F2DCD8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21264FFD1354A94A00F2DCD8 /* Foundation.framework */; };
+		212650231354A97500F2DCD8 /* imgutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 2126500C1354A97500F2DCD8 /* imgutil.c */; };
+		212650241354A97500F2DCD8 /* ioutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 2126500E1354A97500F2DCD8 /* ioutil.c */; };
+		212650251354A97500F2DCD8 /* jfunc.c in Sources */ = {isa = PBXBuildFile; fileRef = 212650101354A97500F2DCD8 /* jfunc.c */; };
+		212650261354A97500F2DCD8 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 212650111354A97500F2DCD8 /* main.c */; };
+		212650281354A97500F2DCD8 /* mathutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 212650131354A97500F2DCD8 /* mathutil.c */; };
+		212650291354A97500F2DCD8 /* memutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 212650151354A97500F2DCD8 /* memutil.c */; };
+		2126502A1354A97500F2DCD8 /* quan.c in Sources */ = {isa = PBXBuildFile; fileRef = 212650171354A97500F2DCD8 /* quan.c */; };
+		2126502B1354A97500F2DCD8 /* reggrow.c in Sources */ = {isa = PBXBuildFile; fileRef = 212650191354A97500F2DCD8 /* reggrow.c */; };
+		2126502C1354A97500F2DCD8 /* segment.c in Sources */ = {isa = PBXBuildFile; fileRef = 2126501A1354A97500F2DCD8 /* segment.c */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		21264FF71354A94A00F2DCD8 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		21264FF91354A94A00F2DCD8 /* JSEG */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = JSEG; sourceTree = BUILT_PRODUCTS_DIR; };
+		21264FFD1354A94A00F2DCD8 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		2126500C1354A97500F2DCD8 /* imgutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = imgutil.c; path = source/imgutil.c; sourceTree = "<group>"; };
+		2126500D1354A97500F2DCD8 /* imgutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = imgutil.h; path = source/imgutil.h; sourceTree = "<group>"; };
+		2126500E1354A97500F2DCD8 /* ioutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ioutil.c; path = source/ioutil.c; sourceTree = "<group>"; };
+		2126500F1354A97500F2DCD8 /* ioutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ioutil.h; path = source/ioutil.h; sourceTree = "<group>"; };
+		212650101354A97500F2DCD8 /* jfunc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = jfunc.c; path = source/jfunc.c; sourceTree = "<group>"; };
+		212650111354A97500F2DCD8 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = source/main.c; sourceTree = "<group>"; };
+		212650131354A97500F2DCD8 /* mathutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mathutil.c; path = source/mathutil.c; sourceTree = "<group>"; };
+		212650141354A97500F2DCD8 /* mathutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mathutil.h; path = source/mathutil.h; sourceTree = "<group>"; };
+		212650151354A97500F2DCD8 /* memutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = memutil.c; path = source/memutil.c; sourceTree = "<group>"; };
+		212650161354A97500F2DCD8 /* memutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = memutil.h; path = source/memutil.h; sourceTree = "<group>"; };
+		212650171354A97500F2DCD8 /* quan.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = quan.c; path = source/quan.c; sourceTree = "<group>"; };
+		212650181354A97500F2DCD8 /* quan.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = quan.h; path = source/quan.h; sourceTree = "<group>"; };
+		212650191354A97500F2DCD8 /* reggrow.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = reggrow.c; path = source/reggrow.c; sourceTree = "<group>"; };
+		2126501A1354A97500F2DCD8 /* segment.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = segment.c; path = source/segment.c; sourceTree = "<group>"; };
+		2126501B1354A97500F2DCD8 /* segment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = segment.h; path = source/segment.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		21264FF61354A94A00F2DCD8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				21264FFE1354A94A00F2DCD8 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		21264FEE1354A94A00F2DCD8 = {
+			isa = PBXGroup;
+			children = (
+				21264FFF1354A94A00F2DCD8 /* JSEG */,
+				21264FFC1354A94A00F2DCD8 /* Frameworks */,
+				21264FFA1354A94A00F2DCD8 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		21264FFA1354A94A00F2DCD8 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				21264FF91354A94A00F2DCD8 /* JSEG */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		21264FFC1354A94A00F2DCD8 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				21264FFD1354A94A00F2DCD8 /* Foundation.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		21264FFF1354A94A00F2DCD8 /* JSEG */ = {
+			isa = PBXGroup;
+			children = (
+				2126503A1354B93200F2DCD8 /* IO Utility */,
+				2126500D1354A97500F2DCD8 /* imgutil.h */,
+				2126500C1354A97500F2DCD8 /* imgutil.c */,
+				212650101354A97500F2DCD8 /* jfunc.c */,
+				212650111354A97500F2DCD8 /* main.c */,
+				212650131354A97500F2DCD8 /* mathutil.c */,
+				212650141354A97500F2DCD8 /* mathutil.h */,
+				212650151354A97500F2DCD8 /* memutil.c */,
+				212650161354A97500F2DCD8 /* memutil.h */,
+				212650171354A97500F2DCD8 /* quan.c */,
+				212650181354A97500F2DCD8 /* quan.h */,
+				212650191354A97500F2DCD8 /* reggrow.c */,
+				2126501A1354A97500F2DCD8 /* segment.c */,
+				2126501B1354A97500F2DCD8 /* segment.h */,
+				212650021354A94A00F2DCD8 /* Supporting Files */,
+			);
+			path = JSEG;
+			sourceTree = "<group>";
+		};
+		212650021354A94A00F2DCD8 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		2126503A1354B93200F2DCD8 /* IO Utility */ = {
+			isa = PBXGroup;
+			children = (
+				2126500F1354A97500F2DCD8 /* ioutil.h */,
+				2126500E1354A97500F2DCD8 /* ioutil.c */,
+			);
+			name = "IO Utility";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		21264FF81354A94A00F2DCD8 /* JSEG */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 212650071354A94A00F2DCD8 /* Build configuration list for PBXNativeTarget "JSEG" */;
+			buildPhases = (
+				21264FF51354A94A00F2DCD8 /* Sources */,
+				21264FF61354A94A00F2DCD8 /* Frameworks */,
+				21264FF71354A94A00F2DCD8 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = JSEG;
+			productName = JSEG;
+			productReference = 21264FF91354A94A00F2DCD8 /* JSEG */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		21264FF01354A94A00F2DCD8 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 21264FF31354A94A00F2DCD8 /* Build configuration list for PBXProject "JSEG" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 21264FEE1354A94A00F2DCD8;
+			productRefGroup = 21264FFA1354A94A00F2DCD8 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				21264FF81354A94A00F2DCD8 /* JSEG */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		21264FF51354A94A00F2DCD8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				212650231354A97500F2DCD8 /* imgutil.c in Sources */,
+				212650241354A97500F2DCD8 /* ioutil.c in Sources */,
+				212650251354A97500F2DCD8 /* jfunc.c in Sources */,
+				212650261354A97500F2DCD8 /* main.c in Sources */,
+				212650281354A97500F2DCD8 /* mathutil.c in Sources */,
+				212650291354A97500F2DCD8 /* memutil.c in Sources */,
+				2126502A1354A97500F2DCD8 /* quan.c in Sources */,
+				2126502B1354A97500F2DCD8 /* reggrow.c in Sources */,
+				2126502C1354A97500F2DCD8 /* segment.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		212650051354A94A00F2DCD8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_ENABLE_SSE3_EXTENSIONS = YES;
+				GCC_ENABLE_SUPPLEMENTAL_SSE3_INSTRUCTIONS = YES;
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				RUN_CLANG_STATIC_ANALYZER = YES;
+				SDKROOT = macosx;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wextra",
+					"-Wno-unused-parameter",
+					"-Wno-unused-value",
+				);
+			};
+			name = Debug;
+		};
+		212650061354A94A00F2DCD8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_ENABLE_SSE3_EXTENSIONS = YES;
+				GCC_ENABLE_SUPPLEMENTAL_SSE3_INSTRUCTIONS = YES;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				RUN_CLANG_STATIC_ANALYZER = YES;
+				SDKROOT = macosx;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wextra",
+					"-Wno-unused-parameter",
+					"-Wno-unused-value",
+				);
+			};
+			name = Release;
+		};
+		212650081354A94A00F2DCD8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		212650091354A94A00F2DCD8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		21264FF31354A94A00F2DCD8 /* Build configuration list for PBXProject "JSEG" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				212650051354A94A00F2DCD8 /* Debug */,
+				212650061354A94A00F2DCD8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		212650071354A94A00F2DCD8 /* Build configuration list for PBXNativeTarget "JSEG" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				212650081354A94A00F2DCD8 /* Debug */,
+				212650091354A94A00F2DCD8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 21264FF01354A94A00F2DCD8 /* Project object */;
+}
