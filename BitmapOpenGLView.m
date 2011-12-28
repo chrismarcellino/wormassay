@@ -8,6 +8,12 @@
 
 #import "BitmapOpenGLView.h"
 
+@interface BitmapOpenGLView ()
+
+- (void)freeDrawingData;
+
+@end
+
 
 @implementation BitmapOpenGLView
 
@@ -40,16 +46,19 @@
 
 - (void)dealloc
 {
-
+    [self freeDrawingData];
     [super dealloc];
 }
 
 - (void)prepareOpenGL
 {
-    GLint value = 1;
-    [[self openGLContext] setValues:&value forParameter:NSOpenGLCPSwapInterval];
+    CGLContextObj glContext = [[self openGLContext] CGLContextObj];
+    CGLLockContext(glContext);
     
-    // Enable non-POT textures
+    GLint value = 1;
+    CGLSetParameter(glContext, kCGLCPSwapInterval, &value);            // XXX CPU UTIL??????
+    
+    // Enable non-power-of-two textures
     glEnable(GL_TEXTURE_RECTANGLE_ARB);
     GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
@@ -58,9 +67,11 @@
     
     // Create the texture
     glGenTextures(1, &_imageTexture);
-    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _imageTexture);     // XXX ONE OF THESE CALLS ISNT NEEDED????
+    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _imageTexture);
     glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
     glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+    
+    CGLUnlockContext(glContext);
 }
 
 - (void)drawBitmapTexture:(BitmapDrawingData *)drawingData
@@ -69,27 +80,40 @@
         drawingData = &_lastDrawingData;
     }
     
-    NSOpenGLContext *context = [self openGLContext];
-    CGLContextObj glContext = [context CGLContextObj];
+    CGLContextObj glContext = [[self openGLContext] CGLContextObj];
     CGLLockContext(glContext);
-    
-    [context makeCurrentContext];
-    
-    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _imageTexture);
+    CGLSetCurrentContext(glContext);
     
     if (drawingData->width != _lastDrawingData.width ||
         drawingData->height != _lastDrawingData.height ||
         drawingData->glPixelFormat != _lastDrawingData.glPixelFormat) {
-        glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
-                     0,
-                     GL_RGBA,
-                     drawingData->width,
-                     drawingData->height,
-                     0,
-                     drawingData->glPixelFormat,
-                     GL_UNSIGNED_INT_8_8_8_8_REV,
-                     drawingData->baseAddress);
+        
+        // Set the texture image
+        if (drawingData->baseAddress) {
+            glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
+                         0,
+                         GL_RGBA,
+                         drawingData->width,
+                         drawingData->height,
+                         0,
+                         drawingData->glPixelFormat,
+                         GL_UNSIGNED_INT_8_8_8_8_REV,
+                         drawingData->baseAddress);
+        } else {
+            // Create a black texture
+            uint8_t black[] = { 0, 0, 0, 1 };
+            glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
+                         0,
+                         GL_RGBA,
+                         1,
+                         1,
+                         0,
+                         GL_BGRA,
+                         GL_UNSIGNED_INT_8_8_8_8_REV,
+                         &black);
+        }
     } else {
+        // Update the existing texture image
         glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB,
                         0,
                         0,
@@ -105,10 +129,10 @@
     glPushMatrix();
     glLoadIdentity();
     
+    // Invert the image
     glOrtho(0, drawingData->width, drawingData->height, 0, -1, 1);
-    glViewport(0, 0, drawingData->width, drawingData->height);
-//    glRotatef(angle * 180.0 / M_PI, 0, 0, -1);
-//    glScalef(scale, scale, 0);
+    // Set the viewport
+    glViewport(_viewport.origin.x, _viewport.origin.y, _viewport.size.width, _viewport.size.height);
     
     glBegin(GL_POLYGON);
     
@@ -128,17 +152,24 @@
     glMatrixMode(GL_MODELVIEW);
     
     glEnd();
-    glFlush();
+    // Exchange the back buffer for the front buffer
+    CGLFlushDrawable(glContext);
     
     // Save the image for redrawing if necessary and release the previous, unless we are internally performing a re-draw
     if (drawingData != &_lastDrawingData) {
-        if (drawingData->freeCallback) {
-            drawingData->freeCallback(drawingData->baseAddress, drawingData->context);
-        }
+        [self freeDrawingData];
         _lastDrawingData = *drawingData;
     }
     
+    CGLSetCurrentContext(NULL);
     CGLUnlockContext(glContext);
+}
+
+- (void)freeDrawingData
+{
+    if (_lastDrawingData.freeCallback) {
+        _lastDrawingData.freeCallback(_lastDrawingData.baseAddress, _lastDrawingData.context);
+    }   
 }
 
 - (void)drawRect:(NSRect)dirtyRect
@@ -158,9 +189,17 @@
 
 - (void)reshape
 {
+    CGLContextObj glContext = [[self openGLContext] CGLContextObj];
+    CGLLockContext(glContext);
+    CGLSetCurrentContext(glContext);
+    
     [super reshape];
+    _viewport = [self bounds];
+    
+    CGLSetCurrentContext(NULL);
+    CGLUnlockContext(glContext);
+    
+    [self setNeedsDisplay:YES];
 }
-
-
 
 @end

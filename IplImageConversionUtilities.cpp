@@ -7,6 +7,7 @@
 //
 
 #import "IplImageConversionUtilities.hpp"
+#import "opencv2/opencv.hpp"
 
 static void releaseImage(void *releaseRefCon, const void *baseAddress);
 

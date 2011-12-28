@@ -14,7 +14,7 @@ typedef struct {
     size_t width;
     size_t height;
     GLenum glPixelFormat;       // e.g. GL_BGRA
-    void (*freeCallback)(void *baseAddress, void *context);     // May be NULL
+    void (*freeCallback)(void *baseAddress, void *context);     // May be NULL. May be called from any thread.
     void *context;
 } BitmapDrawingData;
 
@@ -24,6 +24,7 @@ typedef struct {
     // All protected by the context lock
     GLuint _imageTexture;
     BitmapDrawingData _lastDrawingData;
+    NSRect _viewport;
 }
 
 - (void)drawBitmapTexture:(BitmapDrawingData *)drawingData;

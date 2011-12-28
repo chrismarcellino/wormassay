@@ -8,11 +8,7 @@
 
 #import <CoreVideo/CoreVideo.h>
 #import <ApplicationServices/ApplicationServices.h>
-#ifdef __cplusplus
-#import "opencv2/opencv.hpp"
-#else
-typedef void *IplImage;
-#endif
+#import "opencv2/core/core_c.h"
 
 #ifdef __cplusplus
 extern "C" {

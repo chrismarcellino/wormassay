@@ -9,10 +9,12 @@
 #import "VideoSource.h"
 #import "BitmapOpenGLView.h"
 #import "IplImageConversionUtilities.hpp"
-
+#import "opencv2/core/core_c.h"
 
 NSString *const CaptureDeviceScheme = @"capturedevice";
 static NSPoint LastCascadePoint = { 0.0, 0.0 };
+
+static void releaseIplImage(void *baseAddress, void *context);
 
 NSURL *URLForCaptureDeviceUniqueID(NSString *uniqueID)
 {
@@ -36,6 +38,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 
 @interface VideoSource ()
 
+- (void)adjustWindowSizing;
 - (void)processVideoFrame:(CVImageBufferRef)videoFrame presentationTime:(QTTime)presentationTime;
 
 @end
@@ -76,12 +79,20 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
         _movie = [[QTMovie alloc] initWithURL:absoluteURL error:outError];
     }
     
-    if (_captureDevice || _movie) {
-        return [super initWithContentsOfURL:absoluteURL ofType:typeName error:outError];
-    } else {
+    
+    if (_captureDevice) {
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(adjustWindowSizing)
+                                                     name:QTCaptureDeviceFormatDescriptionsDidChangeNotification
+                                                   object:_captureDevice];
+    }
+    
+    if (!_captureDevice && !_movie) {
         [self autorelease];
         return nil;
     }
+    
+    return [super initWithContentsOfURL:absoluteURL ofType:typeName error:outError];
 }
 
 - (id)initForURL:(NSURL *)absoluteDocumentURL withContentsOfURL:(NSURL *)absoluteDocumentContentsURL ofType:(NSString *)typeName error:(NSError **)outError
@@ -93,6 +104,12 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 
 - (void)dealloc
 {
+    if (_captureDevice) {
+        [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                        name:QTCaptureDeviceFormatDescriptionsDidChangeNotification
+                                                      object:_captureDevice];
+    }
+    
     [_captureDevice release];
     [_captureSession release];
     [_captureDeviceInput release];
@@ -113,14 +130,11 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 - (void)makeWindowControllers
 {
     NSRect contentRect = NSZeroRect;
-    contentRect.size = [self maximumNativeResolution];
+    contentRect.size = [self lastKnownResolution];
     
     // Create the window to hold the content view and contrain it to preserve the aspect ratio
     NSUInteger styleMask = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask;
     NSWindow *window = [[NSWindow alloc] initWithContentRect:contentRect styleMask:styleMask backing:NSBackingStoreBuffered defer:YES];
-    [window setContentMaxSize:contentRect.size];
-    [window setContentMinSize:NSMakeSize(contentRect.size.width / 4, contentRect.size.height / 4)];
-    [window setContentAspectRatio:contentRect.size];
     
     // Enable multi-threaded drawing
 	[window setAllowsConcurrentViewDrawing:YES];
@@ -145,9 +159,38 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
     if (frame.origin.x == 0.0 && frame.origin.y == 0.0) {
         LastCascadePoint = [window cascadeTopLeftFromPoint:LastCascadePoint];
     }
+    
+    [self adjustWindowSizing];
 }
 
-- (NSSize)maximumNativeResolution
+- (void)adjustWindowSizing
+{
+    NSSize contentSize = [self lastKnownResolution];
+    
+    // Adjust the main window controllers's window (currently only window)
+    NSArray *windowControllers = [self windowControllers];
+    if ([windowControllers count] > 0) {
+        NSWindow *window = [[windowControllers objectAtIndex:0] window];
+        
+        NSSize existingContentMaxSize = [window contentMaxSize];
+        
+        // If the content size is changing, reset the frame
+        if (existingContentMaxSize.width != contentSize.width && existingContentMaxSize.height != contentSize.height) {
+            NSRect existingFrame = [window frame];
+            NSPoint existingTopLeftPoint = NSMakePoint(existingFrame.origin.x, existingFrame.origin.y + existingFrame.size.height);
+            
+            [window setContentSize:contentSize];
+            [window setFrameTopLeftPoint:existingTopLeftPoint];
+        }
+        
+        [window setContentMaxSize:contentSize];
+        [window setContentMinSize:NSMakeSize(MAX(contentSize.width / 4, MIN(contentSize.width, 256)),
+                                             MAX(contentSize.height / 4, MIN(contentSize.height, 256)))];
+        [window setContentAspectRatio:contentSize];
+    }
+}
+
+- (NSSize)lastKnownResolution
 {
     NSSize size;
     
@@ -252,13 +295,19 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 {
     // XXX IF ONLY NEED GRAYSCALE, CAN REQUEST YUV NATIVE FORMAT
     
- /*   IplImage *iplImage = CreateIplImageFromCVPixelBuffer(videoFrame, 3);
+    IplImage *iplImage = CreateIplImageFromCVPixelBuffer(videoFrame, 4);
     
-    videoFrame = CreateCVPixelBufferFromIplImagePassingOwnership(iplImage, true);*/
-
-    
+    assert(iplImage->width * 4 == iplImage->widthStep);     // XXXX TODO ADD CONVERTER
+    BitmapDrawingData drawingData = { iplImage->imageData, iplImage->width, iplImage->height, GL_BGRA, releaseIplImage, iplImage };
+    [_bitmapOpenGLView drawBitmapTexture:&drawingData];
     
     // XXX Analyze video and pass data back to a master controller
+}
+
+static void releaseIplImage(void *baseAddress, void *context)
+{
+    IplImage *image = (IplImage *)context;
+    cvReleaseImage(&image);
 }
 
 - (NSString *)displayName

@@ -10,7 +10,7 @@
 #import <QTKit/QTKit.h>
 #import <QuartzCore/QuartzCore.h>
 
-@class ImageDrawingOpenGLView;
+@class BitmapOpenGLView;
 
 extern NSString *const CaptureDeviceScheme;
 
@@ -30,9 +30,9 @@ extern NSString *UniqueIDForCaptureDeviceURL(NSURL *url);
     dispatch_source_t _movieFrameExtractTimer;
     QTTime _nextExtractTime;
     
-    NSOpenGLView *_bitmapOpenGLView;
+    BitmapOpenGLView *_bitmapOpenGLView;
 }
 
-- (NSSize)maximumNativeResolution;
+- (NSSize)lastKnownResolution;
 
 @end
