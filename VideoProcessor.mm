@@ -111,10 +111,10 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
     });
 }
 
-- (void)setPlateOrientation:(PlateOrientation)plateOrietation
+- (void)setPlateOrientation:(PlateOrientation)plateOrientation
 {
     dispatch_async(_queue, ^{
-        _plateOrientation = plateOrietation;
+        _plateOrientation = plateOrientation;
         if (_plateOrientation != plateOrientation) {
             [self resetCaptureStateAndReportResults];
         }
