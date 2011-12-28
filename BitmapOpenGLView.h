@@ -14,6 +14,7 @@ typedef struct {
     size_t width;
     size_t height;
     GLenum glPixelFormat;       // e.g. GL_BGRA
+    GLenum glPixelType;         // e.g. GL_UNSIGNED_BYTE
     void (*freeCallback)(void *baseAddress, void *context);     // May be NULL. May be called from any thread.
     void *context;
 } BitmapDrawingData;

@@ -289,7 +289,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
             [QTMovie exitQTKitOnThread];
             [pool release];
         });
-        dispatch_source_set_timer(_movieFrameExtractTimer, 0, NSEC_PER_SEC * 1000 / duration.timeScale, 0);
+        dispatch_source_set_timer(_movieFrameExtractTimer, 0, NSEC_PER_SEC * 1000ull / duration.timeScale, 0);
         dispatch_resume(_movieFrameExtractTimer);
         [attributes release];
     }
@@ -304,7 +304,6 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
     [_captureSession stopRunning];
     [_captureDecompressedVideoOutput setDelegate:nil];
     if (_movieFrameExtractTimer) {
-        dispatch_suspend(_movieFrameExtractTimer);
         dispatch_source_cancel(_movieFrameExtractTimer);
     }
     [super close];
@@ -336,7 +335,7 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
     IplImage *iplImage = CreateIplImageFromCVPixelBuffer(videoFrame, 4);
     
     assert(iplImage->width * 4 == iplImage->widthStep);     // XXXX TODO ADD CONVERTER
-    BitmapDrawingData drawingData = { iplImage->imageData, iplImage->width, iplImage->height, GL_BGRA, releaseIplImage, iplImage };
+    BitmapDrawingData drawingData = { iplImage->imageData, iplImage->width, iplImage->height, GL_BGRA, GL_UNSIGNED_BYTE, releaseIplImage, iplImage };
     [_bitmapOpenGLView drawBitmapTexture:&drawingData];
     
     // XXX Analyze video and pass data back to a master controller

@@ -70,7 +70,6 @@
     glGenTextures(1, &_imageTexture);
     glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _imageTexture);
     glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
-    glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
     
     CGLUnlockContext(glContext);
 }
@@ -87,21 +86,23 @@
     
     if (drawingData->baseAddress) {
         glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _imageTexture);
+        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
         
-        // If we're changing sizes or formats, we need to set the texture data anew
+        // If we're changing sizes, formats or types, we need to set the texture data anew
         if (drawingData->width != _lastDrawingData.width ||
             drawingData->height != _lastDrawingData.height ||
-            drawingData->glPixelFormat != _lastDrawingData.glPixelFormat) {
+            drawingData->glPixelFormat != _lastDrawingData.glPixelFormat ||
+            drawingData->glPixelType != _lastDrawingData.glPixelType) {
             
             // Set the texture image
             glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
                          0,
-                         GL_RGBA,
+                         4,
                          drawingData->width,
                          drawingData->height,
                          0,
                          drawingData->glPixelFormat,
-                         GL_UNSIGNED_INT_8_8_8_8_REV,
+                         drawingData->glPixelType,
                          drawingData->baseAddress);
         } else {
             // Update the existing texture image
@@ -112,7 +113,7 @@
                             drawingData->width,
                             drawingData->height,
                             drawingData->glPixelFormat,
-                            GL_UNSIGNED_INT_8_8_8_8_REV,
+                            drawingData->glPixelType,
                             drawingData->baseAddress);
         }
         
@@ -139,11 +140,10 @@
         glEnd();
         
         glPopMatrix();
-        glMatrixMode(GL_MODELVIEW);
     } else {
-        // Clear the framebuffer
-        glClearColor(0, 0, 1, 1);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ACCUM_BUFFER_BIT);
+        // Clear the bit plane
+        glClearColor(0, 0, 0, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
     }
     // Exchange the back buffer for the front buffer
     CGLFlushDrawable(glContext);
