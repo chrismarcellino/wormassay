@@ -17,7 +17,7 @@ static const double WellEdgeFindingInsetProportion = 0.7;
 static const size_t MaximumNumberOfFeaturePoints = 200;
 static const double DeltaMeanMovementLimit = 10.0;
 static const double DeltaStdDevMovementLimit = 10.0;
-static const NSTimeInterval IgnoreFramesPostMovementThresholdTimeInterval = 2.0;
+static const NSTimeInterval IgnoreFramesPostMovementThresholdTimeInterval = 5.0;
 
 @implementation OpticalFlowMotionAnalyzer
 
@@ -169,7 +169,7 @@ static const NSTimeInterval IgnoreFramesPostMovementThresholdTimeInterval = 2.0;
         if (featuresCurFound[i]) {
             CvPoint2D32f delta = { featuresCur[i].x - featuresPrev[i].x, featuresCur[i].y - featuresPrev[i].y };
             float magnitude = sqrtf(delta.x * delta.x + delta.y * delta.y);
-            if (magnitude > 1 && magnitude < radius) {
+            if (magnitude > 0.5 && magnitude < radius) {
                 countFound++;
                 averageMovement += magnitude;
                 
