@@ -11,7 +11,7 @@
 
 @interface ConsensusLuminanceMotionAnalyzer : NSObject <AssayAnalyzer> {
     NSUInteger _numberOfVotingFrames;
-    NSUInteger _quorum;
+    double _quorumProportion;
     
     NSMutableArray *_lastFrames;
     NSMutableArray *_deltaThresholded;

@@ -383,10 +383,7 @@ static IplImage* createUnsharpMaskImage(IplImage* image, float radius, float amo
     IplImage* gaussian = cvCreateImage(cvGetSize(image), IPL_DEPTH_32F, image->nChannels);
     
     int stddev = radius + 1.0;
-    int kernelSize = lroundf(4 * (stddev + 1));
-    if (kernelSize % 2 == 0) {
-        kernelSize++;
-    }
+    int kernelSize = lroundf(4 * (stddev + 1)) | 1;
     cvSmooth(source, gaussian, CV_GAUSSIAN, kernelSize, kernelSize, stddev, stddev);
     
     IplImage* resultFloat = cvCreateImage(cvGetSize(image), IPL_DEPTH_32F, image->nChannels);

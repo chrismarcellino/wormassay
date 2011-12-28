@@ -205,7 +205,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
             
             // Print performance statistics. The mean/stddev are for just the procesing time. The frame rate is the total net rate.
             double mean, stddev;
-            if ([_plateData processingTimeMean:&mean stdDev:&stddev inLastFrames:100]) {
+            if ([_plateData processingTimeMean:&mean stdDev:&stddev inLastFrames:30]) {
                 double fps = (double)[_plateData receivedFrameCount] / ([_plateData lastPresentationTime] - [_plateData startPresentationTime]);
                 double drop = (double)[_plateData frameDropCount] / ([_plateData receivedFrameCount] + [_plateData frameDropCount]);
                 
