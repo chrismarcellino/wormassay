@@ -42,6 +42,7 @@
     dispatch_async(_queue, ^{
         [_videoProcessors addObject:videoProcessor];
         [videoProcessor setDelegate:self];
+        [videoProcessor setShouldScanForWells:YES];
     });
 }
 
