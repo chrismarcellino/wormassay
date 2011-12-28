@@ -18,5 +18,6 @@
 
 @property NSUInteger numberOfVotingFrames;
 @property NSUInteger quorum;
+@property NSTimeInterval evaluateFramesAmongLastSeconds;
 
 @end

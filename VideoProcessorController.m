@@ -75,7 +75,7 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
     }
     
     if (!class) {
-        class = NSClassFromString(@"LuminanceMotionAnalyzer");
+        class = NSClassFromString(@"ConsensusLuminanceMotionAnalyzer");
     }
     if (!class) {
         class = [[self assayAnalyzerClasses] objectAtIndex:0];

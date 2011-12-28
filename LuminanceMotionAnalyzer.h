@@ -7,13 +7,9 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "ConsensusLuminanceMotionAnalyzer.h"
 #import "AssayAnalyzer.h"
 
-@interface LuminanceMotionAnalyzer : NSObject <AssayAnalyzer> {
-    VideoFrame *_lastFrame;
-    IplImage* _insetCircleMask;
-    IplImage* _invertedCircleMask;
-    IplImage* _deltaThresholded;
-}
+@interface LuminanceMotionAnalyzer : ConsensusLuminanceMotionAnalyzer <AssayAnalyzer>
 
 @end

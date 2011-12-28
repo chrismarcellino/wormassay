@@ -12,22 +12,23 @@
 #import "opencv2/opencv.hpp"
 #import "CvUtilities.hpp"
 
-static const double PlateMovingProportionAboveThresholdLimit = 0.01;
 static const double WellEdgeFindingInsetProportion = 0.7;
-static const double EvaluateFramesAmongAtLeastLastSeconds = 2.0;        // exactly this value, except if there aren't _numberOfVotingFrames in that period
-
 static const char* WellOccupancyID = "WellOccupancy";
 
 @implementation ConsensusLuminanceMotionAnalyzer
 
 @synthesize numberOfVotingFrames = _numberOfVotingFrames;
 @synthesize quorum = _quorum;
+@synthesize evaluateFramesAmongLastSeconds = _evaluateFramesAmongLastSeconds;
 
 - (id)init
 {
     if ((self = [super init])) {
         _numberOfVotingFrames = 5;
         _quorum = 2;
+        _evaluateFramesAmongLastSeconds = 2.0;
+
+        _lastFrames = [[NSMutableArray alloc] init];
     }
     return self;
 }
@@ -59,7 +60,6 @@ static const char* WellOccupancyID = "WellOccupancy";
 
 - (void)willBeginPlateTrackingWithPlateData:(PlateData *)plateData
 {
-    _lastFrames = [[NSMutableArray alloc] init];
     [plateData setReportingStyle:ReportingStyleMeanAndStdDev forDataColumnID:WellOccupancyID];
 }
 
@@ -78,7 +78,7 @@ static const char* WellOccupancyID = "WellOccupancy";
     // Remove frames that are too old to consider
     while ([_lastFrames count] > _numberOfVotingFrames) {
         VideoFrame *oldestFrame = [_lastFrames objectAtIndex:0];
-        if ([oldestFrame presentationTime] < [videoFrame presentationTime] - EvaluateFramesAmongAtLeastLastSeconds) {
+        if ([oldestFrame presentationTime] < [videoFrame presentationTime] - _evaluateFramesAmongLastSeconds) {
             [_lastFrames removeObjectAtIndex:0];
         } else {
             break;
@@ -139,8 +139,8 @@ static const char* WellOccupancyID = "WellOccupancy";
     meanProportionPlateMoved /= [randomlyChosenFrames count];
     [randomlyChosenFrames release];
     
-    // If the average luminance delta across the set of entire plate images is more than about 2%, the entire plate is likely moving.
-    if (meanProportionPlateMoved > PlateMovingProportionAboveThresholdLimit) {
+    // If the average luminance delta across the set of entire plate images is more than about 1-2%, the entire plate is likely moving.
+    if (meanProportionPlateMoved > (_numberOfVotingFrames > 2 ? 0.02 : 0.01)) {
         // Draw the movement text
         CvFont wellFont = fontForNormalizedScale(3.5, debugImage);
         cvPutText(debugImage,
