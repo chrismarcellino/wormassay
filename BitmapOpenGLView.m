@@ -26,7 +26,7 @@
         NSOpenGLPFAStencilSize, (NSOpenGLPixelFormatAttribute)0,
         NSOpenGLPFAAccumSize, (NSOpenGLPixelFormatAttribute)0,
         NSOpenGLPFAWindow,
-        (NSOpenGLPixelFormatAttribute)0
+        (NSOpenGLPixelFormatAttribute)NULL
     };
     return [[[NSOpenGLPixelFormat alloc] initWithAttributes:attributes] autorelease];
 }
@@ -81,6 +81,7 @@
     CGLSetCurrentContext(glContext);
     
     if (iplImage) {
+        NSAssert(iplImage->widthStep == iplImage->width * iplImage->nChannels, @"image not byte packed");
         // Set the texture image
         glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
                      0,

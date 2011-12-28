@@ -1,5 +1,5 @@
 //
-//  ConsensusLuminanceMotionAnalyzer.h
+//  FrameGaussianConsensusLuminanceMotionAnalyzer.h
 //  WormAssay
 //
 //  Created by Chris Marcellino on 4/19/11.
@@ -9,12 +9,11 @@
 #import <Foundation/Foundation.h>
 #import "AssayAnalyzer.h"
 
-@interface ConsensusLuminanceMotionAnalyzer : NSObject <AssayAnalyzer> {
-    NSMutableArray *_lastFrames;
+@interface GaussianBeforeDeltaConsensusLuminanceMotionAnalyzer : NSObject <AssayAnalyzer> {
+    NSMutableArray *_lastGaussianFrames;
     NSMutableArray *_deltaThresholded;
     IplImage* _insetInvertedCircleMask;
     IplImage* _circleMask;
-    NSMutableArray *_filterContexts;
 }
 
 @property NSUInteger numberOfVotingFrames;

@@ -163,7 +163,6 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
     [string appendString:@"\n"];        // Append a newline
     
     dispatch_async(_queue, ^{
-        NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
         // XXX: Write to disk
         
         // Nested these blocks to preserve ordering between the disk file and log window
@@ -189,7 +188,6 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
                 [textView scrollRangeToVisible:NSMakeRange([textStorage length], 0)];
             }
         });
-        [pool release];
     });
     [string release];
 }
@@ -204,9 +202,7 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
     // XXX MIRROR TO RUN LOG
     dispatch_async(_queue, ^{
         /// XXX TODO
-        NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
         NSLog(@"%@", string);
-        [pool release];
     });
     [string release];
 }
@@ -240,7 +236,6 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
                 [fileManager createDirectoryAtPath:directory withIntermediateDirectories:YES attributes:nil error:NULL];
             }
             [fileManager release];
-            
         }
     }
 }

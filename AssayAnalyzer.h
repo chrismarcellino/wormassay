@@ -20,8 +20,7 @@
 // User visible analyzer name
 + (NSString *)analyzerName;
 
-// Return YES if multiple instances of the -processVideoFrame... method can be called on separate threads simultaneously. 
-// If you return YES from this method and you use autoreleased objects in processVideoFrame..., you must push and pop your own pool.
+// Return YES if multiple instances of the -processVideoFrame... method can be called on separate threads simultaneously.
 - (BOOL)canProcessInParallel;
 
 // Called once, before any frame processing begins to allow class to initialized data structures and create PlateData columns.

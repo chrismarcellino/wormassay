@@ -114,8 +114,6 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     
     // This method is synchronous so that we don't enqueue frames faster than they should be processed. QT will drop the overflow.
     dispatch_sync(_queue, ^{
-        NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-        
         if (_plateData) {
             [_plateData incrementReceivedFrameCount];
         }
@@ -206,7 +204,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
             // Print performance statistics. The mean/stddev are for just the procesing time. The frame rate is the total net rate.
             double mean, stddev;
             if ([_plateData processingTimeMean:&mean stdDev:&stddev inLastFrames:30]) {
-                double fps = (double)[_plateData receivedFrameCount] / ([_plateData lastPresentationTime] - [_plateData startPresentationTime]);
+                double fps = (double)[_plateData receivedFrameCount] / ([videoFrame presentationTime] - [_plateData startPresentationTime]);
                 double drop = (double)[_plateData frameDropCount] / ([_plateData receivedFrameCount] + [_plateData frameDropCount]);
                 
                 char text[100];
@@ -219,9 +217,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                 
         // Dispatch the debug image asynchronously to increase parallelism 
         dispatch_async(_debugFrameCallbackQueue, ^{
-            NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
             callback(debugFrame);
-            [pool release];
         });
         [debugFrame release];
         
@@ -229,8 +225,6 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         if (_plateData) {
             [_plateData addProcessingTime:CACurrentMediaTime() - processingStartTime];
         }
-        
-        [pool release];
     });
 }
 
@@ -256,7 +250,6 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         
         // Process and store the results when holding _queue
         dispatch_async(_queue, ^{
-            NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
             _scanningForWells = NO;
             // If the device was removed, etc., ignore any detected plates
             if (_shouldScanForWells) {
@@ -315,7 +308,6 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                         }
                 }
             }
-            [pool release];
         });
     });
 }
@@ -329,6 +321,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         // Convert the image to grayscale
         IplImage *grayscaleImage = cvCreateImage(cvGetSize([videoFrame image]), IPL_DEPTH_8U, 1);
+        NSAssert(grayscaleImage->widthStep == grayscaleImage->width * grayscaleImage->nChannels, @"image not byte packed");
         cvCvtColor([videoFrame image], grayscaleImage, CV_BGRA2GRAY);
         zxing::Ref<zxing::GreyscaleLuminanceSource> luminanceSource (new zxing::GreyscaleLuminanceSource((unsigned char *)grayscaleImage->imageData,
                                                                                                          grayscaleImage->widthStep,
@@ -357,7 +350,6 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         
         // Process and store the results when holding _queue
         dispatch_async(_queue, ^{
-            NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
             _scanningForBarcodes = NO;
             _lastBarcodeScanTime = [videoFrame presentationTime];
             [_lastBarcodeThisProcessor release];
@@ -374,7 +366,6 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
             if (text && _lastBarcodeThisProcessorRepeatCount >= BarcodeRepeatSuccessCount) {
                 [_delegate videoProcessor:self didCaptureBarcodeText:text atTime:[videoFrame presentationTime]];
             }
-            [pool release];
         });
         
         [text release];

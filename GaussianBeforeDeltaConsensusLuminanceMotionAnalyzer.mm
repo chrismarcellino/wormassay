@@ -1,12 +1,12 @@
 //
-//  ConsensusLuminanceMotionAnalyzer.mm
+//  GaussianBeforeDeltaConsensusLuminanceMotionAnalyzer.mm
 //  WormAssay
 //
 //  Created by Chris Marcellino on 4/19/11.
 //  Copyright 2011 Chris Marcellino. All rights reserved.
 //
 
-#import "ConsensusLuminanceMotionAnalyzer.h"
+#import "GaussianBeforeDeltaConsensusLuminanceMotionAnalyzer.h"
 #import "PlateData.h"
 #import "VideoFrame.h"
 #import "opencv2/opencv.hpp"
@@ -19,7 +19,7 @@ static const double EvaluateFramesAmongAtLeastLastSeconds = 2.0;        // exact
 
 static const char* WellOccupancyID = "WellOccupancy";
 
-@implementation ConsensusLuminanceMotionAnalyzer
+@implementation GaussianBeforeDeltaConsensusLuminanceMotionAnalyzer
 
 @synthesize numberOfVotingFrames = _numberOfVotingFrames;
 @synthesize quorum = _quorum;
@@ -35,7 +35,7 @@ static const char* WellOccupancyID = "WellOccupancy";
 
 - (void)dealloc
 {
-    [_lastFrames release];
+    [_lastGaussianFrames release];
     [_deltaThresholded release];
     if (_insetInvertedCircleMask) {
         cvReleaseImage(&_insetInvertedCircleMask);
@@ -43,13 +43,12 @@ static const char* WellOccupancyID = "WellOccupancy";
     if (_circleMask) {
         cvReleaseImage(&_circleMask);
     }
-    [_filterContexts release];
     [super dealloc];
 }
 
 + (NSString *)analyzerName
 {
-    return NSLocalizedString(@"Gaussian-after-delta Consensus Voting Luminance Difference", nil);
+    return NSLocalizedString(@"Gaussian-before-delta Consensus Voting Luminance Difference", nil);
 }
 
 - (BOOL)canProcessInParallel
@@ -59,18 +58,19 @@ static const char* WellOccupancyID = "WellOccupancy";
 
 - (void)willBeginPlateTrackingWithPlateData:(PlateData *)plateData
 {
-    _lastFrames = [[NSMutableArray alloc] init];
-    // Create a context for each dispatch thread that will need one simultaneously
-    _filterContexts = [[NSMutableArray alloc] init];
-    for (NSUInteger i = 0; i < _numberOfVotingFrames; i++) {
-        [_filterContexts addObject:[CIContext contextForAcceleratedBitmapImageFiltering]];
-    }
+    _lastGaussianFrames = [[NSMutableArray alloc] init];
     [plateData setReportingStyle:ReportingStyleMeanAndStdDev forDataColumnID:WellOccupancyID];
 }
 
 - (BOOL)willBeginFrameProcessing:(VideoFrame *)videoFrame debugImage:(IplImage*)debugImage plateData:(PlateData *)plateData
 {
-    if ([_lastFrames count] < _numberOfVotingFrames) {
+    // Take the Gaussian of the new frame and add it to the frame array
+    VideoFrame *currentGaussianFrame = [videoFrame copy];           // XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    cvSmooth([videoFrame image], [currentGaussianFrame image], CV_GAUSSIAN, 0, 0, 3, 3);
+    [_lastGaussianFrames addObject:currentGaussianFrame];
+    
+    // See if we have enough frames to continue
+    if ([_lastGaussianFrames count] < _numberOfVotingFrames + 1) {
         CvFont wellFont = fontForNormalizedScale(3.5, debugImage);
         cvPutText(debugImage,
                   "ACQUIRING IMAGES",
@@ -81,17 +81,18 @@ static const char* WellOccupancyID = "WellOccupancy";
     }
     
     // Remove frames that are too old to consider
-    while ([_lastFrames count] > _numberOfVotingFrames) {
-        VideoFrame *oldestFrame = [_lastFrames objectAtIndex:0];
+    while ([_lastGaussianFrames count] > _numberOfVotingFrames + 1) {
+        VideoFrame *oldestFrame = [_lastGaussianFrames objectAtIndex:0];
         if ([oldestFrame presentationTime] < [videoFrame presentationTime] - EvaluateFramesAmongAtLeastLastSeconds) {
-            [_lastFrames removeObjectAtIndex:0];
+            [_lastGaussianFrames removeObjectAtIndex:0];
         } else {
             break;
         }
     }
     
     // Randomly choose a subset of _numberOfVotingFrames recent images. We choose the subset once per place to minimize inter-well noise.
-    NSMutableArray *frameChoices = [_lastFrames mutableCopy];
+    NSMutableArray *frameChoices = [_lastGaussianFrames mutableCopy];
+    [frameChoices removeLastObject];
     NSMutableArray *randomlyChosenFrames = [[NSMutableArray alloc] init];
     for (NSUInteger i = 0; i < _numberOfVotingFrames && [frameChoices count] > 0; i++) {
         NSUInteger randomIndex = random() % [frameChoices count];
@@ -111,23 +112,17 @@ static const char* WellOccupancyID = "WellOccupancy";
     dispatch_apply([randomlyChosenFrames count], dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(size_t i){
         VideoFrame *pastFrame = [randomlyChosenFrames objectAtIndex:i];
         // Subtract the entire plate images channelwise
-        IplImage* plateDelta = cvCreateImage(cvGetSize([videoFrame image]), IPL_DEPTH_8U, 4);
-        cvAbsDiff([videoFrame image], [pastFrame image], plateDelta);
-        
-        // Gaussian blur the delta
-//        IplImage* gaussianPlateDelta = [[_filterContexts objectAtIndex:i] createGaussianImageFromImage:plateDelta withStdDev:3];
-        IplImage* gaussianPlateDelta = cvCreateImage(cvSize(plateDelta->width, plateDelta->height), plateDelta->depth, plateDelta->nChannels);
-        cvSmooth(plateDelta, gaussianPlateDelta, CV_GAUSSIAN, 0, 0, 3, 3);
-        cvReleaseImage(&plateDelta);
+        IplImage* plateDelta = cvCreateImage(cvGetSize([currentGaussianFrame image]), IPL_DEPTH_8U, 4);
+        cvAbsDiff([currentGaussianFrame image], [pastFrame image], plateDelta);
         
         // Convert the delta to luminance
-        IplImage* deltaLuminance = cvCreateImage(cvGetSize(gaussianPlateDelta), IPL_DEPTH_8U, 1);
-        cvCvtColor(gaussianPlateDelta, deltaLuminance, CV_BGR2GRAY);
-        cvReleaseImage(&gaussianPlateDelta);
+        IplImage* deltaLuminance = cvCreateImage(cvGetSize(plateDelta), IPL_DEPTH_8U, 1);
+        cvCvtColor(plateDelta, deltaLuminance, CV_BGR2GRAY);
+        cvReleaseImage(&plateDelta);
         
         // Threshold the image to isolate difference pixels corresponding to movement as opposed to noise,
         // setting each pixel that passes the threshold to 1 (for ease in summing later.)
-        IplImage* deltaThresholdedImage = cvCreateImage(cvGetSize(deltaLuminance), IPL_DEPTH_8U, 1);
+        IplImage *deltaThresholdedImage = cvCreateImage(cvGetSize(deltaLuminance), IPL_DEPTH_8U, 1);
         cvThreshold(deltaLuminance, deltaThresholdedImage, 15, 1, CV_THRESH_BINARY);
         cvReleaseImage(&deltaLuminance);
         
@@ -238,8 +233,7 @@ static const char* WellOccupancyID = "WellOccupancy";
 }
 
 - (void)didEndFrameProcessing:(VideoFrame *)videoFrame plateData:(PlateData *)plateData
-{
-    [_lastFrames addObject:videoFrame];
+{    
     [_deltaThresholded release];
     _deltaThresholded = nil;
 }
