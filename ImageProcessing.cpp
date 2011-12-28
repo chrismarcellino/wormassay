@@ -160,6 +160,7 @@ bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vect
                                     200,    // Accumulator threshold
                                     minRadius, // min radius
                                     maxRadius); // max radius
+    cvReleaseImage(&grayInputImage);
     
     // Take the set of all circles whose centers are approximately colinear with other circles along axis aligned lines
     // in both dimensions. Discard all others.
