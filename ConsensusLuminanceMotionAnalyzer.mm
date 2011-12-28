@@ -14,7 +14,7 @@
 
 static const double WellEdgeFindingInsetProportion = 0.7;
 static const double PlateMovingProportionAboveThresholdLimit = 0.02;
-static const char* WellOccupancyID = "WellOccupancy";
+static const char* WellOccupancyID = "Well Occupancy";
 
 @implementation ConsensusLuminanceMotionAnalyzer
 
@@ -57,7 +57,7 @@ static const char* WellOccupancyID = "WellOccupancy";
 
 - (void)willBeginPlateTrackingWithPlateData:(PlateData *)plateData
 {
-    [plateData setReportingStyle:(ReportingStyleMean | ReportingStyleStdDev) forDataColumnID:WellOccupancyID];
+    [plateData setReportingStyle:(ReportingStyleMean | ReportingStyleStdDev | ReportingStylePercent) forDataColumnID:WellOccupancyID];
 }
 
 - (BOOL)willBeginFrameProcessing:(VideoFrame *)videoFrame debugImage:(IplImage*)debugImage plateData:(PlateData *)plateData
@@ -204,7 +204,7 @@ static const char* WellOccupancyID = "WellOccupancy";
     // Keep the pixels that have a quorum
     IplImage *quorumPixels = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
     cvThreshold(&wellPixelwiseVotes, quorumPixels, _quorum - 0.5, 255, CV_THRESH_BINARY);
-    double movedFraction = (double)cvCountNonZero(quorumPixels) / (M_PI * radius * radius);
+    double movedFraction = (double)cvCountNonZero(quorumPixels) / (M_PI * radius * radius) * 1000.0;  // use milli-fractions for readability
     
     // Count pixels and draw onto the debugging image
     [plateData appendMovementUnit:movedFraction atPresentationTime:presentationTime forWell:well];
@@ -230,6 +230,11 @@ static const char* WellOccupancyID = "WellOccupancy";
 - (NSTimeInterval)minimumTimeIntervalProcessedToReportData
 {
     return 5.0;
+}
+
+- (NSUInteger)minimumSamplesProcessedToReportData
+{
+    return 5;
 }
 
 @end

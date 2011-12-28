@@ -188,7 +188,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                 double mean, stddev;
                 if ([_plateData movementUnitsMean:&mean stdDev:&stddev forWell:i inLastSeconds:30]) {
                     char text[20];
-                    snprintf(text, sizeof(text), "%.0f (SD: %.0f)", mean * 1000, stddev * 1000);
+                    snprintf(text, sizeof(text), "%.0f (SD: %.0f)", mean, stddev);
                     
                     float radius = _trackingWellCircles[i].radius;
                     CvPoint textPoint = cvPoint(_trackingWellCircles[i].center[0] - radius * 0.5, _trackingWellCircles[i].center[1]);
@@ -382,7 +382,8 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     // Send the stats unconditionally and let the controller sort it out
     if (_plateData) {
         NSTimeInterval trackingDuration = [_plateData lastPresentationTime] - [_plateData startPresentationTime];
-        if (trackingDuration >= [_assayAnalyzer minimumTimeIntervalProcessedToReportData]) {
+        if (trackingDuration >= [_assayAnalyzer minimumTimeIntervalProcessedToReportData] &&
+            [_plateData sampleCount] > [_assayAnalyzer minimumSamplesProcessedToReportData]) {
             RunLog(@"Ended tracking after %.3f seconds (%.1f fps, %.0f%% dropped)",
                    trackingDuration, [_plateData averageFramesPerSecond], [_plateData droppedFrameProportion] * 100);
             [_delegate videoProcessor:self didFinishAcquiringPlateData:_plateData successfully:YES];
@@ -413,6 +414,14 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 - (void)beginRecordingVideo
 {
     
+}
+
+- (void)reportFinalResultsBeforeRemoval
+{
+    dispatch_async(_queue, ^{
+        [self resetCaptureStateAndReportResults];
+        [self setShouldScanForWells:NO];
+    });
 }
 
 - (void)noteVideoFrameWasDropped

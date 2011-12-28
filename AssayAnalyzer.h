@@ -53,5 +53,6 @@
 
 // Minimum for reporting of data
 - (NSTimeInterval)minimumTimeIntervalProcessedToReportData;
+- (NSUInteger)minimumSamplesProcessedToReportData;
 
 @end

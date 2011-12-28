@@ -13,6 +13,7 @@ enum {
     ReportingStyleMean = 1 << 1,
     ReportingStyleStdDev = 1 << 2,
     ReportingStyleRaw = 1 << 20,
+    ReportingStylePercent = 1 << 21
 };
 typedef int ReportingStyle;
 
@@ -25,7 +26,7 @@ typedef int ReportingStyle;
 @property(readonly) NSTimeInterval startPresentationTime;
 @property(readonly) NSTimeInterval lastPresentationTime;
 
-// MovementUnits are implemented dependent arbitrary units. This is the only required data.
+// MovementUnits are analyzer dependent arbitrary units. This is the only required data.
 - (void)appendMovementUnit:(double)movementUnit atPresentationTime:(NSTimeInterval)presentationTime forWell:(int)well;
 
 // Adds results to a specific column, creating the column if necessary.
@@ -43,6 +44,7 @@ typedef int ReportingStyle;
 // Frame rate statistics are automatically set by the VideoProcessors. MotionAnalyzers should not manipulate these.
 @property(readonly) NSUInteger receivedFrameCount;
 @property(readonly) NSUInteger frameDropCount;
+@property(readonly) NSUInteger sampleCount;
 - (void)incrementReceivedFrameCount;
 - (void)incrementFrameDropCount;
 - (double)averageFramesPerSecond;

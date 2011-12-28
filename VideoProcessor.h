@@ -30,6 +30,7 @@ typedef enum {
 - (void)setAssayAnalyzerClass:(Class)assayAnalyzerClass;
 
 - (void)setShouldScanForWells:(BOOL)shouldScanForWells;
+- (void)reportFinalResultsBeforeRemoval;
 
 // Synchronously processes a video frame (e.g. at frame rate)
 - (void)processVideoFrame:(VideoFrame *)videoFrame debugFrameCallback:(void (^)(VideoFrame *image))callback;    // callback will be called on a background queue

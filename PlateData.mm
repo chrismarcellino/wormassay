@@ -10,10 +10,11 @@
 #import "WellFinding.hpp"
 
 // Required data column identifiers
-static const char* MovementUnitID = "MovementUnits";
+static const char* MovementUnitID = "Movement Units";
 static const char* PresentationTimeID = "Timestamp";
 
 static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &stddev, size_t firstIndex = 0);
+static inline NSString *valueAsString(double value, bool asPercent);
 static inline void appendCSVElement(NSMutableString *output, NSString *element);
 
 @interface PlateData () {
@@ -24,6 +25,7 @@ static inline void appendCSVElement(NSMutableString *output, NSString *element);
     std::map<std::string, ReportingStyle> _reportingStyleByDataColumn;
     NSUInteger _receivedFrameCount;
     NSUInteger _frameDropCount;
+    NSUInteger _sampleCount;
     std::vector<double> _processingTimes;
     NSMutableString *_additionalResultsText;
 }
@@ -38,6 +40,7 @@ static inline void appendCSVElement(NSMutableString *output, NSString *element);
 @synthesize lastPresentationTime = _lastPresentationTime;
 @synthesize receivedFrameCount = _receivedFrameCount;
 @synthesize frameDropCount = _frameDropCount;
+@synthesize sampleCount = _sampleCount;
 
 - (id)initWithWellCount:(NSUInteger)wellCount startPresentationTime:(NSTimeInterval)presentationTime
 {
@@ -61,7 +64,10 @@ static inline void appendCSVElement(NSMutableString *output, NSString *element);
 {
     @synchronized(self) {
         NSAssert(presentationTime >= _lastPresentationTime, @"out of order presentation times");
-        _lastPresentationTime = presentationTime;
+        if (_lastPresentationTime != presentationTime) {
+            _sampleCount++;
+            _lastPresentationTime = presentationTime;
+        }
         [self appendResult:movementUnit toDataColumnID:MovementUnitID forWell:well];
         [self appendResult:presentationTime toDataColumnID:PresentationTimeID forWell:well];
     }
@@ -196,7 +202,8 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
         NSMutableString *output = [[NSMutableString alloc] init];
         
         // Write header row
-        appendCSVElement(output, @"PlateAndWellID");
+        appendCSVElement(output, @"Plate and Well");
+        appendCSVElement(output, @"Assay Date/Time");
         
         NSArray *dataColumnIDs = [self sortedColumnIDsWithData];
         for (NSString *columnID in dataColumnIDs) {
@@ -204,21 +211,31 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
             
             ReportingStyle style = _reportingStyleByDataColumn[columnIDStdStr];
             if (style & ReportingStyleMean) {
-                appendCSVElement(output, [columnID stringByAppendingString:@"-Mean"]);
+                appendCSVElement(output, [columnID stringByAppendingString:@" - Mean"]);
             }
             if (style & ReportingStyleStdDev) {
-                appendCSVElement(output, [columnID stringByAppendingString:@"-StdDev"]);
+                appendCSVElement(output, [columnID stringByAppendingString:@" - Std. Dev."]);
             }
         }
         
         [output appendString:@"\n"];
         
+        // Get the assay date/time
+        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+        [dateFormatter setDateStyle:NSDateFormatterFullStyle];
+        [dateFormatter setTimeStyle:NSDateFormatterFullStyle];
+        NSString *assayDateTime = [dateFormatter stringFromDate:[NSDate date]];
+        [dateFormatter release];
+        
         // Write stats for each well
         for (size_t well = 0; well < _valuesByWellAndDataColumn.size(); well++) {
             // Output the plate-well ID
             std::string wellID = wellIdentifierStringForIndex(well, _valuesByWellAndDataColumn.size());
-            NSString *plateAndWellID = [NSString stringWithFormat:@"%@-%s", plateID, wellID.c_str()];
+            NSString *plateAndWellID = [NSString stringWithFormat:@"%@ Well %s", plateID, wellID.c_str()];
             appendCSVElement(output, plateAndWellID);
+            
+            // Output the assay date/time
+            appendCSVElement(output, assayDateTime);
             
             for (NSString *columnID in dataColumnIDs) {
                 NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -228,16 +245,14 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
                 ReportingStyle style = _reportingStyleByDataColumn[columnIDStdStr];
                 if ((style & ReportingStyleMean) || (style & ReportingStyleStdDev)) {
                     double mean, stddev;
-                    meanAndStdDev(_valuesByWellAndDataColumn[well][std::string(PresentationTimeID)], mean, stddev);
+                    meanAndStdDev(_valuesByWellAndDataColumn[well][columnIDStdStr], mean, stddev);
                     if (style & ReportingStyleMean) {
-                        appendCSVElement(output, [NSString stringWithFormat:@"%f", mean]);
+                        appendCSVElement(output, valueAsString(mean, style & ReportingStylePercent));
                     }
                     if (style & ReportingStyleStdDev) {
-                        appendCSVElement(output, [NSString stringWithFormat:@"%f", stddev]);
+                        appendCSVElement(output, valueAsString(stddev, style & ReportingStylePercent));
                     }
                 }
-                
-                [output appendString:@"\n"];
                 
                 // Append all raw values on a line, preceeded by the plate-well id
                 if (style & ReportingStyleRaw) {
@@ -251,18 +266,24 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
                     appendCSVElement(rawLine, plateAndWellID);
                     const std::vector<double>* rawValues = &_valuesByWellAndDataColumn[well][columnIDStdStr];
                     for (size_t i = 0; i < rawValues->size(); i++) {
-                        NSString *valueString = [[NSString alloc] initWithFormat:@"%f", rawValues->at(i)];
-                        appendCSVElement(rawLine, valueString);
-                        [valueString release];
+                        NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+                        appendCSVElement(rawLine, valueAsString(rawValues->at(i), style & ReportingStylePercent));
+                        [pool release];
                     }
                     [rawLine appendString:@"\n"];
                 }
                 
                 [pool release];
             }
+            [output appendString:@"\n"];
         }
         return output;
     }
+}
+
+static inline NSString *valueAsString(double value, bool asPercent)
+{
+    return asPercent ? [NSString stringWithFormat:@"%.4g%%", value * 100.0] : [NSString stringWithFormat:@"%.4g", value];
 }
 
 static inline void appendCSVElement(NSMutableString *output, NSString *element)

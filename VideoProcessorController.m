@@ -13,6 +13,8 @@
 
 static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
 static NSString *const RunOutputFolderPathKey = @"RunOutputFolderPath";
+static NSString *const SortableLoggingDateFormat = @"yyyy-MM-dd HH:mm zzz";
+static NSString *const SortableLoggingFilenameSafeDateFormat = @"yyyy-MM-dd HHmm zzz";
 
 static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
 
@@ -138,14 +140,7 @@ static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
 - (void)removeVideoProcessor:(VideoProcessor *)videoProcessor
 {
     dispatch_async(_queue, ^{
-        [videoProcessor setShouldScanForWells:NO];
-        if (_currentlyTrackingProcessor == videoProcessor) {
-            for (VideoProcessor *processor in _videoProcessors) {
-                [processor setShouldScanForWells:YES];
-            }
-            [_currentlyTrackingProcessor release];
-            _currentlyTrackingProcessor = nil;
-        }
+        [videoProcessor reportFinalResultsBeforeRemoval];
         [_videoProcessors removeObject:videoProcessor];
     });    
 }
@@ -173,13 +168,10 @@ static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
 - (void)videoProcessor:(VideoProcessor *)vp didFinishAcquiringPlateData:(PlateData *)plateData successfully:(BOOL)successfully
 {
     dispatch_async(_queue, ^{
-        if ([_videoProcessors containsObject:vp] && _currentlyTrackingProcessor == vp) {
+        if (_currentlyTrackingProcessor == vp) {        // may have already been removed from _videoProcessors if device was unplugged/file closed
             for (VideoProcessor *processor in _videoProcessors) {
                 [processor setShouldScanForWells:YES];
             }
-            
-            [_currentlyTrackingProcessor release];
-            _currentlyTrackingProcessor = nil;
             
             // Find the likely barcode corresponding to this plate or make one up
             NSString *plateID = nil;
@@ -193,18 +185,20 @@ static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
             }
             if (!plateID) {
                 NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-                [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss Z"];
+                [dateFormatter setDateFormat:SortableLoggingDateFormat];
                 plateID = [NSString stringWithFormat:@"Unlabeled Plate %@", [dateFormatter stringFromDate:[NSDate date]]];
                 [dateFormatter release];
             }
             
             // Write the results to disk and the run log if successful
             if (successfully) {
+                RunLog(@"Writing results for plate \"%@\" to disk.", plateID);
+                
                 // Determine the filename prefix to log to. Rotate the log files if we've been idle for a time
                 if (!_currentOutputFilenamePrefix || _currentOutputLastWriteTime + logTurnoverIdleInterval < CACurrentMediaTime()) {
                     [_currentOutputFilenamePrefix release];
                     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-                    [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm Z"];
+                    [dateFormatter setDateFormat:SortableLoggingFilenameSafeDateFormat];
                     _currentOutputFilenamePrefix = [[dateFormatter stringFromDate:[NSDate date]] retain];
                     _currentOutputLastWriteTime = CACurrentMediaTime();
                     [dateFormatter release];
@@ -222,11 +216,14 @@ static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
                 for (NSString *columnID in rawOutputDictionary) {
                     NSString *rawDataCSVOutput = [rawOutputDictionary objectForKey:columnID];
                     NSString *rawOutputPath = [folder stringByAppendingPathComponent:
-                                               [NSString stringWithFormat:@"%@ Raw @% Values.csv", _currentOutputFilenamePrefix, columnID]];
+                                               [NSString stringWithFormat:@"%@ Raw %@ Values.csv", _currentOutputFilenamePrefix, columnID]];
                     [self appendString:rawDataCSVOutput toPath:rawOutputPath];
                 }
                 [rawOutputDictionary release];
             }
+            
+            [_currentlyTrackingProcessor release];
+            _currentlyTrackingProcessor = nil;
         }
     });
 }
@@ -249,32 +246,28 @@ static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
     
     [string appendString:@"\n"];        // Append a newline
     
-    dispatch_async(_queue, ^{
-        // XXX: Write to disk
+    // Nested these blocks to preserve ordering between the disk file and log window
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSTextView *textView = [self runLogTextView];
+        NSScrollView *scrollView = [self runLogScrollView];
+        BOOL wasAtBottom = ![scrollView hasVerticalScroller] || 
+        [textView frame].size.height <= [scrollView frame].size.height ||
+        [[scrollView verticalScroller] floatValue] >= 1.0;
         
-        // Nested these blocks to preserve ordering between the disk file and log window
-        dispatch_async(dispatch_get_main_queue(), ^{
-            NSTextView *textView = [self runLogTextView];
-            NSScrollView *scrollView = [self runLogScrollView];
-            BOOL wasAtBottom = ![scrollView hasVerticalScroller] || 
-                            [textView frame].size.height <= [scrollView frame].size.height ||
-                            [[scrollView verticalScroller] floatValue] >= 1.0;
-            
-            if (!_runLogTextAttributes) {
-                _runLogTextAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:
-                                         [NSFont fontWithName:@"Menlo Regular" size:12], NSFontAttributeName, nil];
-            }
-            NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:string attributes:_runLogTextAttributes];
-            NSTextStorage *textStorage = [textView textStorage];
-            [textStorage beginEditing];
-            [textStorage appendAttributedString:attributedString];
-            [textStorage endEditing];
-            [attributedString release];
-            
-            if (wasAtBottom) {
-                [textView scrollRangeToVisible:NSMakeRange([textStorage length], 0)];
-            }
-        });
+        if (!_runLogTextAttributes) {
+            _runLogTextAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:
+                                     [NSFont fontWithName:@"Menlo Regular" size:12], NSFontAttributeName, nil];
+        }
+        NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:string attributes:_runLogTextAttributes];
+        NSTextStorage *textStorage = [textView textStorage];
+        [textStorage beginEditing];
+        [textStorage appendAttributedString:attributedString];
+        [textStorage endEditing];
+        [attributedString release];
+        
+        if (wasAtBottom) {
+            [textView scrollRangeToVisible:NSMakeRange([textStorage length], 0)];
+        }
     });
     [string release];
 }
