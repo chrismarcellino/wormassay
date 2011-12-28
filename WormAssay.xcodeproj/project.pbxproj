@@ -376,7 +376,7 @@
 		215AB4C612CEC7800047B13F /* utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = utils.cpp; sourceTree = "<group>"; };
 		215AB4FE12CECAA60047B13F /* cvconfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cvconfig.h; path = ThirdParty/cvconfig.h; sourceTree = "<group>"; };
 		215AB59712CECC190047B13F /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
-		2162B18413521ABC0081EFDD /* VideoFrame.h */ = {isa = PBXFileReference; fileEncoding = 4; path = VideoFrame.h; sourceTree = SOURCE_ROOT; };
+		2162B18413521ABC0081EFDD /* VideoFrame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoFrame.h; sourceTree = SOURCE_ROOT; };
 		2162B18513521ABC0081EFDD /* VideoFrame.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = VideoFrame.mm; sourceTree = SOURCE_ROOT; };
 		2180AC661346BB99008AF87B /* DocumentController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DocumentController.h; sourceTree = SOURCE_ROOT; };
 		2180AC671346BB99008AF87B /* DocumentController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DocumentController.m; sourceTree = SOURCE_ROOT; };
@@ -1024,10 +1024,6 @@
 				21426FAE134683DA00AF78E5 /* VideoSourceDocument.m */,
 				21264FEA1353FAE600F2DCD8 /* VideoProcessorController.h */,
 				21264FEB1353FAE600F2DCD8 /* VideoProcessorController.m */,
-				210D6E9C134BAC5300BCD6F1 /* VideoProcessor.h */,
-				210D6E9D134BAC5300BCD6F1 /* VideoProcessor.mm */,
-				2119D2CA135A101E00C5B32F /* PlateData.h */,
-				2119D2CB135A101E00C5B32F /* PlateData.mm */,
 			);
 			name = Controllers;
 			path = WormAssay;
@@ -1036,6 +1032,10 @@
 		21EBDA26134AD3BA00736245 /* Image Processing */ = {
 			isa = PBXGroup;
 			children = (
+				210D6E9C134BAC5300BCD6F1 /* VideoProcessor.h */,
+				210D6E9D134BAC5300BCD6F1 /* VideoProcessor.mm */,
+				2119D2CA135A101E00C5B32F /* PlateData.h */,
+				2119D2CB135A101E00C5B32F /* PlateData.mm */,
 				21EBDA23134AD32300736245 /* ImageProcessing.hpp */,
 				21EBDA24134AD32300736245 /* ImageProcessing.cpp */,
 				2162B18413521ABC0081EFDD /* VideoFrame.h */,

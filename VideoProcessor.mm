@@ -96,6 +96,8 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 
 - (void)processVideoFrame:(VideoFrame *)videoFrame debugFrameCallback:(void (^)(VideoFrame *image))callback
 {
+    NSTimeInterval processingStartTime = CACurrentMediaTime();
+    
     // This method is synchronous so that we don't enqueue frames faster than they should be processed. QT will drop the overflow.
     dispatch_sync(_queue, ^{
         if (_plateData) {
@@ -104,14 +106,14 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         
         // If we're not already processing an image for wells, and no other processor has a plate, schedule an async processing
         if (!_scanningForWells && _shouldScanForWells) {
-            VideoFrame *copy = [videoFrame virtualCopy];
+            VideoFrame *copy = [videoFrame copy];
             [self performWellDeterminationCalculationAsyncWithFrame:copy];
             [copy release];
         }
         
         // Always look for barcodes since another camera might have a plate
         if (!_scanningForBarcodes && _lastBarcodeScanTime < [videoFrame presentationTime] - BarcodeScanningPeriod) {
-            VideoFrame *copy = [videoFrame virtualCopy];
+            VideoFrame *copy = [videoFrame copy];
             [self performBarcodeReadingAsyncWithFrame:copy];
             [copy release];
         }
@@ -132,9 +134,9 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         // If this processor detected a barcode, draw it on the debug image
         if (_lastBarcodeThisProcessor) {
             // Draw the movement text
-            CvFont wellFont = fontForNormalizedScale(3.5, [debugImage image]);
+            CvFont font = fontForNormalizedScale(3.5, [debugImage image]);
             CvPoint point = cvPoint(10, [debugImage image]->height - 10);
-            cvPutText([debugImage image], [_lastBarcodeThisProcessor UTF8String], point, &wellFont, CV_RGBA(232, 0, 217, 255));
+            cvPutText([debugImage image], [_lastBarcodeThisProcessor UTF8String], point, &font, CV_RGBA(232, 0, 217, 255));
         }
         
         // Record statistics on the tracked image synchronously (at frame rate), so that we drop frames if we can't keep up.
@@ -165,14 +167,31 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                     double mean, stddev;
                     [_plateData normalizedMovedFractionMean:&mean stdDev:&stddev forWell:i inLastSeconds:10];
                     
+                    char text[20];
+                    snprintf(text, sizeof(text), "%.0f (SD: %.0f)", mean * 1000, stddev * 1000);
+                    
                     float radius = _trackingWellCircles[i].radius;
                     CvPoint textPoint = cvPoint(_trackingWellCircles[i].center[0] - radius * 0.5, _trackingWellCircles[i].center[1]);
                     cvPutText([debugImage image],
-                              [[NSString stringWithFormat:@"%.0f (SD: %.0f)", mean * 1000, stddev * 1000] UTF8String],
+                              text,
                               textPoint,
                               &wellFont,
                               CV_RGBA(0, 255, 255, 255));
                 }
+            }
+            
+            // Print performance statistics. The mean/stddev are for just the procesing time. The frame rate is the total net rate.
+            double mean, stddev;
+            [_plateData processingTimeMean:&mean stdDev:&stddev inLastFrames:100];
+            if (mean > 0.0) {
+                double fps = [_plateData totalFrameCount] / ([_plateData lastPresentationTime] - [_plateData startPresentationTime]);
+                double drop = [_plateData frameDropCount] / [_plateData totalFrameCount];
+                
+                char text[100];
+                snprintf(text, sizeof(text), "%.0f ms/f (SD: %.0f ms), %.1f fps, %.0f%% drop", mean * 1000, stddev * 1000, fps, drop);
+                CvFont font;
+                cvInitFont(&font, CV_FONT_HERSHEY_DUPLEX, 0.6, 0.6, 0, 0.6);
+                cvPutText([debugImage image], text, cvPoint(0, 15), &font, CV_RGBA(232, 0, 217, 255));
             }
             
             // Store the current image for the next pass
@@ -185,6 +204,11 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
             callback(debugImage);
         });
         [debugImage release];
+        
+        // Add the processing time last
+        if (_plateData) {
+            [_plateData addProcessingTime:CACurrentMediaTime() - processingStartTime];
+        }
     });
 }
 

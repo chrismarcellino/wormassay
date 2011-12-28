@@ -15,7 +15,6 @@
 @interface VideoFrame : NSObject <NSCopying> {
     IplImage *_image;
     NSTimeInterval _presentationTime;
-    NSData *_vmCopyData;
 }
 
 - (id)initWithIplImageTakingOwnership:(IplImage *)image presentationTime:(NSTimeInterval)presentationTime;
@@ -25,16 +24,5 @@
 
 @property(readonly) IplImage *image;
 @property(readonly) NSTimeInterval presentationTime;
-
-// This method returns a copy of the frame made using a (fast) virtual copy of the underlying bytes. This copy is safe
-// for mutation on another thread, but doing so will be very inefficient. Use -copy instead if either the original or the
-// copy's bytes will be changed. This method is particularly useful if only the COI and ROI properties of the image header
-// need to be mutated simulatenously on separate threads.
-//
-// (VM copying is much faster than memcpy()ing if the resulting image copy does not need to be modified.
-// Intel Core 2 Duo 2.2 Ghz, VM copying an 8 MB buffer takes 12 us as where memcpy()ing takes 3060 us. 
-// If the resulting destination VM copied OR **original source** buffer is modified significantly,
-// the operation becomes orders of magnitudes slower than if the image was memcpy()ed in the first place.)
-- (id)virtualCopy;
 
 @end

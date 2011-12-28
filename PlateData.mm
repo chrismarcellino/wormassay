@@ -20,6 +20,7 @@ static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &
     std::vector<double> _presentationTimes;
     std::vector<std::vector<double> > _occupancyFractionsByWell;
     std::vector<std::vector<double> > _normalizedMovedFractionsByWell;
+    std::vector<double> _processingTimes;
 }
 
 @end
@@ -41,6 +42,7 @@ static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &
         _occupancyFractionsByWell.resize(wellCount);
         _normalizedMovedFractionsByWell.resize(wellCount);
         _presentationTimes.reserve(InitialVectorSize);
+        _processingTimes.reserve(InitialVectorSize);
         for (size_t i = 0; i < wellCount; i++) {
             _occupancyFractionsByWell[i].reserve(InitialVectorSize);
             _normalizedMovedFractionsByWell[i].reserve(InitialVectorSize);
@@ -65,6 +67,11 @@ static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &
         _occupancyFractionsByWell[well].push_back(occupancyFraction[well]);
         _normalizedMovedFractionsByWell[well].push_back(normalizedMovedFractions[well]);
     }
+}
+
+- (void)addProcessingTime:(NSTimeInterval)processingTime
+{
+    _processingTimes.push_back(processingTime);
 }
 
 - (NSUInteger)sampleCount
@@ -106,6 +113,15 @@ static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &
 - (void)normalizedMovedFractionMean:(double *)mean stdDev:(double *)stddev forWell:(NSUInteger)well inLastSeconds:(NSTimeInterval)seconds
 {
     meanAndStdDev(_normalizedMovedFractionsByWell[well], *mean, *stddev, [self sampleIndexStartingAtSecondsFromEnd:seconds]);
+}
+
+- (void)processingTimeMean:(double *)mean stdDev:(double *)stddev inLastFrames:(NSUInteger)lastFrames
+{
+    NSUInteger firstIndex = 0;
+    if (_processingTimes.size() > lastFrames) {
+        firstIndex = _processingTimes.size() - lastFrames;
+    }
+    meanAndStdDev(_processingTimes, *mean, *stddev, firstIndex);
 }
 
 static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &stddev, NSUInteger firstIndex)

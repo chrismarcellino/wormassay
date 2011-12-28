@@ -128,7 +128,7 @@ bool findWellCircles(IplImage* inputImage, std::vector<Circle> &circles, int wel
     cvReleaseImage(&grayInputImage);
     
     // Return the best circles on failure
-    if (!success && score < 0.25) {
+    if (!success && score < 0.5) {
         circles.clear();
     }
     return success;

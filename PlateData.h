@@ -24,6 +24,8 @@
           normalizedMovedFractions:(double *)normalizedMovedFractions
                 atPresentationTime:(NSTimeInterval)presentationTime;
 
+- (void)addProcessingTime:(NSTimeInterval)processingTime;
+
 - (void)incrementTotalFrameCount;
 - (void)incrementFrameDropCount;
 
@@ -31,5 +33,7 @@
 - (void)occupancyFractionMean:(double *)mean stdDev:(double *)stddev forWell:(NSUInteger)well inLastSeconds:(NSTimeInterval)seconds;
 - (void)normalizedMovedFractionMean:(double *)mean stdDev:(double *)stddev forWell:(NSUInteger)well;
 - (void)normalizedMovedFractionMean:(double *)mean stdDev:(double *)stddev forWell:(NSUInteger)well inLastSeconds:(NSTimeInterval)seconds;
+
+- (void)processingTimeMean:(double *)mean stdDev:(double *)stddev inLastFrames:(NSUInteger)lastFrames;
 
 @end
