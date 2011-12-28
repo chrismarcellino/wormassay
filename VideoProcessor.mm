@@ -26,8 +26,8 @@
     NSTimeInterval _startOfTrackingMotionTime;
     
     IplImageObject *_lastFrame;     // when tracking
-    std::vector<cv::Vec3f> _trackingWellCircles;    // circles used for tracking
-    std::vector<cv::Vec3f> _lastCircles;   // for debugging
+    std::vector<Circle> _trackingWellCircles;    // circles used for tracking
+    std::vector<Circle> _lastCircles;   // for debugging
 }
 
 - (void)performWellDeterminationCalculationAsyncWithFrame:(IplImageObject *)videoFrame presentationTime:(NSTimeInterval)presentationTime;
@@ -148,7 +148,7 @@
     // Perform the calculation on a concurrent queue so that we don't block the current thread
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         // Get wells in row major order
-        std::vector<cv::Vec3f> wellCircles;
+        std::vector<Circle> wellCircles;
         bool plateFound;
         if (searchAllPlateSizes) {
             plateFound = findWellCircles([videoFrame image], wellCircles, wellCountHint);
