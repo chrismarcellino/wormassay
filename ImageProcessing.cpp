@@ -13,6 +13,8 @@
 #import <dispatch/dispatch.h>
 
 static const float MovedPixelPlateMovingProportionThreshold = 0.02;
+static const float WellEdgeFindingInsetProportion = 0.85;
+static const float WellEdgeFindingSecondInsetProportion = 0.7;
 
 static std::vector<Circle> convertCvVec3fSeqToCircleVector(CvSeq *seq);
 static int sortCircleCentersByAxis(const void* a, const void* b, void* userdata);
@@ -336,37 +338,6 @@ void drawWellCirclesAndLabelsOnDebugImage(std::vector<Circle> circles, CvScalar 
     }
 }
 
-/*std::vector<Circle> largestUnoccludedCircleForWellCircles(IplImage *inputImage, std::vector<Circle> &circlesVec)
-{
-    // Iterate through each well and get edge images for each serially
-    IplImage** subimages = (IplImage **)malloc(circles.size() * sizeof(IplImage*));
-    for (size_t i = 0; i < circles.size(); i++) {
-        CvRect boundingSquare = boundingSquareForCircle(circles[i]);
-        
-        cvSetImageROI(plateImage, boundingSquare);
-        subimages[i] = cvCreateImage(cvGetSize(plateImage), IPL_DEPTH_8U, 1);
-        cvCvtColor(plateImage, subimages[i], CV_BGRA2GRAY);
-        cvResetImageROI(plateImage);
-    }
-    
-    // Iterate over each circle and perform a binary search for the smallest circle high quality within the expected range
-    
-    int 
-    CvMemStorage* storage = cvCreateMemStorage();
-    CvSeq* circles = cvHoughCircles(grayInputImage,
-                                    storage,
-                                    CV_HOUGH_GRADIENT,
-                                    2,      // inverse accumulator resolution ratio
-                                    minRadius * 2,  // min dist between centers
-                                    100,    // Canny high threshold
-                                    200,    // Accumulator threshold
-                                    minRadius, // min radius
-                                    maxRadius); // max radius
-    
-    cvReleaseImage(&subimages[i]);
-    
-}*/
-
 std::vector<float> calculateMovedPixelsProportionForWellsFromImages(IplImage *plateImagePrev,
                                                                     IplImage *plateImageCur,
                                                                     const std::vector<Circle> &circles,
@@ -398,9 +369,10 @@ std::vector<float> calculateMovedPixelsProportionForWellsFromImages(IplImage *pl
     double proportionPlateMoved = (double)cvCountNonZero(deltaThreshold) / (plateImageCur->width * plateImagePrev->height);
     
     std::vector<float> movedPixelProportions;
-    movedPixelProportions.reserve(circles.size());
     
     if (proportionPlateMoved < MovedPixelPlateMovingProportionThreshold) {      // Don't perform well calculations if the plate itself is moving
+        movedPixelProportions.reserve(circles.size());
+        
         // Create a circle mask with bits in the circle on
         float radius = circles[0].radius;
         IplImage *circleMask = cvCreateImage(cvSize(radius * 2, radius * 2), IPL_DEPTH_8U, 1);
@@ -454,16 +426,14 @@ std::vector<float> calculateCannyEdgePixelProportionForWellsFromImages(IplImage 
     }
     
     // Create an inverted circle mask with 0's in the circle. Use only a portion of the circle to conservatively avoid taking the well walls.
-    float inset = 0.85;
     float radius = circles[0].radius;
     IplImage *invertedCircleMask = cvCreateImage(cvSize(radius * 2, radius * 2), IPL_DEPTH_8U, 1);
     fastFillImage(invertedCircleMask, 255);
-    cvCircle(invertedCircleMask, cvPoint(radius, radius), radius * inset, cvRealScalar(0), CV_FILLED);
-    // Create a mask of just the edge pixels
-    inset = 0.7;
+    cvCircle(invertedCircleMask, cvPoint(radius, radius), radius * WellEdgeFindingInsetProportion, cvRealScalar(0), CV_FILLED);
+    // Create the second mask to prevent use of pixels from edges found where the first mask cut the image
     IplImage *insetInvertedCircleMask = cvCreateImage(cvSize(radius * 2, radius * 2), IPL_DEPTH_8U, 1);
     fastFillImage(insetInvertedCircleMask, 255);
-    cvCircle(insetInvertedCircleMask, cvPoint(radius, radius), radius * inset, cvRealScalar(0), CV_FILLED);
+    cvCircle(insetInvertedCircleMask, cvPoint(radius, radius), radius * WellEdgeFindingSecondInsetProportion, cvRealScalar(0), CV_FILLED);
     
     // Iterate through each well and get edge images for each serially
     IplImage** subimages = (IplImage **)malloc(circles.size() * sizeof(IplImage*));
