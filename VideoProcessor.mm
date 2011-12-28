@@ -18,6 +18,7 @@
 #import "zxing/ReaderException.h"
 
 static const NSTimeInterval BarcodeScanningPeriod = 1.0;
+static const NSTimeInterval BarcodeRepeatSuccessCount = 3;
 static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 
 @interface VideoProcessor() {
@@ -40,7 +41,9 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     VideoFrame *_lastFrame;     // when tracking
     std::vector<Circle> _trackingWellCircles;    // circles used for tracking
     std::vector<Circle> _lastCircles;   // for debugging
+    
     NSString *_lastBarcodeThisProcessor;
+    NSUInteger _lastBarcodeThisProcessorRepeatCount;
 }
 
 - (void)performWellDeterminationCalculationAsyncWithFrame:(VideoFrame *)videoFrame;
@@ -112,7 +115,8 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         }
         
         // Always look for barcodes since another camera might have a plate
-        if (!_scanningForBarcodes && _lastBarcodeScanTime < [videoFrame presentationTime] - BarcodeScanningPeriod) {
+        BOOL repeatBarcodeScanImmediately = _lastBarcodeThisProcessorRepeatCount > 0 && _lastBarcodeThisProcessorRepeatCount < BarcodeRepeatSuccessCount;
+        if (!_scanningForBarcodes && (_lastBarcodeScanTime < [videoFrame presentationTime] - BarcodeScanningPeriod || repeatBarcodeScanImmediately)) {
             VideoFrame *copy = [videoFrame copy];
             [self performBarcodeReadingAsyncWithFrame:copy];
             [copy release];
@@ -132,7 +136,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         }
         
         // If this processor detected a barcode, draw it on the debug image
-        if (_lastBarcodeThisProcessor) {
+        if (_lastBarcodeThisProcessor && _lastBarcodeThisProcessorRepeatCount >= BarcodeRepeatSuccessCount) {
             // Draw the movement text
             CvFont font = fontForNormalizedScale(3.5, [debugImage image]);
             CvPoint point = cvPoint(10, [debugImage image]->height - 10);
@@ -168,7 +172,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                     [_plateData normalizedMovedFractionMean:&mean stdDev:&stddev forWell:i inLastSeconds:10];
                     
                     char text[20];
-                    snprintf(text, sizeof(text), "%.0f (SD: %.0f)", mean * 1000, stddev * 1000);
+                    snprintf(text, sizeof(text), "%.0f%% (SD: %.0f%%)", mean * 100, stddev * 100);
                     
                     float radius = _trackingWellCircles[i].radius;
                     CvPoint textPoint = cvPoint(_trackingWellCircles[i].center[0] - radius * 0.5, _trackingWellCircles[i].center[1]);
@@ -335,8 +339,19 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
             _lastBarcodeScanTime = [videoFrame presentationTime];
             [_lastBarcodeThisProcessor release];
             _lastBarcodeThisProcessor = [text retain];
-            if (text) {
+            
+            if (text && _lastBarcodeThisProcessor && [text isEqual:_lastBarcodeThisProcessor]) {
+                _lastBarcodeThisProcessorRepeatCount++;
+            } else if (text) {
+                _lastBarcodeThisProcessorRepeatCount = 1;
+            } else {
+                _lastBarcodeThisProcessorRepeatCount = 0;
+            }
+            
+            if (text && _lastBarcodeThisProcessorRepeatCount >= BarcodeRepeatSuccessCount) {
                 [_delegate videoProcessor:self didCaptureBarcodeText:text atTime:[videoFrame presentationTime]];
+            } else {
+                
             }
         });
         

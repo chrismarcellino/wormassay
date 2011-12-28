@@ -419,7 +419,7 @@ std::vector<double> calculateMovedWellFractionPerSecondForWellsFromImages(IplIma
     cvAbsDiff(plateImageCur, plateImagePrev, plateDelta);
     
     // Gaussian blur the delta in place
-    cvSmooth(plateDelta, plateDelta, CV_GAUSSIAN, 3);
+    cvSmooth(plateDelta, plateDelta, CV_GAUSSIAN, 7, 7, 3, 3);
     
     // Convert the delta to luminance
     IplImage* deltaLuminance = cvCreateImage(cvGetSize(plateDelta), IPL_DEPTH_8U, 1);
