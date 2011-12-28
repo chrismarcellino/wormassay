@@ -11,6 +11,7 @@
 		210E8AF5135EB58700FEE49F /* LuminanceMotionAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 210E8AF4135EB58700FEE49F /* LuminanceMotionAnalyzer.mm */; };
 		2119D2CC135A101E00C5B32F /* PlateData.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2119D2CB135A101E00C5B32F /* PlateData.mm */; };
 		21264FEC1353FAE600F2DCD8 /* VideoProcessorController.m in Sources */ = {isa = PBXBuildFile; fileRef = 21264FEB1353FAE600F2DCD8 /* VideoProcessorController.m */; };
+		21400837136E2B650066B8B3 /* LoggingAndNotifications.xib in Resources */ = {isa = PBXBuildFile; fileRef = 21400835136E2B650066B8B3 /* LoggingAndNotifications.xib */; };
 		21426FAF134683DB00AF78E5 /* VideoSourceDocument.m in Sources */ = {isa = PBXBuildFile; fileRef = 21426FAE134683DA00AF78E5 /* VideoSourceDocument.m */; };
 		215CD57D135D157400A558E3 /* WellFinding.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215CD57B135D157400A558E3 /* WellFinding.cpp */; };
 		2162B18613521ABD0081EFDD /* VideoFrame.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2162B18513521ABC0081EFDD /* VideoFrame.mm */; };
@@ -293,6 +294,7 @@
 		2119D2CB135A101E00C5B32F /* PlateData.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = PlateData.mm; sourceTree = SOURCE_ROOT; };
 		21264FEA1353FAE600F2DCD8 /* VideoProcessorController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoProcessorController.h; sourceTree = SOURCE_ROOT; };
 		21264FEB1353FAE600F2DCD8 /* VideoProcessorController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VideoProcessorController.m; sourceTree = SOURCE_ROOT; };
+		21400836136E2B650066B8B3 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/LoggingAndNotifications.xib; sourceTree = "<group>"; };
 		21426FAD134683DA00AF78E5 /* VideoSourceDocument.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoSourceDocument.h; sourceTree = SOURCE_ROOT; };
 		21426FAE134683DA00AF78E5 /* VideoSourceDocument.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VideoSourceDocument.m; sourceTree = SOURCE_ROOT; };
 		215AB44812CEC7130047B13F /* opencv.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = opencv.hpp; path = ThirdParty/OpenCV/include/opencv2/opencv.hpp; sourceTree = "<group>"; };
@@ -787,6 +789,7 @@
 			children = (
 				218DD55C1345441A000B6475 /* WormAssay-Info.plist */,
 				218DD557134543FF000B6475 /* MainMenu.xib */,
+				21400835136E2B650066B8B3 /* LoggingAndNotifications.xib */,
 				218DD57513455374000B6475 /* Worm.icns */,
 			);
 			path = Resources;
@@ -1335,6 +1338,7 @@
 				218DD54913453FC6000B6475 /* MainMenu.xib in Resources */,
 				218DD559134543FF000B6475 /* MainMenu.xib in Resources */,
 				218DD57613455374000B6475 /* Worm.icns in Resources */,
+				21400837136E2B650066B8B3 /* LoggingAndNotifications.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1523,6 +1527,14 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
+		21400835136E2B650066B8B3 /* LoggingAndNotifications.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				21400836136E2B650066B8B3 /* en */,
+			);
+			name = LoggingAndNotifications.xib;
+			sourceTree = "<group>";
+		};
 		218DD54713453FC6000B6475 /* MainMenu.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
