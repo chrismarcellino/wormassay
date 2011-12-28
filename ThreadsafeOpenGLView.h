@@ -1,15 +1,16 @@
 //
-//  InputController.h
+//  ThreadsafeOpenGLView.h
 //  NematodeAssay
 //
-//  Created by Chris Marcellino on 3/31/11.
+//  Created by Chris Marcellino on 4/2/11.
 //  Copyright 2011 Chris Marcellino. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
 
 
-@interface InputController : NSObject {
+@interface ThreadsafeOpenGLView : NSOpenGLView {
+@private
     
 }
 
