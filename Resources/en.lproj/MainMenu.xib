@@ -1188,6 +1188,14 @@
 					</object>
 					<int key="connectionID">550</int>
 				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">showLoggingAndNotificationSettings:</string>
+						<reference key="source" ref="1014"/>
+						<reference key="destination" ref="517408328"/>
+					</object>
+					<int key="connectionID">551</int>
+				</object>
 			</array>
 			<object class="IBMutableOrderedSet" key="objectRecords">
 				<array key="orderedObjects">
@@ -1997,7 +2005,7 @@
 			<nil key="activeLocalization"/>
 			<dictionary class="NSMutableDictionary" key="localizations"/>
 			<nil key="sourceID"/>
-			<int key="maxID">550</int>
+			<int key="maxID">552</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<array class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -2045,6 +2053,17 @@
 				<object class="IBPartialClassDescription">
 					<string key="className">WormAssayAppDelegate</string>
 					<string key="superclassName">NSObject</string>
+					<object class="NSMutableDictionary" key="actions">
+						<string key="NS.key.0">showLoggingAndNotificationSettings:</string>
+						<string key="NS.object.0">id</string>
+					</object>
+					<object class="NSMutableDictionary" key="actionInfosByName">
+						<string key="NS.key.0">showLoggingAndNotificationSettings:</string>
+						<object class="IBActionInfo" key="NS.object.0">
+							<string key="name">showLoggingAndNotificationSettings:</string>
+							<string key="candidateClassName">id</string>
+						</object>
+					</object>
 					<object class="NSMutableDictionary" key="outlets">
 						<string key="NS.key.0">assayAnalyzerMenu</string>
 						<string key="NS.object.0">NSMenu</string>

@@ -79,12 +79,8 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     [textView release];
     [scrollView release];
     
-    // Set up analyzer menu
-    NSMenu *menu = [self assayAnalyzerMenu];
-    for (Class class in [videoProcessorController assayAnalyzerClasses]) {
-        NSMenuItem *item = [menu addItemWithTitle:[class analyzerName] action:@selector(assayAnalyzerMenuItemSelected:) keyEquivalent:@""];
-        [item setState:([class isEqual:[videoProcessorController currentAssayAnalyzerClass]] ? NSOnState : NSOffState)];
-    }
+    // Set analyzer menu item delegate
+    [[self assayAnalyzerMenu] setDelegate:self];
     
     // Log welcome message
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
@@ -97,6 +93,20 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     RunLog(@"%@ version %@ launched. Storage has %@ (%.3g%%) free space.",
            [infoDictionary objectForKey:(id)kCFBundleNameKey], [infoDictionary objectForKey:(id)kCFBundleVersionKey], formattedDataSize(freeSpace), percentFree);
     RunLog(@"VLC can be used to view the video files recorded when assaying using a HDV or DV camera. Download it at http://www.videolan.org/vlc/.");
+}
+
+- (void)menuNeedsUpdate:(NSMenu *)menu
+{
+    // Populate analyzer menu
+    if (menu == [self assayAnalyzerMenu]) {
+        [menu removeAllItems];
+        
+        VideoProcessorController *videoProcessorController = [VideoProcessorController sharedInstance];
+        for (Class class in [videoProcessorController assayAnalyzerClasses]) {
+            NSMenuItem *item = [menu addItemWithTitle:[class analyzerName] action:@selector(assayAnalyzerMenuItemSelected:) keyEquivalent:@""];
+            [item setState:([class isEqual:[videoProcessorController currentAssayAnalyzerClass]] ? NSOnState : NSOffState)];
+        }
+    }
 }
 
 - (void)assayAnalyzerMenuItemSelected:(NSMenuItem *)sender
@@ -223,6 +233,13 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     }
     
     return reply;
+}
+
+- (IBAction)showLoggingAndNotificationSettings:(id)sender
+{
+    NSWindowController *windowController = [[NSWindowController alloc] initWithWindowNibName:@"LoggingAndNotifications"];
+    [windowController showWindow:sender];
+    [windowController release];
 }
 
 @end

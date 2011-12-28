@@ -10,11 +10,13 @@
 
 @class VideoProcessor;
 
-@interface WormAssayAppDelegate : NSObject <NSApplicationDelegate> {
+@interface WormAssayAppDelegate : NSObject <NSApplicationDelegate, NSMenuDelegate> {
     NSPanel *_loggingPanel;
 }
 
 @property(nonatomic, retain) IBOutlet NSMenu *assayAnalyzerMenu;
+
+- (IBAction)showLoggingAndNotificationSettings:(id)sender;
 
 @end
 
