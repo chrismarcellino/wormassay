@@ -15,8 +15,8 @@
 static const char* WellOccupancyID = "Well Occupancy";
 static const double WellEdgeFindingInsetProportion = 0.8;
 static const size_t MaximumNumberOfFeaturePoints = 200;
-static const double DeltaMeanMovementLimit = 15.0;
-static const double DeltaStdDevMovementLimit = 15.0;
+static const double DeltaMeanMovementLimit = 20.0;
+static const double DeltaStdDevMovementLimit = 10.0;
 static const NSTimeInterval IgnoreFramesPostMovementThresholdTimeInterval = 5.0;
 static const NSTimeInterval MinimumIntervalFrameInterval = 0.100;
 
