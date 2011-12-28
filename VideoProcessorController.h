@@ -14,7 +14,7 @@
 #define RunLog(format, args...) [[VideoProcessorController sharedInstance] appendToRunLog:format, ## args]
 
 
-@interface VideoProcessorController : NSObject <VideoProcessorDelegate> {
+@interface VideoProcessorController : NSObject <VideoProcessorDelegate, NSTableViewDataSource> {
     dispatch_queue_t _queue;     // protects all state and serializes
     NSMutableArray *_videoProcessors;
     VideoProcessor *_currentlyTrackingProcessor;
@@ -30,6 +30,10 @@
     NSString *_runID;
     NSTimeInterval _currentOutputLastWriteTime;      // in CPU time
     
+    NSMutableArray *_pendingConversionPaths;
+    NSTask *_conversionTask;
+    BOOL _pauseJobs;
+    
     NSDictionary *_runLogTextAttributes;    // main thread only
 }
 
@@ -44,9 +48,12 @@
 - (void)removeVideoProcessor:(VideoProcessor *)videoProcessor;
 
 - (BOOL)isTracking;
+- (BOOL)supportsConversion;
+- (BOOL)hasConversionJobsQueuedOrRunning;
 
 @property(retain) NSTextView *runLogTextView;
 @property(retain) NSScrollView *runLogScrollView;
+@property(retain) NSTableView *encodingTableView;
 - (void)appendToRunLog:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2);
 
 @end

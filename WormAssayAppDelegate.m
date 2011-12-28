@@ -17,6 +17,7 @@
 
 static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCameras";
 static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
+static NSString *const EncodingWindowAutosaveName = @"EncodingWindow";
 
 @interface WormAssayAppDelegate ()
 
@@ -78,6 +79,20 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     
     [textView release];
     [scrollView release];
+
+    // Create the encoding panel
+    rect.origin.x = NSMaxX(rect) + 10;
+    rect.size.width = 170;
+    _encodingPanel = [[NSPanel alloc] initWithContentRect:rect styleMask:styleMask backing:NSBackingStoreBuffered defer:YES];
+    [_encodingPanel setTitle:NSLocalizedString(@"Encoding", nil)];
+    [_encodingPanel setFrameUsingName:EncodingWindowAutosaveName];
+    [_encodingPanel setFrameAutosaveName:EncodingWindowAutosaveName];
+    NSTableView *tableView = [[NSTableView alloc] initWithFrame:rect];
+    [tableView setUsesAlternatingRowBackgroundColors:YES];
+    [_encodingPanel setContentView:tableView];
+    [tableView release];
+    [_encodingPanel orderFront:self];
+    [videoProcessorController setEncodingTableView:tableView];
     
     // Set analyzer menu item delegate
     [[self assayAnalyzerMenu] setDelegate:self];
@@ -95,32 +110,12 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
            [mainBundle objectForInfoDictionaryKey:(id)kCFBundleVersionKey],
            formattedDataSize(freeSpace),
            percentFree);
-}
-
-- (void)menuNeedsUpdate:(NSMenu *)menu
-{
-    // Populate analyzer menu
-    if (menu == [self assayAnalyzerMenu]) {
-        [menu removeAllItems];
-        
-        VideoProcessorController *videoProcessorController = [VideoProcessorController sharedInstance];
-        for (Class class in [videoProcessorController assayAnalyzerClasses]) {
-            NSMenuItem *item = [menu addItemWithTitle:[class analyzerName] action:@selector(assayAnalyzerMenuItemSelected:) keyEquivalent:@""];
-            [item setState:([class isEqual:[videoProcessorController currentAssayAnalyzerClass]] ? NSOnState : NSOffState)];
-        }
-    }
-}
-
-- (void)assayAnalyzerMenuItemSelected:(NSMenuItem *)sender
-{
-    NSMenu *menu = [self assayAnalyzerMenu];
-    VideoProcessorController *videoProcessorController = [VideoProcessorController sharedInstance];
-    NSInteger selectedIndex = [menu indexOfItem:sender];
-    Class class = [[videoProcessorController assayAnalyzerClasses] objectAtIndex:selectedIndex];
-    [videoProcessorController setCurrentAssayAnalyzerClass:class];
     
-    for (NSInteger i = 0; i < [menu numberOfItems]; i++) {
-        [[menu itemAtIndex:i] setState:i == selectedIndex ? NSOnState : NSOffState];
+    // Log that the conversion executable isn't present
+    if (![[VideoProcessorController sharedInstance] supportsConversion]) {
+        RunLog(@"This version of %@ was built without video conversion support. "
+               "Instead, VLC can be used to view the video files recorded when assaying using a HDV or DV camera. "
+               "Download it at http://www.videolan.org/vlc/.", [mainBundle objectForInfoDictionaryKey:(id)kCFBundleNameKey]);
     }
 }
 
@@ -149,6 +144,33 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     // Log if there are no devices attached
     if ([[[NSDocumentController sharedDocumentController] documents] count] == 0) {
         RunLog(@"Attach a camera or use \"File… Open for Testing\" to simulate one.");
+    }
+}
+
+- (void)menuNeedsUpdate:(NSMenu *)menu
+{
+    // Populate analyzer menu
+    if (menu == [self assayAnalyzerMenu]) {
+        [menu removeAllItems];
+        
+        VideoProcessorController *videoProcessorController = [VideoProcessorController sharedInstance];
+        for (Class class in [videoProcessorController assayAnalyzerClasses]) {
+            NSMenuItem *item = [menu addItemWithTitle:[class analyzerName] action:@selector(assayAnalyzerMenuItemSelected:) keyEquivalent:@""];
+            [item setState:([class isEqual:[videoProcessorController currentAssayAnalyzerClass]] ? NSOnState : NSOffState)];
+        }
+    }
+}
+
+- (void)assayAnalyzerMenuItemSelected:(NSMenuItem *)sender
+{
+    NSMenu *menu = [self assayAnalyzerMenu];
+    VideoProcessorController *videoProcessorController = [VideoProcessorController sharedInstance];
+    NSInteger selectedIndex = [menu indexOfItem:sender];
+    Class class = [[videoProcessorController assayAnalyzerClasses] objectAtIndex:selectedIndex];
+    [videoProcessorController setCurrentAssayAnalyzerClass:class];
+    
+    for (NSInteger i = 0; i < [menu numberOfItems]; i++) {
+        [[menu itemAtIndex:i] setState:i == selectedIndex ? NSOnState : NSOffState];
     }
 }
 
@@ -226,6 +248,16 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
         NSAlert *alert = [[[NSAlert alloc] init] autorelease];
         [alert setMessageText:NSLocalizedString(@"There is a plate read in progress.", nil)]; 
         [alert setInformativeText:NSLocalizedString(@"The current read results and video will be lost if you exit before the plate is removed.", nil)];
+        [alert addButtonWithTitle:NSLocalizedString(@"Cancel", nil)];
+        [alert addButtonWithTitle:NSLocalizedString(@"Quit", nil)];
+        NSInteger result = [alert runModal];
+        if (result == NSAlertFirstButtonReturn) {
+            reply = NSTerminateCancel;
+        }
+    } else if ([[VideoProcessorController sharedInstance] hasConversionJobsQueuedOrRunning]) {
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        [alert setMessageText:NSLocalizedString(@"Videos are currently being encoded", nil)]; 
+        [alert setInformativeText:NSLocalizedString(@"Videos will remain in their original captured format if you exit before the conversion jobs are complete.", nil)];
         [alert addButtonWithTitle:NSLocalizedString(@"Cancel", nil)];
         [alert addButtonWithTitle:NSLocalizedString(@"Quit", nil)];
         NSInteger result = [alert runModal];

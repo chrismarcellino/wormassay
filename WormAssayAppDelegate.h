@@ -12,6 +12,7 @@
 
 @interface WormAssayAppDelegate : NSObject <NSApplicationDelegate, NSMenuDelegate> {
     NSPanel *_loggingPanel;
+    NSPanel *_encodingPanel;
     NSWindowController *_loggingAndNotificationWindowController;
 }
 

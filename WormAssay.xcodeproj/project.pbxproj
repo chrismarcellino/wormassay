@@ -266,6 +266,7 @@
 		21E7790212D322A9006C1554 /* undistort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB4C512CEC7800047B13F /* undistort.cpp */; };
 		21E7790312D322A9006C1554 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB4C612CEC7800047B13F /* utils.cpp */; };
 		21E7790512D322A9006C1554 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 215AB59712CECC190047B13F /* Accelerate.framework */; };
+		21FF202E137776C1008B819B /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 21FF202C137776C1008B819B /* Credits.rtf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -560,6 +561,7 @@
 		21E779A012D323D6006C1554 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
 		21EBDA37134AE0F000736245 /* WormAssay-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "WormAssay-Prefix.pch"; sourceTree = "<group>"; };
 		21FCF94D134CBB8900ABD85C /* CvUtilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CvUtilities.hpp; sourceTree = SOURCE_ROOT; };
+		21FF202D137776C1008B819B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -791,6 +793,7 @@
 			isa = PBXGroup;
 			children = (
 				218DD55C1345441A000B6475 /* WormAssay-Info.plist */,
+				21FF202C137776C1008B819B /* Credits.rtf */,
 				218DD557134543FF000B6475 /* MainMenu.xib */,
 				21400835136E2B650066B8B3 /* LoggingAndNotifications.xib */,
 				218DD57513455374000B6475 /* Worm.icns */,
@@ -1344,6 +1347,7 @@
 				218DD559134543FF000B6475 /* MainMenu.xib in Resources */,
 				218DD57613455374000B6475 /* Worm.icns in Resources */,
 				21400837136E2B650066B8B3 /* LoggingAndNotifications.xib in Resources */,
+				21FF202E137776C1008B819B /* Credits.rtf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1555,6 +1559,14 @@
 				218DD558134543FF000B6475 /* en */,
 			);
 			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+		21FF202C137776C1008B819B /* Credits.rtf */ = {
+			isa = PBXVariantGroup;
+			children = (
+				21FF202D137776C1008B819B /* en */,
+			);
+			name = Credits.rtf;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */

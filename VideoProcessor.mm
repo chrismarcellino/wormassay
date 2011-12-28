@@ -20,7 +20,7 @@
 #import "zxing/common/HybridBinarizer.h"
 #import "zxing/ReaderException.h"
 
-static const NSTimeInterval MinimumWellMatchTimeToBeginTracking = 0.250; // 250 ms
+static const NSTimeInterval MinimumWellMatchTimeToBeginTracking = 0.500; // 500 ms
 static const NSTimeInterval BarcodeScanningPeriod = 0.5;
 static const NSTimeInterval BarcodeRepeatSuccessCount = 3;
 static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
