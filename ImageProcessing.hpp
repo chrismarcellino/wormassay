@@ -30,8 +30,8 @@ extern std::string wellIdentifierStringForIndex(int index, int wellCount);
 
 // Returns true if the circles found correspond to the intended plate configuration. Well circles are returned in 
 // row major order, as (x-center, y-center, radius) triples. The first version determines the well count automatically. 
-extern bool findWellCircles(IplImage *inputImage, std::vector<Circle> &circles, int wellCountHint = 0);
-extern bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vector<Circle> &circlesVec, int expectedRadius = 0, double *score = NULL);
+extern bool findWellCircles(IplImage* inputImage, std::vector<Circle> &circles, int wellCountHint = 0);
+extern bool findWellCirclesForPlateCount(IplImage* inputImage, int wellCount, std::vector<Circle> &circlesVec, int expectedRadius = 0);
 
 // Calcualtes the arithmetic mean of the circles' centers
 extern CvPoint plateCenterForWellCircles(const std::vector<Circle> &circles);
@@ -41,22 +41,25 @@ extern bool plateSequentialCirclesAppearSameAndStationary(const std::vector<Circ
                                                           const std::vector<Circle> &circlesCurrent);
 
 // Draws circles and labels on an image
-extern void drawWellCirclesAndLabelsOnDebugImage(std::vector<Circle> circles, CvScalar circleColor, bool drawLabels, IplImage *debugImage);
+extern void drawWellCirclesAndLabelsOnDebugImage(std::vector<Circle> circles, CvScalar circleColor, bool drawLabels, IplImage* debugImage);
 
 // Counts the proportion of pixels that represent moved well contents between two frames. An empty vector is returned if the plate
 // (or camera) has physically moved between the prev and cur images. 
-extern std::vector<double> calculateMovedWellFractionPerSecondForWellsFromImages(IplImage *plateImagePrev,
-                                                                                 IplImage *plateImageCur,
+extern std::vector<double> calculateMovedWellFractionPerSecondForWellsFromImages(IplImage* plateImagePrev,
+                                                                                 IplImage* plateImageCur,
                                                                                  double timeDelta,
                                                                                  const std::vector<Circle> &circles,
-                                                                                 IplImage *debugImage);
+                                                                                 IplImage* debugImage);
 
 // Calculates the proportion of edge pixels in the image using the Canny edge detector. This can be used to determine well occupancy. 
-extern std::vector<double> calculateCannyEdgePixelProportionForWellsFromImages(IplImage *plateImage, const std::vector<Circle> &circles, IplImage *debugImage);
+extern std::vector<double> calculateCannyEdgePixelProportionForWellsFromImages(IplImage* plateImage, const std::vector<Circle> &circles, IplImage* debugImage);
 
 // Returns a font with drawing size proportional to the image provided with respect to normalizedScale.
-extern CvFont fontForNormalizedScale(double normalizedScale, IplImage *image);
+extern CvFont fontForNormalizedScale(double normalizedScale, IplImage* image);
 
+// Performs unsharp mask on an image and returns the result
+extern IplImage* createUnsharpMaskImage(IplImage* image, float radius, float amount, float threshold = 0.0);
+    
 #define CV_RGBA( r, g, b, a )  cvScalar( (b), (g), (r), (a) )
 
 #ifdef __cplusplus

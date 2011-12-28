@@ -746,6 +746,14 @@
 									<reference key="NSOnImage" ref="1033313550"/>
 									<reference key="NSMixedImage" ref="310636482"/>
 								</object>
+								<object class="NSMenuItem" id="901842175">
+									<reference key="NSMenu" ref="433591544"/>
+									<string key="NSTitle">Unsharp Mask</string>
+									<string key="NSKeyEquiv"/>
+									<int key="NSMnemonicLoc">2147483647</int>
+									<reference key="NSOnImage" ref="1033313550"/>
+									<reference key="NSMixedImage" ref="310636482"/>
+								</object>
 								<object class="NSMenuItem" id="517408328">
 									<reference key="NSMenu" ref="433591544"/>
 									<string key="NSTitle">Logging &amp; Notifications…</string>
@@ -1892,6 +1900,7 @@
 						<array class="NSMutableArray" key="children">
 							<reference ref="136013487"/>
 							<reference ref="517408328"/>
+							<reference ref="901842175"/>
 						</array>
 						<reference key="parent" ref="503703545"/>
 					</object>
@@ -1913,6 +1922,11 @@
 					<object class="IBObjectRecord">
 						<int key="objectID">543</int>
 						<reference key="object" ref="517408328"/>
+						<reference key="parent" ref="433591544"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">544</int>
+						<reference key="object" ref="901842175"/>
 						<reference key="parent" ref="433591544"/>
 					</object>
 				</array>
@@ -2077,6 +2091,7 @@
 				<string key="534.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="540.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="543.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
+				<string key="544.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="56.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<integer value="1" key="56.ImportedFromIB2"/>
 				<string key="57.IBEditorWindowLastContentRect">{{416, 203}, {275, 183}}</string>
@@ -2116,7 +2131,7 @@
 			<nil key="activeLocalization"/>
 			<dictionary class="NSMutableDictionary" key="localizations"/>
 			<nil key="sourceID"/>
-			<int key="maxID">543</int>
+			<int key="maxID">544</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<array class="NSMutableArray" key="referencedPartialClassDescriptions">
