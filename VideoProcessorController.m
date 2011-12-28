@@ -292,6 +292,9 @@ static void createFolderIfNecessary(NSString *path)
             _currentlyTrackingProcessor = [vp retain];
             _trackingBeginTime = presentationTime;
             
+            // Ensure that the plate tracking processor has the intended orientation
+            [vp setPlateOrientation:[self plateOrientation]];
+            
             // Clear the past barcodes
             [_barcodesSinceTrackingBegan removeAllObjects];
             
@@ -552,6 +555,7 @@ static inline BOOL isValidPath(NSString *path, NSFileManager *fileManager)
 {
     NSFileManager *fileManager = [[NSFileManager alloc] init];
     
+    // If there isn't a ffmpeg executable in the bundle, see if the user or system has one
     NSString *path = [[NSBundle mainBundle] pathForAuxiliaryExecutable:@"ffmpeg"];
     if (!isValidPath(path, fileManager)) {
         path = [[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"ffmpeg"];
