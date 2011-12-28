@@ -34,7 +34,6 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     
     ProcessingState _processingState;
     int _wellCountHint;
-    int _wellRadiusHint;
     NSTimeInterval _firstWellFrameTime;
     NSTimeInterval _lastBarcodeScanTime;
     
@@ -105,7 +104,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     // This method is synchronous so that we don't enqueue frames faster than they should be processed. QT will drop the overflow.
     dispatch_sync(_queue, ^{
         if (_plateData) {
-            [_plateData incrementTotalFrameCount];
+            [_plateData incrementReceivedFrameCount];
         }
         
         // If we're not already processing an image for wells, and no other processor has a plate, schedule an async processing
@@ -187,8 +186,8 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
             double mean, stddev;
             [_plateData processingTimeMean:&mean stdDev:&stddev inLastFrames:100];
             if (mean > 0.0) {
-                double fps = (double)[_plateData totalFrameCount] / ([_plateData lastPresentationTime] - [_plateData startPresentationTime]);
-                double drop = (double)[_plateData frameDropCount] / [_plateData totalFrameCount];
+                double fps = (double)[_plateData receivedFrameCount] / ([_plateData lastPresentationTime] - [_plateData startPresentationTime]);
+                double drop = (double)[_plateData frameDropCount] / ([_plateData receivedFrameCount] + [_plateData frameDropCount]);
                 
                 char text[100];
                 snprintf(text, sizeof(text), "%.0f ms/f (SD: %.0f ms), %.1f fps, %.0f%% drop", mean * 1000, stddev * 1000, fps, drop * 100);
@@ -222,7 +221,6 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     
     // Get instance variables while holding _queue for thread-safety
     int wellCountHint = _wellCountHint;
-    int wellRadiusHint = _wellRadiusHint;
     bool searchAllPlateSizes = _processingState == ProcessingStateNoPlate;
     
     // Perform the calculation on a concurrent queue so that we don't block the current thread
@@ -233,7 +231,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         if (searchAllPlateSizes) {
             plateFound = findWellCircles([videoFrame image], wellCircles, wellCountHint);
         } else {
-            plateFound = findWellCirclesForWellCount([videoFrame image], wellCountHint, wellCircles, wellRadiusHint);
+            plateFound = findWellCirclesForWellCount([videoFrame image], wellCountHint, wellCircles);
         }
         
         // Process and store the results when holding _queue
@@ -247,7 +245,6 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                 // If we've found a plate, store the well count to improve the performance of future searches
                 if (plateFound) {
                     _wellCountHint = wellCircles.size();
-                    _wellRadiusHint = wellCircles[0].radius;
                 }
                 
                 switch (_processingState) {

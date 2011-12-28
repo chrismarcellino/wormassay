@@ -15,7 +15,7 @@ static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &
 @interface PlateData () {
     NSUInteger _wellCount;
     NSTimeInterval _startPresentationTime;
-    NSUInteger _totalFrameCount;
+    NSUInteger _receivedFrameCount;
     NSUInteger _frameDropCount;
     std::vector<double> _presentationTimes;
     std::vector<std::vector<double> > _occupancyFractionsByWell;
@@ -30,7 +30,7 @@ static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &
 
 @synthesize wellCount = _wellCount;
 @synthesize startPresentationTime = _startPresentationTime;
-@synthesize totalFrameCount = _totalFrameCount;
+@synthesize receivedFrameCount = _receivedFrameCount;
 @synthesize frameDropCount = _frameDropCount;
 
 - (id)initWithWellCount:(NSUInteger)wellCount startPresentationTime:(NSTimeInterval)presentationTime
@@ -79,9 +79,9 @@ static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &
     return _presentationTimes.size();
 }
 
-- (void)incrementTotalFrameCount
+- (void)incrementReceivedFrameCount
 {
-    _totalFrameCount++;
+    _receivedFrameCount++;
 }
 
 - (void)incrementFrameDropCount

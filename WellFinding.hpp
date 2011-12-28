@@ -29,7 +29,7 @@ extern bool getPlateConfigurationForWellCount(int wellCount, int &rows, int &col
 // row major order, as (x-center, y-center, radius) triples. The first version determines the well count automatically.
 // The second provides a lower latency to failure when the number of wells expected is known. 
 extern bool findWellCircles(IplImage* inputImage, std::vector<Circle> &circles, int wellCountHint = -1);
-extern bool findWellCirclesForWellCount(IplImage* inputImage, int wellCount, std::vector<Circle> &circlesVec, int expectedRadius = -1);
+extern bool findWellCirclesForWellCount(IplImage* inputImage, int wellCount, std::vector<Circle> &circlesVec);
 
 // Calcualtes the arithmetic mean of the circles' centers
 extern CvPoint plateCenterForWellCircles(const std::vector<Circle> &circles);

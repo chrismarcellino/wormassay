@@ -16,7 +16,7 @@
 @property(readonly) NSUInteger wellCount;
 @property(readonly) NSTimeInterval startPresentationTime;
 @property(readonly) NSTimeInterval lastPresentationTime;
-@property(readonly) NSUInteger totalFrameCount;
+@property(readonly) NSUInteger receivedFrameCount;
 @property(readonly) NSUInteger frameDropCount;
 @property(readonly) NSUInteger sampleCount;
 
@@ -26,7 +26,7 @@
 
 - (void)addProcessingTime:(NSTimeInterval)processingTime;
 
-- (void)incrementTotalFrameCount;
+- (void)incrementReceivedFrameCount;
 - (void)incrementFrameDropCount;
 
 - (void)occupancyFractionMean:(double *)mean stdDev:(double *)stddev forWell:(NSUInteger)well;

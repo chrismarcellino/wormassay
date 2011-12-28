@@ -14,16 +14,13 @@
 #import <dispatch/dispatch.h>
 
 
-static bool findWellCirclesForWellCounts(IplImage* inputImage,
-                                         std::vector<int> wellCounts,
-                                         std::vector<Circle> &circles,
-                                         int expectedRadius = -1);
+static bool findWellCirclesForWellCounts(IplImage* inputImage, std::vector<int> wellCounts, std::vector<Circle> &circles);
 
 static bool findWellCirclesForWellCountsUsingImage(IplImage* image,
                                                    const std::vector<int> &wellCounts,
                                                    std::vector<Circle> *circles,
                                                    double *score,
-                                                   int expectedRadius);
+                                                   int expectedRadius = -1);
 
 static bool findWellCirclesForWellCountUsingImage(IplImage* image,
                                                   int wellCount,
@@ -92,15 +89,12 @@ bool findWellCircles(IplImage* inputImage, std::vector<Circle> &circles, int wel
     return findWellCirclesForWellCounts(inputImage, wellCounts, circles);
 }
 
-bool findWellCirclesForWellCount(IplImage* inputImage, int wellCount, std::vector<Circle> &circlesVec, int expectedRadius)
+bool findWellCirclesForWellCount(IplImage* inputImage, int wellCount, std::vector<Circle> &circlesVec)
 {
-    return findWellCirclesForWellCounts(inputImage, std::vector<int>(1, wellCount), circlesVec, expectedRadius);
+    return findWellCirclesForWellCounts(inputImage, std::vector<int>(1, wellCount), circlesVec);
 }
 
-static bool findWellCirclesForWellCounts(IplImage* inputImage,
-                                  std::vector<int> wellCounts,
-                                  std::vector<Circle> &circles,
-                                  int expectedRadius)
+static bool findWellCirclesForWellCounts(IplImage* inputImage, std::vector<int> wellCounts, std::vector<Circle> &circles)
 {
     // Only report failed circle sets if they are not too noisy
     double score = 0.5;
@@ -108,10 +102,10 @@ static bool findWellCirclesForWellCounts(IplImage* inputImage,
     // Convert the input image to grayscale
     IplImage* grayscaleImage = cvCreateImage(cvGetSize(inputImage), IPL_DEPTH_8U, 1);
     cvCvtColor(inputImage, grayscaleImage, CV_BGRA2GRAY);
-    bool success = findWellCirclesForWellCountsUsingImage(grayscaleImage, wellCounts, &circles, &score, expectedRadius);
+    bool success = findWellCirclesForWellCountsUsingImage(grayscaleImage, wellCounts, &circles, &score);
     
     // If not found and we didn't have an expected radius, try again but seed with the mean radius of the wells that were found.
-    if (!success && expectedRadius == 0) {
+    if (!success) {
         int meanRadiusFound = (int)meanRadiusForCircles(circles);
         if (meanRadiusFound > 0) {
             success = findWellCirclesForWellCountsUsingImage(grayscaleImage, wellCounts, &circles, &score, meanRadiusFound);
@@ -126,8 +120,8 @@ static bool findWellCirclesForWellCounts(IplImage* inputImage,
         cvCvtColor(unsharpMask, grayscaleUnsharpMaskImage, CV_BGRA2GRAY);
         cvReleaseImage(&unsharpMask);
         
-        success = findWellCirclesForWellCountsUsingImage(grayscaleUnsharpMaskImage, wellCounts, &circles, &score, expectedRadius);
-        if (!success && expectedRadius == 0) {
+        success = findWellCirclesForWellCountsUsingImage(grayscaleUnsharpMaskImage, wellCounts, &circles, &score);
+        if (!success) {
             int meanRadiusFound = (int)meanRadiusForCircles(circles);
             if (meanRadiusFound > 0) {
                 success = findWellCirclesForWellCountsUsingImage(grayscaleUnsharpMaskImage, wellCounts, &circles, &score, meanRadiusFound);
@@ -227,6 +221,10 @@ static bool findWellCirclesForWellCountUsingImage(IplImage* image,
     // Take the set of all circles whose centers are approximately colinear with other circles along axis aligned lines
     // in both dimensions. Discard all others.
     int colinearityThreshold = maxRadius / 2;
+    // Low well count plates require much more colinearity, as it is too easy to pick out a set of random circles from visual noise/surroundings
+    if (wellCount <= 6) {
+        colinearityThreshold = maxRadius / 8;
+    }
     
     // Do two passes so that we only start filtering entire rows once we've filtered out spurious circles
     for (int pass = 0; pass < 2; pass++) {
