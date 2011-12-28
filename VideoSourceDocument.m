@@ -17,7 +17,7 @@
 NSString *const CaptureDeviceScheme = @"capturedevice";
 NSString *const CaptureDeviceFileType = @"dyn.capturedevice";
 
-static NSPoint LastCascadePoint = { 0.0, 0.0 };
+static NSPoint upperLeftForFrame(NSRect frame);
 
 NSURL *URLForCaptureDeviceUniqueID(NSString *uniqueID)
 {
@@ -162,8 +162,11 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 
 - (void)makeWindowControllers
 {
-    NSRect contentRect = NSZeroRect;
+    NSRect visibleScreenFrame = [[NSScreen mainScreen] visibleFrame];
+    NSRect contentRect;
     contentRect.size = [self lastKnownResolution];
+    contentRect.origin = NSMakePoint(visibleScreenFrame.origin.x,
+                                     visibleScreenFrame.origin.y + visibleScreenFrame.size.height - contentRect.size.height);
     
     // Create the window to hold the content view and contrain it to preserve the aspect ratio
     NSUInteger styleMask = NSTitledWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask;
@@ -188,18 +191,26 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
     [window release];
     [windowController release];
     
-    // Cascade the window if it doesn't have a previously saved position
-    NSRect frame = [window frame];
-    if (frame.origin.x == 0.0 && frame.origin.y == 0.0) {
-        LastCascadePoint = [window cascadeTopLeftFromPoint:LastCascadePoint];
-    }
-    
-    // Remove the icon and disable the close butotn if this is a capture device
+    // Remove the icon if this is a capture device
     if (_captureDevice) {
         [window setRepresentedURL:nil];
     }
     
     [self adjustWindowSizing];
+    
+    // Cascade the window if it is has the same upper left point as another window
+    NSPoint windowUpperLeft = upperLeftForFrame([window frame]);
+    for (NSWindow *anotherWindow in [NSApp windows]) {
+        if (window != anotherWindow && NSEqualPoints(windowUpperLeft, upperLeftForFrame([anotherWindow frame]))) {
+            [window setFrameTopLeftPoint:[window cascadeTopLeftFromPoint:windowUpperLeft]];
+            break;
+        }
+    }
+}
+
+static NSPoint upperLeftForFrame(NSRect frame)
+{
+    return NSMakePoint(frame.origin.x, frame.origin.y + frame.size.height);
 }
 
 - (void)adjustWindowSizing
@@ -321,7 +332,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
                 QTTime currentFrameTime = [_movie currentTime];
                 CGImageRef videoFrame = (CGImageRef)[_movie frameImageAtTime:currentFrameTime withAttributes:attributes error:&error];
                 if (error) {
-                    NSLog(@"Video frame decode error: %@", error);
+                    RunLog(@"Video frame decode error: %@", error);
                 }
                 if (videoFrame) {
                     IplImageObject *image = [[IplImageObject alloc] initByCopyingCGImage:videoFrame resultChannelCount:4];
@@ -386,10 +397,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
        fromConnection:(QTCaptureConnection *)connection
 {
-    _frameDropCount++;
-    if (_frameDropCount == 10 || _frameDropCount == 100 || _frameDropCount % 1000 == 0) {
-        RunLog(@"Device %@ dropped %llu total frames", _sourceIdentifier, (unsigned long long)_frameDropCount);
-    }
+    [_processor incrementFrameDropCount];
 }
 
 // This method will be called on a background thread. It will not be called again until the current call returns.
@@ -402,7 +410,7 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
     }];
     
     NSTimeInterval delta = CACurrentMediaTime() - time;
-    NSLog(@"######## FRAME PROCESSING TIME: %.0f ms (%.1f fps)", delta * 1000, 1.0 / delta);  // XXX
+    RunLog(@"######## FRAME PROCESSING TIME: %.0f ms (%.1f fps)", delta * 1000, 1.0 / delta);  // XXX
 }
 
 - (NSString *)displayName

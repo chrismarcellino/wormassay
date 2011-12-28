@@ -34,6 +34,8 @@ typedef enum {
          presentationTime:(NSTimeInterval)presentationTime
        debugFrameCallback:(void (^)(IplImageObject *image))callback;    // callback will be called on a background queue
 
+- (void)incrementFrameDropCount;
+
 @end
 
 

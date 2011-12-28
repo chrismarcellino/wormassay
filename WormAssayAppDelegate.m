@@ -9,6 +9,7 @@
 #import "WormAssayAppDelegate.h"
 #import "VideoSourceDocument.h"
 #import "DocumentController.h"
+#import "VideoProcessorController.h"
 #import "VideoProcessor.h"
 #import <QTKit/QTKit.h>
 
@@ -52,7 +53,8 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     // Create the logging window and associate it with the VideoProcessorController
     NSRect screenFrame = [[NSScreen mainScreen] visibleFrame];
     NSRect rect = screenFrame;
-    rect.size.height = 200;
+    rect.size.width = MIN(1000, rect.size.width);
+    rect.size.height = MIN(200, rect.size.height);
     NSUInteger styleMask = NSTitledWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask | NSUtilityWindowMask;
     _loggingPanel = [[NSPanel alloc] initWithContentRect:rect styleMask:styleMask backing:NSBackingStoreBuffered defer:YES];
     [_loggingPanel setHidesOnDeactivate:NO];
@@ -64,8 +66,9 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     [_loggingPanel setContentView:textView];
     [textView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
     [textView release];
-    
     [_loggingPanel orderBack:self];
+    
+    [[VideoProcessorController sharedInstance] setRunLogTextStorage:[textView textStorage]];
     
     [self loadCaptureDevices];
 }

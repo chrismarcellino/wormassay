@@ -36,6 +36,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MIN;
     IplImageObject *_lastFrame;     // when tracking
     std::vector<Circle> _trackingWellCircles;    // circles used for tracking
     std::vector<Circle> _lastCircles;   // for debugging
+    NSUInteger _frameDropCount;
 }
 
 - (void)performWellDeterminationCalculationAsyncWithFrame:(IplImageObject *)videoFrame presentationTime:(NSTimeInterval)presentationTime;
@@ -282,11 +283,19 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MIN;
     _lastBarcodeScanTime = PresentationTimeDistantPast;
     _trackingWellCircles.clear();
     _lastCircles.clear();
+    _frameDropCount = 0;
 }
 
 - (void)beginRecordingVideo
 {
     
+}
+
+- (void)incrementFrameDropCount
+{
+    dispatch_async(_queue, ^{
+        _frameDropCount++;
+    });
 }
 
 @end

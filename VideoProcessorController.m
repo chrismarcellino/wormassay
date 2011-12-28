@@ -11,6 +11,8 @@
 
 @implementation VideoProcessorController
 
+@synthesize runLogTextStorage;
+
 + (VideoProcessorController *)sharedInstance
 {
     static dispatch_once_t pred = 0;
@@ -80,7 +82,7 @@
 - (void)videoProcessor:(VideoProcessor *)vp didCaptureBarcodeText:(NSString *)text atTime:(NSTimeInterval)presentationTime
 {
     dispatch_async(_queue, ^{
-        NSLog(@"CODE %@", text);
+        RunLog(@"CODE %@", text);
         // XXX DO SOME STUFF WITH THE RESULTS
     });
 }
@@ -89,18 +91,25 @@
 {
     va_list args;
     va_start(args, format);
-    NSString *string = [[NSString alloc] initWithFormat:format arguments:args];
+    NSMutableString *string = [[NSMutableString alloc] initWithFormat:format arguments:args];
     va_end(args);
     
+    [string appendString:@"\n"];        // Append a newline
+    
     dispatch_async(_queue, ^{
-        // XXX: todo, write documents folder appropriately, and show on screen in a window.
-        // for now, syslog.
-        NSLog(@"%@", string);
+        // XXX: Write to disk
+        
+        // Nested these blocks to preserve ordering between the disk file and log window
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:string];
+            [[self runLogTextStorage] appendAttributedString:attributedString];
+            [attributedString release];
+        });
     });
     [string release];
 }
 
-- (void)appendToResultsLog:(NSString *)format, ...
+- (void)appendToResultsCSVFile:(NSString *)format, ...
 {
     va_list args;
     va_start(args, format);

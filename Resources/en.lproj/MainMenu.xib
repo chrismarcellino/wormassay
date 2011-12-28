@@ -748,15 +748,7 @@
 								</object>
 								<object class="NSMenuItem" id="517408328">
 									<reference key="NSMenu" ref="433591544"/>
-									<string key="NSTitle">Logging Folder…</string>
-									<string key="NSKeyEquiv"/>
-									<int key="NSMnemonicLoc">2147483647</int>
-									<reference key="NSOnImage" ref="1033313550"/>
-									<reference key="NSMixedImage" ref="310636482"/>
-								</object>
-								<object class="NSMenuItem" id="338125518">
-									<reference key="NSMenu" ref="433591544"/>
-									<string key="NSTitle">Email Notifications…</string>
+									<string key="NSTitle">Logging &amp; Notifications…</string>
 									<string key="NSKeyEquiv"/>
 									<int key="NSMnemonicLoc">2147483647</int>
 									<reference key="NSOnImage" ref="1033313550"/>
@@ -1898,16 +1890,10 @@
 						<int key="objectID">531</int>
 						<reference key="object" ref="433591544"/>
 						<array class="NSMutableArray" key="children">
-							<reference ref="338125518"/>
 							<reference ref="136013487"/>
 							<reference ref="517408328"/>
 						</array>
 						<reference key="parent" ref="503703545"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">532</int>
-						<reference key="object" ref="338125518"/>
-						<reference key="parent" ref="433591544"/>
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">533</int>
@@ -2087,7 +2073,6 @@
 				<string key="531.IBEditorWindowLastContentRect">{{604, 269}, {231, 43}}</string>
 				<string key="531.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="531.editorWindowContentRectSynchronizationRect">{{475, 832}, {234, 43}}</string>
-				<string key="532.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="533.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="534.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="540.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
