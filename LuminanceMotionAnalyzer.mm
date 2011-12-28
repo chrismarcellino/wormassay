@@ -62,7 +62,7 @@ static const char* WellOccupancyID = "WellOccupancy";
     cvAbsDiff([videoFrame image], [_lastFrame image], plateDelta);
     
     // Gaussian blur the delta in place
-    cvSmooth(plateDelta, plateDelta, CV_GAUSSIAN, 7, 7, 3, 3);
+    cvSmooth(plateDelta, plateDelta, CV_GAUSSIAN, 0, 0, 3, 3);
     
     // Convert the delta to luminance
     IplImage* deltaLuminance = cvCreateImage(cvGetSize(plateDelta), IPL_DEPTH_8U, 1);
@@ -81,8 +81,8 @@ static const char* WellOccupancyID = "WellOccupancy";
         // Draw the movement text
         CvFont wellFont = fontForNormalizedScale(3.5, debugImage);
         cvPutText(debugImage,
-                  "CAMERA OR PLATE MOVING",
-                  cvPoint(debugImage->width * 0.1, debugImage->height * 0.55),
+                  "SUBJECT OR LIGHTING MOVING",
+                  cvPoint(debugImage->width * 0.075, debugImage->height * 0.55),
                   &wellFont,
                   CV_RGBA(232, 0, 217, 255));
         return NO;

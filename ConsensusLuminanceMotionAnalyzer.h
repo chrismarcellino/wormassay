@@ -10,9 +10,6 @@
 #import "AssayAnalyzer.h"
 
 @interface ConsensusLuminanceMotionAnalyzer : NSObject <AssayAnalyzer> {
-    NSUInteger _numberOfVotingFrames;
-    double _quorumProportion;
-    
     NSMutableArray *_lastFrames;
     NSMutableArray *_deltaThresholded;
     IplImage* _insetInvertedCircleMask;
