@@ -319,18 +319,21 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
 // Called on main thread
 - (void)close
 {
-    // Work around AppKit calling close twice in succession
     if (!_closeCalled) {
         _closeCalled = YES;
         RunLog(@"Closing %@: %@", _captureDevice ? @"removed device" : @"file", _sourceIdentifier);
         [[VideoProcessorController sharedInstance] removeVideoProcessor:_processor];
         
-        [_captureSession stopRunning];
-        [_captureDecompressedVideoOutput setDelegate:nil];
-        [_movieView pause:self];
-        if ([_movieView delegate] == self) {
-            [self autorelease];
-            [_movieView setDelegate:nil];
+        if (_captureDevice) {
+            [_captureSession stopRunning];
+            [_captureDecompressedVideoOutput setDelegate:nil];
+        } else {
+            [NSThread sleepForTimeInterval:0.1];     // work around hard to reproduce CIImage/QTMovieView thread safety issues
+            [_movieView pause:self];
+            if ([_movieView delegate] == self) {
+                [self autorelease];
+                [_movieView setDelegate:nil];
+            }
         }
     }
     [super close];

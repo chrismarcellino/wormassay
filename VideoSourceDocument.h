@@ -29,7 +29,6 @@ extern BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device);
     QTCaptureDeviceInput *_captureDeviceInput;
     QTCaptureDecompressedVideoOutput *_captureDecompressedVideoOutput;
     dispatch_queue_t _frameArrivalQueue;
-    dispatch_queue_t _frameProcessingQueue;
     BOOL _currentlyProcessingFrame;
     
     QTMovie *_movie;

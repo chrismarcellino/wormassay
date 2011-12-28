@@ -187,7 +187,9 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
         
         dispatch_async(_queue, ^{
             for (VideoProcessor *videoProcessor in _videoProcessors) {
-                [videoProcessor setPlateOrientation:plateOrietation];
+                if (![videoProcessor fileSourceFilename]) {
+                    [videoProcessor setPlateOrientation:plateOrietation];
+                }
             }
         });
     }
@@ -259,7 +261,9 @@ static void createFolderIfNecessary(NSString *path)
         [_videoProcessors addObject:videoProcessor];
         [videoProcessor setDelegate:self];
         [videoProcessor setAssayAnalyzerClass:[self currentAssayAnalyzerClass]];
-        [videoProcessor setPlateOrientation:[self plateOrientation]];
+        if (![videoProcessor fileSourceFilename]) {
+            [videoProcessor setPlateOrientation:[self plateOrientation]];
+        }
         [videoProcessor setShouldScanForWells:YES];
     });
 }
