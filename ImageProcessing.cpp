@@ -64,7 +64,7 @@ std::string wellIdentifierStringForIndex(int index, int wellCount)
     return str;
 }
 
-bool findWellCircles(IplImage *inputImage, int &wellCount, std::vector<cv::Vec3f> &circles, int wellCountHint)
+bool findWellCircles(IplImage *inputImage, std::vector<cv::Vec3f> &circles, int wellCountHint)
 {
     std::vector<int> wellCounts = knownPlateWellCounts();
     if (wellCountHint > 0) {
@@ -83,7 +83,6 @@ bool findWellCircles(IplImage *inputImage, int &wellCount, std::vector<cv::Vec3f
     
     for (int i = 0; i < wellCounts.size(); i++) {
         if (findWellCirclesForPlateCount(inputImage, wellCounts[i], circles, score)) {
-            wellCount = wellCounts[i];
             return true;
         }
         
@@ -270,7 +269,9 @@ extern bool plateSequentialCirclesAppearSameAndStationary(std::vector<cv::Vec3f>
         return false;
     }
     
-    // Return false if the center of the plate has moved more than the (mean radius) / 10 pxiels
+    // Return false if the center of the plate has moved more than the (mean radius) / 10 pxiels.
+    // This is a useful comparison as the average position of all circles have relatively little variance, as where each
+    // individual well has much more noise. 
     CvPoint centerPrevious = plateCenterForWellCircles(circlesPrevious);
     CvPoint centerNext = plateCenterForWellCircles(circlesNext);
     float deltaX = centerPrevious.x - centerNext.x;

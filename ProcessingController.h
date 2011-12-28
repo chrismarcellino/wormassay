@@ -27,10 +27,15 @@ typedef enum {
     
     ProcessingState _state;
     NSString *_wellCameraSourceIdentifier;
+    NSArray *_wellFindingInProcessSourceIdentifiers;
+    NSArray *_barcodeFindingInProcessSourceIdentifiers;
     int _wellCountHint;
 #if __cplusplus     // hide C++ ivars from non C++ clients. This is only safe to do on the 64-bit Objective-C ABI, which this app requires.
-    std::vector<cv::Vec3f> _cicrles;
+    std::vector<cv::Vec3f> _baselineWellCircles;
 #endif
+    
+    NSTimeInterval _startOfTrackingMotionTime;
+    NSString *_barcode;
 }
 
 + (ProcessingController *)sharedInstance;

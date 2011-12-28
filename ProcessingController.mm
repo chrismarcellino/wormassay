@@ -15,6 +15,14 @@
                                                     fromSourceIdentifier:(NSString *)sourceIdentifier
                                                        frameAbsoluteTime:(NSTimeInterval)frameAbsoluteTime;
 
+- (void)resetCaptureStateAndReportDataIfPossible;
+
+- (void)performBarcodeReadingAsyncWithFrameTakingOwnership:(IplImage *)videoFrame
+                                      fromSourceIdentifier:(NSString *)sourceIdentifier
+                                         frameAbsoluteTime:(NSTimeInterval)frameAbsoluteTime;
+
+- (void)beginRecordingVideo;
+
 @end
 
 
@@ -36,6 +44,7 @@
         _queue = dispatch_queue_create("ProcessingController queue", NULL);
         _debugFrameCallbackQueue = dispatch_queue_create("Debug frame callback queue", NULL);
         _processingState = ProcessingStateNoPlate;
+        _wellFindingInProcessSourceIdentifiers = [[NSMutableArray alloc] init];
         
         // Initialize the debugging font
         cvInitFont(&debugImageFont, CV_FONT_HERSHEY_SIMPLEX, 1.0, 1.0, 0, 1);
@@ -58,38 +67,29 @@
 debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callback
 {
     dispatch_sync(_queue, ^{
-        switch (_state) {
-            case ProcessingStateNoPlate:
-                // No well positions acquired, so start an asynchronous analysis using a copy of the image,
-                // since it must persist pass the return of this method
-                IplImage *videoFrameCopy = cvCloneImage(videoFrame);
-                [self performWellDeterminationCalculationAsyncWithFrameTakingOwnership:videoFrameCopy frameAbsoluteTime:frameAbsoluteTime];
-                // Transition the state to waiting, so we don't start any more calculations in the interim
-                _state = ProcessingStateWaitingForFirstWellAnalysisResults;
-                break;
-            case ProcessingStateWaitingForFirstWellAnalysisResults:
-                // Self-edge
-                break;
-            case ProcessingStateWaitingForFrameToBeginSecondWellAnalysis:
-                // Begin async processing of another frame
-                IplImage *videoFrameCopy = cvCloneImage(videoFrame);
-                [self performWellDeterminationCalculationAsyncWithFrameTakingOwnership:videoFrameCopy frameAbsoluteTime:frameAbsoluteTime];
-                _state = ProcessingStateWaitingForSecondWellAnalysisResults;
-                break;
-            case ProcessingStateWaitingForSecondWellAnalysisResults:
-                // Self-edge
-                break;:
-            case ProcessingStateAcquiringMotionFramesWaitingToBeginWellAnalysis:
-            case ProcessingStateAcquiringMotionFramesAndWaitingForWellAnalysisResults:
-                // If we need to start another well analysis, do so async
-                if (_state == ProcessingStateAcquiringMotionFramesWaitingToBeginWellAnalysis) {
-                    IplImage *videoFrameCopy = cvCloneImage(videoFrame);
-                    [self performWellDeterminationCalculationAsyncWithFrameTakingOwnership:videoFrameCopy frameAbsoluteTime:frameAbsoluteTime];
-                    _state = ProcessingStateAcquiringMotionFramesAndWaitingForWellAnalysisResults;
-                }
-                
-                // XXX: start storing statistics on worm motion
-                break;
+        // If we're not already in the process of anaylzing a frame from this source for wells, and we are interested
+        // in this source, start an asynchronous analysis using a copy of the image (since the copy will persist pass
+        // the return of this method.)
+        bool alreadySearchingForThisSouce = [_wellFindingInProcessSourceIdentifiers containsObject:sourceIdentifier];
+        bool interestedInThisSouce = _state == ProcessingStateNoPlate || [_wellCameraSourceIdentifier isEqual:sourceIdentifier];
+        if (!alreadySearchingForThisSouce && interestedInThisSouce) {
+            [self performWellDeterminationCalculationAsyncWithFrameTakingOwnership:cvCloneImage(videoFrame)
+                                                              fromSourceIdentifier:sourceIdentifier
+                                                                 frameAbsoluteTime:frameAbsoluteTime];
+        }
+        
+        // If we are capturing, begin searching frames for a barcode until we obtrain one for this plate
+        if (!_barcode) {
+            [self performBarcodeReadingAsyncWithFrameTakingOwnership:cvCloneImage(videoFrame)
+                                                fromSourceIdentifier:sourceIdentifier
+                                                   frameAbsoluteTime:frameAbsoluteTime];
+        }
+        
+        // Record statistics on this image syncrhounsly (at frame rate), so that we drop frames if we can't keep up.
+        // It is imperative to base all statistics on the elapsed time so that the results are independent of hardware
+        // performance.
+        if (_state == ProcessingStateTrackingMotion) {
+            // XXX calculate stats
         }
         
         // Once we're done with the frame, draw debugging stuff on a copy and send it back
@@ -127,42 +127,111 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callbac
                                                     fromSourceIdentifier:(NSString *)sourceIdentifier
                                                        frameAbsoluteTime:(NSTimeInterval)frameAbsoluteTime
 {
+    [_wellFindingInProcessSourceIdentifiers addObject:sourceIdentifier];
+    
+    // Get instance variables while holding _queue
+    int wellCountHint = _wellCountHint;
+    
     // Perform the calculation on a concurrent queue so that we don't block the current thread
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         std::vector<cv::Vec3f> wellCircles;
-        int wellCount;
-        bool plateFound = findWellCircles(videoFrame, wellCount, wellCircles, _wellCountHint);        // gets wells in row major order
+        bool plateFound = findWellCircles(videoFrame, wellCircles, wellCountHint);        // gets wells in row major order
         
         // Process and store the results when holding _queue
         dispatch_async(_queue, ^{
+            [_wellFindingInProcessSourceIdentifiers removeOjbect:sourceIdentifiers];
+            
+            // If we've found a plate, store the well count to improve the performance of future searches
+            if (plateFound) {
+                _wellCountHint = wellCircles.size();
+            }
+            
             switch (_state) {
-                case ProcessingStateWaitingForFrameToBeginFirstWellAnaysis:
-                case ProcessingStateWaitingForFrameToBeginSecondWellCalculationResults:
-                case ProcessingStateAcquiringMotionFramesWaitingToBeginWellAnalysis:
-                    // non-existant edges
-                    @throw [NSException exceptionWithName:NSInternalInconsistencyException
-                                                   reason:@"Waiting to begin a frame process, but results just arrived"
-                                                 userInfo:nil];
-                case ProcessingStateWaitingForFirstWellAnalysisResults:
+                case ProcessingStateNoPlate:
                     if (plateFound) {
-                        // Store the identifier of camera that has the plate that we're interested in
-                        NSAssert(!_wellCameraSourceIdentifier, @"_wellCameraIdentifier shouldn't be set");
+                        NSAssert(!_wellCameraSourceIdentifier, @"In ProcessingStateNoPlate, but _wellCameraSourceIdentifier != nil");
                         _wellCameraSourceIdentifier = [sourceIdentifier copy];
-                        
+                        _state = ProcessingStatePlateFirstFrameIdentified;
+                        _baselineWellCircles = circles;     // store the first circles as the baseline for the second set
                     }
                     break;
-                case ProcessingStateWaitingForSecondWellAnalysisResults:
                     
+                case ProcessingStatePlateFirstFrameIdentified:
+                    // Since we've seen a plate in one camera, ignore any pending results from others
+                    if ([_wellCameraSourceIdentifier isEqual:sourceIdentifier]) {
+                        if (plateFound) {
+                            if (plateSequentialCirclesAppearSameAndStationary(_baselineWellCircles, wellCircles)) {
+                                _state = ProcessingStateTrackingMotion;
+                                _baselineWellCircles = circles; // store the second set as the baseline for all remaining sets
+                                _startOfTrackingMotionTime = frameAbsoluteTime;
+                                
+                                [self beginRecordingVideo];
+                            } else {
+                                // There is still a plate, but it doesn't match or has moved so we stay in this state
+                                _baselineWellCircles = circles;
+                            }
+                        } else {
+                            // Plate is gone so reset
+                            [self resetCaptureStateAndReportDataIfPossible];
+                        }
+                    }
                     break;
-                case ProcessingStateAcquiringMotionFramesAndWaitingForWellAnalysisResults:
                     
-                    break;
+                case ProcessingStateTrackingMotion:
+                    // Since we've seen a plate in one camera, ignore any pending results from others.
+                    // But if the plate is gone, moved or different, reset
+                    if ([_wellCameraSourceIdentifier isEqual:sourceIdentifier] && !plateFound || !plateSequentialCirclesAppearSameAndStationary(_baselineWellCircles, wellCircles)) {
+                        [self resetCaptureStateAndReportDataIfPossible];
+                    }
+                            
             }
         });
-    };
+    });
+}
 
-/*    CvPoint plateCenter = plateCenterForWellCircles(wellCircles);*/
+// requires _queue to be held
+- (void)resetCaptureStateAndReportDataIfPossible
+{
+    // XXX IF RECORDING
+        //[self endRecordingVideoWithName];
+    
+    // XXX if (RECORCORDING && > 5 seconds total), save the stats and stuff
+    
+    _state = ProcessingStateNoPlate;
+    [_wellCameraSourceIdentifier release];
+    _wellCameraSourceIdentifier = nil;
+    
+    _startOfTrackingMotionTime = 0.0;
+    
+    [_barcode release];
+    _barcode = nil;
+}
 
+// requires _queue to be held
+- (void)performBarcodeReadingAsyncWithFrameTakingOwnership:(IplImage *)videoFrame
+                                      fromSourceIdentifier:(NSString *)sourceIdentifier
+                                         frameAbsoluteTime:(NSTimeInterval)frameAbsoluteTime
+{
+    [_barcodeFindingInProcessSourceIdentifiers addObject:sourceIdentifier];
+    
+    // Perform the calculation on a concurrent queue so that we don't block the current thread
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        // XXX DO BARCODE FIND HERE (SYNC)
+        
+        // Process and store the results when holding _queue
+        dispatch_async(_queue, ^{
+            [_barcodeFindingInProcessSourceIdentifiers removeOjbect:sourceIdentifiers];
+            
+            if (frameAbsoluteTime >= _startOfTrackingMotionTime) {
+                // XXX STORE BARCODE RESULT TO BARCODE
+            }
+        });
+    });
+}
+
+- (void)beginRecordingVideo
+{
+    
 }
 
 - (void)logFormat:(NSString *)format, ...

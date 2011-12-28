@@ -274,8 +274,6 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
         // Ensure that we are able to read at least one frame
         NSDictionary *attributes = [[NSDictionary alloc] initWithObjectsAndKeys:
                                     QTMovieFrameImageTypeCGImageRef, QTMovieFrameImageType,
-                                    [NSNumber numberWithBool:NO], QTMovieFrameImageHighQuality,
-                                    [NSNumber numberWithBool:NO], QTMovieFrameImageDeinterlaceFields,
                                     nil];
         success = [_movie frameImageAtTime:[_movie currentTime] withAttributes:attributes error:outError] != nil;
         
