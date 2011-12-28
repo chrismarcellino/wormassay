@@ -10,6 +10,7 @@
 #import "opencv2/core/core_c.h"
 
 @class IplImageObject;
+@class PlateData;
 @protocol VideoProcessorDelegate;
 
 typedef enum {
@@ -34,7 +35,7 @@ typedef enum {
          presentationTime:(NSTimeInterval)presentationTime
        debugFrameCallback:(void (^)(IplImageObject *image))callback;    // callback will be called on a background queue
 
-- (void)incrementFrameDropCount;
+- (void)noteVideoFrameWasDropped;
 
 @end
 
@@ -42,7 +43,7 @@ typedef enum {
 @protocol VideoProcessorDelegate
 
 - (void)videoProcessorDidBeginTrackingPlate:(VideoProcessor *)vp;
-- (void)videoProcessor:(VideoProcessor *)vp didFinishAcquiringPlateResults:(id)something;
+- (void)videoProcessor:(VideoProcessor *)vp didFinishAcquiringPlateData:(PlateData *)plateData;
 - (void)videoProcessor:(VideoProcessor *)vp didCaptureBarcodeText:(NSString *)text atTime:(NSTimeInterval)presentationTime;
 
 @end

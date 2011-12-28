@@ -9,7 +9,9 @@
 #import "VideoProcessor.h"
 #import "ImageProcessing.hpp"
 #import "IplImageObject.h"
-#import "VideoProcessorController.h"
+#import "PlateData.h"
+#import <iostream>
+#import <iomanip>
 #import "zxing/common/GreyscaleLuminanceSource.h"
 #import "zxing/MultiFormatReader.h"
 #import "zxing/DecodeHints.h"
@@ -34,12 +36,12 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     int _wellRadiusHint;
     NSTimeInterval _firstWellFrameTime;
     NSTimeInterval _lastBarcodeScanTime;
-    NSTimeInterval _lastFrameTime;
     
+    PlateData *_plateData;
     IplImageObject *_lastFrame;     // when tracking
     std::vector<Circle> _trackingWellCircles;    // circles used for tracking
     std::vector<Circle> _lastCircles;   // for debugging
-    NSUInteger _frameDropCount;
+    NSString *_lastBarcodeThisProcessor;
 }
 
 - (void)performWellDeterminationCalculationAsyncWithFrame:(IplImageObject *)videoFrame presentationTime:(NSTimeInterval)presentationTime;
@@ -69,7 +71,9 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     [_sourceIdentifier release];
     dispatch_release(_queue);
     dispatch_release(_debugFrameCallbackQueue);
+    [_plateData release];
     [_lastFrame release];
+    [_lastBarcodeThisProcessor release];
     [super dealloc];
 }
 
@@ -97,6 +101,10 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 {
     // This method is synchronous so that we don't enqueue frames faster than they should be processed. QT will drop the overflow.
     dispatch_sync(_queue, ^{
+        if (_plateData) {
+            [_plateData incrementTotalFrameCount];
+        }
+        
         // If we're not already processing an image for wells, and no other processor has a plate, schedule an async processing
         if (!_scanningForWells && _shouldScanForWells) {
             [self performWellDeterminationCalculationAsyncWithFrame:videoFrame presentationTime:presentationTime];
@@ -120,28 +128,48 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                                                  [debugImage image]);
         }
         
+        // If this processor detected a barcode, draw it on the debug image
+        if (_lastBarcodeThisProcessor) {
+            // Draw the movement text
+            CvFont wellFont = fontForNormalizedScale(3.5, [debugImage image]);
+            cvPutText(debugImage, [_lastBarcodeThisProcessor UTF8String], cvPoint(10, 10), &wellFont, CV_RGBA(232, 0, 217, 255));
+        }
+        
         // Record statistics on the tracked image synchronously (at frame rate), so that we drop frames if we can't keep up.
         // It is important to base all statistics on the elapsed time so that the results are independent of hardware
         // performance.
         if (_processingState == ProcessingStateTrackingMotion) {
             if (_lastFrame) {
-                // XXX calculate and store stats
-                std::vector<float> occupancyProportions = calculateCannyEdgePixelProportionForWellsFromImages([videoFrame image],
-                                                                                                              _trackingWellCircles,
-                                                                                                              [debugImage image]);
-                std::vector<float> movedProportions = calculateMovedWellFractionPerSecondForWellsFromImages([_lastFrame image],
-                                                                                                            [videoFrame image],
-                                                                                                            presentationTime - _lastFrameTime,
-                                                                                                            _trackingWellCircles,
-                                                                                                            [debugImage image]);
+                // Calculate and store the data
+                std::vector<double> occupancyFractions = calculateCannyEdgePixelProportionForWellsFromImages([videoFrame image],
+                                                                                                             _trackingWellCircles,
+                                                                                                             [debugImage image]);
+                std::vector<double> normalizedMovedFractions = calculateMovedWellFractionPerSecondForWellsFromImages([_lastFrame image],
+                                                                                                                     [videoFrame image],
+                                                                                                                     presentationTime - [_plateData lastPresentationTime],
+                                                                                                                     _trackingWellCircles,
+                                                                                                                     [debugImage image]);
+                // If we were able to get stats, add them to the plate data
+                if (normalizedMovedFractions.size() > 0) {
+                    [_plateData addFrameOccupancyFractions:&*occupancyFractions.begin()
+                                  normalizedMovedFractions:&*normalizedMovedFractions.begin()
+                                        atPresentationTime:presentationTime];
+                }
                 
-                // XXX TEST
+                // Print the stats in the wells averaged over the last 10 seconds to limit computational complexity
                 CvFont wellFont = fontForNormalizedScale(1.0, [debugImage image]);
-                for (size_t i = 0; i < movedProportions.size(); i++) {
+                for (size_t i = 0; i < _trackingWellCircles.size(); i++) {
+                    double mean, stddev;
+                    [_plateData normalizedMovedFractionMean:&mean stdDev:&stddev forWell:i inLastSeconds:10];
+                    std::stringstream ss;
+                    ss << std::setprecision(0) << mean << " (SD: " << stddev << ")";
+                    std::string str;
+                    ss >> str;
+                    
                     float radius = _trackingWellCircles[i].radius;
                     CvPoint textPoint = cvPoint(_trackingWellCircles[i].center[0] - radius * 0.1, _trackingWellCircles[i].center[1]);
                     cvPutText([debugImage image],
-                              [[NSString stringWithFormat:@"%.0f", movedProportions[i] * 1000] UTF8String],
+                              str.c_str(),
                               textPoint,
                               &wellFont,
                               CV_RGBA(0, 255, 255, 255));
@@ -151,7 +179,6 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
             // Store the current image for the next pass
             [_lastFrame release];
             _lastFrame = [videoFrame retain];
-            _lastFrameTime = presentationTime;
         }
                 
         // Dispatch the debug image asynchronously to increase parallelism 
@@ -209,13 +236,17 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                     case ProcessingStatePlateFirstFrameIdentified:
                         if (plateFound) {
                             // If the second identification yields matching results as the first, and they are spread by at least
-                            // 100 ms, begin motion tracking and video recording
+                            // 250 ms, begin motion tracking and video recording
                             if (plateSequentialCirclesAppearSameAndStationary(_trackingWellCircles, wellCircles) &&
-                                presentationTime - _firstWellFrameTime >= 0.100) {
+                                presentationTime - _firstWellFrameTime >= 0.250) {
                                 _processingState = ProcessingStateTrackingMotion;
                                 _trackingWellCircles = wellCircles; // store the second set as the baseline for all remaining sets
                                 _lastBarcodeScanTime = PresentationTimeDistantPast;     // Now that plate is in place, immediately retry barcode capture
                                 
+                                // Create plate data and set start time
+                                NSAssert(!_plateData, @"plate data already exists");
+                                _plateData = [[PlateData alloc] initWithWellCount:wellCircles.size() startPresentationTime:presentationTime];
+                                // Begin recording video
                                 [self beginRecordingVideo];
                             } else {
                                 // There is still a plate, but it doesn't match or more likely is still moving moved, or not enough
@@ -279,6 +310,8 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         dispatch_async(_queue, ^{
             _scanningForBarcodes = NO;
             _lastBarcodeScanTime = presentationTime;
+            [_lastBarcodeThisProcessor release];
+            _lastBarcodeThisProcessor = [text retain];
             if (text) {
                 [_delegate videoProcessor:self didCaptureBarcodeText:text atTime:presentationTime];
             }
@@ -292,17 +325,22 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 // requires _queue to be held
 - (void)resetCaptureStateAndReportResults
 {
-    // XXX IF RECORDING
-    //[self endRecordingVideoWithName];
-    // XXX if (RECORCORDING && > 5 seconds total), save the stats and stuff
+    // Send the stats unconditionally and let the controller sort it out
+    [_delegate videoProcessor:self didFinishAcquiringPlateData:_plateData];
+        // SAVE AND NAME VIDEO XXX DONT DEADLOCK WHEN GETTING RESULT NAME  (INSTEAD PASS TEMP FILE NAME TO VIDEO PROCESSOR
+        //[self endRecordingVideoWithName];
+        // ELSE IF TOO SHORT DELETE THE VIDEO
     
     _processingState = ProcessingStateNoPlate;
+    [_plateData release];
+    _plateData = nil;
+    [_lastFrame release];
+    _lastFrame = nil;
     
     _firstWellFrameTime = PresentationTimeDistantPast;
     _lastBarcodeScanTime = PresentationTimeDistantPast;
     _trackingWellCircles.clear();
     _lastCircles.clear();
-    _frameDropCount = 0;
 }
 
 - (void)beginRecordingVideo
@@ -310,10 +348,12 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     
 }
 
-- (void)incrementFrameDropCount
+- (void)noteVideoFrameWasDropped
 {
     dispatch_async(_queue, ^{
-        _frameDropCount++;
+        if (_plateData) {
+            [_plateData incrementFrameDropCount];
+        }
     });
 }
 

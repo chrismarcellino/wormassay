@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		210D6E9E134BAC5300BCD6F1 /* VideoProcessor.mm in Sources */ = {isa = PBXBuildFile; fileRef = 210D6E9D134BAC5300BCD6F1 /* VideoProcessor.mm */; };
+		2119D2CC135A101E00C5B32F /* PlateData.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2119D2CB135A101E00C5B32F /* PlateData.mm */; };
 		21264FEC1353FAE600F2DCD8 /* VideoProcessorController.m in Sources */ = {isa = PBXBuildFile; fileRef = 21264FEB1353FAE600F2DCD8 /* VideoProcessorController.m */; };
 		21426FAF134683DB00AF78E5 /* VideoSourceDocument.m in Sources */ = {isa = PBXBuildFile; fileRef = 21426FAE134683DA00AF78E5 /* VideoSourceDocument.m */; };
 		2162B18613521ABD0081EFDD /* IplImageObject.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2162B18513521ABC0081EFDD /* IplImageObject.mm */; };
@@ -283,6 +284,8 @@
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		210D6E9C134BAC5300BCD6F1 /* VideoProcessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoProcessor.h; sourceTree = SOURCE_ROOT; };
 		210D6E9D134BAC5300BCD6F1 /* VideoProcessor.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = VideoProcessor.mm; sourceTree = SOURCE_ROOT; };
+		2119D2CA135A101E00C5B32F /* PlateData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlateData.h; sourceTree = SOURCE_ROOT; };
+		2119D2CB135A101E00C5B32F /* PlateData.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = PlateData.mm; sourceTree = SOURCE_ROOT; };
 		21264FEA1353FAE600F2DCD8 /* VideoProcessorController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoProcessorController.h; sourceTree = SOURCE_ROOT; };
 		21264FEB1353FAE600F2DCD8 /* VideoProcessorController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VideoProcessorController.m; sourceTree = SOURCE_ROOT; };
 		21426FAD134683DA00AF78E5 /* VideoSourceDocument.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoSourceDocument.h; sourceTree = SOURCE_ROOT; };
@@ -387,7 +390,7 @@
 		218DD558134543FF000B6475 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		218DD55A13454411000B6475 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		218DD55C1345441A000B6475 /* WormAssay-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "WormAssay-Info.plist"; sourceTree = SOURCE_ROOT; };
-		218DD55D1345445B000B6475 /* WormAssayAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lineEnding = 0; path = WormAssayAppDelegate.h; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		218DD55D1345445B000B6475 /* WormAssayAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = WormAssayAppDelegate.h; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		218DD55E1345445B000B6475 /* WormAssayAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = WormAssayAppDelegate.m; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		218DD57513455374000B6475 /* Worm.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Worm.icns; sourceTree = "<group>"; };
 		2190977E1357598D00EEE2BB /* libzxing.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libzxing.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1023,6 +1026,8 @@
 				21264FEB1353FAE600F2DCD8 /* VideoProcessorController.m */,
 				210D6E9C134BAC5300BCD6F1 /* VideoProcessor.h */,
 				210D6E9D134BAC5300BCD6F1 /* VideoProcessor.mm */,
+				2119D2CA135A101E00C5B32F /* PlateData.h */,
+				2119D2CB135A101E00C5B32F /* PlateData.mm */,
 			);
 			name = Controllers;
 			path = WormAssay;
@@ -1326,6 +1331,7 @@
 				210D6E9E134BAC5300BCD6F1 /* VideoProcessor.mm in Sources */,
 				2162B18613521ABD0081EFDD /* IplImageObject.mm in Sources */,
 				21264FEC1353FAE600F2DCD8 /* VideoProcessorController.m in Sources */,
+				2119D2CC135A101E00C5B32F /* PlateData.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

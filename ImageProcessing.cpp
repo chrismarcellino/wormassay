@@ -12,8 +12,8 @@
 #import <math.h>
 #import <dispatch/dispatch.h>
 
-static const float MovedPixelPlateMovingProportionThreshold = 0.02;
-static const float WellEdgeFindingInsetProportion = 0.7;
+static const double MovedPixelPlateMovingProportionThreshold = 0.02;
+static const double WellEdgeFindingInsetProportion = 0.7;
 
 static std::vector<Circle> convertCvVec3fSeqToCircleVector(CvSeq *seq);
 static int sortCircleCentersByAxis(const void* a, const void* b, void* userdata);
@@ -86,8 +86,8 @@ bool findWellCircles(IplImage *inputImage, std::vector<Circle> &circles, int wel
     }
     
     // Iterate through all well count values
-    float bestScore = -1.0;
-    float score;
+    double bestScore = -1.0;
+    double score;
     std::vector<Circle> bestCircles;
     
     for (size_t i = 0; i < wellCounts.size(); i++) {
@@ -110,7 +110,7 @@ bool findWellCircles(IplImage *inputImage, std::vector<Circle> &circles, int wel
     return false;
 }
 
-bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vector<Circle> &circlesVec, int expectedRadius, float *score)
+bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vector<Circle> &circlesVec, int expectedRadius, double *score)
 {
     // Convert the input image to grayscale
     IplImage *grayInputImage = cvCreateImage(cvGetSize(inputImage), IPL_DEPTH_8U, 1);
@@ -121,7 +121,7 @@ bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vect
     getPlateConfigurationForWellCount(wellCount, rows, columns);
     int smallerImageDimension = MIN(inputImage->width, inputImage->height);
     int largerImageDimension = MAX(inputImage->width, inputImage->height);
-    float errorTolerance = 0.20;      // 20%, see below
+    double errorTolerance = 0.20;      // 20%, see below
     
     // Notes on assumptions made for well dimensions:
     // Microtiter plates are 120 mm x 80 mm, which is a 3:2 ratio. We assume that the plate will
@@ -222,7 +222,7 @@ bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vect
     // Determine if this is a valid plate and provide scores for debugging
     bool success = circles->total == wellCount && allColinearCirclesFound;
     if (score) {
-        *score = MAX(1.0 - (float)abs(circles->total - wellCount) / wellCount - (allColinearCirclesFound ? 0.0 : 0.01), 0.0);
+        *score = MAX(1.0 - (double)abs(circles->total - wellCount) / wellCount - (allColinearCirclesFound ? 0.0 : 0.01), 0.0);
     }
     
     if (success) {
@@ -343,15 +343,15 @@ void drawWellCirclesAndLabelsOnDebugImage(std::vector<Circle> circles, CvScalar 
     }
 }
 
-std::vector<float> calculateMovedWellFractionPerSecondForWellsFromImages(IplImage *plateImagePrev,
-                                                                        IplImage *plateImageCur,
-                                                                        float timeDelta,
-                                                                        const std::vector<Circle> &circles,
-                                                                        IplImage *debugImage)
+std::vector<double> calculateMovedWellFractionPerSecondForWellsFromImages(IplImage *plateImagePrev,
+                                                                          IplImage *plateImageCur,
+                                                                          double timeDelta,
+                                                                          const std::vector<Circle> &circles,
+                                                                          IplImage *debugImage)
 {
     // If there was a resolution change, report that the frame moved
     if (plateImagePrev->width != plateImageCur->width || plateImagePrev->height != plateImageCur->height || circles.size() == 0) {
-        return std::vector<float>();
+        return std::vector<double>();
     }
     
     // Subtrace the entire plate images channelwise
@@ -374,7 +374,7 @@ std::vector<float> calculateMovedWellFractionPerSecondForWellsFromImages(IplImag
     // Calculate the average luminance delta across the entire plate image. If this is more than about 2%, the entire plate is likely moving.
     double proportionPlateMoved = (double)cvCountNonZero(deltaThreshold) / (plateImageCur->width * plateImagePrev->height);
     
-    std::vector<float> movedPixelProportions;
+    std::vector<double> movedPixelProportions;
     
     if (proportionPlateMoved < MovedPixelPlateMovingProportionThreshold) {      // Don't perform well calculations if the plate itself is moving
         movedPixelProportions.reserve(circles.size());
@@ -397,7 +397,7 @@ std::vector<float> calculateMovedWellFractionPerSecondForWellsFromImages(IplImag
             cvResetImageROI(deltaThreshold);
             
             // Count pixels
-            float proportion = (float)cvCountNonZero(subimage) / (M_PI * radius * radius) / timeDelta;
+            double proportion = (double)cvCountNonZero(subimage) / (M_PI * radius * radius) / timeDelta;
             movedPixelProportions.push_back(proportion);
             
             // Draw onto the debugging image
@@ -425,10 +425,10 @@ std::vector<float> calculateMovedWellFractionPerSecondForWellsFromImages(IplImag
     return movedPixelProportions;
 }
 
-std::vector<float> calculateCannyEdgePixelProportionForWellsFromImages(IplImage *plateImage, const std::vector<Circle> &circles, IplImage *debugImage)
+std::vector<double> calculateCannyEdgePixelProportionForWellsFromImages(IplImage *plateImage, const std::vector<Circle> &circles, IplImage *debugImage)
 {
     if (circles.size() == 0) {
-        return std::vector<float>();
+        return std::vector<double>();
     }
     
     // Create an inverted circle mask with 0's in the circle. Use only a portion of the circle to conservatively avoid taking the well walls.
@@ -450,7 +450,7 @@ std::vector<float> calculateCannyEdgePixelProportionForWellsFromImages(IplImage 
     
     // Iterare through each well subimage in parallel
     IplImage** edges = (IplImage **)malloc(circles.size() * sizeof(IplImage*));
-    float* edgePixelPorportions = (float*)malloc(circles.size() * sizeof(float));
+    double* edgePixelPorportions = (double*)malloc(circles.size() * sizeof(double));
     dispatch_apply(circles.size(), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(size_t i){ 
         // Find edges in the image
         IplImage *cannyEdges = cvCreateImage(cvGetSize(subimages[i]), IPL_DEPTH_8U, 1);
@@ -465,7 +465,7 @@ std::vector<float> calculateCannyEdgePixelProportionForWellsFromImages(IplImage 
         cvReleaseImage(&cannyEdges);
         
         // Store the pixel counts
-        edgePixelPorportions[i] = (float)cvCountNonZero(edges[i]) / (edges[i]->width * edges[i]->height);
+        edgePixelPorportions[i] = (double)cvCountNonZero(edges[i]) / (edges[i]->width * edges[i]->height);
     });
     
     // Iterate over each well in serial, draw debugging images and free images
@@ -482,7 +482,7 @@ std::vector<float> calculateCannyEdgePixelProportionForWellsFromImages(IplImage 
         cvReleaseImage(&edges[i]);
     }
     
-    std::vector<float> vector = std::vector<float>(edgePixelPorportions, edgePixelPorportions + circles.size());
+    std::vector<double> vector = std::vector<double>(edgePixelPorportions, edgePixelPorportions + circles.size());
     
     free(edgePixelPorportions);
     free(subimages);

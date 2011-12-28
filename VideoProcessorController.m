@@ -7,7 +7,7 @@
 //
 
 #import "VideoProcessorController.h"
-
+#import "PlateData.h"
 
 @implementation VideoProcessorController
 
@@ -61,31 +61,37 @@
 - (void)videoProcessorDidBeginTrackingPlate:(VideoProcessor *)vp
 {
     dispatch_async(_queue, ^{
-        for (VideoProcessor *processor in _videoProcessors) {
-            // Prevent all other processors from scanning for wells to conserve CPU time and avoid tracking more than one plate
-            if (vp != processor) {
-                [processor setShouldScanForWells:NO];
+        if ([_videoProcessors containsObject:vp]) {
+            for (VideoProcessor *processor in _videoProcessors) {
+                // Prevent all other processors from scanning for wells to conserve CPU time and avoid tracking more than one plate
+                if (vp != processor) {
+                    [processor setShouldScanForWells:NO];
+                }
             }
         }
     });
 }
 
-- (void)videoProcessor:(VideoProcessor *)vp didFinishAcquiringPlateResults:(id)something
+- (void)videoProcessor:(VideoProcessor *)vp didFinishAcquiringPlateData:(PlateData *)plateData
 {
     dispatch_async(_queue, ^{
-        for (VideoProcessor *processor in _videoProcessors) {
-            [processor setShouldScanForWells:YES];
+        if ([_videoProcessors containsObject:vp]) {
+            for (VideoProcessor *processor in _videoProcessors) {
+                [processor setShouldScanForWells:YES];
+            }
+            
+            // XXX DO SOME STUFF WITH THE RESULTS
         }
-        
-        // XXX DO SOME STUFF WITH THE RESULTS
     });
 }
 
 - (void)videoProcessor:(VideoProcessor *)vp didCaptureBarcodeText:(NSString *)text atTime:(NSTimeInterval)presentationTime
 {
     dispatch_async(_queue, ^{
-        RunLog(@"CODE %@", text);
-        // XXX DO SOME STUFF WITH THE RESULTS
+        if ([_videoProcessors containsObject:vp]) {
+            RunLog(@"CODE %@", text);
+            // XXX DO SOME STUFF WITH THE RESULTS
+        }
     });
 }
 

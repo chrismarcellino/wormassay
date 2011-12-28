@@ -397,7 +397,6 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
             [self adjustWindowSizing];
         });
     } else {
-        NSTimeInterval t = [NSDate timeIntervalSinceReferenceDate];     //XXXXXXXXXXXXXXXXXXXXXX
         IplImageObject *image = [[IplImageObject alloc] initByCopyingCVPixelBuffer:(CVPixelBufferRef)videoFrame resultChannelCount:4];
         
         NSTimeInterval presentationTimeInterval;
@@ -405,7 +404,7 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
             presentationTimeInterval = CACurrentMediaTime();
         }
         [self processVideoFrame:image presentationTime:presentationTimeInterval];
-        [image release];            RunLog(@"Elapsed frame time:  %.0f ms  (%.1f fps)", ([NSDate timeIntervalSinceReferenceDate] - t) * 1000, 1/ ([NSDate timeIntervalSinceReferenceDate] - t));
+        [image release];
     }
 }
 
@@ -413,7 +412,7 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
 didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
        fromConnection:(QTCaptureConnection *)connection
 {
-    [_processor incrementFrameDropCount];   RunLog(@"Dropping frame");
+    [_processor noteVideoFrameWasDropped];
 }
 
 // This method will be called on a background thread. It will not be called again until the current call returns.
