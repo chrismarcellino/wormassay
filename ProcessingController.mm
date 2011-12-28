@@ -20,6 +20,8 @@
     NSMutableArray *_wellFindingInProcessSourceIdentifiers;
     NSMutableArray *_barcodeFindingInProcessSourceIdentifiers;
     int _wellCountHint;
+    
+    IplImage *_lastTrackingPlateFrame;
     std::vector<cv::Vec3f> _trackingWellCircles;
     std::map<std::string, std::vector<cv::Vec3f> > _lastCirclesMap;    // for debugging
     
@@ -79,7 +81,10 @@
     dispatch_release(_debugFrameCallbackQueue);
     [_wellFindingInProcessSourceIdentifiers release];
     [_barcodeFindingInProcessSourceIdentifiers release];
-    [_wellCameraSourceIdentifier release];
+    [_wellCameraSourceIdentifier release];    
+    if (_lastTrackingPlateFrame) {
+        cvReleaseImage(&_lastTrackingPlateFrame);
+    }
     [super dealloc];
 }
 
@@ -137,18 +142,23 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callbac
         // Create a copy of the frame to draw debugging info on that we will send back
         IplImage *debugImage = cvCloneImage(videoFrame);
         
-        // Record statistics on this image syncrhounsly (at frame rate), so that we drop frames if we can't keep up.
-        // It is imperative to base all statistics on the elapsed time so that the results are independent of hardware
+        // Record statistics on the tracked image synchronously (at frame rate), so that we drop frames if we can't keep up.
+        // It is important to base all statistics on the elapsed time so that the results are independent of hardware
         // performance.
         if (_processingState == ProcessingStateTrackingMotion && [_wellCameraSourceIdentifier isEqual:sourceIdentifier]) {
             for (size_t i = 0; i < _trackingWellCircles.size(); i++) {
-                float filledArea;
-                CvRect boundingSquare;
-                IplImage *wellImage = createEdgeImageForWellImageFromImage(videoFrame, _trackingWellCircles[i], filledArea, debugImage);
+//                IplImage *wellImage = createEdgeImageForWellImageFromImage(videoFrame, _trackingWellCircles[i], filledArea, debugImage);
+                IplImage *wellImage = createDeltaImageForWellFromImages(videoFrame, _trackingWellCircles[i], debugImage);
                 cvReleaseImage(&wellImage);
             }
             
             // XXX calculate stats
+            
+            // Store the current image for the next pass            
+            if (_lastTrackingPlateFrame) {
+                cvReleaseImage(&_lastTrackingPlateFrame);
+            }
+            
         }
         
         // Draw debugging well circles and labels

@@ -1,18 +1,44 @@
 //
-//  IplImageConversionUtilities.cpp
+//  IplImageObject.m
 //  NematodeAssay
 //
-//  Created by Chris Marcellino on 4/2/11.
-//  Copyright 2011 Regents of the University of California. All rights reserved.
+//  Created by Chris Marcellino on 4/10/11.
+//  Copyright 2011 Chris Marcellino. All rights reserved.
 //
 
-#import "IplImageConversionUtilities.h"
+#import "IplImageObject.h"
 #import "opencv2/opencv.hpp"
+
+#define MIN_VM_COPY_SIZE (16 * PAGE_SIZE)
 
 static inline void premultiplyImage(IplImage *img, bool reverse);
 
+@implementation IplImageObject
 
-IplImage *CreateIplImageFromCVPixelBuffer(CVPixelBufferRef cvImageBuffer, int outChannels)
+@synthesize image = _image;
+
+- (id)initWithIplImageTakingOwnership:(IplImage *)image
+{
+    if ((self = [super init])) {
+        NSAssert(image, @"image is required");
+        _image = image;
+    }
+    
+    return self;
+}
+
+- (void)dealloc
+{
+    if (_dataIfVMCopiedAttempted) {
+        cvReleaseImageHeader(&_image);
+        [_dataIfVMCopiedAttempted release];
+    } else {
+        cvReleaseImage(&_image);
+    }
+    [super dealloc];
+}
+
+- (id)initByCopyingCVPixelBuffer:(CVPixelBufferRef)cvPixelBuffer resultChannelCount:(int)outChannels vmCopyIfPossible:(BOOL)attemptVmCopy
 {
     CVPixelBufferLockBaseAddress(cvImageBuffer, kCVPixelBufferLock_ReadOnly);    
     
@@ -34,41 +60,57 @@ IplImage *CreateIplImageFromCVPixelBuffer(CVPixelBufferRef cvImageBuffer, int ou
     size_t height = CVPixelBufferGetHeight(cvImageBuffer);
     size_t bytesPerRow = CVPixelBufferGetBytesPerRow(cvImageBuffer);
     
-    IplImage *iplImageHeader = cvCreateImageHeader(cvSize(width, height), IPL_DEPTH_8U, bufferChannels);
-    iplImageHeader->widthStep = bytesPerRow;
-    iplImageHeader->imageSize = bytesPerRow * height;
-    iplImageHeader->imageData = iplImageHeader->imageDataOrigin = (char *)baseAddress;
-    
     IplImage *iplImage = NULL;
-    if (outChannels == bufferChannels) {
-        iplImage = cvCloneImage(iplImageHeader);
+    NSData *vmCopiedData = nil;
+    
+    if (attemptVmCopy && outChannels == bufferChannels && iplImageHeader->imageSize > MIN_VM_COPY_SIZE) {
+        iplImage = cvCreateImageHeader(cvGetSize(iplImageHeader), IPL_DEPTH_8U, outChannels);
+        iplImage->widthStep = bytesPerRow;
+        iplImage->imageSize = bytesPerRow * height;
+        // NSData will vm_copy when possible and handle deallocation correctly. See benchmark results in this class' header file.
+        vmCopiedData = [[NSData alloc] initWithBytes:baseAddress length:bytesPerRow * height];
     } else {
-        int conversionCode = -1;
-        if (outChannels == 1 && bufferChannels == 3) {
-            conversionCode = CV_BGR2GRAY;
-        } else if (outChannels == 1 && bufferChannels == 4) {
-            conversionCode = CV_BGRA2GRAY;
-        } else if (outChannels == 3 && bufferChannels == 1) {
-            conversionCode = CV_GRAY2BGR;
-        } else if (outChannels == 3 && bufferChannels == 4) {
-            conversionCode = CV_BGRA2BGR;
-        } else if (outChannels == 4 && bufferChannels == 1) {
-            conversionCode = CV_GRAY2BGRA;
-        } else if (outChannels == 4 && bufferChannels == 3) {
-            conversionCode = CV_BGRA2BGR;
-        }
+        // Create a header to hold the source image
+        IplImage *iplImageHeader = cvCreateImageHeader(cvSize(width, height), IPL_DEPTH_8U, bufferChannels);
+        iplImageHeader->widthStep = bytesPerRow;
+        iplImageHeader->imageSize = bytesPerRow * height;
+        iplImageHeader->imageData = iplImageHeader->imageDataOrigin = (char *)baseAddress;
         
-        iplImage = cvCreateImage(cvGetSize(iplImageHeader), IPL_DEPTH_8U, outChannels);
-        cvCvtColor(iplImageHeader, iplImage, conversionCode);
+        if (outChannels == bufferChannels) {
+            iplImage = cvCloneImage(iplImageHeader);
+        } else {
+            int conversionCode = -1;
+            if (outChannels == 1 && bufferChannels == 3) {
+                conversionCode = CV_BGR2GRAY;
+            } else if (outChannels == 1 && bufferChannels == 4) {
+                conversionCode = CV_BGRA2GRAY;
+            } else if (outChannels == 3 && bufferChannels == 1) {
+                conversionCode = CV_GRAY2BGR;
+            } else if (outChannels == 3 && bufferChannels == 4) {
+                conversionCode = CV_BGRA2BGR;
+            } else if (outChannels == 4 && bufferChannels == 1) {
+                conversionCode = CV_GRAY2BGRA;
+            } else if (outChannels == 4 && bufferChannels == 3) {
+                conversionCode = CV_BGRA2BGR;
+            }
+            
+            iplImage = cvCreateImage(cvGetSize(iplImageHeader), IPL_DEPTH_8U, outChannels);
+            cvCvtColor(iplImageHeader, iplImage, conversionCode);
+        }
+        cvReleaseImageHeader(&iplImageHeader);
     }
-    cvReleaseImageHeader(&iplImageHeader);
     
     CVPixelBufferUnlockBaseAddress(cvImageBuffer, kCVPixelBufferLock_ReadOnly);
     
-    return iplImage;
+    if ((self = [super initWithIplImage:iplImage])) {
+        _dataIfVMCopiedAttempted = vmCopiedData;
+    } else {
+        [vmCopiedData release];
+    }
+    return self;
 }
 
-IplImage *CreateIplImageFromCGImage(CGImageRef cgImage, int outChannels)
+- (id)initByCopyingCGImage:(CGImageRef)cgImage resultChannelCount:(int)outChannels
 {
     CvSize size = cvSize(CGImageGetWidth(cgImage), CGImageGetHeight(cgImage));
     // CG can only write into 4 byte aligned bitmaps. We'll convert it later for 3 channels.
@@ -113,7 +155,7 @@ IplImage *CreateIplImageFromCGImage(CGImageRef cgImage, int outChannels)
         iplImage = temp;
     }
     
-    return iplImage;
+    return [super initWithIplImage:iplImage];
 }
 
 static inline void premultiplyImage(IplImage *img, bool reverse)
@@ -137,3 +179,5 @@ static inline void premultiplyImage(IplImage *img, bool reverse)
         row += img->widthStep;
     }
 }
+
+@end

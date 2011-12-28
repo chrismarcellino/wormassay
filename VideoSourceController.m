@@ -12,6 +12,7 @@
 #import "BitmapOpenGLView.h"
 #import "ProcessingController.h"
 #import "IplImageConversionUtilities.h"
+#import "IplImageObject.h"
 
 NSString *const CaptureDeviceScheme = @"capturedevice";
 NSString *const CaptureDeviceFileType = @"dyn.capturedevice";
@@ -361,7 +362,9 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
        fromConnection:(QTCaptureConnection *)connection
 {
     IplImage *iplImage = CreateIplImageFromCVPixelBuffer((CVPixelBufferRef)videoFrame, 4);
-    [self processVideoFrame:iplImage presentationTime:[sampleBuffer presentationTime]];
+    IplImageObject *image = [[IplImageObject alloc] initWithIplImage:iplImage];
+    [self processVideoFrame:image presentationTime:[sampleBuffer presentationTime]];
+    [image release];
     cvReleaseImage(&iplImage);
 }
 
@@ -377,7 +380,7 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
 
 // This method will be called on a background thread. It will not be called again until the current call returns.
 // Interviening frames may be dropped if the video is a live capture device source. 
-- (void)processVideoFrame:(IplImage *)iplImage presentationTime:(QTTime)presentationTime
+- (void)processVideoFrame:(IplImageObject *)image presentationTime:(QTTime)presentationTime
 {
     NSAssert(iplImage->width * iplImage->nChannels == iplImage->widthStep, @"packed images are required");
 

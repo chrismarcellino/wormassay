@@ -320,6 +320,42 @@ IplImage *createEdgeImageForWellImageFromImage(IplImage *plateImage, cv::Vec3f w
     return edges;
 }
 
+IplImage *createDeltaImageForWellFromImages(IplImage *plateImagePrev, IplImage *plateImageCur, cv::Vec3f wellCircle, IplImage *debugImage)
+{
+    // Copy the grayscale subimage corresponding to the circle's bounding square
+    float radius = wellCircle[2];
+    CvRect boundingSquare = cvRect(wellCircle[0] - radius, wellCircle[1] - radius, 2 * radius, 2 * radius);
+    
+    // Make the subimages for the previous plate
+    cvSetImageROI(plateImagePrev, boundingSquare);
+    IplImage* subimagePrev = cvCreateImage(cvGetSize(plateImagePrev), IPL_DEPTH_8U, 3);
+    if (plateImagePrev->nChannels == 3) {
+        cvCopy(plateImagePrev, subimagePrev);
+    } else {
+        cvCvtColor(plateImagePrev, subimagePrev,  CV_BGRA2BGR);
+    }
+    cvResetImageROI(plateImagePrev);
+    
+    // Make the subimages for the current plate
+    cvSetImageROI(plateImageCur, boundingSquare);
+    IplImage* subimageCur = cvCreateImage(cvGetSize(plateImageCur), IPL_DEPTH_8U, 3);
+    if (plateImageCur->nChannels == 3) {
+        cvCopy(plateImageCur, subimageCur);
+    } else {
+        cvCvtColor(plateImageCur, subimageCur,  CV_BGRA2BGR);
+    }
+    cvResetImageROI(plateImageCur);
+    
+    // Subtract the images
+    IplImage* delta = cvCreateImage(cvGetSize(plateImageCur), IPL_DEPTH_8U, 1);
+    cvAbsDiff(plateImageCur, plateImagePrev, delta);
+    
+    cvReleaseImage(&subimagePrev);
+    cvReleaseImage(&subimageCur);
+    
+    return delta;
+}
+
 float getMotionDeltaBetweenEdgeFrames(IplImage *previousFrame, IplImage *currentFrame)
 {
     return 0.0;     ///XXXXXXXXXXXXXXXX TODO
