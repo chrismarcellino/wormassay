@@ -793,6 +793,12 @@
 				GCC_PREFIX_HEADER = "NematodeAssay-Prefix.pch";
 				INFOPLIST_FILE = "NematodeAssay-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wextra",
+					"-Wno-unused-parameter",
+					"-Wno-unused-value",
+				);
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -804,6 +810,12 @@
 				GCC_PREFIX_HEADER = "NematodeAssay-Prefix.pch";
 				INFOPLIST_FILE = "NematodeAssay-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wextra",
+					"-Wno-unused-parameter",
+					"-Wno-unused-value",
+				);
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
