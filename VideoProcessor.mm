@@ -164,10 +164,15 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                     CvRect boundingSquare = boundingSquareForCircle(_trackingWellCircles[i]);
                     IplImage wellImage;
                     memcpy(&wellImage, [videoFrame image], sizeof(IplImage));
+                    cvSetImageROI(&wellImage, boundingSquare);
                     IplImage debugImage;
                     memcpy(&debugImage, [debugFrame image], sizeof(IplImage));
-                    cvSetImageROI(&wellImage, boundingSquare);
-                    [_assayAnalyzer processVideoFrameWellSynchronously:&wellImage forWell:i debugImage:&debugImage presentationTime:[videoFrame presentationTime] plateData:_plateData];
+                    cvSetImageROI(&debugImage, boundingSquare);
+                    [_assayAnalyzer processVideoFrameWellSynchronously:&wellImage
+                                                               forWell:i
+                                                            debugImage:&debugImage
+                                                      presentationTime:[videoFrame presentationTime]
+                                                             plateData:_plateData];
                 });
                 if (!parallel) {
                     dispatch_release(processingQueue);
@@ -274,6 +279,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                                 _lastBarcodeScanTime = PresentationTimeDistantPast;     // Now that plate is in place, immediately retry barcode capture
                                 
                                 // Create plate data and analyzer
+                                RunLog(@"Began tracking %i well plate using %@ analyzer.", _trackingWellCircles.size(), [_assayAnalyzerClass analyzerName]);
                                 NSAssert(!_plateData && !_assayAnalyzer, @"plate data or motion analyzer already exists");
                                 _plateData = [[PlateData alloc] initWithWellCount:wellCircles.size() startPresentationTime:[videoFrame presentationTime]];
                                 _assayAnalyzer = [[_assayAnalyzerClass alloc] init];
@@ -375,6 +381,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     
     // Send the stats unconditionally and let the controller sort it out
     if (_plateData) {
+        RunLog(@"Ended tracking after zyx");
         [_delegate videoProcessor:self didFinishAcquiringPlateData:_plateData];
         // SAVE AND NAME VIDEO XXX DONT DEADLOCK WHEN GETTING RESULT NAME  (INSTEAD PASS TEMP FILE NAME TO VIDEO PROCESSOR
         //[self endRecordingVideoWithName];

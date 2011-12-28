@@ -1281,11 +1281,11 @@
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBOutletConnection" key="connection">
-						<string key="label">wellAnalyzerSubmenu</string>
+						<string key="label">assayAnalyzerMenu</string>
 						<reference key="source" ref="263138065"/>
 						<reference key="destination" ref="721894706"/>
 					</object>
-					<int key="connectionID">549</int>
+					<int key="connectionID">550</int>
 				</object>
 			</array>
 			<object class="IBMutableOrderedSet" key="objectRecords">
@@ -2153,7 +2153,7 @@
 			<nil key="activeLocalization"/>
 			<dictionary class="NSMutableDictionary" key="localizations"/>
 			<nil key="sourceID"/>
-			<int key="maxID">549</int>
+			<int key="maxID">550</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<array class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -2202,13 +2202,13 @@
 					<string key="className">WormAssayAppDelegate</string>
 					<string key="superclassName">NSObject</string>
 					<object class="NSMutableDictionary" key="outlets">
-						<string key="NS.key.0">wellAnalyzerSubmenu</string>
+						<string key="NS.key.0">assayAnalyzerMenu</string>
 						<string key="NS.object.0">NSMenu</string>
 					</object>
 					<object class="NSMutableDictionary" key="toOneOutletInfosByName">
-						<string key="NS.key.0">wellAnalyzerSubmenu</string>
+						<string key="NS.key.0">assayAnalyzerMenu</string>
 						<object class="IBToOneOutletInfo" key="NS.object.0">
-							<string key="name">wellAnalyzerSubmenu</string>
+							<string key="name">assayAnalyzerMenu</string>
 							<string key="candidateClassName">NSMenu</string>
 						</object>
 					</object>

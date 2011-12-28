@@ -50,15 +50,15 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
     NSMutableArray *assayAnalyzerClasses = [NSMutableArray array];
     
     int	numberOfClasses = objc_getClassList(NULL, 0);
-	Class *classList = malloc(numberOfClasses * sizeof(Class));
-    objc_getClassList(classList, numberOfClasses);
+	Class *classes = malloc(numberOfClasses * sizeof(Class));
+    objc_getClassList(classes, numberOfClasses);
     for (int i = 0; i < numberOfClasses; i++) {
-        Class aClass = classList[i];
-        if (class_getClassMethod(aClass, @selector(conformsToProtocol:)) && [aClass conformsToProtocol:@protocol(AssayAnalyzer)]) {
-            [assayAnalyzerClasses addObject:aClass];
-        } 
+        // use this runtime method instead of messaging the class to avoid +loading all classes in memory
+        if (class_conformsToProtocol(classes[i], @protocol(AssayAnalyzer))) {
+            [assayAnalyzerClasses addObject:classes[i]];
+        }
     }
-    free(classList);
+    free(classes);
     
     // Sort by display name
     [assayAnalyzerClasses sortUsingSelector:@selector(analyzerName)];

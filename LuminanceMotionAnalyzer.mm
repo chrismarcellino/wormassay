@@ -11,7 +11,7 @@
 #import "opencv2/opencv.hpp"
 #import "CvUtilities.hpp"
 
-static const double PixelDeltaMovingThreshold = 0.02;
+static const double PixelDeltaMovingThreshold = 10.0;
 static const double WellEdgeFindingInsetProportion = 0.7;
 
 static const char* WellOccupancyID = "WellOccupancy";
@@ -68,7 +68,7 @@ static const char* WellOccupancyID = "WellOccupancy";
     cvReleaseImage(&plateDelta);
     
     // If the delta is more than about XXX%, the entire plate is likely moving, so don't perform any well calculations between these two plates
-    if (meanDelta < PixelDeltaMovingThreshold) {
+    if (meanDelta > PixelDeltaMovingThreshold) {
         // Draw the movement text
         CvFont wellFont = fontForNormalizedScale(3.5, debugImage);
         cvPutText(debugImage,
@@ -93,18 +93,14 @@ static const char* WellOccupancyID = "WellOccupancy";
     
     // If we haven't already, create an inverted circle mask with 0's in the circle.
     // We use only a portion of the circle to conservatively avoid taking the well walls.
-    int radius = (wellImage->width + wellImage->height) / 4;
+    int radius = cvGetSize(wellImage).width / 2;
     if (!_insetInvertedCircleMask || !sizeEqualsSize(cvGetSize(_insetInvertedCircleMask), cvGetSize(wellImage))) {
         if (_insetInvertedCircleMask) {
             cvReleaseImage(&_insetInvertedCircleMask);
         }
         _insetInvertedCircleMask = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
         fastFillImage(_insetInvertedCircleMask, 255);
-        cvCircle(_insetInvertedCircleMask,
-                 cvPoint(wellImage->width / 2, wellImage->height / 2),
-                 radius * WellEdgeFindingInsetProportion,
-                 cvRealScalar(0),
-                 CV_FILLED);
+        cvCircle(_insetInvertedCircleMask, cvPoint(radius, radius), radius * WellEdgeFindingInsetProportion, cvRealScalar(0), CV_FILLED);
     }
     
     // Get grayscale subimages for the well
@@ -139,10 +135,7 @@ static const char* WellOccupancyID = "WellOccupancy";
         }
         _invertedCircleMask = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
         fastFillImage(_invertedCircleMask, 255);
-        cvCircle(_invertedCircleMask,
-                 cvPoint(wellImage->width / 2, wellImage->height / 2),
-                 radius,
-                 cvRealScalar(0), CV_FILLED);
+        cvCircle(_invertedCircleMask, cvPoint(radius, radius), radius, cvRealScalar(0), CV_FILLED);
     }
     
     // Subtract the well images channelwise. Make a copy of the header since we want to change the ROI.

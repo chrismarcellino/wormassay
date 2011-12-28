@@ -82,7 +82,7 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     // Set up analyzer menu
     NSMenu *menu = [self assayAnalyzerMenu];
     for (Class class in [videoProcessorController assayAnalyzerClasses]) {
-        [menu addItemWithTitle:[class analyzerName] action:@selector(assayAnalyzerMenuItemSelected:) keyEquivalent:nil];
+        [menu addItemWithTitle:[class analyzerName] action:@selector(assayAnalyzerMenuItemSelected:) keyEquivalent:@""];
     }
     
     // Log welcome message
