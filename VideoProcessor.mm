@@ -10,6 +10,7 @@
 #import "ImageProcessing.hpp"
 #import "IplImageObject.h"
 #import "PlateData.h"
+#import "VideoProcessorController.h"   // for RunLog()
 #import "zxing/common/GreyscaleLuminanceSource.h"
 #import "zxing/MultiFormatReader.h"
 #import "zxing/DecodeHints.h"

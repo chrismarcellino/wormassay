@@ -20,7 +20,12 @@ static const double WellEdgeFindingInsetProportion = 0.7;
 static const double WellFindingUnsharpMaskRadius = 6.88;
 static const double WellFindingUnsharpMaskAmount = 2.812;
 
-static bool _findWellCirclesForPlateCount(IplImage* inputImage, int wellCount, std::vector<Circle> &circlesVec, double& score, int expectedRadius = -1);
+static bool _findWellCirclesForPlateCountUsingGrayscaleImage(IplImage* grayInputImage,
+                                                             int wellCount,
+                                                             std::vector<Circle> &circlesVec,
+                                                             double& score,
+                                                             int expectedRadius = -1);
+static int meanRadiusForCvVec3fCircleSeq(CvSeq *seq);
 static std::vector<Circle> convertCvVec3fSeqToCircleVector(CvSeq *seq);
 static int sortCircleCentersByAxis(const void* a, const void* b, void* userdata);
 static int sortCirclesInRowMajorOrder(const void* a, const void* b, void* userdata);
@@ -91,26 +96,36 @@ bool findWellCircles(IplImage* inputImage, std::vector<Circle> &circles, int wel
         wellCounts.insert(wellCounts.begin(), wellCountHint);
     }
     
+    // Convert the input image to grayscale
+    IplImage* grayInputImage = cvCreateImage(cvGetSize(inputImage), IPL_DEPTH_8U, 1);
+    cvCvtColor(inputImage, grayInputImage, CV_BGRA2GRAY);
+    
     // Iterate through all well count values
     double score = 0.0;
     bool success = false;
-    IplImage *unsharpMask = NULL;
+    IplImage *grayUnsharpMask = NULL;
     for (size_t i = 0; i < wellCounts.size(); i++) {
-        if (_findWellCirclesForPlateCount(inputImage, wellCounts[i], circles, score)) {
+        if (_findWellCirclesForPlateCountUsingGrayscaleImage(grayInputImage, wellCounts[i], circles, score)) {
             success = true;
             break;
         }
-        if (!unsharpMask) {
-            unsharpMask = createUnsharpMaskImage(inputImage, WellFindingUnsharpMaskRadius, WellFindingUnsharpMaskAmount);
+        if (!grayUnsharpMask) {
+            // Try again with the unsharp masked image
+            IplImage *unsharpMask = createUnsharpMaskImage(inputImage, WellFindingUnsharpMaskRadius, WellFindingUnsharpMaskAmount);
+            grayUnsharpMask = cvCreateImage(cvGetSize(unsharpMask), IPL_DEPTH_8U, 1);
+            cvCvtColor(unsharpMask, grayUnsharpMask, CV_BGRA2GRAY);
+            cvReleaseImage(&unsharpMask);
         }
-        if (_findWellCirclesForPlateCount(unsharpMask, wellCounts[i], circles, score)) {
+        if (_findWellCirclesForPlateCountUsingGrayscaleImage(grayUnsharpMask, wellCounts[i], circles, score)) {
             success = true;
             break;
         }
     }
-    if (unsharpMask) {
-        cvReleaseImage(&unsharpMask);
+    
+    if (grayUnsharpMask) {
+        cvReleaseImage(&grayUnsharpMask);
     }
+    cvReleaseImage(&grayInputImage);
     
     // Return the best circles on failure
     if (!success && score < 0.25) {
@@ -121,27 +136,39 @@ bool findWellCircles(IplImage* inputImage, std::vector<Circle> &circles, int wel
 
 bool findWellCirclesForPlateCount(IplImage* inputImage, int wellCount, std::vector<Circle> &circlesVec, int expectedRadius)
 {
-    double score = 1.0;
-    bool result = _findWellCirclesForPlateCount(inputImage, wellCount, circlesVec, score, expectedRadius);
-    if (!result) {
-        IplImage *unsharpMask = createUnsharpMaskImage(inputImage, WellFindingUnsharpMaskRadius, WellFindingUnsharpMaskAmount);
-        result = _findWellCirclesForPlateCount(unsharpMask, wellCount, circlesVec, score, expectedRadius);
-        cvReleaseImage(&unsharpMask);
-    }
-    return result;
-}
-
-static bool _findWellCirclesForPlateCount(IplImage* inputImage, int wellCount, std::vector<Circle> &circlesVec, double& score, int expectedRadius)
-{
     // Convert the input image to grayscale
     IplImage* grayInputImage = cvCreateImage(cvGetSize(inputImage), IPL_DEPTH_8U, 1);
     cvCvtColor(inputImage, grayInputImage, CV_BGRA2GRAY);
     
+    double score = 1.0;
+    bool result = _findWellCirclesForPlateCountUsingGrayscaleImage(grayInputImage, wellCount, circlesVec, score, expectedRadius);
+    cvReleaseImage(&grayInputImage);
+    
+    if (!result) {
+        // Try again with the unsharp masked image
+        IplImage *unsharpMask = createUnsharpMaskImage(inputImage, WellFindingUnsharpMaskRadius, WellFindingUnsharpMaskAmount);
+        IplImage* grayUnsharpMask = cvCreateImage(cvGetSize(unsharpMask), IPL_DEPTH_8U, 1);
+        cvCvtColor(unsharpMask, grayUnsharpMask, CV_BGRA2GRAY);
+        cvReleaseImage(&unsharpMask);
+        
+        result = _findWellCirclesForPlateCountUsingGrayscaleImage(grayUnsharpMask, wellCount, circlesVec, score, expectedRadius);
+        cvReleaseImage(&grayUnsharpMask);
+    }
+    
+    return result;
+}
+
+static bool _findWellCirclesForPlateCountUsingGrayscaleImage(IplImage* grayInputImage,
+                                                             int wellCount,
+                                                             std::vector<Circle> &circlesVec,
+                                                             double& score,
+                                                             int expectedRadius)
+{
     // Determine well metrics for this plate type
     int rows, columns;
     getPlateConfigurationForWellCount(wellCount, rows, columns);
-    int smallerImageDimension = MIN(inputImage->width, inputImage->height);
-    int largerImageDimension = MAX(inputImage->width, inputImage->height);
+    int smallerImageDimension = MIN(grayInputImage->width, grayInputImage->height);
+    int largerImageDimension = MAX(grayInputImage->width, grayInputImage->height);
     
     // Notes on assumptions made for well dimensions:
     // Microtiter plates are 120 mm x 80 mm, which is a 3:2 ratio. We assume that the plate will
@@ -186,52 +213,55 @@ static bool _findWellCirclesForPlateCount(IplImage* inputImage, int wellCount, s
                                     200,    // Accumulator threshold
                                     minRadius, // min radius
                                     maxRadius); // max radius
-    CvSeq* unfilteredCircles = circles;     // for debugging
-    cvReleaseImage(&grayInputImage);
+    CvSeq* unfilteredCircles = circles;
     
     // Take the set of all circles whose centers are approximately colinear with other circles along axis aligned lines
     // in both dimensions. Discard all others.
     int colinearityThreshold = maxRadius / 2;
     
-    // First sort the centers by X value so that lines vertically colinear are adjacent in the seq. Next do the opposite. 
-    for (int axis = 0; axis <= 1; axis++) {
-        cvSeqSort(circles, sortCircleCentersByAxis, &axis);
-        
-        // Iterate through list and move circles colinear along Y lines to a new seq, and hence have similar X values (and then vice versa)
-        CvSeq* colinearCircles = cvCreateSeq(CV_32FC3, sizeof(CvSeq), 3 * sizeof(float), storage);
-        
-        // Iterate through the current list
-        for (int i = 0; i < circles->total; i++) {
-            float* current = (float*)cvGetSeqElem(circles, i);
+    // Do two passes so that we only start filtering entire rows once we've filtered out spurious circles
+    for (int pass = 0; pass < 2; pass++) {
+        // First sort the centers by X value so that lines vertically colinear are adjacent in the seq. Next do the opposite. 
+        for (int axis = 0; axis <= 1; axis++) {
+            cvSeqSort(circles, sortCircleCentersByAxis, &axis);
             
-            // Iterate along a colinear line
-            int numberOfColinearCircles = 0;
-            for (int j = i + 1; j < circles->total; j++) {
-                float *partner = (float*)cvGetSeqElem(circles, j);
-                if (fabsf(current[axis] - partner[axis]) <= colinearityThreshold) {
-                    if (numberOfColinearCircles == 0) {
-                        // Push the 'current' element
-                        cvSeqPush(colinearCircles, current);
+            // Iterate through list and move circles colinear along Y lines to a new seq, and hence have similar X values (and then vice versa)
+            CvSeq* colinearCircles = cvCreateSeq(CV_32FC3, sizeof(CvSeq), 3 * sizeof(float), storage);
+            
+            // Iterate through the current list
+            for (int i = 0; i < circles->total; i++) {
+                float* current = (float*)cvGetSeqElem(circles, i);
+                
+                // Iterate along a colinear line
+                int numberOfColinearCircles = 0;
+                for (int j = i + 1; j < circles->total; j++) {
+                    float *partner = (float*)cvGetSeqElem(circles, j);
+                    if (fabsf(current[axis] - partner[axis]) <= colinearityThreshold) {
+                        if (numberOfColinearCircles == 0) {
+                            // Push the 'current' element
+                            cvSeqPush(colinearCircles, current);
+                            numberOfColinearCircles++;
+                        }
+                        
+                        // Push each partner and advance i so these matching partners aren't unnecessarily reconsidered
+                        cvSeqPush(colinearCircles, partner);
                         numberOfColinearCircles++;
+                        i++;
+                        // Advanced current so we tolerate plates that are not perfectly axis alligned
+                        current = partner;
+                    } else {
+                        break;
                     }
-                    
-                    // Push each partner and advance i so these matching partners aren't unnecessarily reconsidered
-                    cvSeqPush(colinearCircles, partner);
-                    numberOfColinearCircles++;
-                    i++;
-                } else {
-                    break;
+                }
+                
+                // On the second pass, determine if we saw as many colinear circles as we expected and if not, pop what we just pushed
+                if (pass >= 1 && numberOfColinearCircles != (axis == 1 ? columns : rows)) {
+                    cvSeqPopMulti(colinearCircles, NULL, numberOfColinearCircles);
                 }
             }
             
-            // Determine if we saw as many colinear circles as we expected and if not, pop what we just pushed
-            int expectedNumberOfColinearCircles = (axis == 1) ? columns : rows;
-            if (numberOfColinearCircles != expectedNumberOfColinearCircles) {
-                cvSeqPopMulti(colinearCircles, NULL, numberOfColinearCircles);
-            }
+            circles = colinearCircles;
         }
-        
-        circles = colinearCircles;
     }
     
     // Determine if this is a valid plate
@@ -242,13 +272,9 @@ static bool _findWellCirclesForPlateCount(IplImage* inputImage, int wellCount, s
         circlesVec = convertCvVec3fSeqToCircleVector(circles);
         
         // Set the wells' area to be the mean under the assumption that there is no perspective distortion
-        int sum = 0;
+        int meanRadius = meanRadiusForCvVec3fCircleSeq(circles);
         for (size_t i = 0; i < circlesVec.size(); i++) {
-            sum += circlesVec[i].radius;
-        }
-        sum /= wellCount;
-        for (size_t i = 0; i < circlesVec.size(); i++) {
-            circlesVec[i].radius = sum;
+            circlesVec[i].radius = meanRadius;
         }
     } else {
         // Otherwise if this score is higher than the existing, return all of the detected circles at this plate size for debugging
@@ -259,8 +285,27 @@ static bool _findWellCirclesForPlateCount(IplImage* inputImage, int wellCount, s
         }
     }
     cvReleaseMemStorage(&storage);
-        
+    
+    // If we had too many circles before filtering and were unable to unable a valid filtered set, try using a tighther fit 
+    // for the radius based on the average if we haven't already done so.
+    if (!success && expectedRadius <= 0 && unfilteredCircles->total > wellCount) {
+        success = _findWellCirclesForPlateCountUsingGrayscaleImage(grayInputImage, wellCount, circlesVec, score, meanRadiusForCvVec3fCircleSeq(unfilteredCircles));
+    }
+    
     return success;
+}
+
+static int meanRadiusForCvVec3fCircleSeq(CvSeq *seq)
+{
+    float meanRadius = 0;
+    for (int i = 0; i < seq->total; i++) {
+        float* current = (float*)cvGetSeqElem(seq, i);
+        meanRadius += current[2];
+    }
+    if (seq->total > 0) {
+        meanRadius /= seq->total;
+    }
+    return (int)meanRadius;
 }
 
 static std::vector<Circle> convertCvVec3fSeqToCircleVector(CvSeq *seq)
@@ -523,27 +568,25 @@ CvFont fontForNormalizedScale(double normalizedScale, IplImage* image)
 
 IplImage* createUnsharpMaskImage(IplImage* image, float radius, float amount, float threshold)
 {
-    radius += 1.0;
-    IplImage* result = cvCreateImage(cvGetSize(image), IPL_DEPTH_8U, image->nChannels);
-    int kernelSize = lroundf(4 * (radius + 1));
+    IplImage* source = cvCreateImage(cvGetSize(image), IPL_DEPTH_32F, image->nChannels);
+    cvConvert(image, source);
+    IplImage* gaussian = cvCreateImage(cvGetSize(image), IPL_DEPTH_32F, image->nChannels);
+    
+    int stddev = radius + 1.0;
+    int kernelSize = lroundf(4 * (stddev + 1));
     if (kernelSize % 2 == 0) {
         kernelSize++;
     }
-    cvSmooth(image, result, CV_GAUSSIAN, kernelSize, kernelSize, radius, radius);
+    cvSmooth(source, gaussian, CV_GAUSSIAN, kernelSize, kernelSize, stddev, stddev);
     
-    for (int i = 0; i < image->height; i++) {
-        for (int j = 0; j < image->width; j++) {
-            for (int k = 0; k < image->nChannels; k++) {
-                uint8_t source = CV_IMAGE_ELEM(image, uint8_t, i, j * image->nChannels + k);
-                uint8_t gaussian = CV_IMAGE_ELEM(result, uint8_t, i, j * result->nChannels + k);
-                float diff = source - gaussian;
-                if (2 * ABS(diff) >= threshold) {
-                    float u = source + amount * diff;
-                    CV_IMAGE_ELEM(result, uint8_t, i, j * result->nChannels + k) = MIN(MAX(u, 0.0), UCHAR_MAX);
-                }
-            }
-        }
-    }
+    IplImage* resultFloat = cvCreateImage(cvGetSize(image), IPL_DEPTH_32F, image->nChannels);
+    cvAddWeighted(source, 1.0 + amount, gaussian, -amount, 0.0, resultFloat);
     
+    cvReleaseImage(&gaussian);
+    cvReleaseImage(&source);
+    
+    IplImage* result = cvCreateImage(cvGetSize(image), image->depth, image->nChannels);
+    cvConvert(resultFloat, result);
+    cvReleaseImage(&resultFloat);
     return result;
 }
