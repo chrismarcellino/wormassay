@@ -93,31 +93,43 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callbac
             // XXX calculate stats
         }
         
-        // Once we're done with the frame, draw debugging stuff on a copy and send it back
+        // Once we're done with the frame, draw debugging stuff on a copy of the plate camera's frames and send it back
         IplImage *debugImage = cvCloneImage(videoFrame);
-        for (size_t i = 0; i < _baselineWellCircles.size(); i++) {
-            CvPoint center = cvPoint(cvRound(_baselineWellCircles[i][0]), cvRound(_baselineWellCircles[i][1]));
-            int radius = cvRound(_baselineWellCircles[i][2]);
-            // Draw the circle outline
-            CvScalar color = (_processingState == ProcessingStateNoPlate) ? 
-                                CV_RGB(255, 0, 0) :
-                                ((_processingState == ProcessingStatePlateFirstFrameIdentified) ? CV_RGB(255, 255, 0) : CV_RGB(0, 255, 0));
-            cvCircle(debugImage, center, radius, color, 3, 8, 0);
-            
-            // Draw text in the circle
-            if (_processingState == ProcessingStateTrackingMotion) {
-                CvPoint textPoint = cvPoint(center.x - radius / 2, center.y - radius / 2);
-                cvPutText(debugImage,
-                          wellIdentifierStringForIndex(i, _baselineWellCircles.size()).c_str(),
-                          textPoint,
-                          &debugImageFont,
-                          cvScalar(255, 255, 0));
+        if (_processingState == ProcessingStateNoPlate || [_wellCameraSourceIdentifier isEqual:sourceIdentifier]) {
+            const std::vector<cv::Vec3f> circlesToDraw = (_processingState == ProcessingStateNoPlate) ?
+                        _lastCirclesMap[std::string([sourceIdentifier UTF8String])] : _baselineWellCircles;
+            for (size_t i = 0; i < circlesToDraw.size(); i++) {
+                CvPoint center = cvPoint(cvRound(circlesToDraw[i][0]), cvRound(circlesToDraw[i][1]));
+                int radius = cvRound(circlesToDraw[i][2]);
+                // Draw the circle outline
+                CvScalar color = (_processingState == ProcessingStateNoPlate) ? 
+                        CV_RGB(255, 0, 0) :
+                        ((_processingState == ProcessingStatePlateFirstFrameIdentified) ? CV_RGB(255, 255, 0) : CV_RGB(0, 255, 0));
+                cvCircle(debugImage, center, radius, color, 3, 8, 0);
+                
+                // Draw text in the circle
+                if (_processingState == ProcessingStateTrackingMotion) {
+                    CvPoint textPoint = cvPoint(center.x - radius / 2, center.y - radius / 2);
+                    cvPutText(debugImage,
+                              wellIdentifierStringForIndex(i, circlesToDraw.size()).c_str(),
+                              textPoint,
+                              &debugImageFont,
+                              cvScalar(255, 255, 0));
+                }
             }
         }
-        
         dispatch_async(_debugFrameCallbackQueue, ^{
             callback(debugImage);
         });
+    });
+}
+
+- (void)noteSourceIdentifierHasDisconnected:(NSString *)sourceIdentifier
+{
+    dispatch_sync(_queue, ^{
+        if ([_wellCameraSourceIdentifier isEqual:sourceIdentifier]) {
+            [self resetCaptureStateAndReportDataIfPossible];
+        }
     });
 }
 
@@ -139,6 +151,9 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callbac
         // Process and store the results when holding _queue
         dispatch_async(_queue, ^{
             [_wellFindingInProcessSourceIdentifiers removeObject:sourceIdentifier];
+            
+            // Store the circles for debugging later
+            _lastCirclesMap[std::string([sourceIdentifier UTF8String])] = wellCircles;
             
             // If we've found a plate, store the well count to improve the performance of future searches
             if (plateFound) {

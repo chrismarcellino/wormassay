@@ -39,9 +39,6 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
-    // Get the capture system started as early as possible so we can try to avoid unsightly resolution changes
-    [QTCaptureDevice inputDevices];
-    
     // Register for camera notifications and create windows for each camera
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center addObserver:self selector:@selector(captureDevicesChanged) name:QTCaptureDeviceWasConnectedNotification object:nil];

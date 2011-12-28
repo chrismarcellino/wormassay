@@ -324,6 +324,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 - (void)close
 {
     ProcessLog(@"Closing removed device/file: %@", _sourceIdentifier);
+    [[ProcessingController sharedInstance] noteSourceIdentifierHasDisconnected:_sourceIdentifier];
     
     [_captureSession stopRunning];
     [_captureDecompressedVideoOutput setDelegate:nil];

@@ -32,6 +32,7 @@ typedef enum {
     int _wellCountHint;
 #if __cplusplus     // hide C++ ivars from non C++ clients. This is only safe to do on the 64-bit Objective-C ABI, which this app requires.
     std::vector<cv::Vec3f> _baselineWellCircles;
+    std::map<std::string, std::vector<cv::Vec3f> > _lastCirclesMap;    // for debugging
 #endif
     
     NSTimeInterval _startOfTrackingMotionTime;
@@ -45,6 +46,8 @@ typedef enum {
      fromSourceIdentifier:(NSString *)sourceIdentifier
         presentationTime:(NSTimeInterval)presentationTime
 debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callback;
+
+- (void)noteSourceIdentifierHasDisconnected:(NSString *)sourceIdentifier;
 
 - (void)logFormat:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2);
 
