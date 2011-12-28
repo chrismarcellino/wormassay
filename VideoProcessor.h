@@ -41,6 +41,6 @@ typedef enum {
 
 - (void)videoProcessorDidBeginTrackingPlate:(VideoProcessor *)vp;
 - (void)videoProcessor:(VideoProcessor *)vp didFinishAcquiringPlateResults:(id)something;
-- (void)videoProcessor:(VideoProcessor *)vp didCaptureBarcode:(NSString *)barcode atTime:(NSTimeInterval)presentationTime;
+- (void)videoProcessor:(VideoProcessor *)vp didCaptureBarcodeText:(NSString *)text atTime:(NSTimeInterval)presentationTime;
 
 @end

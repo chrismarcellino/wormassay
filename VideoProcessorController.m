@@ -77,9 +77,10 @@
     });
 }
 
-- (void)videoProcessor:(VideoProcessor *)vp didCaptureBarcode:(NSString *)barcode atTime:(NSTimeInterval)presentationTime
+- (void)videoProcessor:(VideoProcessor *)vp didCaptureBarcodeText:(NSString *)text atTime:(NSTimeInterval)presentationTime
 {
     dispatch_async(_queue, ^{
+        NSLog(@"CODE %@", text);
         // XXX DO SOME STUFF WITH THE RESULTS
     });
 }

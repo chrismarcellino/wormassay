@@ -9,6 +9,14 @@
 #import "VideoProcessor.h"
 #import "ImageProcessing.hpp"
 #import "IplImageObject.h"
+#import "zxing/common/GreyscaleLuminanceSource.h"
+#import "zxing/MultiFormatReader.h"
+#import "zxing/DecodeHints.h"
+#import "zxing/common/HybridBinarizer.h"
+#import "zxing/ReaderException.h"
+
+static const NSTimeInterval BarcodeScanningPeriod = 1.0;
+static const NSTimeInterval PresentationTimeDistantPast = -DBL_MIN;
 
 @interface VideoProcessor() {
     NSString *_sourceIdentifier;
@@ -23,7 +31,7 @@
     ProcessingState _processingState;
     int _wellCountHint;
     NSTimeInterval _firstWellFrameTime;
-    NSTimeInterval _startOfTrackingMotionTime;
+    NSTimeInterval _lastBarcodeScanTime;
     
     IplImageObject *_lastFrame;     // when tracking
     std::vector<Circle> _trackingWellCircles;    // circles used for tracking
@@ -90,8 +98,8 @@
             [self performWellDeterminationCalculationAsyncWithFrame:videoFrame presentationTime:presentationTime];
         }
         
-        // If we are capturing, begin searching frames for a barcode until we obtrain one for this plate
-        if (!_scanningForBarcodes && _processingState == ProcessingStateTrackingMotion) {
+        // Always look for barcodes since another camera might have a plate
+        if (!_scanningForBarcodes && _lastBarcodeScanTime < presentationTime - BarcodeScanningPeriod) {
             [self performBarcodeReadingAsyncWithFrame:videoFrame presentationTime:presentationTime];
         }
         
@@ -186,7 +194,7 @@
                                 presentationTime - _firstWellFrameTime >= 0.100) {
                                 _processingState = ProcessingStateTrackingMotion;
                                 _trackingWellCircles = wellCircles; // store the second set as the baseline for all remaining sets
-                                _startOfTrackingMotionTime = presentationTime;
+                                _lastBarcodeScanTime = PresentationTimeDistantPast;     // Now that plate is in place, immediately retry barcode capture
                                 
                                 [self beginRecordingVideo];
                             } else {
@@ -219,16 +227,46 @@
     
     // Perform the calculation on a concurrent queue so that we don't block the current thread
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        // XXX DO BARCODE FIND HERE (SYNC).   FIGURE OUT A WAY TO PREVENT FROM OVER BARCODE SEARCHING!!
-        sleep(1);
+        // Convert the image to grayscale
+        IplImage *grayscaleImage = cvCreateImage(cvGetSize([videoFrame image]), IPL_DEPTH_8U, 1);
+        cvCvtColor([videoFrame image], grayscaleImage, CV_BGRA2GRAY);
+        zxing::Ref<zxing::GreyscaleLuminanceSource> luminanceSource (new zxing::GreyscaleLuminanceSource((unsigned char *)grayscaleImage->imageData,
+                                                                                                         grayscaleImage->widthStep,
+                                                                                                         grayscaleImage->height,
+                                                                                                         0,
+                                                                                                         0,
+                                                                                                         grayscaleImage->width,
+                                                                                                         grayscaleImage->height));
+        
+        // Binarize the image
+        zxing::Ref<zxing::Binarizer> binarizer(new zxing::HybridBinarizer(luminanceSource));
+        zxing::Ref<zxing::BinaryBitmap> binaryBitmap (new zxing::BinaryBitmap(binarizer));
+        
+        // Search for barcodes
+        zxing::Ref<zxing::MultiFormatReader> reader(new zxing::MultiFormatReader());
+        zxing::DecodeHints hints;
+        hints.setTryHarder(true);           // rotates images in all directions in search of barcodes, etc.
+        NSString *text;
+        try {
+            zxing::Ref<zxing::Result> barcodeResult = reader->decode(binaryBitmap, hints);
+            const std::vector<zxing::Ref<zxing::ResultPoint> > points = barcodeResult->getResultPoints();
+            text = [[NSString alloc] initWithUTF8String:barcodeResult->getText()->getText().c_str()];
+        } catch (zxing::ReaderException &e) {
+            // No barcode found
+            text = nil;
+        }
         
         // Process and store the results when holding _queue
         dispatch_async(_queue, ^{
             _scanningForBarcodes = NO;
-            if (presentationTime >= _startOfTrackingMotionTime) {
-                // XXX STORE BARCODE RESULT TO BARCODE
+            _lastBarcodeScanTime = presentationTime;
+            if (text) {
+                [_delegate videoProcessor:self didCaptureBarcodeText:text atTime:presentationTime];
             }
         });
+        
+        [text release];
+        cvReleaseImage(&grayscaleImage);
     });
 }
 
@@ -241,7 +279,8 @@
     
     _processingState = ProcessingStateNoPlate;
     
-    _startOfTrackingMotionTime = _firstWellFrameTime = 0.0;
+    _firstWellFrameTime = PresentationTimeDistantPast;
+    _lastBarcodeScanTime = PresentationTimeDistantPast;
     _trackingWellCircles.clear();
     _lastCircles.clear();
 }
