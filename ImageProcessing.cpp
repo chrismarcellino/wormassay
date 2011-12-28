@@ -346,8 +346,6 @@ std::vector<int> calculateMovedPixelsForWellsFromImages(IplImage *plateImagePrev
     cvReleaseImage(&deltaLuminance);
     
     // Calculate the average luminance delta across the entire plate image. If this is more than about 2%, the entire plate is likely moving.
-    CvScalar mean, stdDev;
-    cvAvgSdv(deltaThreshold, &mean, &stdDev);
     double proportionPlateMoved = (double)cvCountNonZero(deltaThreshold) / (plateImageCur->width * plateImagePrev->height);
     
     std::vector<int> movedPixelCounts;
