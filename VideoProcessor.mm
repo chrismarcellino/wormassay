@@ -10,8 +10,6 @@
 #import "ImageProcessing.hpp"
 #import "IplImageObject.h"
 #import "PlateData.h"
-#import <iostream>
-#import <iomanip>
 #import "zxing/common/GreyscaleLuminanceSource.h"
 #import "zxing/MultiFormatReader.h"
 #import "zxing/DecodeHints.h"
@@ -132,7 +130,8 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         if (_lastBarcodeThisProcessor) {
             // Draw the movement text
             CvFont wellFont = fontForNormalizedScale(3.5, [debugImage image]);
-            cvPutText(debugImage, [_lastBarcodeThisProcessor UTF8String], cvPoint(10, 10), &wellFont, CV_RGBA(232, 0, 217, 255));
+            CvPoint point = cvPoint(10, [debugImage image]->height - 10);
+            cvPutText([debugImage image], [_lastBarcodeThisProcessor UTF8String], point, &wellFont, CV_RGBA(232, 0, 217, 255));
         }
         
         // Record statistics on the tracked image synchronously (at frame rate), so that we drop frames if we can't keep up.
@@ -157,19 +156,15 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                 }
                 
                 // Print the stats in the wells averaged over the last 10 seconds to limit computational complexity
-                CvFont wellFont = fontForNormalizedScale(1.0, [debugImage image]);
+                CvFont wellFont = fontForNormalizedScale(0.75, [debugImage image]);
                 for (size_t i = 0; i < _trackingWellCircles.size(); i++) {
                     double mean, stddev;
                     [_plateData normalizedMovedFractionMean:&mean stdDev:&stddev forWell:i inLastSeconds:10];
-                    std::stringstream ss;
-                    ss << std::setprecision(0) << mean << " (SD: " << stddev << ")";
-                    std::string str;
-                    ss >> str;
                     
                     float radius = _trackingWellCircles[i].radius;
-                    CvPoint textPoint = cvPoint(_trackingWellCircles[i].center[0] - radius * 0.1, _trackingWellCircles[i].center[1]);
+                    CvPoint textPoint = cvPoint(_trackingWellCircles[i].center[0] - radius * 0.5, _trackingWellCircles[i].center[1]);
                     cvPutText([debugImage image],
-                              str.c_str(),
+                              [[NSString stringWithFormat:@"%.0f (SD: %.0f)", mean * 1000, stddev * 1000] UTF8String],
                               textPoint,
                               &wellFont,
                               CV_RGBA(0, 255, 255, 255));

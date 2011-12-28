@@ -10,7 +10,7 @@
 
 static const size_t InitialVectorSize = 1024;
 
-static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &stddev, size_t firstIndex = 0, size_t lastIndex = -1);
+static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &stddev, size_t firstIndex = 0);
 
 @interface PlateData () {
     NSUInteger _wellCount;
@@ -95,7 +95,7 @@ static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &
 
 - (void)occupancyFractionMean:(double *)mean stdDev:(double *)stddev forWell:(NSUInteger)well inLastSeconds:(NSTimeInterval)seconds
 {
-    meanAndStdDev(_occupancyFractionsByWell[well], *mean, *stddev, [self sampleIndexStartingAtSecondsFromEnd:seconds], _occupancyFractionsByWell.size());
+    meanAndStdDev(_occupancyFractionsByWell[well], *mean, *stddev, [self sampleIndexStartingAtSecondsFromEnd:seconds]);
 }
 
 - (void)normalizedMovedFractionMean:(double *)mean stdDev:(double *)stddev forWell:(NSUInteger)well
@@ -105,27 +105,23 @@ static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &
 
 - (void)normalizedMovedFractionMean:(double *)mean stdDev:(double *)stddev forWell:(NSUInteger)well inLastSeconds:(NSTimeInterval)seconds
 {
-    meanAndStdDev(_normalizedMovedFractionsByWell[well], *mean, *stddev, [self sampleIndexStartingAtSecondsFromEnd:seconds], _normalizedMovedFractionsByWell.size());
+    meanAndStdDev(_normalizedMovedFractionsByWell[well], *mean, *stddev, [self sampleIndexStartingAtSecondsFromEnd:seconds]);
 }
 
-static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &stddev, size_t firstIndex, size_t lastIndex)
+static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &stddev, NSUInteger firstIndex)
 {
-    if (lastIndex <= 0) {
-        lastIndex = vec.size();
-    }
-    
     double sum = 0.0;
-    for (size_t i = firstIndex; i < lastIndex; i++) {
+    for (size_t i = firstIndex; i < vec.size(); i++) {
         sum += vec[i];
     }
-    mean = sum / (lastIndex - firstIndex);
+    mean = sum / (vec.size() - firstIndex);
     
     double variance = 0.0;
-    for (size_t i = firstIndex; i < lastIndex; i++) {
+    for (size_t i = firstIndex; i < vec.size(); i++) {
         double difference = vec[i] - mean;
         variance += difference * difference;
     }
-    variance /= (lastIndex - firstIndex);
+    variance /= (vec.size() - firstIndex);
     stddev = sqrt(variance);
 }
 
