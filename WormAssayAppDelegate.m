@@ -57,18 +57,40 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     rect.size.height = MIN(200, rect.size.height);
     NSUInteger styleMask = NSTitledWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask | NSUtilityWindowMask;
     _loggingPanel = [[NSPanel alloc] initWithContentRect:rect styleMask:styleMask backing:NSBackingStoreBuffered defer:YES];
-    [_loggingPanel setHidesOnDeactivate:NO];
-    [_loggingPanel setTitle:@"Run Log"];
+    [_loggingPanel setTitle:NSLocalizedString(@"Run Log", nil)];
     [_loggingPanel setFrameUsingName:LoggingWindowAutosaveName];
     [_loggingPanel setFrameAutosaveName:LoggingWindowAutosaveName];
     
-    NSTextView *textView = [[NSTextView alloc] initWithFrame:NSZeroRect];
-    [_loggingPanel setContentView:textView];
-    [textView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-    [textView release];
-    [_loggingPanel orderBack:self];
+    rect.origin = NSZeroPoint;
+    NSScrollView *scrollView = [[NSScrollView alloc] initWithFrame:rect];
+    [scrollView setBorderType:NSNoBorder];
+    [scrollView setHasVerticalScroller:YES];
+    [scrollView setHasHorizontalScroller:YES];
+    [scrollView setAutohidesScrollers:YES];
+    [scrollView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+    NSTextView *textView = [[NSTextView alloc] initWithFrame:rect];
+    [textView setEditable:NO];
+    [textView setVerticallyResizable:YES];
+    [textView setHorizontallyResizable:YES];
+    [textView setContinuousSpellCheckingEnabled:NO];
+    [textView setAllowsUndo:NO];
+    [textView setAutoresizingMask:NSViewWidthSizable];
+    [[textView textContainer] setWidthTracksTextView:NO];
+    [[textView textContainer] setContainerSize:NSMakeSize(FLT_MAX, FLT_MAX)];
+    [scrollView setDocumentView:textView];
+    [_loggingPanel setContentView:scrollView];
+    [_loggingPanel orderFront:self];
     
     [[VideoProcessorController sharedInstance] setRunLogTextStorage:[textView textStorage]];
+    [[VideoProcessorController sharedInstance] setRunLogTextScrollView:scrollView];
+    
+    [textView release];
+    [scrollView release];
+    
+    // Log welcome message
+    NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
+    RunLog(@"%@ version %@ launched.", [infoDictionary objectForKey:(id)kCFBundleNameKey], [infoDictionary objectForKey:(id)kCFBundleVersionKey]);
+    RunLog(@"");
     
     [self loadCaptureDevices];
 }

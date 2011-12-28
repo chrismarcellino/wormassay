@@ -17,7 +17,9 @@
 @interface VideoProcessorController : NSObject <VideoProcessorDelegate> {
     dispatch_queue_t _queue;     // protects all state and serializes
     NSMutableArray *_videoProcessors;
-    NSTextStorage *_runLogTextStorage;      // main thread only
+    NSTextView *_runLogTextView;      // main thread only
+    NSScrollView *_runLogTextScrollView; // main thread only
+    NSDictionary *_runLogTextAttributes;
 }
 
 + (VideoProcessorController *)sharedInstance;
@@ -26,6 +28,7 @@
 - (void)removeVideoProcessor:(VideoProcessor *)videoProcessor;
 
 @property(retain) NSTextStorage *runLogTextStorage;
+@property(retain) NSScrollView *runLogTextScrollView;
 - (void)appendToRunLog:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2);
 - (void)appendToResultsCSVFile:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2);
 

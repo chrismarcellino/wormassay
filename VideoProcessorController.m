@@ -11,7 +11,8 @@
 
 @implementation VideoProcessorController
 
-@synthesize runLogTextStorage;
+@synthesize runLogTextStorage = _runLogTextStorage;
+@synthesize runLogTextScrollView = _runLogTextScrollView;
 
 + (VideoProcessorController *)sharedInstance
 {
@@ -36,6 +37,9 @@
 - (void)dealloc
 {
     [_videoProcessors release];
+    [_runLogTextView release];
+    [_runLogTextScrollView release];
+    [_runLogTextAttributes release];
     [super dealloc];
 }
 
@@ -101,8 +105,16 @@
         
         // Nested these blocks to preserve ordering between the disk file and log window
         dispatch_async(dispatch_get_main_queue(), ^{
-            NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:string];
-            [[self runLogTextStorage] appendAttributedString:attributedString];
+            if (!_runLogTextAttributes) {
+                _runLogTextAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:
+                                         [NSFont fontWithName:@"Menlo Regular" size:12], NSFontAttributeName, nil];
+            }
+            
+            NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:string attributes:_runLogTextAttributes];
+            NSTextStorage *textStorage = [self runLogTextStorage];
+            [textStorage beginEditing];
+            [textStorage appendAttributedString:attributedString];
+            [textStorage endEditing];
             [attributedString release];
         });
     });

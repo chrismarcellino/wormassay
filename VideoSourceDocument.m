@@ -404,13 +404,9 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
 // Interviening frames may be dropped if the video is a live capture device source. 
 - (void)processVideoFrame:(IplImageObject *)image presentationTime:(NSTimeInterval)presentationTime
 {
-    NSTimeInterval time = CACurrentMediaTime();
     [_processor processVideoFrame:image presentationTime:presentationTime debugFrameCallback:^(IplImageObject *image) {
         [_bitmapOpenGLView renderImage:image];
     }];
-    
-    NSTimeInterval delta = CACurrentMediaTime() - time;
-    RunLog(@"######## FRAME PROCESSING TIME: %.0f ms (%.1f fps)", delta * 1000, 1.0 / delta);  // XXX
 }
 
 - (NSString *)displayName
