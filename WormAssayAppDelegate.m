@@ -1,32 +1,31 @@
 //
-//  NematodeAssayAppDelegate.m
-//  NematodeAssay
+//  WormAssayAppDelegate.m
+//  WormAssay
 //
 //  Created by Chris Marcellino on 3/31/11.
 //  Copyright 2011 Regents of the University of California. All rights reserved.
 //
 
-#import "NematodeAssayAppDelegate.h"
+#import "WormAssayAppDelegate.h"
 #import "VideoSourceDocument.h"
 #import "DocumentController.h"
 #import "VideoProcessor.h"
 #import <QTKit/QTKit.h>
 
 static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCameras";
+static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
 
-@interface NematodeAssayAppDelegate ()
+@interface WormAssayAppDelegate ()
 
 - (void)loadCaptureDevices;
 - (void)captureDevicesChanged;
 
 @end
 
-@implementation NematodeAssayAppDelegate
+@implementation WormAssayAppDelegate
 
 - (void)applicationWillFinishLaunching:(NSNotification *)notification
 {
-    _registeredDevices = [[NSMutableArray alloc] init];
-
     // Register default user defaults
     NSDictionary *defaults = [[NSDictionary alloc] initWithObjectsAndKeys:
                               [NSNumber numberWithBool:YES], IgnoreBuiltInCamerasUserDefaultsKey, nil];
@@ -49,6 +48,24 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
                                                               forKeyPath:[@"values." stringByAppendingString:IgnoreBuiltInCamerasUserDefaultsKey]
                                                                  options:0
                                                                  context:NULL];
+    
+    // Create the logging window and associate it with the VideoProcessorController
+    NSRect screenFrame = [[NSScreen mainScreen] visibleFrame];
+    NSRect rect = screenFrame;
+    rect.size.height = 200;
+    NSUInteger styleMask = NSTitledWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask | NSUtilityWindowMask;
+    _loggingPanel = [[NSPanel alloc] initWithContentRect:rect styleMask:styleMask backing:NSBackingStoreBuffered defer:YES];
+    [_loggingPanel setHidesOnDeactivate:NO];
+    [_loggingPanel setTitle:@"Run Log"];
+    [_loggingPanel setFrameUsingName:LoggingWindowAutosaveName];
+    [_loggingPanel setFrameAutosaveName:LoggingWindowAutosaveName];
+    
+    NSTextView *textView = [[NSTextView alloc] initWithFrame:NSZeroRect];
+    [_loggingPanel setContentView:textView];
+    [textView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+    [textView release];
+    
+    [_loggingPanel orderBack:self];
     
     [self loadCaptureDevices];
 }

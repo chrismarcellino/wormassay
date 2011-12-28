@@ -1,6 +1,6 @@
 //
 //  VideoProcessorController.m
-//  NematodeAssay
+//  WormAssay
 //
 //  Created by Chris Marcellino on 4/11/11.
 //  Copyright 2011 Regents of the University of California. All rights reserved.
@@ -24,7 +24,7 @@
 - (id)init
 {
     if ((self = [super init])) {
-        _queue = dispatch_queue_create("edu.ucsf.chrismarcellino.nematodeassay.videoprocessorcontroller", NULL);
+        _queue = dispatch_queue_create("edu.ucsf.chrismarcellino.wormassay.videoprocessorcontroller", NULL);
         _videoProcessors = [[NSMutableArray alloc] init];
     }
     

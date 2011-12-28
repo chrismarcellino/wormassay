@@ -2,6 +2,6 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "self:NematodeAssay.xcodeproj">
+      location = "self:WormAssay.xcodeproj">
    </FileRef>
 </Workspace>

@@ -1,6 +1,6 @@
 //
 //  VideoSourceDocument.m
-//  NematodeAssay
+//  WormAssay
 //
 //  Created by Chris Marcellino on 4/1/11.
 //  Copyright 2011 Regents of the University of California. All rights reserved.
@@ -104,7 +104,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
                                     [NSNumber numberWithBool:NO], QTMovieOpenAsyncOKAttribute,
                                     nil];
         _movie = [[QTMovie alloc] initWithAttributes:attributes error:outError];
-        _movieQueue = dispatch_queue_create("edu.ucsf.chrismarcellino.nematodeassay.fileframeextract", NULL);
+        _movieQueue = dispatch_queue_create("edu.ucsf.chrismarcellino.wormassay.fileframeextract", NULL);
         [attributes release];
         
         _sourceIdentifier = [[absoluteURL path] retain];
@@ -166,15 +166,18 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
     contentRect.size = [self lastKnownResolution];
     
     // Create the window to hold the content view and contrain it to preserve the aspect ratio
-    NSUInteger styleMask = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask;
+    NSUInteger styleMask = NSTitledWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask;
+    if (_movie) {
+        styleMask |= NSClosableWindowMask;
+    }
     NSWindow *window = [[NSWindow alloc] initWithContentRect:contentRect styleMask:styleMask backing:NSBackingStoreBuffered defer:YES];
     // Enable multi-threaded drawing
     [window setPreferredBackingLocation:NSWindowBackingLocationVideoMemory];
 	[window useOptimizedDrawing:YES];       // since there are no overlapping subviews
     [window setOpaque:YES];
+    [window setShowsResizeIndicator:NO];
     
     // Insert the bitmap view into the window (the view is created in init so that it is safe to access by the capture threads without locking)
-    [_bitmapOpenGLView setFrame:contentRect];
     [_bitmapOpenGLView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
     [window setContentView:_bitmapOpenGLView];
     
@@ -194,7 +197,6 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
     // Remove the icon and disable the close butotn if this is a capture device
     if (_captureDevice) {
         [window setRepresentedURL:nil];
-        [[window standardWindowButton:NSWindowCloseButton] setEnabled:NO];
     }
     
     [self adjustWindowSizing];

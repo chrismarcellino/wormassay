@@ -1,6 +1,6 @@
 //
 //  VideoProcessor.m
-//  NematodeAssay
+//  WormAssay
 //
 //  Created by Chris Marcellino on 4/5/11.
 //  Copyright 2011 Regents of the University of California. All rights reserved.
@@ -53,8 +53,8 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MIN;
 {
     if ((self = [super init])) {
         _sourceIdentifier = [sourceIdentifier copy];
-        _queue = dispatch_queue_create("edu.ucsf.chrismarcellino.nematodeassay.videoprocessor", NULL);
-        _debugFrameCallbackQueue = dispatch_queue_create("edu.ucsf.chrismarcellino.nematodeassay.callback", NULL);
+        _queue = dispatch_queue_create("edu.ucsf.chrismarcellino.wormassay.videoprocessor", NULL);
+        _debugFrameCallbackQueue = dispatch_queue_create("edu.ucsf.chrismarcellino.wormassay.callback", NULL);
         _processingState = ProcessingStateNoPlate;
     }
     return self;
@@ -249,7 +249,6 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MIN;
         NSString *text;
         try {
             zxing::Ref<zxing::Result> barcodeResult = reader->decode(binaryBitmap, hints);
-            const std::vector<zxing::Ref<zxing::ResultPoint> > points = barcodeResult->getResultPoints();
             text = [[NSString alloc] initWithUTF8String:barcodeResult->getText()->getText().c_str()];
         } catch (zxing::ReaderException &e) {
             // No barcode found

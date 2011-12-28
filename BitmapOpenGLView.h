@@ -1,6 +1,6 @@
 //
 //  BitmapOpenGLView.h
-//  NematodeAssay
+//  WormAssay
 //
 //  Created by Chris Marcellino on 4/3/11.
 //  Copyright 2011 Regents of the University of California. All rights reserved.
