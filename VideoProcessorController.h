@@ -34,6 +34,7 @@
 - (NSArray *)assayAnalyzerClasses;
 @property(assign) Class currentAssayAnalyzerClass;
 @property(copy) NSString *runOutputFolderPath;
+- (NSString *)videoFolderPathCreatingIfNecessary:(BOOL)create;
 
 - (void)addVideoProcessor:(VideoProcessor *)videoProcessor;
 - (void)removeVideoProcessor:(VideoProcessor *)videoProcessor;

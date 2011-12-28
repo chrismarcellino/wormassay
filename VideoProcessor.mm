@@ -307,12 +307,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                                     }
                                     if (_recordingCaptureOutput) {
                                         // Construct a temporary recording path name
-                                        NSProcessInfo *processInfo = [NSProcessInfo processInfo];
-                                        NSString *filename = [NSString stringWithFormat:@"%@-%i-%x%x.ts", [processInfo processName], [processInfo processIdentifier], arc4random()];
-                                        NSString *tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:filename];
-                                        [_recordingCaptureOutput recordToOutputFileURL:[NSURL fileURLWithPath:tempPath]];
-                                        // Notify the delegate that recording has started
-                                        [_delegate videoProcessor:self willBeginRecordingWithCaptureOutput:_recordingCaptureOutput];
+                                        [_delegate videoProcessor:self shouldBeginRecordingWithCaptureOutput:_recordingCaptureOutput];
                                     }
                                 }
                             } else {
@@ -419,7 +414,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         [_delegate videoProcessor:self
       didFinishAcquiringPlateData:_plateData
                      successfully:longEnough
-           recordingCaptureOutput:_recordingCaptureOutput
+       stopRecordingCaptureOutput:_recordingCaptureOutput
                    captureSession:_captureSession];
         
         // Release our retain on the recording capture output (the VideoProcessorController is responsible for stopping recording)

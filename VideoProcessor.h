@@ -47,11 +47,11 @@ typedef enum {
 @protocol VideoProcessorDelegate
 
 - (void)videoProcessor:(VideoProcessor *)vp didBeginTrackingPlateAtPresentationTime:(NSTimeInterval)presentationTime;
-- (void)videoProcessor:(VideoProcessor *)vp willBeginRecordingWithCaptureOutput:(QTCaptureFileOutput *)captureFileOutput;
+- (void)videoProcessor:(VideoProcessor *)vp shouldBeginRecordingWithCaptureOutput:(QTCaptureFileOutput *)captureFileOutput;
 - (void)videoProcessor:(VideoProcessor *)vp
 didFinishAcquiringPlateData:(PlateData *)plateData
           successfully:(BOOL)successfully
-recordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
+stopRecordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
         captureSession:(QTCaptureSession *)captureSession;
 - (void)videoProcessor:(VideoProcessor *)vp didCaptureBarcodeText:(NSString *)text atTime:(NSTimeInterval)presentationTime;
 

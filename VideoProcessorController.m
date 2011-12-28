@@ -15,6 +15,7 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
 static NSString *const RunOutputFolderPathKey = @"RunOutputFolderPath";
 static NSString *const SortableLoggingDateFormat = @"yyyy-MM-dd HH:mm zzz";
 static NSString *const SortableLoggingFilenameSafeDateFormat = @"yyyy-MM-dd HHmm zzz";
+static NSString *const UnlabeledPlateLabel = @"Unlabeled Plate";
 
 static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
 
@@ -126,6 +127,17 @@ static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
     return path;
 }
 
+- (NSString *)videoFolderPathCreatingIfNecessary:(BOOL)create
+{
+    NSFileManager *fileManager = create ? [[NSFileManager alloc] init] : nil;
+    NSString *videoFolder = [[self runOutputFolderPath] stringByAppendingPathComponent:@"Videos"];
+    if (create && ![fileManager fileExistsAtPath:videoFolder]) {
+        [fileManager createDirectoryAtPath:videoFolder withIntermediateDirectories:YES attributes:nil error:NULL];
+    }
+    [fileManager release];
+    return videoFolder;
+}
+
 - (void)setRunOutputFolderPath:(NSString *)path
 {
     [[NSUserDefaults standardUserDefaults] setObject:path forKey:RunOutputFolderPathKey];
@@ -178,15 +190,20 @@ static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
     });
 }
 
-- (void)videoProcessor:(VideoProcessor *)vp willBeginRecordingWithCaptureOutput:(QTCaptureFileOutput *)captureFileOutput
+- (void)videoProcessor:(VideoProcessor *)vp shouldBeginRecordingWithCaptureOutput:(QTCaptureFileOutput *)captureFileOutput
 {
-    [captureFileOutput setDelegate:self];
+    dispatch_async(_queue, ^{
+        [captureFileOutput setDelegate:self];
+        NSString *filename = [NSString stringWithFormat:@"%@ (%xx).ts", UnlabeledPlateLabel, [[NSProcessInfo processInfo] processIdentifier], arc4random()];
+        NSString *path = [[self videoFolderPathCreatingIfNecessary:YES] stringByAppendingPathComponent:filename];
+        [captureFileOutput recordToOutputFileURL:[NSURL fileURLWithPath:path]];
+    });
 }
 
 - (void)videoProcessor:(VideoProcessor *)vp
 didFinishAcquiringPlateData:(PlateData *)plateData
           successfully:(BOOL)successfully
-recordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
+stopRecordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
         captureSession:(QTCaptureSession *)captureSession
 {
     dispatch_async(_queue, ^{
@@ -195,7 +212,7 @@ recordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
                 [processor setShouldScanForWells:YES];
             }
             
-            // Find the likely barcode corresponding to this plate or make one up
+            // Find the likely barcode corresponding to this plate or use a placeholder if there isn't one
             NSString *plateID = nil;
             NSUInteger count = 0;
             for (NSString *barcode in _barcodesSinceTrackingBegan) {
@@ -207,7 +224,7 @@ recordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
             }
             if (!plateID) {
                 NSString *fileSourceFilename = [vp fileSourceFilename];
-                plateID = fileSourceFilename ? fileSourceFilename : @"Unlabeled Plate";
+                plateID = fileSourceFilename ? fileSourceFilename : UnlabeledPlateLabel;
             }
             
             // Append the date
@@ -250,15 +267,10 @@ recordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
                 // Mark the recording URL for moving once it is finalized
                 NSURL *tempRecordingURL = [recordingCaptureOutput outputFileURL];
                 if (recordingCaptureOutput && tempRecordingURL) {
-                    NSFileManager *fileManager = [[NSFileManager alloc] init];
-                    NSString *videoFolder = [folder stringByAppendingPathComponent:@"Videos"];
-                    if (![fileManager fileExistsAtPath:videoFolder]) {
-                        [fileManager createDirectoryAtPath:videoFolder withIntermediateDirectories:YES attributes:nil error:NULL];
-                    }
-                    [fileManager release];
-                    
-                    NSString *destinationPath = [videoFolder stringByAppendingPathComponent:
-                                                 [_currentOutputFilenamePrefix stringByAppendingString:@" Video.ts"]];
+                    NSString *extension = [[tempRecordingURL path] pathExtension];
+                    NSString *destinationPath = [[[self videoFolderPathCreatingIfNecessary:YES] stringByAppendingPathComponent:
+                                                 [_currentOutputFilenamePrefix stringByAppendingString:@" Video"]]
+                                                 stringByAppendingPathExtension:extension];
                     NSURL *destinationURL = [NSURL fileURLWithPath:destinationPath];
                     // Store the temporary URL and destination URL so we can move it into place once the file is finalized
                     [_videoTempURLsToDestinationURLs setObject:destinationURL forKey:tempRecordingURL];
