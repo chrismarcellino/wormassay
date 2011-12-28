@@ -29,7 +29,7 @@ typedef enum {
 
 // Adds results to a specific column, creating the column if necessary.
 - (void)setReportingStyle:(ReportingStyle)style forDataColumnID:(const char *)columnID;
-- (void)appendResult:(double)result toDataColumn:(const char *)columnID forWell:(int)well;
+- (void)appendResult:(double)result toDataColumnID:(const char *)columnID forWell:(int)well;
 
 // Allows reporting of non-formatted results text to be provided with the results and in the log files. Most MotionAnalyzers are
 // not expected to provide this.
@@ -45,7 +45,7 @@ typedef enum {
 - (void)incrementFrameDropCount;
 
 - (void)addProcessingTime:(NSTimeInterval)processingTime;
-- (void)processingTimeMean:(double *)mean stdDev:(double *)stddev inLastFrames:(NSUInteger)lastFrames;
+- (BOOL)processingTimeMean:(double *)mean stdDev:(double *)stddev inLastFrames:(NSUInteger)lastFrames;
 
 // Results Output
 

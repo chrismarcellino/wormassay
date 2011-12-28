@@ -10,6 +10,7 @@
 #import "CvUtilities.hpp"
 #import "VideoFrame.h"
 #import "PlateData.h"
+#import "AssayAnalyzer.h"
 #import "WellFinding.hpp"
 #import "VideoProcessorController.h"   // for RunLog()
 #import "zxing/common/GreyscaleLuminanceSource.h"
@@ -26,7 +27,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 @interface VideoProcessor() {
     NSString *_sourceIdentifier;
     id<VideoProcessorDelegate> _delegate;        // not retained
-    Class _wellAnalyzerClass;
+    Class _assayAnalyzerClass;
     dispatch_queue_t _queue;        // protects all state and serializes
     dispatch_queue_t _debugFrameCallbackQueue;
     
@@ -39,6 +40,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     NSTimeInterval _firstWellFrameTime;
     NSTimeInterval _lastBarcodeScanTime;
     
+    id<AssayAnalyzer> _assayAnalyzer;
     PlateData *_plateData;
     std::vector<Circle> _trackingWellCircles;    // circles used for tracking
     CvSize _trackedImageSize;
@@ -75,6 +77,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     dispatch_release(_queue);
     dispatch_release(_debugFrameCallbackQueue);
     [_plateData release];
+    [_assayAnalyzer release];
     [_lastBarcodeThisProcessor release];
     [super dealloc];
 }
@@ -86,10 +89,10 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     });
 }
 
-- (void)setAssayAnalzyerClass:(Class)wellAnalyzerClass
+- (void)setAssayAnalyzerClass:(Class)assayAnalyzerClass
 {
     dispatch_async(_queue, ^{
-        _wellAnalyzerClass = delegate;
+        _assayAnalyzerClass = assayAnalyzerClass;
         [self resetCaptureStateAndReportResults];
     });
 }
@@ -131,7 +134,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         }
         
         // Create a copy of the frame to draw debugging info on, which we will send back
-        VideoFrame *debugImage = [videoFrame copy];
+        VideoFrame *debugFrame = [videoFrame copy];
         
         // First, draw debugging well circles and labels on each frame so that they appear underneath other drawing
         if (_shouldScanForWells) {
@@ -140,21 +143,21 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
             drawWellCirclesAndLabelsOnDebugImage(_processingState == ProcessingStateNoPlate ? _lastCircles : _trackingWellCircles,
                                                  circleColor,
                                                  _processingState == ProcessingStateTrackingMotion,
-                                                 [debugImage image]);
+                                                 [debugFrame image]);
         }
         
         // If this processor detected a barcode, draw it on the debug image
         if (_lastBarcodeThisProcessor && _lastBarcodeThisProcessorRepeatCount >= BarcodeRepeatSuccessCount) {
             // Draw the movement text
-            CvFont font = fontForNormalizedScale(3.5, [debugImage image]);
-            CvPoint point = cvPoint(10, [debugImage image]->height - 10);
-            cvPutText([debugImage image], [_lastBarcodeThisProcessor UTF8String], point, &font, CV_RGBA(232, 0, 217, 255));
+            CvFont font = fontForNormalizedScale(3.5, [debugFrame image]);
+            CvPoint point = cvPoint(10, [debugFrame image]->height - 10);
+            cvPutText([debugFrame image], [_lastBarcodeThisProcessor UTF8String], point, &font, CV_RGBA(232, 0, 217, 255));
         }
         
         // Analyze tracked images synchronously (at frame rate), so that we drop frames if we can't keep up.
         if (_processingState == ProcessingStateTrackingMotion && sizeEqualsSize(_trackedImageSize, cvGetSize([videoFrame image]))) {
-            if ([_wellAnalyzer willBeginFrameProcessing:videoFrame plateData:plateData]) {
-                BOOL parallel = [_wellAnalyzer canCallProcessMethodInParallel];
+            if ([_assayAnalyzer willBeginFrameProcessing:videoFrame debugImage:[debugFrame image] plateData:_plateData]) {
+                BOOL parallel = [_assayAnalyzer canProcessInParallel];
                 dispatch_queue_t processingQueue = parallel ? dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0) : dispatch_queue_create(NULL, NULL);
                 dispatch_apply(_trackingWellCircles.size(), processingQueue, ^(size_t i){
                     // Make stack copies of the headers so that they can have their own ROI's, etc.
@@ -164,17 +167,17 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                     IplImage debugImage;
                     memcpy(&debugImage, [debugFrame image], sizeof(IplImage));
                     cvSetImageROI(&wellImage, boundingSquare);
-                    [_wellAnalyzer processVideoFrameWellSynchronously:&wellImage debugImage:&debugImage plateData:_plateData];
+                    [_assayAnalyzer processVideoFrameWellSynchronously:&wellImage forWell:i debugImage:&debugImage presentationTime:[videoFrame presentationTime] plateData:_plateData];
                 });
                 if (!parallel) {
                     dispatch_release(processingQueue);
                 }
                 
-                [_wellAnalyzer didEndFrameProcessing:videoFrame plateData:plateData];
+                [_assayAnalyzer didEndFrameProcessing:videoFrame plateData:_plateData];
             }
             
             // Print the stats in the wells averaged over the last 30 seconds (to limit computational complexity)
-            CvFont wellFont = fontForNormalizedScale(0.75, [debugImage image]);
+            CvFont wellFont = fontForNormalizedScale(0.75, [debugFrame image]);
             for (size_t i = 0; i < _trackingWellCircles.size(); i++) {
                 double mean, stddev;
                 if ([_plateData movementUnitsMean:&mean stdDev:&stddev forWell:i inLastSeconds:30]) {
@@ -183,7 +186,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                     
                     float radius = _trackingWellCircles[i].radius;
                     CvPoint textPoint = cvPoint(_trackingWellCircles[i].center[0] - radius * 0.5, _trackingWellCircles[i].center[1]);
-                    cvPutText([debugImage image],
+                    cvPutText([debugFrame image],
                               text,
                               textPoint,
                               &wellFont,
@@ -193,7 +196,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
             
             // Print performance statistics. The mean/stddev are for just the procesing time. The frame rate is the total net rate.
             double mean, stddev;
-            if ([_plateData processingTimeMean:&mean stdDev:&stddev inLastFrames:100])
+            if ([_plateData processingTimeMean:&mean stdDev:&stddev inLastFrames:100]) {
                 double fps = (double)[_plateData receivedFrameCount] / ([_plateData lastPresentationTime] - [_plateData startPresentationTime]);
                 double drop = (double)[_plateData frameDropCount] / ([_plateData receivedFrameCount] + [_plateData frameDropCount]);
                 
@@ -201,19 +204,15 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                 snprintf(text, sizeof(text), "%.0f ms/f (SD: %.0f ms), %.1f fps, %.0f%% drop", mean * 1000, stddev * 1000, fps, drop * 100);
                 CvFont font;
                 cvInitFont(&font, CV_FONT_HERSHEY_DUPLEX, 0.6, 0.6, 0, 0.6);
-                cvPutText([debugImage image], text, cvPoint(0, 15), &font, CV_RGBA(232, 0, 217, 255));
+                cvPutText([debugFrame image], text, cvPoint(0, 15), &font, CV_RGBA(232, 0, 217, 255));
             }
-            
-            // Store the current image for the next pass
-            [_lastFrame release];
-            _lastFrame = [videoFrame retain];
         }
                 
         // Dispatch the debug image asynchronously to increase parallelism 
         dispatch_async(_debugFrameCallbackQueue, ^{
-            callback(debugImage);
+            callback(debugFrame);
         });
-        [debugImage release];
+        [debugFrame release];
         
         // Add the processing time last
         if (_plateData) {
@@ -275,11 +274,11 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                                 _lastBarcodeScanTime = PresentationTimeDistantPast;     // Now that plate is in place, immediately retry barcode capture
                                 
                                 // Create plate data and analyzer
-                                NSAssert(!_plateData && !_wellAnalyzer, @"plate data or motion analyzer already exists");
+                                NSAssert(!_plateData && !_assayAnalyzer, @"plate data or motion analyzer already exists");
                                 _plateData = [[PlateData alloc] initWithWellCount:wellCircles.size() startPresentationTime:[videoFrame presentationTime]];
-                                _wellAnalyzer = [[_wellAnalyzerClass alloc] init];
-                                NSAssert(_wellAnalyzer, @"failed to allocate AssayAnalzyer: %@", _wellAnalyzerClass);
-                                [_wellAnalyzer willBeginPlateTrackingWithPlateData:_plateData];
+                                _assayAnalyzer = [[_assayAnalyzerClass alloc] init];
+                                NSAssert1(_assayAnalyzer, @"failed to allocate AssayAnalyzer %@", _assayAnalyzerClass);
+                                [_assayAnalyzer willBeginPlateTrackingWithPlateData:_plateData];
                                 // Begin recording video
                                 [self beginRecordingVideo];
                             } else {
@@ -370,9 +369,9 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 // requires _queue to be held
 - (void)resetCaptureStateAndReportResults
 {
-    [_wellAnalyzer didEndTrackingPlateWithPlateData:_plateData];
-    [_wellAnalyzer release];
-    _wellAnalyzer = nil;
+    [_assayAnalyzer didEndTrackingPlateWithPlateData:_plateData];
+    [_assayAnalyzer release];
+    _assayAnalyzer = nil;
     
     // Send the stats unconditionally and let the controller sort it out
     if (_plateData) {
@@ -385,8 +384,6 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     _processingState = ProcessingStateNoPlate;
     [_plateData release];
     _plateData = nil;
-    [_lastFrame release];
-    _lastFrame = nil;
     
     _firstWellFrameTime = PresentationTimeDistantPast;
     _lastBarcodeScanTime = PresentationTimeDistantPast;

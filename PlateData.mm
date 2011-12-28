@@ -60,8 +60,8 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
     @synchronized(self) {
         NSAssert(presentationTime >= _lastPresentationTime, @"out of order presentation times");
         _lastPresentationTime = presentationTime;
-        [self appendResult:movementUnit toDataColumn:MovementUnitID forWell:well];
-        [self appendResult:presentationTime toDataColumn:PresentationTimeID forWell:well];
+        [self appendResult:movementUnit toDataColumnID:MovementUnitID forWell:well];
+        [self appendResult:presentationTime toDataColumnID:PresentationTimeID forWell:well];
     }
 }
 
@@ -72,7 +72,7 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
     }
 }
 
-- (void)appendResult:(double)result toDataColumn:(const char *)columnID forWell:(int)well
+- (void)appendResult:(double)result toDataColumnID:(const char *)columnID forWell:(int)well
 {
     @synchronized(self) {
         _valuesByWellAndDataColumn[well][std::string(columnID)].push_back(result);
@@ -127,14 +127,14 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
     }
 }
 
-- (void)processingTimeMean:(double *)mean stdDev:(double *)stddev inLastFrames:(NSUInteger)lastFrames
+- (BOOL)processingTimeMean:(double *)mean stdDev:(double *)stddev inLastFrames:(NSUInteger)lastFrames
 {
     @synchronized(self) {
         NSUInteger firstIndex = 0;
         if (_processingTimes.size() > lastFrames) {
             firstIndex = _processingTimes.size() - lastFrames;
         }
-        meanAndStdDev(_processingTimes, *mean, *stddev, firstIndex);
+        return meanAndStdDev(_processingTimes, *mean, *stddev, firstIndex);
     }
 }
 

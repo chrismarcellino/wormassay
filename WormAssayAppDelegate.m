@@ -11,6 +11,7 @@
 #import "DocumentController.h"
 #import "VideoProcessorController.h"
 #import "VideoProcessor.h"
+#import "AssayAnalyzer.h"
 #import <QTKit/QTKit.h>
 #import <IOKit/pwr_mgt/IOPMLib.h>
 
@@ -19,7 +20,7 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
 
 @interface WormAssayAppDelegate ()
 
-- (void)wellAnalyzerMenuItemSelected:(NSMenuItem *)sender;
+- (void)assayAnalyzerMenuItemSelected:(NSMenuItem *)sender;
 - (void)loadCaptureDevices;
 - (void)captureDevicesChanged;
 
@@ -27,7 +28,7 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
 
 @implementation WormAssayAppDelegate
 
-@synthesize wellAnalyzerMenu;
+@synthesize assayAnalyzerMenu;
 
 - (void)applicationWillFinishLaunching:(NSNotification *)notification
 {
@@ -79,10 +80,9 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     [scrollView release];
     
     // Set up analyzer menu
-    NSMenu *wellAnalyzerSubmenu = [self wellAnalyzerSubmenu];
-    NSUInteger tag = 0;
-    for (Class class in [videoProcessorController wellAnalyzerClasses]) {
-        [wellAnalyzerSubmenu addItemWithTitle:[class analyzerName] action:@selector(wellAnalyzerMenuItemSelected:) keyEquivalent:nil];
+    NSMenu *menu = [self assayAnalyzerMenu];
+    for (Class class in [videoProcessorController assayAnalyzerClasses]) {
+        [menu addItemWithTitle:[class analyzerName] action:@selector(assayAnalyzerMenuItemSelected:) keyEquivalent:nil];
     }
     
     // Log welcome message
@@ -90,12 +90,12 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     RunLog(@"%@ version %@ launched.", [infoDictionary objectForKey:(id)kCFBundleNameKey], [infoDictionary objectForKey:(id)kCFBundleVersionKey]);
 }
 
-- (void)wellAnalyzerMenuItemSelected:(NSMenuItem *)sender
+- (void)assayAnalyzerMenuItemSelected:(NSMenuItem *)sender
 {
     VideoProcessorController *videoProcessorController = [VideoProcessorController sharedInstance];
-    NSUInteger index = [[self wellAnalyzerSubmenu] indexOfMenuItem:sender];
-    Class class = [[videoProcessorController wellAnalyzerClasses] objectAtIndex:index];
-    [videoProcessorController setWellAnalzyerClass:class];
+    NSUInteger index = [[self assayAnalyzerMenu] indexOfItem:sender];
+    Class class = [[videoProcessorController assayAnalyzerClasses] objectAtIndex:index];
+    [videoProcessorController setAssayAnalyzerClass:class];
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification

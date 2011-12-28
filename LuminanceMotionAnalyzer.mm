@@ -7,10 +7,11 @@
 //
 
 #import "LuminanceMotionAnalyzer.h"
+#import "PlateData.h"
 #import "opencv2/opencv.hpp"
 #import "CvUtilities.hpp"
 
-static const double PixelDeltaMovingProportionThreshold = 0.02;
+static const double PixelDeltaMovingThreshold = 0.02;
 static const double WellEdgeFindingInsetProportion = 0.7;
 
 static const char* WellOccupancyID = "WellOccupancy";
@@ -60,14 +61,14 @@ static const char* WellOccupancyID = "WellOccupancy";
     
     // Determine the mean delta
     CvScalar channelMean, channelStdDev;
-    cvAvgSdv(grayscalePlateDelta, &channelMean, &channelStdDev);   //  xxxxxxxxxxxxxxxxxxxxXXXXXXXXXXX CHANGE TO AVG
-    double mean = (channelMean[0] + channelMean[1] + channelMean[2]) / 3;
-    NSLog(@"###########  WHOLE PLATE MEAN %f SD: %f", mean, (channelStdDev[0] + channelStdDev[1] + channelStdDev[2]) / 3;
+    cvAvgSdv(plateDelta, &channelMean, &channelStdDev);   //  xxxxxxxxxxxxxxxxxxxxXXXXXXXXXXX CHANGE TO AVG.                  IF THIS SCHEME SUCKS, USE OLD ONE HERE ONLY
+    double meanDelta = (channelMean.val[0] + channelMean.val[1] + channelMean.val[2]) / 3;
+    NSLog(@"###########  WHOLE PLATE MEAN %f SD: %f", meanDelta, (channelStdDev.val[0] + channelStdDev.val[1] + channelStdDev.val[2]) / 3);
     
     cvReleaseImage(&plateDelta);
     
     // If the delta is more than about XXX%, the entire plate is likely moving, so don't perform any well calculations between these two plates
-    if (proportionPlateMoved < PixelDeltaMovingProportionThreshold) {
+    if (meanDelta < PixelDeltaMovingThreshold) {
         // Draw the movement text
         CvFont wellFont = fontForNormalizedScale(3.5, debugImage);
         cvPutText(debugImage,
@@ -82,19 +83,28 @@ static const char* WellOccupancyID = "WellOccupancy";
     return YES;
 }
 
-- (void)processVideoFrameWellSynchronously:(IplImage*)wellImage forWell:(int)well debugImage:(IplImage*)debugImage plateData:(PlateData *)plateData
+- (void)processVideoFrameWellSynchronously:(IplImage*)wellImage
+                                   forWell:(int)well
+                                debugImage:(IplImage*)debugImage
+                          presentationTime:(NSTimeInterval)presentationTime
+                                 plateData:(PlateData *)plateData
 {
     // ======= Contour finding ========
     
     // If we haven't already, create an inverted circle mask with 0's in the circle.
     // We use only a portion of the circle to conservatively avoid taking the well walls.
+    int radius = (wellImage->width + wellImage->height) / 4;
     if (!_insetInvertedCircleMask || !sizeEqualsSize(cvGetSize(_insetInvertedCircleMask), cvGetSize(wellImage))) {
         if (_insetInvertedCircleMask) {
             cvReleaseImage(&_insetInvertedCircleMask);
         }
         _insetInvertedCircleMask = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
         fastFillImage(_insetInvertedCircleMask, 255);
-        cvCircle(_insetInvertedCircleMask, cvPoint(radius, radius), radius * WellEdgeFindingInsetProportion, cvRealScalar(0), CV_FILLED);
+        cvCircle(_insetInvertedCircleMask,
+                 cvPoint(wellImage->width / 2, wellImage->height / 2),
+                 radius * WellEdgeFindingInsetProportion,
+                 cvRealScalar(0),
+                 CV_FILLED);
     }
     
     // Get grayscale subimages for the well
@@ -116,26 +126,29 @@ static const char* WellOccupancyID = "WellOccupancy";
     
     // Store the pixel counts and draw debugging images
     double occupancyFraction = (double)cvCountNonZero(dialtedEdges) / (dialtedEdges->width * dialtedEdges->height);
-    [plateData appendResult:occupancyFraction toDataColumnID:occupancyFraction forWell:well];
+    [plateData appendResult:occupancyFraction toDataColumnID:WellOccupancyID forWell:well];
     cvSet(debugImage, CV_RGBA(0, 0, 255, 255), dialtedEdges);
     cvReleaseImage(&dialtedEdges);
     
     // ======== Motion measurement =========
     
     // If we haven't already, create an inverted circle mask with all bits on in the circle (but not inset)
-    if (!_invertedCircleMask || !sizeEqualsSize(cvGetSize(_circleMask), cvGetSize(wellImage))) {
+    if (!_invertedCircleMask || !sizeEqualsSize(cvGetSize(_invertedCircleMask), cvGetSize(wellImage))) {
         if (_invertedCircleMask) {
             cvReleaseImage(&_invertedCircleMask);
         }
         _invertedCircleMask = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
         fastFillImage(_invertedCircleMask, 255);
-        cvCircle(_invertedCircleMask, cvPoint(radius, radius), radius, cvRealScalar(0), CV_FILLED);
+        cvCircle(_invertedCircleMask,
+                 cvPoint(wellImage->width / 2, wellImage->height / 2),
+                 radius,
+                 cvRealScalar(0), CV_FILLED);
     }
     
-    // Subtract the well images channelwise
+    // Subtract the well images channelwise. Make a copy of the header since we want to change the ROI.
     IplImage previousWellImage;
     memcpy(&previousWellImage, [_lastFrame image], sizeof(IplImage));
-    cvSetImageROI(&previousWellImage, cvGetImageROI(_lastFrame));
+    cvSetImageROI(&previousWellImage, cvGetImageROI(wellImage));
     IplImage* wellDelta = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 4);
     cvAbsDiff(wellImage, &previousWellImage, wellDelta);
     

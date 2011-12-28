@@ -27,7 +27,7 @@ typedef enum {
 
 - (id)initWithSourceIdentifier:(NSString *)sourceIdentifier;
 - (void)setDelegate:(id<VideoProcessorDelegate>)delegate;
-- (void)setAssayAnalzyerClass:(Class)wellAnalyzerClass;
+- (void)setAssayAnalyzerClass:(Class)assayAnalyzerClass;
 
 - (void)setShouldScanForWells:(BOOL)shouldScanForWells;
 

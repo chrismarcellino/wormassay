@@ -8,10 +8,10 @@
 
 #import "VideoProcessorController.h"
 #import <objc/runtime.h>
-#import "AssayAnalzyer.h"
+#import "AssayAnalyzer.h"
 #import "PlateData.h"
 
-static NSString *const AssayAnalzyerClassKey = @"AssayAnalzyerClass";
+static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
 
 @implementation VideoProcessorController
 
@@ -45,30 +45,30 @@ static NSString *const AssayAnalzyerClassKey = @"AssayAnalzyerClass";
     [super dealloc];
 }
 
-- (NSArray *)wellAnalyzerClasses
+- (NSArray *)assayAnalyzerClasses
 {
-    NSMutableArray *wellAnalyzerClasses = [NSMutableArray array];
+    NSMutableArray *assayAnalyzerClasses = [NSMutableArray array];
     
     int	numberOfClasses = objc_getClassList(NULL, 0);
 	Class *classList = malloc(numberOfClasses * sizeof(Class));
     objc_getClassList(classList, numberOfClasses);
     for (int i = 0; i < numberOfClasses; i++) {
         Class aClass = classList[i];
-        if (class_getClassMethod(aClass, @selector(conformsToProtocol:)) && [aClass conformsToProtocol:@protocol(AssayAnalzyer)]) {
-            [wellAnalyzerClasses addObject:aClass];
+        if (class_getClassMethod(aClass, @selector(conformsToProtocol:)) && [aClass conformsToProtocol:@protocol(AssayAnalyzer)]) {
+            [assayAnalyzerClasses addObject:aClass];
         } 
     }
     free(classList);
     
     // Sort by display name
-    [wellAnalyzerClasses sortUsingSelector:@selector(analyzerName)];
+    [assayAnalyzerClasses sortUsingSelector:@selector(analyzerName)];
     
-    return wellAnalyzerClasses;
+    return assayAnalyzerClasses;
 }
 
-- (Class)wellAnalyzerClass
+- (Class)assayAnalyzerClass
 {
-    NSString *string = [[NSUserDefaults standardUserDefaults] stringForKey:AssayAnalzyerClassKey];
+    NSString *string = [[NSUserDefaults standardUserDefaults] stringForKey:AssayAnalyzerClassKey];
     Class class = Nil;
     if (string) {
         class = NSClassFromString(string);
@@ -78,22 +78,22 @@ static NSString *const AssayAnalzyerClassKey = @"AssayAnalzyerClass";
         class = NSClassFromString(@"LuminanceMotionAnalyzer");
     }
     if (!class) {
-        class = [[self wellAnalyzerClasses] objectAtIndex:0];
+        class = [[self assayAnalyzerClasses] objectAtIndex:0];
     }
     
     return class;
 }
 
-- (void)setAssayAnalzyerClass:(Class)wellAnalyzerClass
+- (void)setAssayAnalyzerClass:(Class)assayAnalyzerClass
 {
-    if (wellAnalyzerClass != [self wellAnalyzerClass]) {
+    if (assayAnalyzerClass != [self assayAnalyzerClass]) {
         NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-        [defaults setObject:NSStringFromClass(wellAnalyzerClass) forKey:AssayAnalzyerClassKey];
+        [defaults setObject:NSStringFromClass(assayAnalyzerClass) forKey:AssayAnalyzerClassKey];
         [defaults synchronize];
         
         dispatch_async(_queue, ^{
             for (VideoProcessor *videoProcessor in _videoProcessors) {
-                [videoProcessor setAssayAnalzyerClass:wellAnalyzerClass];
+                [videoProcessor setAssayAnalyzerClass:assayAnalyzerClass];
             }
         });
     }
@@ -104,7 +104,7 @@ static NSString *const AssayAnalzyerClassKey = @"AssayAnalzyerClass";
     dispatch_async(_queue, ^{
         [_videoProcessors addObject:videoProcessor];
         [videoProcessor setDelegate:self];
-        [videoProcessor setAssayAnalzyerClass:[self wellAnalyzerClass]];
+        [videoProcessor setAssayAnalyzerClass:[self assayAnalyzerClass]];
         [videoProcessor setShouldScanForWells:YES];
     });
 }

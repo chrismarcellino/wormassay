@@ -7,9 +7,9 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "AssayAnalzyer.h"
+#import "AssayAnalyzer.h"
 
-@interface LuminanceMotionAnalyzer : NSObject <AssayAnalzyer> {
+@interface LuminanceMotionAnalyzer : NSObject <AssayAnalyzer> {
     VideoFrame *_lastFrame;
     IplImage* _insetInvertedCircleMask;
     IplImage* _invertedCircleMask;

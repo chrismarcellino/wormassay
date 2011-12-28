@@ -1,5 +1,5 @@
 //
-//  AssayAnalzyer.h
+//  AssayAnalyzer.h
 //  WormAssay
 //
 //  Created by Chris Marcellino on 4/19/11.
@@ -15,7 +15,7 @@
 // Well analyzers will only be instantiated (using -init) when a well positions are being tracked.
 // A reference to the debug image is provided to each processing method which may be used to draw on to
 // display information to the user (e.g. movement indicators or worm contours, etc.).
-@protocol AssayAnalzyer
+@protocol AssayAnalyzer <NSObject>
 
 // User visible analyzer name
 + (NSString *)analyzerName;
@@ -34,12 +34,16 @@
 
 // This method is called once for each well on the plate (potentially in parallel if -canCallProcessMethodInParallel returns YES.)
 // The videoFrame and debugImage have their ROI set to cover only the square corresponding to the exact boundaries of the well circle.
-// Hence, the center point of the circle is the box midpoint.
+// Hence, the center point of the circle is the box midpoint. Well is 0 indexed and in row-major order.
 // The underlying videoFrame IplImage is unique to the callee and may be modified, but the underlying data may not.
 // Both the plateData underlying IplImage and data may be modified, but only read/write atomicity is guaranteed for the ROI.
 // The callee can return NO if processing of this frame should be aborted (e.g. poor image quality or movement) or if all computation is
 // already complete (e.g. entire frame was processed here), in which case no further frame handling methods will be called for this frame.
-- (void)processVideoFrameWellSynchronously:(IplImage*)wellImage forWell:(int)well debugImage:(IplImage*)debugImage plateData:(PlateData *)plateData;
+- (void)processVideoFrameWellSynchronously:(IplImage*)wellImage
+                                   forWell:(int)well
+                                debugImage:(IplImage*)debugImage
+                          presentationTime:(NSTimeInterval)presentationTime
+                                 plateData:(PlateData *)plateData;
 
 // This method is called after all -willBeginFrameProcessing: calls returns, to allow comitting of any final plate data for this frame.
 - (void)didEndFrameProcessing:(VideoFrame *)videoFrame plateData:(PlateData *)plateData;
