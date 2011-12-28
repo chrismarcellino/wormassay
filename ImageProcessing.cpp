@@ -320,8 +320,8 @@ void drawWellCirclesAndLabelsOnDebugImage(std::vector<Circle> circles, CvScalar 
     CvFont wellFont = fontForNormalizedScale(1.0, debugImage);
     
     for (size_t i = 0; i < circles.size(); i++) {
-        CvPoint center = cvPoint(cvRound(circles[i].center[0]), cvRound(circles[i].center[1]));
-        int radius = cvRound(circles[i].radius);
+        CvPoint center = cvPoint(circles[i].center[0], circles[i].center[1]);
+        int radius = circles[i].radius;
         
         // Draw the circle outline
         cvCircle(debugImage, center, radius, circleColor, 3, 8, 0);

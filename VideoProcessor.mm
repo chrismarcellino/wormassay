@@ -133,8 +133,15 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                                                                                                        [debugImage image]);
                 
                 // XXX TEST
-                if (movedProportions.size() > 0) {
-                    RunLog(@"Well 1 moved: %f", (double)movedProportions[0]);
+                CvFont wellFont = fontForNormalizedScale(1.0, [debugImage image]);
+                for (size_t i = 0; i < movedProportions.size(); i++) {
+                    float radius = _trackingWellCircles[i].radius;
+                    CvPoint textPoint = cvPoint(_trackingWellCircles[i].center[0] - radius * 0.1, _trackingWellCircles[i].center[1]);
+                    cvPutText([debugImage image],
+                              [[NSString stringWithFormat:@"%.0f", movedProportions[i] * 1000] UTF8String],
+                              textPoint,
+                              &wellFont,
+                              CV_RGBA(0, 255, 255, 255));
                 }
             }
             
