@@ -239,7 +239,7 @@ static int sortCirclesInRowMajorOrder(const void* a, const void* b, void* userda
     return (fabsf(aVec[1] - bVec[1]) <= *(int*)userdata) ? (aVec[0] - bVec[0]) : (aVec[1] - bVec[1]);
 }
 
-CvPoint plateCenterForWellCircles(std::vector<cv::Vec3f> &circles)
+CvPoint plateCenterForWellCircles(const std::vector<cv::Vec3f> &circles)
 {
     CvPoint average = cvPoint(0,0);
     for (int i = 0; i < circles.size(); i++) {
@@ -254,28 +254,29 @@ CvPoint plateCenterForWellCircles(std::vector<cv::Vec3f> &circles)
     return average;
 }
 
-extern bool plateSequentialCirclesAppearSameAndStationary(std::vector<cv::Vec3f> &circlesPrevious, std::vector<cv::Vec3f> &circlesNext)
+bool plateSequentialCirclesAppearSameAndStationary(const std::vector<cv::Vec3f> &circlesPrevious,
+                                                   const std::vector<cv::Vec3f> &circlesCurrent)
 {
     // Return false if the number of circles have changed
-    if (circlesPrevious.size() != circlesNext.size() || circlesPrevious.size() == 0 || circlesNext.size() == 0) {
+    if (circlesPrevious.size() != circlesCurrent.size() || circlesPrevious.size() == 0 || circlesCurrent.size() == 0) {
         return false;
     }
     
     // Return false if the radius has changed signifigantly
     float radiusPrevious = circlesPrevious[0][2];
-    float radiusNext = circlesNext[0][2];
-    float radiusRatio = radiusPrevious / radiusNext;
+    float radiusCurrent = circlesCurrent[0][2];
+    float radiusRatio = radiusPrevious / radiusCurrent;
     if (radiusRatio > 1.25 || radiusRatio < 0.8) {
         return false;
     }
     
     // Return false if the center of the plate has moved more than the (mean radius) / 10 pxiels.
     // This is a useful comparison as the average position of all circles have relatively little variance, as where each
-    // individual well has much more noise. 
+    // individual well has much more noise.
     CvPoint centerPrevious = plateCenterForWellCircles(circlesPrevious);
-    CvPoint centerNext = plateCenterForWellCircles(circlesNext);
-    float deltaX = centerPrevious.x - centerNext.x;
-    float deltaY = centerPrevious.y - centerNext.y;
+    CvPoint centerCurrent = plateCenterForWellCircles(circlesCurrent);
+    float deltaX = centerPrevious.x - centerCurrent.x;
+    float deltaY = centerPrevious.y - centerCurrent.y;
     float distance = sqrtf(deltaX * deltaX + deltaY * deltaY);
-    return distance < (radiusPrevious + radiusNext) / 2.0 / 10.0;
+    return distance < (radiusPrevious + radiusCurrent) / 2.0 / 10.0;
 }

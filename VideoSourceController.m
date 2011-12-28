@@ -8,6 +8,7 @@
 
 #import "VideoSourceController.h"
 #import "opencv2/core/core_c.h"
+#import <QuartzCore/QuartzCore.h>
 #import "BitmapOpenGLView.h"
 #import "ProcessingController.h"
 #import "IplImageConversionUtilities.h"
@@ -358,8 +359,14 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
 {
     NSAssert(iplImage->width * iplImage->nChannels == iplImage->widthStep, @"packed images are required");
 
+    NSTimeInterval presentationTimeInterval;
+    if (!QTGetTimeInterval(presentationTime, &presentationTimeInterval)) {
+        presentationTimeInterval = CACurrentMediaTime();
+    }
+    
     [[ProcessingController sharedInstance] processVideoFrame:iplImage
                                         fromSourceIdentifier:_sourceIdentifier
+                                            presentationTime:presentationTimeInterval
                     debugVideoFrameCompletionTakingOwnership:^(IplImage *debugFrame) {
         // Draw the output images. The OpenGL view must take ownership of the images.
         NSAssert(debugFrame->width * debugFrame->nChannels == debugFrame->widthStep, @"packed images are required");

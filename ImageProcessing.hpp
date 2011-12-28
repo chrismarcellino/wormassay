@@ -28,10 +28,11 @@ extern bool findWellCircles(IplImage *inputImage, std::vector<cv::Vec3f> &circle
 extern bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vector<cv::Vec3f> &circlesVec, float &score);
 
 // Calcualtes the arithmetic mean of the circles' centers
-extern CvPoint plateCenterForWellCircles(std::vector<cv::Vec3f> &circles);
+extern CvPoint plateCenterForWellCircles(const std::vector<cv::Vec3f> &circles);
 
 // Returns true if the plate corresponding to the circle sets has moved or been removed during two sequential sets of samplings.
-extern bool plateSequentialCirclesAppearSameAndStationary(std::vector<cv::Vec3f> &circlesPrevious, std::vector<cv::Vec3f> &circlesNext);
+extern bool plateSequentialCirclesAppearSameAndStationary(const std::vector<cv::Vec3f> &circlesPrevious,
+                                                          const std::vector<cv::Vec3f> &circlesCurrent);
 
 #ifdef __cplusplus
 }

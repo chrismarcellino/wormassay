@@ -25,10 +25,10 @@ typedef enum {
     dispatch_queue_t _debugFrameCallbackQueue;
     CvFont debugImageFont;
     
-    ProcessingState _state;
+    ProcessingState _processingState;
     NSString *_wellCameraSourceIdentifier;
-    NSArray *_wellFindingInProcessSourceIdentifiers;
-    NSArray *_barcodeFindingInProcessSourceIdentifiers;
+    NSMutableArray *_wellFindingInProcessSourceIdentifiers;
+    NSMutableArray *_barcodeFindingInProcessSourceIdentifiers;
     int _wellCountHint;
 #if __cplusplus     // hide C++ ivars from non C++ clients. This is only safe to do on the 64-bit Objective-C ABI, which this app requires.
     std::vector<cv::Vec3f> _baselineWellCircles;
@@ -43,7 +43,7 @@ typedef enum {
 // Caller is responsible for calling cvReleaseImage() on debugFrame. Block will be called on an arbitrary thread. 
 - (void)processVideoFrame:(IplImage *)videoFrame
      fromSourceIdentifier:(NSString *)sourceIdentifier
-        frameAbsoluteTime:(NSTimeInterval)frameAbsoluteTime
+        presentationTime:(NSTimeInterval)presentationTime
 debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callback;
 
 - (void)logFormat:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2);
