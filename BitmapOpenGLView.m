@@ -74,12 +74,11 @@
 
 - (void)renderImage:(VideoFrame *)image
 {
-    IplImage *iplImage = image ? [image image] : [_lastImage image];
-    
     CGLContextObj glContext = [[self openGLContext] CGLContextObj];
     CGLLockContext(glContext);
     CGLSetCurrentContext(glContext);
-    
+ 
+    IplImage *iplImage = image ? [image image] : [_lastImage image];
     if (iplImage) {
         NSAssert(iplImage->widthStep == iplImage->width * iplImage->nChannels, @"image not byte packed");
         // Set the texture image

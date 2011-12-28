@@ -51,4 +51,7 @@
 // The final callback before this instance is released. Use for any final post-processing.
 - (void)didEndTrackingPlateWithPlateData:(PlateData *)plateData;
 
+// Minimum for reporting of data
+- (NSTimeInterval)minimumTimeIntervalProcessedToReportData;
+
 @end

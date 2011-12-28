@@ -145,7 +145,7 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
     });
 }
 
-- (void)videoProcessor:(VideoProcessor *)vp didFinishAcquiringPlateData:(PlateData *)plateData
+- (void)videoProcessor:(VideoProcessor *)vp didFinishAcquiringPlateData:(PlateData *)plateData successfully:(BOOL)successfully
 {
     dispatch_async(_queue, ^{
         if ([_videoProcessors containsObject:vp] && _currentlyTrackingProcessor == vp) {
@@ -156,7 +156,7 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
             [_currentlyTrackingProcessor release];
             _currentlyTrackingProcessor = nil;
             
-            // Write the results to disk and the run log
+            // Write the results to disk and the run log if successful
             
         }
     });

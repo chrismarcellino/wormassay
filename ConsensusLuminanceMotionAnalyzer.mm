@@ -57,7 +57,7 @@ static const char* WellOccupancyID = "WellOccupancy";
 
 - (void)willBeginPlateTrackingWithPlateData:(PlateData *)plateData
 {
-    [plateData setReportingStyle:(ReportingStyleMean | ReportingStyleStdDev | ReportingStyleRaw) forDataColumnID:WellOccupancyID];
+    [plateData setReportingStyle:(ReportingStyleMean | ReportingStyleStdDev) forDataColumnID:WellOccupancyID];
 }
 
 - (BOOL)willBeginFrameProcessing:(VideoFrame *)videoFrame debugImage:(IplImage*)debugImage plateData:(PlateData *)plateData
@@ -225,6 +225,11 @@ static const char* WellOccupancyID = "WellOccupancy";
 - (void)didEndTrackingPlateWithPlateData:(PlateData *)plateData
 {
     // nothing
+}
+
+- (NSTimeInterval)minimumTimeIntervalProcessedToReportData
+{
+    return 5.0;
 }
 
 @end

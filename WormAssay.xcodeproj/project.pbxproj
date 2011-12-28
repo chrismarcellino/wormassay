@@ -1016,8 +1016,6 @@
 		21910731135E2B3100A12F1F /* Analysis */ = {
 			isa = PBXGroup;
 			children = (
-				2119D2CA135A101E00C5B32F /* PlateData.h */,
-				2119D2CB135A101E00C5B32F /* PlateData.mm */,
 				21910734135E2B5600A12F1F /* AssayAnalyzer.h */,
 				210E8AF3135EB58700FEE49F /* LuminanceMotionAnalyzer.h */,
 				210E8AF4135EB58700FEE49F /* LuminanceMotionAnalyzer.mm */,
@@ -1062,6 +1060,8 @@
 				215CD57B135D157400A558E3 /* WellFinding.cpp */,
 				2162B18413521ABC0081EFDD /* VideoFrame.h */,
 				2162B18513521ABC0081EFDD /* VideoFrame.mm */,
+				2119D2CA135A101E00C5B32F /* PlateData.h */,
+				2119D2CB135A101E00C5B32F /* PlateData.mm */,
 				21FCF94D134CBB8900ABD85C /* CvUtilities.hpp */,
 			);
 			name = "Image Processing";

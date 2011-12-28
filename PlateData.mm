@@ -46,7 +46,7 @@ static inline void appendCSVElement(NSMutableString *output, NSString *element);
         _startPresentationTime = _lastPresentationTime = presentationTime;
         _valuesByWellAndDataColumn.resize(wellCount);
         
-        [self setReportingStyle:ReportingStyleMean | ReportingStyleStdDev forDataColumnID:MovementUnitID];
+        [self setReportingStyle:(ReportingStyleMean | ReportingStyleStdDev | ReportingStyleRaw) forDataColumnID:MovementUnitID];
     }
     return self;
 }
@@ -129,6 +129,16 @@ static inline void appendCSVElement(NSMutableString *output, NSString *element);
     }
 }
 
+- (double)averageFramesPerSecond
+{
+    return (double)[self receivedFrameCount] / ([self lastPresentationTime] - [self startPresentationTime]);
+}
+
+- (double)droppedFrameProportion
+{
+    return (double)[self frameDropCount] / ([self receivedFrameCount] + [self frameDropCount]);
+}
+
 - (void)addProcessingTime:(NSTimeInterval)processingTime
 {
     @synchronized(self) {
@@ -171,7 +181,7 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
     @synchronized(self) {
         NSMutableArray *columnIDs = [NSMutableArray arrayWithCapacity:_valuesByWellAndDataColumn.size()];
         for (map<std::string, std::vector<double> >::iterator it = _valuesByWellAndDataColumn[0].begin(); it != _valuesByWellAndDataColumn[0].end(); it++) {
-            NSString *columnID = [[NSString alloc] initWithUTF8String:(it->first).cStr()];
+            NSString *columnID = [[NSString alloc] initWithUTF8String:(it->first).c_str()];
             [columnIDs addObject:columnID];
             [columnID release];
         }
@@ -187,11 +197,12 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
         
         // Write header row
         appendCSVElement(output, @"PlateAndWellID");
-        appendCSVElement(output, @"PlateID");
         
         NSArray *dataColumnIDs = [self sortedColumnIDsWithData];
         for (NSString *columnID in dataColumnIDs) {
-            ReportingStyle style = _reportingStyleByDataColumn[std::string(columnID)];
+            std::string columnIDStdStr = std::string([columnID UTF8String]);
+            
+            ReportingStyle style = _reportingStyleByDataColumn[columnIDStdStr];
             if (style & ReportingStyleMean) {
                 appendCSVElement(output, [columnID stringByAppendingString:@"-Mean"]);
             }
@@ -200,15 +211,14 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
             }
         }
         
-        [output addObject:@"\n"];
+        [output appendString:@"\n"];
         
         // Write stats for each well
         for (size_t well = 0; well < _valuesByWellAndDataColumn.size(); well++) {
-            std::string wellID = wellIdentifierStringForIndex(well);
-            NSString *plateAndWellID = [NSString stringWithFormat:@"%@-%s", plateID, wellID.cStr()];
+            // Output the plate-well ID
+            std::string wellID = wellIdentifierStringForIndex(well, _valuesByWellAndDataColumn.size());
+            NSString *plateAndWellID = [NSString stringWithFormat:@"%@-%s", plateID, wellID.c_str()];
             appendCSVElement(output, plateAndWellID);
-            appendCSVElement(output, [NSString stringWithFormat:@"%s", wellID.cStr()]);
-            appendCSVElement(output, plateID);
             
             for (NSString *columnID in dataColumnIDs) {
                 NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -239,9 +249,11 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
                     }
                     
                     appendCSVElement(rawLine, plateAndWellID);
-                    const std::vector<double>* rawValues = _valuesByWellAndDataColumn[well][columnIDStdStr];
-                    for (size_t i = 0; i < rawValues.size(); i++) {
-                        appendCSVElement(rawLine, rawValues[i]);
+                    const std::vector<double>* rawValues = &_valuesByWellAndDataColumn[well][columnIDStdStr];
+                    for (size_t i = 0; i < rawValues->size(); i++) {
+                        NSString *valueString = [[NSString alloc] initWithFormat:@"%f", rawValues->at(i)];
+                        appendCSVElement(rawLine, valueString);
+                        [valueString release];
                     }
                     [rawLine appendString:@"\n"];
                 }
@@ -249,6 +261,7 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
                 [pool release];
             }
         }
+        return output;
     }
 }
 

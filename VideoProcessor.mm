@@ -37,7 +37,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     
     ProcessingState _processingState;
     int _wellCountHint;
-    NSTimeInterval _firstWellFrameTime;
+    NSTimeInterval _firstWellFrameTime;     // not the begining of tracking
     NSTimeInterval _lastBarcodeScanTime;
     
     id<AssayAnalyzer> _assayAnalyzer;
@@ -203,11 +203,9 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
             // Print performance statistics. The mean/stddev are for just the procesing time. The frame rate is the total net rate.
             double mean, stddev;
             if ([_plateData processingTimeMean:&mean stdDev:&stddev inLastFrames:15]) {
-                double fps = (double)[_plateData receivedFrameCount] / ([videoFrame presentationTime] - [_plateData startPresentationTime]);
-                double drop = (double)[_plateData frameDropCount] / ([_plateData receivedFrameCount] + [_plateData frameDropCount]);
-                
                 char text[100];
-                snprintf(text, sizeof(text), "%.0f ms/f (SD: %.0f ms), %.1f fps, %.0f%% drop", mean * 1000, stddev * 1000, fps, drop * 100);
+                snprintf(text, sizeof(text), "%.0f ms/f (SD: %.0f ms), %.1f fps, %.0f%% drop",
+                         mean * 1000, stddev * 1000, [_plateData averageFramesPerSecond], [_plateData droppedFrameProportion] * 100);
                 CvFont font;
                 cvInitFont(&font, CV_FONT_HERSHEY_DUPLEX, 0.6, 0.6, 0, 0.6);
                 cvPutText([debugFrame image], text, cvPoint(0, 15), &font, CV_RGBA(232, 0, 217, 255));
@@ -380,17 +378,27 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 - (void)resetCaptureStateAndReportResults
 {
     [_assayAnalyzer didEndTrackingPlateWithPlateData:_plateData];
-    [_assayAnalyzer release];
-    _assayAnalyzer = nil;
     
     // Send the stats unconditionally and let the controller sort it out
     if (_plateData) {
-        RunLog(@"Ended tracking after zyx");
-        [_delegate videoProcessor:self didFinishAcquiringPlateData:_plateData];
+        NSTimeInterval trackingDuration = [_plateData lastPresentationTime] - [_plateData startPresentationTime];
+        if (trackingDuration >= [_assayAnalyzer minimumTimeIntervalProcessedToReportData]) {
+            RunLog(@"Ended tracking after %.3f seconds (%.1f fps, %.0f%% dropped)",
+                   trackingDuration, [_plateData averageFramesPerSecond], [_plateData droppedFrameProportion] * 100);
+            [_delegate videoProcessor:self didFinishAcquiringPlateData:_plateData successfully:YES];
+            
+        } else {
+            RunLog(@"Ignoring truncated run of %.3f seconds", trackingDuration);
+            [_delegate videoProcessor:self didFinishAcquiringPlateData:_plateData successfully:NO];
+        }
+        
         // SAVE AND NAME VIDEO XXX DONT DEADLOCK WHEN GETTING RESULT NAME  (INSTEAD PASS TEMP FILE NAME TO VIDEO PROCESSOR
         //[self endRecordingVideoWithName];
         // ELSE IF TOO SHORT DELETE THE VIDEO
     }
+    
+    [_assayAnalyzer release];
+    _assayAnalyzer = nil;
     
     _processingState = ProcessingStateNoPlate;
     [_plateData release];

@@ -8,12 +8,13 @@
 
 #import <Foundation/Foundation.h>
 
-typedef enum {
+enum {
     ReportingStyleNone = 0,
     ReportingStyleMean = 1 << 1,
     ReportingStyleStdDev = 1 << 2,
     ReportingStyleRaw = 1 << 20,
-} ReportingStyle;
+};
+typedef int ReportingStyle;
 
 // Thread-safe
 @interface PlateData : NSObject
@@ -44,6 +45,8 @@ typedef enum {
 @property(readonly) NSUInteger frameDropCount;
 - (void)incrementReceivedFrameCount;
 - (void)incrementFrameDropCount;
+- (double)averageFramesPerSecond;
+- (double)droppedFrameProportion;
 
 - (void)addProcessingTime:(NSTimeInterval)processingTime;
 - (BOOL)processingTimeMean:(double *)mean stdDev:(double *)stddev inLastFrames:(NSUInteger)lastFrames;
