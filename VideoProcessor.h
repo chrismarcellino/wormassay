@@ -41,7 +41,7 @@ typedef enum {
 
 @protocol VideoProcessorDelegate
 
-- (void)videoProcessorDidBeginTrackingPlate:(VideoProcessor *)vp;
+- (void)videoProcessor:(VideoProcessor *)vp didBeginTrackingPlateAtPresentationTime:(NSTimeInterval)presentationTime;
 - (void)videoProcessor:(VideoProcessor *)vp didFinishAcquiringPlateData:(PlateData *)plateData;
 - (void)videoProcessor:(VideoProcessor *)vp didCaptureBarcodeText:(NSString *)text atTime:(NSTimeInterval)presentationTime;
 

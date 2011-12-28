@@ -17,6 +17,10 @@
 @interface VideoProcessorController : NSObject <VideoProcessorDelegate> {
     dispatch_queue_t _queue;     // protects all state and serializes
     NSMutableArray *_videoProcessors;
+    VideoProcessor *_currentlyTrackingProcessor;
+    NSTimeInterval _trackingBeginTime;
+    NSCountedSet *_barcodesSinceTrackingBegan;
+    
     NSDictionary *_runLogTextAttributes;    // main thread only
 }
 

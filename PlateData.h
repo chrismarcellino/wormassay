@@ -10,9 +10,9 @@
 
 typedef enum {
     ReportingStyleNone = 0,
-    ReportingStyleRaw,
-    ReportingStyleMean,
-    ReportingStyleMeanAndStdDev
+    ReportingStyleMean = 1 << 1,
+    ReportingStyleStdDev = 1 << 2,
+    ReportingStyleRaw = 1 << 20,
 } ReportingStyle;
 
 // Thread-safe
@@ -29,6 +29,7 @@ typedef enum {
 
 // Adds results to a specific column, creating the column if necessary.
 - (void)setReportingStyle:(ReportingStyle)style forDataColumnID:(const char *)columnID;
+- (ReportingStyle)reportingStyleForDataColumnID:(const char *)columnID
 - (void)appendResult:(double)result toDataColumnID:(const char *)columnID forWell:(int)well;
 
 // Allows reporting of non-formatted results text to be provided with the results and in the log files. Most MotionAnalyzers are
@@ -48,5 +49,7 @@ typedef enum {
 - (BOOL)processingTimeMean:(double *)mean stdDev:(double *)stddev inLastFrames:(NSUInteger)lastFrames;
 
 // Results Output
+- (NSArray *)sortedColumnIDsWithData;
+- (NSString *)csvOutputForPlateID:(NSString *)plateID withAdditionalRawDataOutput:(NSDictionary *)filenamesToDataStrings;
 
 @end

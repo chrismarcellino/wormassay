@@ -31,8 +31,9 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
 - (id)init
 {
     if ((self = [super init])) {
-        _queue = dispatch_queue_create("videoprocessorcontroller", NULL);
+        _queue = dispatch_queue_create("video-processor-controller", NULL);
         _videoProcessors = [[NSMutableArray alloc] init];
+        _barcodesSinceTrackingBegan = [[NSCountedSet alloc] init];
     }
     
     return self;
@@ -50,8 +51,8 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
     NSMutableArray *assayAnalyzerClasses = [NSMutableArray array];
     
     int	numberOfClasses = objc_getClassList(NULL, 0);
-	Class *classes = malloc(numberOfClasses * sizeof(Class));
-    objc_getClassList(classes, numberOfClasses);
+	Class *classes = calloc(numberOfClasses * 2, sizeof(Class));
+    numberOfClasses = objc_getClassList(classes, numberOfClasses);
     for (int i = 0; i < numberOfClasses; i++) {
         // use this runtime method instead of messaging the class to avoid +loading all classes in memory
         if (class_conformsToProtocol(classes[i], @protocol(AssayAnalyzer))) {
@@ -113,14 +114,27 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
 {
     dispatch_async(_queue, ^{
         [videoProcessor setShouldScanForWells:NO];
+        if (_currentlyTrackingProcessor == videoProcessor) {
+            for (VideoProcessor *processor in _videoProcessors) {
+                [processor setShouldScanForWells:YES];
+            }
+            [_currentlyTrackingProcessor release];
+            _currentlyTrackingProcessor = nil;
+        }
         [_videoProcessors removeObject:videoProcessor];
     });    
 }
 
-- (void)videoProcessorDidBeginTrackingPlate:(VideoProcessor *)vp
+- (void)videoProcessor:(VideoProcessor *)vp didBeginTrackingPlateAtPresentationTime:(NSTimeInterval)presentationTime
 {
     dispatch_async(_queue, ^{
-        if ([_videoProcessors containsObject:vp]) {
+        if ([_videoProcessors containsObject:vp] && !_currentlyTrackingProcessor) {
+            _currentlyTrackingProcessor = [vp retain];
+            _trackingBeginTime = presentationTime;
+            
+            // Clear the past barcodes
+            [_barcodesSinceTrackingBegan removeAllObjects];
+            
             for (VideoProcessor *processor in _videoProcessors) {
                 // Prevent all other processors from scanning for wells to conserve CPU time and avoid tracking more than one plate
                 if (vp != processor) {
@@ -134,12 +148,16 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
 - (void)videoProcessor:(VideoProcessor *)vp didFinishAcquiringPlateData:(PlateData *)plateData
 {
     dispatch_async(_queue, ^{
-        if ([_videoProcessors containsObject:vp]) {
+        if ([_videoProcessors containsObject:vp] && _currentlyTrackingProcessor == vp) {
             for (VideoProcessor *processor in _videoProcessors) {
                 [processor setShouldScanForWells:YES];
             }
             
-            // XXX DO SOME STUFF WITH THE RESULTS
+            [_currentlyTrackingProcessor release];
+            _currentlyTrackingProcessor = nil;
+            
+            // Write the results to disk and the run log
+            
         }
     });
 }
@@ -147,8 +165,8 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
 - (void)videoProcessor:(VideoProcessor *)vp didCaptureBarcodeText:(NSString *)text atTime:(NSTimeInterval)presentationTime
 {
     dispatch_async(_queue, ^{
-        if ([_videoProcessors containsObject:vp]) {
-            // XXX DO SOME STUFF WITH THE RESULTS
+        if ([_videoProcessors containsObject:vp] && presentationTime >= _trackingBeginTime) {
+            [_barcodesSinceTrackingBegan addObject:text];
         }
     });
 }

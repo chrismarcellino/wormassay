@@ -20,7 +20,7 @@
 #import "zxing/ReaderException.h"
 
 static const NSTimeInterval MinimumWellMatchTimeToBeginTracking = 0.250; // 250 ms
-static const NSTimeInterval BarcodeScanningPeriod = 1.0;
+static const NSTimeInterval BarcodeScanningPeriod = 0.5;
 static const NSTimeInterval BarcodeRepeatSuccessCount = 3;
 static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 
@@ -65,8 +65,8 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 {
     if ((self = [super init])) {
         _sourceIdentifier = [sourceIdentifier copy];
-        _queue = dispatch_queue_create("videoprocessor", NULL);
-        _debugFrameCallbackQueue = dispatch_queue_create("videoprocessor.callback", NULL);
+        _queue = dispatch_queue_create("video-processor", NULL);
+        _debugFrameCallbackQueue = dispatch_queue_create("video-processor-callback", NULL);
     }
     return self;
 }
@@ -126,8 +126,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         }
         
         // Always look for barcodes since another camera might have a plate
-        BOOL repeatBarcodeScanImmediately = _lastBarcodeThisProcessorRepeatCount > 0 && _lastBarcodeThisProcessorRepeatCount < BarcodeRepeatSuccessCount;
-        if (!_scanningForBarcodes && (_lastBarcodeScanTime < [videoFrame presentationTime] - BarcodeScanningPeriod || repeatBarcodeScanImmediately)) {
+        if (!_scanningForBarcodes && _lastBarcodeScanTime < [videoFrame presentationTime] - BarcodeScanningPeriod) {
             VideoFrame *copy = [videoFrame copy];
             [self performBarcodeReadingAsyncWithFrame:copy];
             [copy release];
@@ -238,7 +237,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     bool searchAllPlateSizes = _processingState == ProcessingStateNoPlate;
     
     // Perform the calculation on a concurrent queue so that we don't block the current thread
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{        
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         // Get wells in row major order
         std::vector<Circle> wellCircles;
         bool plateFound;
@@ -280,6 +279,9 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                                 _trackedImageSize = cvGetSize([videoFrame image]);
                                 _lastBarcodeScanTime = PresentationTimeDistantPast;     // Now that plate is in place, immediately retry barcode capture
                                 
+                                // Notify the delegate
+                                [_delegate videoProcessor:self didBeginTrackingPlateAtPresentationTime:[videoFrame presentationTime]];
+                                
                                 // Create plate data and analyzer
                                 RunLog(@"Began tracking %i well plate using %@ analyzer.", _trackingWellCircles.size(), [_assayAnalyzerClass analyzerName]);
                                 NSAssert(!_plateData && !_assayAnalyzer, @"plate data or motion analyzer already exists");
@@ -287,6 +289,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                                 _assayAnalyzer = [[_assayAnalyzerClass alloc] init];
                                 NSAssert1(_assayAnalyzer, @"failed to allocate AssayAnalyzer %@", _assayAnalyzerClass);
                                 [_assayAnalyzer willBeginPlateTrackingWithPlateData:_plateData];
+                                
                                 // Begin recording video
                                 [self beginRecordingVideo];
                             } else {
@@ -338,7 +341,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         // Search for barcodes
         zxing::Ref<zxing::MultiFormatReader> reader(new zxing::MultiFormatReader());
         zxing::DecodeHints hints;
-        hints.setTryHarder(true);           // rotates images in all directions in search of barcodes, etc.
+        hints.setTryHarder(true);           // rotate images in search of barcodes, etc.
         NSString *text;
         try {
             zxing::Ref<zxing::Result> barcodeResult = reader->decode(binaryBitmap, hints);

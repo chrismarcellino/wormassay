@@ -7,12 +7,15 @@
 //
 
 #import "PlateData.h"
+#import "WellFinding.hpp"
 
 // Required data column identifiers
 static const char* MovementUnitID = "MovementUnits";
 static const char* PresentationTimeID = "Timestamp";
 
 static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &stddev, size_t firstIndex = 0);
+static inline void appendCSVElement(NSMutableString *output, NSString *element);
+static NSString *escapedCSVElement(NSString *element);
 
 @interface PlateData () {
     NSUInteger _wellCount;
@@ -44,7 +47,7 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
         _startPresentationTime = _lastPresentationTime = presentationTime;
         _valuesByWellAndDataColumn.resize(wellCount);
         
-        [self setReportingStyle:ReportingStyleMeanAndStdDev forDataColumnID:MovementUnitID];
+        [self setReportingStyle:ReportingStyleMean | ReportingStyleStdDev forDataColumnID:MovementUnitID];
     }
     return self;
 }
@@ -69,6 +72,13 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
 {
     @synchronized(self) {
         _reportingStyleByDataColumn[std::string(columnID)] = style;
+    }
+}
+
+- (ReportingStyle)reportingStyleForDataColumnID:(const char *)columnID
+{
+    @synchronized(self) {
+        return _reportingStyleByDataColumn[std::string(columnID)];
     }
 }
 
@@ -157,5 +167,83 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
     return numSamples > 0;
 }
 
+- (NSArray *)sortedColumnIDsWithData
+{
+    @synchronized(self) {
+        NSMutableArray *columnIDs = [NSMutableArray arrayWithCapacity:_valuesByWellAndDataColumn.size()];
+        for (map<std::string, std::vector<double> >::iterator it = _valuesByWellAndDataColumn[0].begin(); it != _valuesByWellAndDataColumn[0].end(); it++) {
+            NSString *columnID = [[NSString alloc] initWithUTF8String:(it->first).cStr()];
+            [columnIDs addObject:columnID];
+            [columnID release];
+        }
+        [columnIDs sortUsingSelector:@selector(caseInsensitiveCompare:)];
+        return columnIDs;
+    }
+}
+
+- (NSString *)csvOutputForPlateID:(NSString *)plateID withAdditionalRawDataOutput:(NSDictionary *)filenamesToDataStrings
+{
+    @synchronized(self) {
+        NSMutableString *output = [[NSMutableString alloc] init];
+        
+        // Write header row
+        appendCSVElement(output, @"PlateAndWellID");
+        appendCSVElement(output, @"WellID");
+        appendCSVElement(output, @"PlateID");
+        
+        NSArray *dataColumnIDs = [self sortedColumnIDsWithData];
+        for (NSString *columnID in dataColumnIDs) {
+            ReportingStyle style = _reportingStyleByDataColumn[std::string(columnID)];
+            if (style & ReportingStyleMean) {
+                appendCSVElement(output, [columnID stringByAppendingString:@"-Mean"]);
+            }
+            if (style & ReportingStyleStdDev) {
+                appendCSVElement(output, [columnID stringByAppendingString:@"-StdDev"]);
+            }
+        }
+        
+        [output addObject:@"\n"];
+        
+        // Write stats for each well
+        for (size_t i = 0; i < _valuesByWellAndDataColumn.size(); i++) {
+            std::string wellID = wellIdentifierStringForIndex(i);
+            appendCSVElement(output, [NSString stringWithFormat:@"%@-%s", plateID, wellID.cStr()]);
+            appendCSVElement(output, [NSString stringWithFormat:@"%s", wellID.cStr()]);
+            appendCSVElement(output, plateID);
+            
+            for (NSString *columnID in dataColumnIDs) {
+                ReportingStyle style = _reportingStyleByDataColumn[std::string(columnID)];
+                if ((style & ReportingStyleMean) || (style & ReportingStyleStdDev)) {
+                    double mean, stddev;
+                    meanAndStdDev(_valuesByWellAndDataColumn[i][std::string(PresentationTimeID)], mean, stddev);
+                    if (style & ReportingStyleMean) {
+                        /// XXXXXXXXXXX
+                    }
+                    if (style & ReportingStyleStdDev) {
+                        // XXXXXXXXXX
+                    }
+                }
+                
+                if (style & ReportingStyleRaw) {
+                    // XXXXXXXXXXX
+                }
+            }
+        }
+    }
+}
+
+static inline void appendCSVElement(NSMutableString *output, NSString *element)
+{
+    [output appendString:escapedCSVElement(element)];
+}
+
+static NSString *escapedCSVElement(NSString *element)
+{
+    if ([element rangeOfString:@","].length > 0 || [element rangeOfString:@"\""].length > 0) {
+        element = [element stringByReplacingOccurrencesOfString:@"\"" withString:@"\"\""];
+        element = [NSString stringWithFormat:@"\"%@\"", element];
+    }
+    return [element stringByAppendingString:@","];
+}
 
 @end

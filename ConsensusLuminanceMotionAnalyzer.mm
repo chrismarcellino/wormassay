@@ -57,7 +57,7 @@ static const char* WellOccupancyID = "WellOccupancy";
 
 - (void)willBeginPlateTrackingWithPlateData:(PlateData *)plateData
 {
-    [plateData setReportingStyle:ReportingStyleMeanAndStdDev forDataColumnID:WellOccupancyID];
+    [plateData setReportingStyle:(ReportingStyleMean | ReportingStyleStdDev | ReportingStyleRaw) forDataColumnID:WellOccupancyID];
 }
 
 - (BOOL)willBeginFrameProcessing:(VideoFrame *)videoFrame debugImage:(IplImage*)debugImage plateData:(PlateData *)plateData
