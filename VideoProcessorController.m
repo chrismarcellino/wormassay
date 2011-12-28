@@ -89,7 +89,6 @@
 {
     dispatch_async(_queue, ^{
         if ([_videoProcessors containsObject:vp]) {
-            RunLog(@"CODE %@", text);
             // XXX DO SOME STUFF WITH THE RESULTS
         }
     });

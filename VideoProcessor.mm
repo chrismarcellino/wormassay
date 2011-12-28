@@ -184,11 +184,11 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
             double mean, stddev;
             [_plateData processingTimeMean:&mean stdDev:&stddev inLastFrames:100];
             if (mean > 0.0) {
-                double fps = [_plateData totalFrameCount] / ([_plateData lastPresentationTime] - [_plateData startPresentationTime]);
-                double drop = [_plateData frameDropCount] / [_plateData totalFrameCount];
+                double fps = (double)[_plateData totalFrameCount] / ([_plateData lastPresentationTime] - [_plateData startPresentationTime]);
+                double drop = (double)[_plateData frameDropCount] / [_plateData totalFrameCount];
                 
                 char text[100];
-                snprintf(text, sizeof(text), "%.0f ms/f (SD: %.0f ms), %.1f fps, %.0f%% drop", mean * 1000, stddev * 1000, fps, drop);
+                snprintf(text, sizeof(text), "%.0f ms/f (SD: %.0f ms), %.1f fps, %.0f%% drop", mean * 1000, stddev * 1000, fps, drop * 100);
                 CvFont font;
                 cvInitFont(&font, CV_FONT_HERSHEY_DUPLEX, 0.6, 0.6, 0, 0.6);
                 cvPutText([debugImage image], text, cvPoint(0, 15), &font, CV_RGBA(232, 0, 217, 255));
