@@ -21,6 +21,7 @@
         [self setNumberOfVotingFrames:1];
         [self setQuorum:1];
         [self setEvaluateFramesAmongLastSeconds:0.0];
+        [self setDeltaThresholdCutoff:15];
     }
     return self;
 }

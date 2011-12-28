@@ -13,6 +13,7 @@
 #import "CvUtilities.hpp"
 
 static const double WellEdgeFindingInsetProportion = 0.7;
+static const double PlateMovingProportionAboveThresholdLimit = 0.02;
 static const char* WellOccupancyID = "WellOccupancy";
 
 @implementation ConsensusLuminanceMotionAnalyzer
@@ -20,13 +21,15 @@ static const char* WellOccupancyID = "WellOccupancy";
 @synthesize numberOfVotingFrames = _numberOfVotingFrames;
 @synthesize quorum = _quorum;
 @synthesize evaluateFramesAmongLastSeconds = _evaluateFramesAmongLastSeconds;
+@synthesize deltaThresholdCutoff = _deltaThresholdCutoff;
 
 - (id)init
 {
     if ((self = [super init])) {
         _numberOfVotingFrames = 5;
-        _quorum = 2;
+        _quorum = 3;
         _evaluateFramesAmongLastSeconds = 2.0;
+        _deltaThresholdCutoff = 10;
 
         _lastFrames = [[NSMutableArray alloc] init];
     }
@@ -122,7 +125,7 @@ static const char* WellOccupancyID = "WellOccupancy";
         // Threshold the image to isolate difference pixels corresponding to movement as opposed to noise,
         // setting each pixel that passes the threshold to 1 (for ease in summing below)
         IplImage* deltaThresholdedImage = cvCreateImage(cvGetSize(deltaLuminance), IPL_DEPTH_8U, 1);
-        cvThreshold(deltaLuminance, deltaThresholdedImage, 15, 1, CV_THRESH_BINARY);
+        cvThreshold(deltaLuminance, deltaThresholdedImage, _deltaThresholdCutoff, 1, CV_THRESH_BINARY);
         cvReleaseImage(&deltaLuminance);
         
         dispatch_sync(criticalSection, ^{
@@ -139,8 +142,8 @@ static const char* WellOccupancyID = "WellOccupancy";
     meanProportionPlateMoved /= [randomlyChosenFrames count];
     [randomlyChosenFrames release];
     
-    // If the average luminance delta across the set of entire plate images is more than about 1-2%, the entire plate is likely moving.
-    if (meanProportionPlateMoved > (_numberOfVotingFrames > 2 ? 0.02 : 0.01)) {
+    // If the average luminance delta across the set of entire plate images is more than about 2%, the entire plate is likely moving.
+    if (meanProportionPlateMoved > PlateMovingProportionAboveThresholdLimit) {
         // Draw the movement text
         CvFont wellFont = fontForNormalizedScale(3.5, debugImage);
         cvPutText(debugImage,

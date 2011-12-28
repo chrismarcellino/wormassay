@@ -19,5 +19,6 @@
 @property NSUInteger numberOfVotingFrames;
 @property NSUInteger quorum;
 @property NSTimeInterval evaluateFramesAmongLastSeconds;
+@property NSUInteger deltaThresholdCutoff;
 
 @end
