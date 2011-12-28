@@ -339,6 +339,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 
 - (void)close
 {
+    // Work around AppKit calling close twice in succession
     if (!closeCalled) {
         closeCalled = YES;
         ProcessLog(@"Closing removed device/file: %@", _sourceIdentifier);

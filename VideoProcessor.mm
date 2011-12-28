@@ -13,7 +13,6 @@
 @interface VideoProcessor() {
     dispatch_queue_t _queue;        // protects all state and serializes
     dispatch_queue_t _debugFrameCallbackQueue;
-    CvFont debugImageFont;
     
     ProcessingState _processingState;
     NSString *_wellCameraSourceIdentifier;
@@ -69,9 +68,6 @@
         _connectedSourceIdentifiers = [[NSMutableArray alloc] init];
         _wellFindingInProcessSourceIdentifiers = [[NSMutableArray alloc] init];
         _barcodeFindingInProcessSourceIdentifiers = [[NSMutableArray alloc] init];
-        
-        // Initialize the debugging font
-        cvInitFont(&debugImageFont, CV_FONT_HERSHEY_SIMPLEX, 1.0, 1.0, 0, 1);
     }
     return self;
 }
@@ -145,14 +141,11 @@ debugVideoFrameCompletion:(void (^)(IplImageObject *image))callback;
         // It is important to base all statistics on the elapsed time so that the results are independent of hardware
         // performance.
         if (_processingState == ProcessingStateTrackingMotion && [_wellCameraSourceIdentifier isEqual:sourceIdentifier]) {
-            if (_lastTrackingPlateFrame) {
-                for (size_t i = 0; i < _trackingWellCircles.size(); i++) {
-                    //                IplImage *wellImage = createEdgeImageForWellImageFromImage(videoFrame, _trackingWellCircles[i], filledArea, [debugImage image]);
-                    float wellImage = calculateMovedPixelsForWellFromImages([_lastTrackingPlateFrame image],
-                                                                            [videoFrame image],
-                                                                            _trackingWellCircles[i],
-                                                                            [debugImage image]);
-                }
+            if (_lastTrackingPlateFrame) {      printf("##### time %f  ", presentationTime);
+                std::vector<int> movedPixelCounts = calculateMovedPixelsForWellsFromImages([_lastTrackingPlateFrame image],
+                                                                                           [videoFrame image],
+                                                                                           _trackingWellCircles,
+                                                                                           [debugImage image]);
             }
             
             // XXX calculate stats
@@ -164,6 +157,8 @@ debugVideoFrameCompletion:(void (^)(IplImageObject *image))callback;
         
         // Draw debugging well circles and labels
         if (_processingState == ProcessingStateNoPlate || [_wellCameraSourceIdentifier isEqual:sourceIdentifier]) {
+            CvFont debugImageFont = fontForNormalizedScale(1.0, [debugImage image]);
+            
             const std::vector<cv::Vec3f> circlesToDraw = (_processingState == ProcessingStateNoPlate) ?
                         _lastCirclesMap[std::string([sourceIdentifier UTF8String])] : _trackingWellCircles;
             for (size_t i = 0; i < circlesToDraw.size(); i++) {
@@ -175,7 +170,7 @@ debugVideoFrameCompletion:(void (^)(IplImageObject *image))callback;
                         ((_processingState == ProcessingStatePlateFirstFrameIdentified) ? CV_RGB(255, 255, 0) : CV_RGB(0, 255, 0));
                 cvCircle([debugImage image], center, radius, color, 3, 8, 0);
                 
-                // Draw text in the circle
+                // Draw the well labels
                 if (_processingState == ProcessingStateTrackingMotion) {
                     CvPoint textPoint = cvPoint(center.x - radius, center.y - radius);
                     cvPutText([debugImage image],

@@ -34,8 +34,15 @@ extern CvPoint plateCenterForWellCircles(const std::vector<cv::Vec3f> &circles);
 extern bool plateSequentialCirclesAppearSameAndStationary(const std::vector<cv::Vec3f> &circlesPrevious,
                                                           const std::vector<cv::Vec3f> &circlesCurrent);
 
-// XXXX EXPERIMENTATION
-extern float calculateMovedPixelsForWellFromImages(IplImage *plateImagePrev, IplImage *plateImageCur, cv::Vec3f wellCircle, IplImage *debugImage);
+// Counts the number of pixels that represent moved well contents between two frames. An empty vector is returned if the plate
+// (or camera) has physically moved between the prev and cur images. 
+extern std::vector<int> calculateMovedPixelsForWellsFromImages(IplImage *plateImagePrev,
+                                                               IplImage *plateImageCur,
+                                                               const std::vector<cv::Vec3f> &circles,
+                                                               IplImage *debugImage);
+
+// Returns a font with drawing size proportional to the image provided with respect to normalizedScale.
+extern CvFont fontForNormalizedScale(double normalizedScale, IplImage *image);
 
 #ifdef __cplusplus
 }

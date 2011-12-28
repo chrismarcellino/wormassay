@@ -219,11 +219,11 @@ bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vect
         
         // Set the wells' area to be the mean under the assumption that there is no perspective distortion
         int sum = 0;
-        for (int i = 0; i < circlesVec.size(); i++) {
+        for (size_t i = 0; i < circlesVec.size(); i++) {
             sum += circlesVec[i][2];
         }
         sum /= wellCount;
-        for (int i = 0; i < circlesVec.size(); i++) {
+        for (size_t i = 0; i < circlesVec.size(); i++) {
             circlesVec[i][2] = sum;
         }
     } else {
@@ -294,7 +294,8 @@ bool plateSequentialCirclesAppearSameAndStationary(const std::vector<cv::Vec3f> 
     return distance < (radiusPrevious + radiusCurrent) / 2.0 / 10.0;
 }
 
-IplImage *createEdgeImageForWellImageFromImage(IplImage *plateImage, cv::Vec3f wellCircle, float &filledArea, IplImage *debugImage)
+/*IplImage *createEdgeImageForWellImageFromImage(IplImage *plateImage, cv::Vec3f wellCircle,
+ float &filledArea, IplImage *debugImage)
 {
     // Copy the grayscale subimage corresponding to the circle's bounding square
     float radius = wellCircle[2];
@@ -331,59 +332,84 @@ IplImage *createEdgeImageForWellImageFromImage(IplImage *plateImage, cv::Vec3f w
     cvReleaseImage(&graySubimage);
     
     return edges;
-}
+}*/
 
-float calculateMovedPixelsForWellFromImages(IplImage *plateImagePrev, IplImage *plateImageCur, cv::Vec3f wellCircle, IplImage *debugImage)
+std::vector<int> calculateMovedPixelsForWellsFromImages(IplImage *plateImagePrev,
+                                                        IplImage *plateImageCur,
+                                                        const std::vector<cv::Vec3f> &circles,
+                                                        IplImage *debugImage)
 {
-    // Copy the subimages corresponding to the circle's bounding square
-    float radius = wellCircle[2];
-    CvRect boundingSquare = cvRect(wellCircle[0] - radius, wellCircle[1] - radius, 2 * radius, 2 * radius);
-    
-    // Create a circle mask with bits in the circle on
-    IplImage *circleMask = cvCreateImage(cvSize(boundingSquare.width, boundingSquare.height), IPL_DEPTH_8U, 1);
-    fastZeroImage(circleMask);
-    cvCircle(circleMask, cvPoint(radius, radius), radius, cvRealScalar(255), CV_FILLED);
-    
-    // Make the subimages for the previous plate
-    cvSetImageROI(plateImagePrev, boundingSquare);
-    IplImage* subimagePrev = cvCreateImage(cvGetSize(plateImagePrev), IPL_DEPTH_8U, 4);
-    cvCopy(plateImagePrev, subimagePrev, circleMask);
-    cvResetImageROI(plateImagePrev);
-    
-    // Make the subimages for the current plate
-    cvSetImageROI(plateImageCur, boundingSquare);
-    IplImage* subimageCur = cvCreateImage(cvGetSize(plateImageCur), IPL_DEPTH_8U, 4);
-    cvCopy(plateImageCur, subimageCur, circleMask);
-    cvResetImageROI(plateImageCur);
-    
-    // Subtract the images channelwise
-    IplImage* delta = cvCreateImage(cvGetSize(subimageCur), IPL_DEPTH_8U, 4);
-    cvAbsDiff(subimageCur, subimagePrev, delta);
-    
-    cvReleaseImage(&subimagePrev);
-    cvReleaseImage(&subimageCur);
-    
-    // Convert the delta to luminance
-    IplImage *deltaLuminance = cvCreateImage(cvGetSize(delta), IPL_DEPTH_8U, 1);
-    cvCvtColor(delta, deltaLuminance, CV_BGR2GRAY);
-    cvReleaseImage(&delta);
-    
-    // Threshold the image to isolate 'moved' pixels
-    IplImage *deltaLumThreshold = cvCreateImage(cvGetSize(deltaLuminance), IPL_DEPTH_8U, 1);
-    cvThreshold(deltaLuminance, deltaLumThreshold, 10, 255, CV_THRESH_BINARY);
-    
-    // Draw onto the debugging image
-    if (debugImage) {
-        cvSetImageROI(debugImage, boundingSquare);
-        IplImage *rgbaDeltaLumThreshood = cvCreateImage(cvGetSize(deltaLumThreshold), IPL_DEPTH_8U, 4);
-        cvCvtColor(deltaLumThreshold, rgbaDeltaLumThreshood, CV_GRAY2BGRA);
-        cvCopy(rgbaDeltaLumThreshood, debugImage, circleMask);
-        cvReleaseImage(&deltaLumThreshold);
-        cvResetImageROI(debugImage);
+    // If there was a resolution change, report that the frame moved
+    if (plateImagePrev->width != plateImageCur->width || plateImagePrev->height != plateImageCur->height || circles.size() == 0) {
+        return std::vector<int>();
     }
     
-    cvReleaseImage(&circleMask);
-
+    // Subtrace the entire plate images channelwise
+    IplImage* plateDelta = cvCreateImage(cvGetSize(plateImageCur), IPL_DEPTH_8U, 4);
+    cvAbsDiff(plateImageCur, plateImagePrev, plateDelta);
     
-    return 0.0;
+    // Gaussian blur the delta in place
+    cvSmooth(plateDelta, plateDelta, CV_GAUSSIAN, 3);           /// or 5???
+    
+    // Convert the delta to luminance
+    IplImage *deltaLuminance = cvCreateImage(cvGetSize(plateDelta), IPL_DEPTH_8U, 1);
+    cvCvtColor(plateDelta, deltaLuminance, CV_BGR2GRAY);
+    cvReleaseImage(&plateDelta);
+    
+    // Threshold the image to isolate difference pixels corresponding to movement as opposed to noise
+    IplImage *deltaThreshold = cvCreateImage(cvGetSize(deltaLuminance), IPL_DEPTH_8U, 1);
+    cvThreshold(deltaLuminance, deltaThreshold, 15, 255, CV_THRESH_BINARY);
+    cvReleaseImage(&deltaLuminance);
+    
+    // Calculate the average luminance delta across the entire plate image. If this is more than about 2%, the entire plate is likely moving.
+    CvScalar mean, stdDev;
+    cvAvgSdv(deltaThreshold, &mean, &stdDev);
+    double proportionPlateMoved = (double)cvCountNonZero(deltaThreshold) / (plateImageCur->width * plateImagePrev->height);
+    
+    std::vector<int> movedPixelCounts;
+    if (proportionPlateMoved < 0.02) {      // Don't perform well calculations if the plate itself is moving
+        // Create a circle mask with bits in the circle on
+        float radius = circles[0][2];
+        IplImage *circleMask = cvCreateImage(cvSize(radius * 2, radius * 2), IPL_DEPTH_8U, 1);
+        fastZeroImage(circleMask);
+        cvCircle(circleMask, cvPoint(radius, radius), radius, cvRealScalar(255), CV_FILLED);
+        
+        // Iterate through each well and count the pixels that pass the threshold
+        movedPixelCounts.reserve(circles.size());
+        for (size_t i = 0; i < circles.size(); i++) {
+            // Get the subimage of the thresholded delta image for the current well using the circle mask
+            CvRect boundingSquare = cvRect(circles[i][0] - radius, circles[i][1] - radius, 2 * radius, 2 * radius);
+            
+            cvSetImageROI(deltaThreshold, boundingSquare);
+            IplImage* subimage = cvCreateImage(cvGetSize(deltaThreshold), IPL_DEPTH_8U, 1);
+            fastZeroImage(subimage);
+            cvCopy(deltaThreshold, subimage, circleMask);
+            cvResetImageROI(deltaThreshold);
+            
+            // Count pixels
+            int count = cvCountNonZero(subimage);
+            movedPixelCounts.push_back(count);
+            
+            // Draw onto the debugging image
+            if (debugImage) {
+                cvSetImageROI(debugImage, boundingSquare);
+                cvSet(debugImage, CV_RGB(255, 0, 0), subimage);
+                cvResetImageROI(debugImage);
+            }
+            
+            cvReleaseImage(&subimage);
+        }
+        cvReleaseImage(&circleMask);
+    }
+    
+    cvReleaseImage(&deltaThreshold);
+    return movedPixelCounts;
+}
+
+CvFont fontForNormalizedScale(double normalizedScale, IplImage *image)
+{
+    double fontScale = MIN(image->width, image->height) / 1080.0 * normalizedScale;
+    CvFont font;
+    cvInitFont(&font, CV_FONT_HERSHEY_DUPLEX, fontScale, fontScale, 0, 1);
+    return font;
 }
