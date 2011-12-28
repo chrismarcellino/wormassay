@@ -9,6 +9,7 @@
 #import "ImageProcessing.hpp"
 #import "opencv2/opencv.hpp"
 #import "CvRectUtilities.hpp"
+#import "jseg.h"
 #import <math.h>
 
 static int sortCircleCentersByAxis(const void* a, const void* b, void* userdata);
@@ -389,7 +390,7 @@ std::vector<int> calculateMovedPixelsForWellsFromImages(IplImage *plateImagePrev
     return movedPixelCounts;
 }
 
-std::vector<int> calculateEdgePixelsForWellsFromImages(IplImage *plateImage, const std::vector<cv::Vec3f> &circles, IplImage *debugImage)
+std::vector<int> calculateCannyEdgePixelsForWellsFromImages(IplImage *plateImage, const std::vector<cv::Vec3f> &circles, IplImage *debugImage)
 {
     if (circles.size() == 0) {
         return std::vector<int>();
@@ -403,8 +404,8 @@ std::vector<int> calculateEdgePixelsForWellsFromImages(IplImage *plateImage, con
     fastFillImage(invertedCircleMask, 255);
     cvCircle(invertedCircleMask, cvPoint(radius, radius), radius, cvRealScalar(0), CV_FILLED);
     
-    std::vector<int> filledEdgePixelCounts;
-    filledEdgePixelCounts.reserve(circles.size());
+    std::vector<int> edgePixelCounts;
+    edgePixelCounts.reserve(circles.size());
     // Iterate through each well
     for (size_t i = 0; i < circles.size(); i++) {
         CvRect boundingSquare = cvRect(circles[i][0] - radius, circles[i][1] - radius, 2 * radius, 2 * radius);
@@ -420,6 +421,8 @@ std::vector<int> calculateEdgePixelsForWellsFromImages(IplImage *plateImage, con
         // Find edges in the image
         IplImage* edges = cvCreateImage(cvGetSize(subimage), IPL_DEPTH_8U, 1);
         cvCanny(subimage, edges, 50, 100);
+        int count = cvCountNonZero(subimage);
+        edgePixelCounts.push_back(count);
         
         // Draw onto the debugging image
         if (debugImage) {
@@ -433,7 +436,57 @@ std::vector<int> calculateEdgePixelsForWellsFromImages(IplImage *plateImage, con
     }
     cvReleaseImage(&invertedCircleMask);
     
-    return filledEdgePixelCounts;
+    return edgePixelCounts;
+}
+
+std::vector<int> calculateJSEGRegionEdgePixelsForWellsFromImages(IplImage *plateImage, const std::vector<cv::Vec3f> &circles, IplImage *debugImage)
+{
+    if (circles.size() == 0) {
+        return std::vector<int>();
+    }
+    
+    // Copy the grayscale subimage corresponding to the circle's bounding square
+    float radius = circles[0][2];
+    
+    // Create an inverted circle mask with 0's in the circle
+    IplImage *invertedCircleMask = cvCreateImage(cvSize(radius * 2, radius * 2), IPL_DEPTH_8U, 1);
+    fastFillImage(invertedCircleMask, 255);
+    cvCircle(invertedCircleMask, cvPoint(radius, radius), radius, cvRealScalar(0), CV_FILLED);
+    
+    std::vector<int> edgePixelCounts;
+    edgePixelCounts.reserve(circles.size());
+    // Iterate through each well
+    for (size_t i = 0; i < circles.size(); i++) {
+        CvRect boundingSquare = cvRect(circles[i][0] - radius, circles[i][1] - radius, 2 * radius, 2 * radius);
+        
+        cvSetImageROI(plateImage, boundingSquare);
+        IplImage* subimage = cvCreateImage(cvGetSize(plateImage), IPL_DEPTH_8U, 1);
+        cvCvtColor(plateImage, subimage, CV_BGRA2GRAY);
+        cvResetImageROI(plateImage);
+        
+        // Mask the plate image, turning pixels outside the circle black
+        cvSet(subimage, cvRealScalar(0), invertedCircleMask);
+        
+        // Find edges in the image
+        IplImage* regionMap = createJSEGRegionMapFromImage(subimage);
+        IplImage* edges = createSegmentEdgeMaskImageForRegionMap(regionMap);
+        int count = cvCountNonZero(subimage);
+        edgePixelCounts.push_back(count);
+        
+        // Draw onto the debugging image
+        if (debugImage) {
+            cvSetImageROI(debugImage, boundingSquare);
+            cvSet(debugImage, CV_RGBA(0, 255, 255, 255), edges);
+            cvResetImageROI(debugImage);
+        }
+        
+        cvReleaseImage(&regionMap);
+        cvReleaseImage(&subimage);
+        cvReleaseImage(&edges);
+    }
+    cvReleaseImage(&invertedCircleMask);
+    
+    return edgePixelCounts;
 }
 
 CvFont fontForNormalizedScale(double normalizedScale, IplImage *image)

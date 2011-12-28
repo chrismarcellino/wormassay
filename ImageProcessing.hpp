@@ -44,8 +44,11 @@ extern std::vector<int> calculateMovedPixelsForWellsFromImages(IplImage *plateIm
                                                                const std::vector<cv::Vec3f> &circles,
                                                                IplImage *debugImage);
 
-// Calculates the number of connected-component filled edge pixels in the image. This can be used to determine well occupancy. 
-extern std::vector<int> calculateEdgePixelsForWellsFromImages(IplImage *plateImage, const std::vector<cv::Vec3f> &circles, IplImage *debugImage);
+// Calculates the number of edge pixels in the image using the Canny edge detector. This can be used to determine well occupancy. 
+extern std::vector<int> calculateCannyEdgePixelsForWellsFromImages(IplImage *plateImage, const std::vector<cv::Vec3f> &circles, IplImage *debugImage);
+
+// Calculates the number of edge pixels in the image using the edge segments of the JSEG region map. This can be used to determine well occupancy. 
+extern std::vector<int> calculateJSEGRegionEdgePixelsForWellsFromImages(IplImage *plateImage, const std::vector<cv::Vec3f> &circles, IplImage *debugImage);
 
 // Returns a font with drawing size proportional to the image provided with respect to normalizedScale.
 extern CvFont fontForNormalizedScale(double normalizedScale, IplImage *image);
