@@ -81,8 +81,8 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     [_loggingPanel setContentView:scrollView];
     [_loggingPanel orderFront:self];
     
-    [[VideoProcessorController sharedInstance] setRunLogTextStorage:[textView textStorage]];
-    [[VideoProcessorController sharedInstance] setRunLogTextScrollView:scrollView];
+    [[VideoProcessorController sharedInstance] setRunLogTextView:textView];
+    [[VideoProcessorController sharedInstance] setRunLogScrollView:scrollView];
     
     [textView release];
     [scrollView release];

@@ -9,6 +9,7 @@
 #import "VideoProcessor.h"
 #import "ImageProcessing.hpp"
 #import "IplImageObject.h"
+#import "VideoProcessorController.h"
 #import "zxing/common/GreyscaleLuminanceSource.h"
 #import "zxing/MultiFormatReader.h"
 #import "zxing/DecodeHints.h"
@@ -16,7 +17,7 @@
 #import "zxing/ReaderException.h"
 
 static const NSTimeInterval BarcodeScanningPeriod = 1.0;
-static const NSTimeInterval PresentationTimeDistantPast = -DBL_MIN;
+static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 
 @interface VideoProcessor() {
     NSString *_sourceIdentifier;
@@ -130,6 +131,11 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MIN;
                                                                                                        [videoFrame image],
                                                                                                        _trackingWellCircles,
                                                                                                        [debugImage image]);
+                
+                // XXX TEST
+                if (movedProportions.size() > 0) {
+                    RunLog(@"Well 1 moved: %f", (double)movedProportions[0]);
+                }
             }
             
             // Store the current image for the next pass
