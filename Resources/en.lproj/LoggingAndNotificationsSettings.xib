@@ -37,11 +37,11 @@
 				<int key="NSWindowStyleMask">11</int>
 				<int key="NSWindowBacking">2</int>
 				<string key="NSWindowRect">{{196, 240}, {514, 202}}</string>
-				<int key="NSWTFlags">544736256</int>
+				<int key="NSWTFlags">1618478080</int>
 				<string key="NSWindowTitle">Logging &amp; Notifications</string>
 				<string key="NSWindowClass">NSPanel</string>
 				<nil key="NSViewClass"/>
-				<string key="NSWindowContentMinSize">{514, 251}</string>
+				<string key="NSWindowContentMinSize">{514, 202}</string>
 				<object class="NSView" key="NSWindowView" id="1006">
 					<reference key="NSNextResponder"/>
 					<int key="NSvFlags">256</int>
@@ -162,7 +162,7 @@
 						</object>
 						<object class="NSTextField" id="296997447">
 							<reference key="NSNextResponder" ref="1006"/>
-							<int key="NSvFlags">266</int>
+							<int key="NSvFlags">274</int>
 							<string key="NSFrame">{{20, 20}, {375, 39}}</string>
 							<reference key="NSSuperview" ref="1006"/>
 							<reference key="NSWindow"/>
@@ -266,7 +266,7 @@
 					<reference key="NSNextKeyView" ref="297243115"/>
 				</object>
 				<string key="NSScreenRect">{{0, 0}, {1440, 878}}</string>
-				<string key="NSMinSize">{514, 273}</string>
+				<string key="NSMinSize">{514, 224}</string>
 				<string key="NSMaxSize">{1e+13, 1e+13}</string>
 				<string key="NSFrameAutosaveName">LoggingAndNotificationsSettings</string>
 			</object>
