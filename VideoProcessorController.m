@@ -206,11 +206,15 @@ recordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
                 }
             }
             if (!plateID) {
-                NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-                [dateFormatter setDateFormat:SortableLoggingDateFormat];
-                plateID = [NSString stringWithFormat:@"Unlabeled Plate %@", [dateFormatter stringFromDate:[NSDate date]]];
-                [dateFormatter release];
+                NSString *fileSourceFilename = [vp fileSourceFilename];
+                plateID = fileSourceFilename ? fileSourceFilename : @"Unlabeled Plate";
             }
+            
+            // Append the date
+            NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+            [dateFormatter setDateFormat:SortableLoggingDateFormat];
+            NSString *plateIDAndDate = [NSString stringWithFormat:@"%@ %@", plateID, [dateFormatter stringFromDate:[NSDate date]]];
+            [dateFormatter release];
             
             // Write the results to disk and the run log if successful
             if (successfully) {
@@ -228,7 +232,7 @@ recordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
                 
                 // Get the run CSV data and log it out to disk
                 NSMutableDictionary *rawOutputDictionary = [[NSMutableDictionary alloc] init];
-                NSString *runOutput = [plateData csvOutputForPlateID:plateID withAdditionalRawDataOutput:rawOutputDictionary];
+                NSString *runOutput = [plateData csvOutputForPlateID:plateIDAndDate withAdditionalRawDataOutput:rawOutputDictionary];
                 
                 NSString *folder = [self runOutputFolderPath];
                 NSString *runOutputPath = [folder stringByAppendingPathComponent:

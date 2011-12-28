@@ -335,7 +335,8 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
     }
     
     NSAssert(!_processor, @"processor already exists");
-    _processor = [[VideoProcessor alloc] initWithCaptureSession:_captureSession];
+    NSString *fileSourceFilename = _movie ? [[[_movie attributeForKey:QTMovieURLAttribute] path] lastPathComponent] : nil;
+    _processor = [[VideoProcessor alloc] initWithCaptureSession:_captureSession fileSourceFilename:fileSourceFilename];
     [[VideoProcessorController sharedInstance] addVideoProcessor:_processor];
     
     return success;

@@ -141,7 +141,7 @@ static const char* WellOccupancyID = "Well Occupancy";
         // Draw the movement text
         CvFont wellFont = fontForNormalizedScale(3.5, debugImage);
         cvPutText(debugImage,
-                  "SUBJECT OR LIGHTING MOVING",
+                  "PLATE OR LIGHTING MOVING",
                   cvPoint(debugImage->width * 0.075, debugImage->height * 0.55),
                   &wellFont,
                   CV_RGBA(232, 0, 217, 255));

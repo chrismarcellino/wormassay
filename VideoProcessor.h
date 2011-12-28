@@ -26,7 +26,9 @@ typedef enum {
 // Instance variables are declared in the implementation file as they contain C++ objects
 // which would prevent importation by C/Obj-C compilation units
 
-- (id)initWithCaptureSession:(QTCaptureSession *)captureSession;        // captureSession is used for recording
+// CaptureSession is used for recording
+- (id)initWithCaptureSession:(QTCaptureSession *)captureSession fileSourceFilename:(NSString *)fileSourceFilename;
+@property(readonly) NSString *fileSourceFilename;       // nil if a device source
 
 - (void)setDelegate:(id<VideoProcessorDelegate>)delegate;
 - (void)setAssayAnalyzerClass:(Class)assayAnalyzerClass;

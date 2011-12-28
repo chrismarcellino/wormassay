@@ -29,6 +29,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     id<VideoProcessorDelegate> _delegate;        // not retained
     QTCaptureSession *_captureSession;
     QTCaptureFileOutput *_recordingCaptureOutput;
+    NSString *_fileSourceFilename;
     Class _assayAnalyzerClass;
     dispatch_queue_t _queue;        // protects all state and serializes
     dispatch_queue_t _debugFrameCallbackQueue;
@@ -62,10 +63,13 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 
 @implementation VideoProcessor
 
-- (id)initWithCaptureSession:(QTCaptureSession *)captureSession
+@synthesize fileSourceFilename = _fileSourceFilename;
+
+- (id)initWithCaptureSession:(QTCaptureSession *)captureSession fileSourceFilename:(NSString *)fileSourceFilename
 {
     if ((self = [super init])) {
         _captureSession = [captureSession retain];
+        _fileSourceFilename = [fileSourceFilename copy];
         [_recordingCaptureOutput setDelegate:self];
         _queue = dispatch_queue_create("video-processor", NULL);
         _debugFrameCallbackQueue = dispatch_queue_create("video-processor-callback", NULL);
@@ -77,6 +81,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 {
     [_captureSession release];
     [_recordingCaptureOutput release];
+    [_fileSourceFilename release];
     dispatch_release(_queue);
     dispatch_release(_debugFrameCallbackQueue);
     [_plateData release];
