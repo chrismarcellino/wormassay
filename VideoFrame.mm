@@ -28,7 +28,12 @@ static inline void premultiplyImage(IplImage *img, bool reverse);
 
 - (void)dealloc
 {
-    cvReleaseImage(&_image);
+    if (_vmCopyData) {
+        [_vmCopyData release];
+        cvReleaseImageHeader(&_image);
+    } else {
+        cvReleaseImage(&_image);
+    }
     [super dealloc];
 }
 
@@ -163,6 +168,20 @@ static inline void premultiplyImage(IplImage *img, bool reverse)
         }
         row += img->widthStep;
     }
+}
+
+- (id)virtualCopy
+{
+    IplImage *image = cvCreateImageHeader(cvGetSize(_image), _image->depth, _image->nChannels);
+    image->widthStep = _image->widthStep;
+    image->imageSize = _image->imageSize;
+    
+    // NSData will vm_copy when possible and handle deallocation correctly. See benchmark results in this class' header file.
+    NSData *data = [[NSData alloc] initWithBytes:_image->imageData length:_image->imageSize];
+    image->imageData = image->imageDataOrigin = (char *)[data bytes];
+    VideoFrame *copy = [[[self class] alloc] initWithIplImageTakingOwnership:image presentationTime:_presentationTime];
+    copy->_vmCopyData = data;
+    return copy;
 }
 
 @end

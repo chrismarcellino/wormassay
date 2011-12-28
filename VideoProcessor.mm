@@ -104,12 +104,16 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         
         // If we're not already processing an image for wells, and no other processor has a plate, schedule an async processing
         if (!_scanningForWells && _shouldScanForWells) {
-            [self performWellDeterminationCalculationAsyncWithFrame:videoFrame];
+            VideoFrame *copy = [videoFrame virtualCopy];
+            [self performWellDeterminationCalculationAsyncWithFrame:copy];
+            [copy release];
         }
         
         // Always look for barcodes since another camera might have a plate
         if (!_scanningForBarcodes && _lastBarcodeScanTime < [videoFrame presentationTime] - BarcodeScanningPeriod) {
-            [self performBarcodeReadingAsyncWithFrame:videoFrame];
+            VideoFrame *copy = [videoFrame virtualCopy];
+            [self performBarcodeReadingAsyncWithFrame:copy];
+            [copy release];
         }
         
         // Create a copy of the frame to draw debugging info on, which we will send back
