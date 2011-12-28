@@ -174,7 +174,6 @@
 		219099D11357A05300EEE2BB /* libiconv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 219099D01357A05300EEE2BB /* libiconv.dylib */; };
 		219099D21357A05C00EEE2BB /* libiconv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 219099D01357A05300EEE2BB /* libiconv.dylib */; };
 		2190AF18135B6E4A00C3853B /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2190AF17135B6E4A00C3853B /* IOKit.framework */; };
-		21A709271363E37E00298424 /* GaussianBeforeDeltaConsensusLuminanceMotionAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 21A709261363E37E00298424 /* GaussianBeforeDeltaConsensusLuminanceMotionAnalyzer.mm */; };
 		21B611D813612082002A47FB /* ConsensusLuminanceMotionAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 21B611D713612082002A47FB /* ConsensusLuminanceMotionAnalyzer.mm */; };
 		21CC72061347EDD4001146DA /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CC72051347EDD4001146DA /* CoreVideo.framework */; };
 		21CC724913484A79001146DA /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CC724813484A79001146DA /* QuartzCore.framework */; };
@@ -297,7 +296,7 @@
 		21264FEB1353FAE600F2DCD8 /* VideoProcessorController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VideoProcessorController.m; sourceTree = SOURCE_ROOT; };
 		21426FAD134683DA00AF78E5 /* VideoSourceDocument.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoSourceDocument.h; sourceTree = SOURCE_ROOT; };
 		21426FAE134683DA00AF78E5 /* VideoSourceDocument.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VideoSourceDocument.m; sourceTree = SOURCE_ROOT; };
-		214B93AA1363628A00F60FC4 /* CIContext-AcceleratedFilters.h */ = {isa = PBXFileReference; fileEncoding = 4; path = "CIContext-AcceleratedFilters.h"; sourceTree = SOURCE_ROOT; };
+		214B93AA1363628A00F60FC4 /* CIContext-AcceleratedFilters.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "CIContext-AcceleratedFilters.h"; sourceTree = SOURCE_ROOT; };
 		214B93AB1363628A00F60FC4 /* CIContext-AcceleratedFilters.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "CIContext-AcceleratedFilters.mm"; sourceTree = SOURCE_ROOT; };
 		215AB44812CEC7130047B13F /* opencv.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = opencv.hpp; path = ThirdParty/OpenCV/include/opencv2/opencv.hpp; sourceTree = "<group>"; };
 		215AB44F12CEC72B0047B13F /* core.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = core.hpp; sourceTree = "<group>"; };
@@ -549,8 +548,6 @@
 		219099D01357A05300EEE2BB /* libiconv.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.dylib; path = usr/lib/libiconv.dylib; sourceTree = SDKROOT; };
 		2190AF17135B6E4A00C3853B /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		21910734135E2B5600A12F1F /* AssayAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AssayAnalyzer.h; sourceTree = SOURCE_ROOT; };
-		21A709251363E37E00298424 /* GaussianBeforeDeltaConsensusLuminanceMotionAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GaussianBeforeDeltaConsensusLuminanceMotionAnalyzer.h; sourceTree = SOURCE_ROOT; };
-		21A709261363E37E00298424 /* GaussianBeforeDeltaConsensusLuminanceMotionAnalyzer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = GaussianBeforeDeltaConsensusLuminanceMotionAnalyzer.mm; sourceTree = SOURCE_ROOT; };
 		21B611D613612082002A47FB /* ConsensusLuminanceMotionAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ConsensusLuminanceMotionAnalyzer.h; sourceTree = SOURCE_ROOT; };
 		21B611D713612082002A47FB /* ConsensusLuminanceMotionAnalyzer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ConsensusLuminanceMotionAnalyzer.mm; sourceTree = SOURCE_ROOT; };
 		21CC72051347EDD4001146DA /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
@@ -1030,8 +1027,6 @@
 				210E8AF4135EB58700FEE49F /* LuminanceMotionAnalyzer.mm */,
 				21B611D613612082002A47FB /* ConsensusLuminanceMotionAnalyzer.h */,
 				21B611D713612082002A47FB /* ConsensusLuminanceMotionAnalyzer.mm */,
-				21A709251363E37E00298424 /* GaussianBeforeDeltaConsensusLuminanceMotionAnalyzer.h */,
-				21A709261363E37E00298424 /* GaussianBeforeDeltaConsensusLuminanceMotionAnalyzer.mm */,
 			);
 			name = Analysis;
 			path = WormAssay;
@@ -1370,7 +1365,6 @@
 				210E8AF5135EB58700FEE49F /* LuminanceMotionAnalyzer.mm in Sources */,
 				21B611D813612082002A47FB /* ConsensusLuminanceMotionAnalyzer.mm in Sources */,
 				214B93AC1363628A00F60FC4 /* CIContext-AcceleratedFilters.mm in Sources */,
-				21A709271363E37E00298424 /* GaussianBeforeDeltaConsensusLuminanceMotionAnalyzer.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

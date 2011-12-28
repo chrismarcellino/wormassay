@@ -11,7 +11,7 @@
 
 @interface LuminanceMotionAnalyzer : NSObject <AssayAnalyzer> {
     VideoFrame *_lastFrame;
-    IplImage* _insetInvertedCircleMask;
+    IplImage* _insetCircleMask;
     IplImage* _invertedCircleMask;
     IplImage* _deltaThresholded;
 }

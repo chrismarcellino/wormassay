@@ -21,8 +21,8 @@ static const char* WellOccupancyID = "WellOccupancy";
 - (void)dealloc
 {
     [_lastFrame release];
-    if (_insetInvertedCircleMask) {
-        cvReleaseImage(&_insetInvertedCircleMask);
+    if (_insetCircleMask) {
+        cvReleaseImage(&_insetCircleMask);
     }
     if (_invertedCircleMask) {
         cvReleaseImage(&_invertedCircleMask);
@@ -99,16 +99,16 @@ static const char* WellOccupancyID = "WellOccupancy";
 {
     // ======= Contour finding ========
     
-    // If we haven't already, create an inverted circle mask with 0's in the circle.
+    // If we haven't already, create a circle mask with all bits on in the circle.
     // We use only a portion of the circle to conservatively avoid taking the well walls.
     int radius = cvGetSize(wellImage).width / 2;
-    if (!_insetInvertedCircleMask || !sizeEqualsSize(cvGetSize(_insetInvertedCircleMask), cvGetSize(wellImage))) {
-        if (_insetInvertedCircleMask) {
-            cvReleaseImage(&_insetInvertedCircleMask);
+    if (!_insetCircleMask || !sizeEqualsSize(cvGetSize(_insetCircleMask), cvGetSize(wellImage))) {
+        if (_insetCircleMask) {
+            cvReleaseImage(&_insetCircleMask);
         }
-        _insetInvertedCircleMask = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
-        fastFillImage(_insetInvertedCircleMask, 255);
-        cvCircle(_insetInvertedCircleMask, cvPoint(radius, radius), radius * WellEdgeFindingInsetProportion, cvRealScalar(0), CV_FILLED);
+        _insetCircleMask = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
+        fastZeroImage(_insetCircleMask);
+        cvCircle(_insetCircleMask, cvPoint(radius, radius), radius * WellEdgeFindingInsetProportion, cvRealScalar(255), CV_FILLED);
     }
     
     // Get grayscale subimages for the well
@@ -121,7 +121,7 @@ static const char* WellOccupancyID = "WellOccupancy";
     cvReleaseImage(&grayscaleImage);
     
     // Mask off the edge pixels that correspond to the wells
-    cvSet(cannyEdges, cvRealScalar(0), _insetInvertedCircleMask);
+    cvAnd(cannyEdges, _insetCircleMask, cannyEdges);
     
     // Dilate the edge image
     IplImage* dialtedEdges = cvCreateImage(cvGetSize(cannyEdges), IPL_DEPTH_8U, 1);

@@ -11,7 +11,6 @@
 #import "VideoFrame.h"
 #import "opencv2/opencv.hpp"
 #import "CvUtilities.hpp"
-#import "CIContext-AcceleratedFilters.h"
 
 static const double PlateMovingProportionAboveThresholdLimit = 0.01;
 static const double WellEdgeFindingInsetProportion = 0.7;
@@ -36,20 +35,21 @@ static const char* WellOccupancyID = "WellOccupancy";
 - (void)dealloc
 {
     [_lastFrames release];
-    [_deltaThresholded release];
-    if (_insetInvertedCircleMask) {
-        cvReleaseImage(&_insetInvertedCircleMask);
+    if (_pixelwiseVotes) {
+        cvReleaseImage(&_pixelwiseVotes);
+    }
+    if (_insetCircleMask) {
+        cvReleaseImage(&_insetCircleMask);
     }
     if (_circleMask) {
         cvReleaseImage(&_circleMask);
     }
-    [_filterContexts release];
     [super dealloc];
 }
 
 + (NSString *)analyzerName
 {
-    return NSLocalizedString(@"Gaussian-after-delta Consensus Voting Luminance Difference", nil);
+    return NSLocalizedString(@"Consensus Voting Luminance Difference", nil);
 }
 
 - (BOOL)canProcessInParallel
@@ -60,11 +60,6 @@ static const char* WellOccupancyID = "WellOccupancy";
 - (void)willBeginPlateTrackingWithPlateData:(PlateData *)plateData
 {
     _lastFrames = [[NSMutableArray alloc] init];
-    // Create a context for each dispatch thread that will need one simultaneously
-    _filterContexts = [[NSMutableArray alloc] init];
-    for (NSUInteger i = 0; i < _numberOfVotingFrames; i++) {
-        [_filterContexts addObject:[CIContext contextForAcceleratedBitmapImageFiltering]];
-    }
     [plateData setReportingStyle:ReportingStyleMeanAndStdDev forDataColumnID:WellOccupancyID];
 }
 
@@ -105,8 +100,10 @@ static const char* WellOccupancyID = "WellOccupancy";
     
     __block double meanProportionPlateMoved = 0.0;
     
-    NSAssert(!_deltaThresholded, @"_deltaThresholded array already exists");
-    _deltaThresholded = [[NSMutableArray alloc] init];
+    NSAssert(!_pixelwiseVotes, @"_pixelwiseVotes already exists");
+    _pixelwiseVotes = cvCreateImage(cvGetSize([videoFrame image]), IPL_DEPTH_8U, 1);
+    fastZeroImage(_pixelwiseVotes);
+    
     dispatch_queue_t criticalSection = dispatch_queue_create(NULL, NULL);
     dispatch_apply([randomlyChosenFrames count], dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(size_t i){
         VideoFrame *pastFrame = [randomlyChosenFrames objectAtIndex:i];
@@ -115,29 +112,27 @@ static const char* WellOccupancyID = "WellOccupancy";
         cvAbsDiff([videoFrame image], [pastFrame image], plateDelta);
         
         // Gaussian blur the delta
-//        IplImage* gaussianPlateDelta = [[_filterContexts objectAtIndex:i] createGaussianImageFromImage:plateDelta withStdDev:3];
-        IplImage* gaussianPlateDelta = cvCreateImage(cvSize(plateDelta->width, plateDelta->height), plateDelta->depth, plateDelta->nChannels);
-        cvSmooth(plateDelta, gaussianPlateDelta, CV_GAUSSIAN, 0, 0, 3, 3);
-        cvReleaseImage(&plateDelta);
+        cvSmooth(plateDelta, plateDelta, CV_GAUSSIAN, 0, 0, 3, 3);
         
         // Convert the delta to luminance
-        IplImage* deltaLuminance = cvCreateImage(cvGetSize(gaussianPlateDelta), IPL_DEPTH_8U, 1);
-        cvCvtColor(gaussianPlateDelta, deltaLuminance, CV_BGR2GRAY);
-        cvReleaseImage(&gaussianPlateDelta);
+        IplImage* deltaLuminance = cvCreateImage(cvGetSize(plateDelta), IPL_DEPTH_8U, 1);
+        cvCvtColor(plateDelta, deltaLuminance, CV_BGR2GRAY);
+        cvReleaseImage(&plateDelta);
         
         // Threshold the image to isolate difference pixels corresponding to movement as opposed to noise,
-        // setting each pixel that passes the threshold to 1 (for ease in summing later.)
+        // setting each pixel that passes the threshold to 1 (for ease in summing below)
         IplImage* deltaThresholdedImage = cvCreateImage(cvGetSize(deltaLuminance), IPL_DEPTH_8U, 1);
         cvThreshold(deltaLuminance, deltaThresholdedImage, 15, 1, CV_THRESH_BINARY);
         cvReleaseImage(&deltaLuminance);
         
-        VideoFrame *deltaThresholdedImageFrame = [[VideoFrame alloc] initWithIplImageTakingOwnership:deltaThresholdedImage
-                                                                                    presentationTime:[videoFrame presentationTime]];
         dispatch_sync(criticalSection, ^{
-            [_deltaThresholded addObject:deltaThresholdedImageFrame];
+            // Sum the threshold subimages from the random set delta from the current frame. The luminance sum at each
+            // pixel will equal the number of votes, since we set the pixels that passed the threshold to 1.
+            cvAdd(_pixelwiseVotes, deltaThresholdedImage, _pixelwiseVotes);
+            // Calculate the mean for plate movement/lighting change determination
             meanProportionPlateMoved += (double)cvCountNonZero(deltaThresholdedImage) / (deltaThresholdedImage->width * deltaThresholdedImage->height);
         });
-        [deltaThresholdedImageFrame release];
+        cvReleaseImage(&deltaThresholdedImage);
     });
     dispatch_release(criticalSection);
     
@@ -167,16 +162,16 @@ static const char* WellOccupancyID = "WellOccupancy";
 {
     // ======= Contour finding ========
     
-    // If we haven't already, create an inverted circle mask with 0's in the circle.
+    // If we haven't already, create a circle mask with all bits on in the circle.
     // We use only a portion of the circle to conservatively avoid taking the well walls.
     int radius = cvGetSize(wellImage).width / 2;
-    if (!_insetInvertedCircleMask || !sizeEqualsSize(cvGetSize(_insetInvertedCircleMask), cvGetSize(wellImage))) {
-        if (_insetInvertedCircleMask) {
-            cvReleaseImage(&_insetInvertedCircleMask);
+    if (!_insetCircleMask || !sizeEqualsSize(cvGetSize(_insetCircleMask), cvGetSize(wellImage))) {
+        if (_insetCircleMask) {
+            cvReleaseImage(&_insetCircleMask);
         }
-        _insetInvertedCircleMask = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
-        fastFillImage(_insetInvertedCircleMask, 255);
-        cvCircle(_insetInvertedCircleMask, cvPoint(radius, radius), radius * WellEdgeFindingInsetProportion, cvRealScalar(0), CV_FILLED);
+        _insetCircleMask = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
+        fastZeroImage(_insetCircleMask);
+        cvCircle(_insetCircleMask, cvPoint(radius, radius), radius * WellEdgeFindingInsetProportion, cvRealScalar(255), CV_FILLED);
     }
     
     // Get grayscale subimages for the well
@@ -189,7 +184,7 @@ static const char* WellOccupancyID = "WellOccupancy";
     cvReleaseImage(&grayscaleImage);
     
     // Mask off the edge pixels that correspond to the wells
-    cvSet(cannyEdges, cvRealScalar(0), _insetInvertedCircleMask);
+    cvAnd(cannyEdges, _insetCircleMask, cannyEdges);
     
     // Dilate the edge image
     IplImage* dialtedEdges = cvCreateImage(cvGetSize(cannyEdges), IPL_DEPTH_8U, 1);
@@ -214,34 +209,29 @@ static const char* WellOccupancyID = "WellOccupancy";
         cvCircle(_circleMask, cvPoint(radius, radius), radius, cvRealScalar(255), CV_FILLED);
     }
     
-    // Sum the threshold subimages from the random set delta from the current frame (using a local stack copy of the header for threadsafety).
-    // The luminance sum at each pixel will equal the number of votes, since we set the pixels that passed the threshold to 1.
-    IplImage *pixelwiseSum = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
-    fastZeroImage(pixelwiseSum);
-    for (VideoFrame *deltaThresholdedImage in _deltaThresholded) {
-        IplImage wellDeltaThresholded = *[deltaThresholdedImage image];
-        cvSetImageROI(&wellDeltaThresholded, cvGetImageROI(wellImage));
-        cvAdd(pixelwiseSum, &wellDeltaThresholded, pixelwiseSum, _circleMask);
-    }
+    // Mask the pixelwise votes (using a local stack copy of the header for threadsafety)
+    IplImage wellPixelwiseVotes = *_pixelwiseVotes;
+    cvSetImageROI(&wellPixelwiseVotes, cvGetImageROI(wellImage));
+    cvAnd(&wellPixelwiseVotes, _circleMask, &wellPixelwiseVotes);
     
     // Keep the pixels that have a quorum
     IplImage *quorumPixels = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
-    cvThreshold(pixelwiseSum, quorumPixels, _quorum - 0.5, 255, CV_THRESH_BINARY);
+    cvThreshold(&wellPixelwiseVotes, quorumPixels, _quorum - 0.5, 255, CV_THRESH_BINARY);
     double movedFraction = (double)cvCountNonZero(quorumPixels) / (M_PI * radius * radius);
     
     // Count pixels and draw onto the debugging image
     [plateData appendMovementUnit:movedFraction atPresentationTime:presentationTime forWell:well];
     cvSet(debugImage, CV_RGBA(255, 0, 0, 255), quorumPixels);
     
-    cvReleaseImage(&pixelwiseSum);
     cvReleaseImage(&quorumPixels);
 }
 
 - (void)didEndFrameProcessing:(VideoFrame *)videoFrame plateData:(PlateData *)plateData
 {
     [_lastFrames addObject:videoFrame];
-    [_deltaThresholded release];
-    _deltaThresholded = nil;
+    if (_pixelwiseVotes) {
+        cvReleaseImage(&_pixelwiseVotes);
+    }
 }
 
 - (void)didEndTrackingPlateWithPlateData:(PlateData *)plateData
