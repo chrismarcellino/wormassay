@@ -1,5 +1,5 @@
 //
-//  VideoSource.h
+//  VideoSourceController.h
 //  NematodeAssay
 //
 //  Created by Chris Marcellino on 4/1/11.
@@ -19,7 +19,7 @@ extern NSURL *URLForCaptureDeviceUniqueID(NSString *uniqueID);
 extern NSString *UniqueIDForCaptureDeviceURL(NSURL *url);
 
 
-@interface VideoSource : NSDocument {
+@interface VideoSourceController : NSDocument {
     // A document will strictly have one of captureDevice or movie and their associated objects
     QTCaptureDevice *_captureDevice;
     QTCaptureSession *_captureSession;

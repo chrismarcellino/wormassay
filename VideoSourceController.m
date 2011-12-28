@@ -1,12 +1,12 @@
 //
-//  VideoSource.m
+//  VideoSourceController.m
 //  NematodeAssay
 //
 //  Created by Chris Marcellino on 4/1/11.
 //  Copyright 2011 Regents of the University of California. All rights reserved.
 //
 
-#import "VideoSource.h"
+#import "VideoSourceController.h"
 #import "BitmapOpenGLView.h"
 #import "IplImageConversionUtilities.hpp"
 #import "opencv2/core/core_c.h"
@@ -38,7 +38,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
     return uniqueID;
 }
 
-@interface VideoSource ()
+@interface VideoSourceController ()
 
 - (void)adjustWindowSizing;
 - (void)processVideoFrame:(CVImageBufferRef)videoFrame presentationTime:(QTTime)presentationTime;
@@ -46,7 +46,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 @end
 
 
-@implementation VideoSource
+@implementation VideoSourceController
 
 + (NSArray *)readableTypes
 {
@@ -345,4 +345,13 @@ static void releaseIplImage(void *baseAddress, void *context)
     return displayName;
 }
 
+
+- (BOOL)validateUserInterfaceItem:(id <NSValidatedUserInterfaceItem>)anItem
+{
+    if ([anItem action] == @selector(close) && _captureDevice) {
+        return NO;
+    }
+    return [super validateUserInterfaceItem:anItem];
+}
+        
 @end
