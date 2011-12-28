@@ -42,12 +42,6 @@ static const char* WellOccupancyID = "WellOccupancy";
     if (_pixelwiseVotes) {
         cvReleaseImage(&_pixelwiseVotes);
     }
-    if (_insetCircleMask) {
-        cvReleaseImage(&_insetCircleMask);
-    }
-    if (_circleMask) {
-        cvReleaseImage(&_circleMask);
-    }
     [super dealloc];
 }
 
@@ -165,17 +159,11 @@ static const char* WellOccupancyID = "WellOccupancy";
 {
     // ======= Contour finding ========
     
-    // If we haven't already, create a circle mask with all bits on in the circle.
-    // We use only a portion of the circle to conservatively avoid taking the well walls.
+    // Create a circle mask with all bits on in the circle using only a portion of the circle to conservatively avoid taking the well walls.
     int radius = cvGetSize(wellImage).width / 2;
-    if (!_insetCircleMask || !sizeEqualsSize(cvGetSize(_insetCircleMask), cvGetSize(wellImage))) {
-        if (_insetCircleMask) {
-            cvReleaseImage(&_insetCircleMask);
-        }
-        _insetCircleMask = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
-        fastZeroImage(_insetCircleMask);
-        cvCircle(_insetCircleMask, cvPoint(radius, radius), radius * WellEdgeFindingInsetProportion, cvRealScalar(255), CV_FILLED);
-    }
+    IplImage *insetCircleMask = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
+    fastZeroImage(insetCircleMask);
+    cvCircle(insetCircleMask, cvPoint(insetCircleMask->width / 2, insetCircleMask->height / 2), radius * WellEdgeFindingInsetProportion, cvRealScalar(255), CV_FILLED);
     
     // Get grayscale subimages for the well
     IplImage* grayscaleImage = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
@@ -187,7 +175,7 @@ static const char* WellOccupancyID = "WellOccupancy";
     cvReleaseImage(&grayscaleImage);
     
     // Mask off the edge pixels that correspond to the wells
-    cvAnd(cannyEdges, _insetCircleMask, cannyEdges);
+    cvAnd(cannyEdges, insetCircleMask, cannyEdges);
     
     // Dilate the edge image
     IplImage* dialtedEdges = cvCreateImage(cvGetSize(cannyEdges), IPL_DEPTH_8U, 1);
@@ -199,23 +187,19 @@ static const char* WellOccupancyID = "WellOccupancy";
     [plateData appendResult:occupancyFraction toDataColumnID:WellOccupancyID forWell:well];
     cvSet(debugImage, CV_RGBA(0, 0, 255, 255), dialtedEdges);
     cvReleaseImage(&dialtedEdges);
+    cvReleaseImage(&insetCircleMask);
     
     // ======== Motion measurement =========
     
-    // If we haven't already, create an circle mask with all bits on in the circle (but not inset)
-    if (!_circleMask || !sizeEqualsSize(cvGetSize(_circleMask), cvGetSize(wellImage))) {
-        if (_circleMask) {
-            cvReleaseImage(&_circleMask);
-        }
-        _circleMask = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
-        fastZeroImage(_circleMask);
-        cvCircle(_circleMask, cvPoint(radius, radius), radius, cvRealScalar(255), CV_FILLED);
-    }
+    // Create an circle mask with all bits on in the circle (but not inset)
+    IplImage *circleMask = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
+    fastZeroImage(circleMask);
+    cvCircle(circleMask, cvPoint(circleMask->width / 2, circleMask->height / 2), radius, cvRealScalar(255), CV_FILLED);
     
     // Mask the pixelwise votes (using a local stack copy of the header for threadsafety)
     IplImage wellPixelwiseVotes = *_pixelwiseVotes;
     cvSetImageROI(&wellPixelwiseVotes, cvGetImageROI(wellImage));
-    cvAnd(&wellPixelwiseVotes, _circleMask, &wellPixelwiseVotes);
+    cvAnd(&wellPixelwiseVotes, circleMask, &wellPixelwiseVotes);
     
     // Keep the pixels that have a quorum
     IplImage *quorumPixels = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
@@ -227,6 +211,7 @@ static const char* WellOccupancyID = "WellOccupancy";
     cvSet(debugImage, CV_RGBA(255, 0, 0, 255), quorumPixels);
     
     cvReleaseImage(&quorumPixels);
+    cvReleaseImage(&circleMask);
 }
 
 - (void)didEndFrameProcessing:(VideoFrame *)videoFrame plateData:(PlateData *)plateData

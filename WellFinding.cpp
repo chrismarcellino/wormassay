@@ -373,7 +373,19 @@ bool plateSequentialCirclesAppearSameAndStationary(const std::vector<Circle> &ci
     float deltaX = centerPrevious.x - centerCurrent.x;
     float deltaY = centerPrevious.y - centerCurrent.y;
     float distance = sqrtf(deltaX * deltaX + deltaY * deltaY);
-    return distance < (radiusPrevious + radiusCurrent) / 2.0 / 10.0;
+    if (distance > (radiusPrevious + radiusCurrent) / 2.0 / 10.0) {
+        return false;
+    }
+    
+    // Return false if the average magnitude (unsigned) of each well's difference has changed signifigantly
+    float averageMagnitude = 0.0;
+    for (size_t i = 0; i < circlesCurrent.size(); i++) {
+        float deltaX = circlesCurrent[i].center[0] - circlesPrevious[i].center[0];
+        float deltaY = circlesCurrent[i].center[1] - circlesPrevious[i].center[1];
+        averageMagnitude += sqrtf(deltaX * deltaX + deltaY * deltaY);
+    }
+    averageMagnitude /= circlesCurrent.size();
+    return averageMagnitude < radiusCurrent / 4;
 }
 
 static IplImage* createUnsharpMaskImage(IplImage* image, float radius, float amount, float threshold)

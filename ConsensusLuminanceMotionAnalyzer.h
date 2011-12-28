@@ -12,8 +12,6 @@
 @interface ConsensusLuminanceMotionAnalyzer : NSObject <AssayAnalyzer> {
     NSMutableArray *_lastFrames;
     IplImage* _pixelwiseVotes;
-    IplImage* _insetCircleMask;
-    IplImage* _circleMask;
 }
 
 @property NSUInteger numberOfVotingFrames;
