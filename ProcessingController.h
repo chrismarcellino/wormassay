@@ -22,4 +22,6 @@
                     fromSourceIdentifier:(NSString *)sourceIdentifier
 debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))block;
 
+- (void)logFormat:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2);
+
 @end

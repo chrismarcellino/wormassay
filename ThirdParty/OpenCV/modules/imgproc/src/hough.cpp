@@ -819,7 +819,7 @@ icvHoughCirclesGradient( CvMat* img, float dp, float min_dist,
     CvSeqReader reader;
 
     edges = cvCreateMat( img->rows, img->cols, CV_8UC1 );
-    cvCanny( img, edges, MAX(canny_threshold/2,1), canny_threshold, 3 );
+    cvCanny( img, edges, MAX(canny_threshold/5,1), canny_threshold, 3 );        // CRM 5/5/2011 Cherry pick OpenCV post-3.2 revision 3977, as it appears to improve results
 
     dx = cvCreateMat( img->rows, img->cols, CV_16SC1 );
     dy = cvCreateMat( img->rows, img->cols, CV_16SC1 );
@@ -861,7 +861,7 @@ icvHoughCirclesGradient( CvMat* img, float dp, float min_dist,
             if( !edges_row[x] || (vx == 0 && vy == 0) )
                 continue;
 
-            float mag = sqrt(vx*vx+vy*vy);
+            float mag = sqrtf(vx*vx+vy*vy);     // CRM 5/5/2011 Fix sqrt typing
             assert( mag >= 1 );
             sx = cvRound((vx*idp)*ONE/mag);
             sy = cvRound((vy*idp)*ONE/mag);

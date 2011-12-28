@@ -45,4 +45,9 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))block
     // Debug frame must be generated immediately using data from worker tasks
 }
 
+- (void)logFormat:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2)
+{
+    
+}
+
 @end

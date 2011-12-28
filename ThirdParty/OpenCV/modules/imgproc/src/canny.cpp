@@ -169,7 +169,8 @@ CV_IMPL void cvCanny( const void* srcarr, void* dstarr,
 
             if( !(flags & CV_CANNY_L2_GRADIENT) )
                 for( j = 0; j < size.width; j++ )
-                    _mag[j] = abs(_dx[j]) + abs(_dy[j]);
+#define CV_FAST_ABS(x) ((x) > 0 ? (x) : -(x))           // CRM 4/5/2011 Performance optimization for hot (precision changing) abs() call
+                    _mag[j] = CV_FAST_ABS(_dx[j]) + CV_FAST_ABS(_dy[j]);
             /*else if( icvFilterSobelVert_8u16s_C1R_p != 0 ) // check for IPP
             {
                 // use vectorized sqrt
@@ -186,8 +187,7 @@ CV_IMPL void cvCanny( const void* srcarr, void* dstarr,
                 for( j = 0; j < size.width; j++ )
                 {
                     x = _dx[j]; y = _dy[j];
-                    // _magf[j] = (float)std::sqrt((double)x*x + (double)y*y)
-                    _magf[j] = sqrtf(x*x + y*y);     // CRM 1/15/11 PERFORMANCE OPTIMIZATION
+                    _magf[j] = (float)std::sqrt((double)x*x + (double)y*y);
                 }
             }
         }
