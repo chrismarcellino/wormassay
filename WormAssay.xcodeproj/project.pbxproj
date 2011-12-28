@@ -11,6 +11,7 @@
 		210D6E9E134BAC5300BCD6F1 /* VideoProcessor.mm in Sources */ = {isa = PBXBuildFile; fileRef = 210D6E9D134BAC5300BCD6F1 /* VideoProcessor.mm */; };
 		210E8AF5135EB58700FEE49F /* LuminanceMotionAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 210E8AF4135EB58700FEE49F /* LuminanceMotionAnalyzer.mm */; };
 		2119D2CC135A101E00C5B32F /* PlateData.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2119D2CB135A101E00C5B32F /* PlateData.mm */; };
+		2124FF7F13848D700027EB2C /* NullMotionAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2124FF7E13848D700027EB2C /* NullMotionAnalyzer.mm */; };
 		21264FEC1353FAE600F2DCD8 /* VideoProcessorController.m in Sources */ = {isa = PBXBuildFile; fileRef = 21264FEB1353FAE600F2DCD8 /* VideoProcessorController.m */; };
 		21400837136E2B650066B8B3 /* LoggingAndNotificationsSettings.xib in Resources */ = {isa = PBXBuildFile; fileRef = 21400835136E2B650066B8B3 /* LoggingAndNotificationsSettings.xib */; };
 		21426FAF134683DB00AF78E5 /* VideoSourceDocument.m in Sources */ = {isa = PBXBuildFile; fileRef = 21426FAE134683DA00AF78E5 /* VideoSourceDocument.m */; };
@@ -329,6 +330,8 @@
 		210E8AF4135EB58700FEE49F /* LuminanceMotionAnalyzer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = LuminanceMotionAnalyzer.mm; sourceTree = SOURCE_ROOT; };
 		2119D2CA135A101E00C5B32F /* PlateData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlateData.h; sourceTree = SOURCE_ROOT; };
 		2119D2CB135A101E00C5B32F /* PlateData.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = PlateData.mm; sourceTree = SOURCE_ROOT; };
+		2124FF7D13848D700027EB2C /* NullMotionAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NullMotionAnalyzer.h; sourceTree = SOURCE_ROOT; };
+		2124FF7E13848D700027EB2C /* NullMotionAnalyzer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = NullMotionAnalyzer.mm; sourceTree = SOURCE_ROOT; };
 		21264FEA1353FAE600F2DCD8 /* VideoProcessorController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoProcessorController.h; sourceTree = SOURCE_ROOT; };
 		21264FEB1353FAE600F2DCD8 /* VideoProcessorController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VideoProcessorController.m; sourceTree = SOURCE_ROOT; };
 		21400836136E2B650066B8B3 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/LoggingAndNotificationsSettings.xib; sourceTree = "<group>"; };
@@ -1092,6 +1095,8 @@
 				21B611D713612082002A47FB /* ConsensusLuminanceMotionAnalyzer.mm */,
 				21DC6F3E137CE50000D38B13 /* OpticalFlowMotionAnalyzer.h */,
 				21DC6F3F137CE50000D38B13 /* OpticalFlowMotionAnalyzer.mm */,
+				2124FF7D13848D700027EB2C /* NullMotionAnalyzer.h */,
+				2124FF7E13848D700027EB2C /* NullMotionAnalyzer.mm */,
 			);
 			name = Analysis;
 			path = WormAssay;
@@ -1502,6 +1507,7 @@
 				21B5165F137A061B0055CFE7 /* ArrayTableView.m in Sources */,
 				21965211137A7161004F2D57 /* LoggingAndNotificationsSettingsWindowController.m in Sources */,
 				21DC6F40137CE50000D38B13 /* OpticalFlowMotionAnalyzer.mm in Sources */,
+				2124FF7F13848D700027EB2C /* NullMotionAnalyzer.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

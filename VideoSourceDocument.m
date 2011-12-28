@@ -328,7 +328,7 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
             [_captureSession stopRunning];
             [_captureDecompressedVideoOutput setDelegate:nil];
         } else {
-            [NSThread sleepForTimeInterval:0.1];     // work around hard to reproduce CIImage/QTMovieView thread safety issues (brutal hack)
+            [NSThread sleepForTimeInterval:0.1];     // work around to reproduce CIImage/QTMovieView thread safety issues (brutal hack)
             [_movieView pause:self];
             if ([_movieView delegate] == self) {
                 [self autorelease];
