@@ -105,7 +105,9 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
 {
     dispatch_async(_queue, ^{
         _assayAnalyzerClass = assayAnalyzerClass;
-        [self resetCaptureStateAndReportResults];
+        if (_assayAnalyzerClass != assayAnalyzerClass) {
+            [self resetCaptureStateAndReportResults];
+        }
     });
 }
 
@@ -113,7 +115,9 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
 {
     dispatch_async(_queue, ^{
         _plateOrientation = plateOrietation;
-        [self resetCaptureStateAndReportResults];
+        if (_plateOrientation != plateOrientation) {
+            [self resetCaptureStateAndReportResults];
+        }
     });
 }
 
