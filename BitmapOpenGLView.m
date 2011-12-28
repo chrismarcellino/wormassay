@@ -7,6 +7,7 @@
 //
 
 #import "BitmapOpenGLView.h"
+#import <OpenGL/glu.h>
 
 @interface BitmapOpenGLView ()
 
@@ -62,7 +63,7 @@
     glEnable(GL_TEXTURE_RECTANGLE_ARB);
     GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
-        NSLog(@"Error: failed to enable GL_TEXTURE_RECTANGLE_ARB (%i)", error);
+        NSLog(@"Error: failed to enable GL_TEXTURE_RECTANGLE_ARB (%s)", gluErrorString(error));
     }
     
     // Create the texture
@@ -84,65 +85,66 @@
     CGLLockContext(glContext);
     CGLSetCurrentContext(glContext);
     
-    // If we're changing sizes or formats, or if we've never draw before,
-    // we need to set the texture data anew
-    if (!drawingData->baseAddress) {
+    if (drawingData->baseAddress) {
+        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _imageTexture);
+        
+        // If we're changing sizes or formats, we need to set the texture data anew
+        if (drawingData->width != _lastDrawingData.width ||
+            drawingData->height != _lastDrawingData.height ||
+            drawingData->glPixelFormat != _lastDrawingData.glPixelFormat) {
+            
+            // Set the texture image
+            glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
+                         0,
+                         GL_RGBA,
+                         drawingData->width,
+                         drawingData->height,
+                         0,
+                         drawingData->glPixelFormat,
+                         GL_UNSIGNED_INT_8_8_8_8_REV,
+                         drawingData->baseAddress);
+        } else {
+            // Update the existing texture image
+            glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB,
+                            0,
+                            0,
+                            0,
+                            drawingData->width,
+                            drawingData->height,
+                            drawingData->glPixelFormat,
+                            GL_UNSIGNED_INT_8_8_8_8_REV,
+                            drawingData->baseAddress);
+        }
+        
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        
+        // Invert the image
+        glOrtho(0, drawingData->width, drawingData->height, 0, -1, 1);
+        // Set the viewport
+        glViewport(_viewport.origin.x, _viewport.origin.y, _viewport.size.width, _viewport.size.height);
+        
+        glBegin(GL_POLYGON);
+        
+        glTexCoord2d(0, 0);
+        glVertex2f(0, 0);
+        glTexCoord2d(drawingData->width, 0);
+        glVertex2f(drawingData->width, 0);
+        glTexCoord2d(drawingData->width, drawingData->height);
+        glVertex2f(drawingData->width, drawingData->height);
+        glTexCoord2d(0, drawingData->height);
+        glVertex2f(0, drawingData->height);
+        
+        glEnd();
+        
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+    } else {
+        // Clear the framebuffer
         glClearColor(0, 0, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ACCUM_BUFFER_BIT);
-    } else if (drawingData->width != _lastDrawingData.width ||
-        drawingData->height != _lastDrawingData.height ||
-        drawingData->glPixelFormat != _lastDrawingData.glPixelFormat) {
-        
-        // Set the texture image
-        glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
-                     0,
-                     GL_RGBA,
-                     drawingData->width,
-                     drawingData->height,
-                     0,
-                     drawingData->glPixelFormat,
-                     GL_UNSIGNED_INT_8_8_8_8_REV,
-                     drawingData->baseAddress);
-    } else {
-        // Update the existing texture image
-        glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB,
-                        0,
-                        0,
-                        0,
-                        drawingData->width,
-                        drawingData->height,
-                        drawingData->glPixelFormat,
-                        GL_UNSIGNED_INT_8_8_8_8_REV,
-                        drawingData->baseAddress);
     }
-    
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    
-    // Invert the image
-    glOrtho(0, drawingData->width, drawingData->height, 0, -1, 1);
-    // Set the viewport
-    glViewport(_viewport.origin.x, _viewport.origin.y, _viewport.size.width, _viewport.size.height);
-    
-    glBegin(GL_POLYGON);
-    
-    glTexCoord2d(0, 0);
-    glVertex2f(0, 0);
-    
-    glTexCoord2d(drawingData->width, 0);
-    glVertex2f(drawingData->width, 0);
-    
-    glTexCoord2d(drawingData->width, drawingData->height);
-    glVertex2f(drawingData->width, drawingData->height);
-    
-    glTexCoord2d(0, drawingData->height);
-    glVertex2f(0, drawingData->height);
-    
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    
-    glEnd();
     // Exchange the back buffer for the front buffer
     CGLFlushDrawable(glContext);
     
@@ -150,6 +152,11 @@
     if (drawingData != &_lastDrawingData) {
         [self freeDrawingData];
         _lastDrawingData = *drawingData;
+    }
+    
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        NSLog(@"Error: %@ drawing error (%s)", [self class], gluErrorString(error));
     }
     
     CGLSetCurrentContext(NULL);

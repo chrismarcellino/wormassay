@@ -12,7 +12,7 @@
 #import "opencv2/core/core_c.h"
 
 NSString *const CaptureDeviceScheme = @"capturedevice";
-NSString *const CaptureDeviceFileType = @"capturedevice";
+NSString *const CaptureDeviceFileType = @"dyn.capturedevice";
 
 static NSPoint LastCascadePoint = { 0.0, 0.0 };
 
@@ -53,7 +53,8 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 
 + (NSArray *)readableTypes
 {
-    return [[QTMovie movieFileTypes:QTIncludeCommonTypes] arrayByAddingObject:CaptureDeviceFileType];
+    //return [[QTMovie movieFileTypes:QTIncludeCommonTypes] arrayByAddingObject:CaptureDeviceFileType];
+    return [NSArray arrayWithObjects:CaptureDeviceFileType, @"public.movie", nil];
 }
 
 + (NSArray *)writableTypes
@@ -264,9 +265,14 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
         NSDictionary *attributes = [[NSDictionary alloc] initWithObjectsAndKeys:QTMovieFrameImageTypeCVPixelBufferRef, QTMovieFrameImageType, nil];
         success = [_movie frameImageAtTime:_nextExtractTime withAttributes:attributes error:outError] != nil;
         
+        [_movie detachFromCurrentThread];
+        
         _movieFrameExtractTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, _movieFrameExtractQueue);
         dispatch_source_set_event_handler(_movieFrameExtractTimer, ^{
             NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+            // Migrate the movie to this thread
+            [QTMovie enterQTKitOnThread];
+            [_movie attachToCurrentThread];
             
             CVPixelBufferRef videoFrame = (CVPixelBufferRef)[_movie frameImageAtTime:_nextExtractTime withAttributes:attributes error:nil];
             [self processVideoFrame:videoFrame presentationTime:_nextExtractTime];
@@ -278,10 +284,13 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
             if (!QTTimeInTimeRange(increment, range)) {
                 _nextExtractTime = start;
             }
-            
+
+            [_movie detachFromCurrentThread];
+            [QTMovie exitQTKitOnThread];
             [pool release];
         });
         dispatch_source_set_timer(_movieFrameExtractTimer, 0, NSEC_PER_SEC * 1000 / duration.timeScale, 0);
+        dispatch_resume(_movieFrameExtractTimer);
         [attributes release];
     }
     
@@ -295,6 +304,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
     [_captureSession stopRunning];
     [_captureDecompressedVideoOutput setDelegate:nil];
     if (_movieFrameExtractTimer) {
+        dispatch_suspend(_movieFrameExtractTimer);
         dispatch_source_cancel(_movieFrameExtractTimer);
     }
     [super close];

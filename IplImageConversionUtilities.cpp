@@ -22,7 +22,7 @@ IplImage *CreateIplImageFromCVPixelBuffer(CVPixelBufferRef cvImageBuffer, int ou
         bufferChannels = 1;
     } else if (formatType == kCVPixelFormatType_24BGR) {
         bufferChannels = 3;
-    } else if (formatType == kCVPixelFormatType_32BGRA) {
+    } else if (formatType == kCVPixelFormatType_32BGRA || formatType == kCVPixelFormatType_32ARGB) {        //XXXXXXXXXXXXXX
         bufferChannels = 4;
     }
     assert(bufferChannels > 0);
