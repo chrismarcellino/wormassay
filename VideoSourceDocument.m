@@ -384,7 +384,10 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
         _ciContext = [[CIContext contextWithCGLContext:NULL pixelFormat:NULL colorSpace:NULL options:nil] retain];
     }
     
-    VideoFrame *frame = [[VideoFrame alloc] initByCopyingCIImage:image usingCIContext:_ciContext resultChannelCount:4 presentationTime:CACurrentMediaTime()];
+    VideoFrame *frame = [[VideoFrame alloc] initByCopyingCIImage:image
+                                                  usingCIContext:_ciContext
+                                              resultChannelCount:4
+                                                presentationTime:CACurrentMediaTime()];
     [self processVideoFrame:frame];
     return nil;
 }
