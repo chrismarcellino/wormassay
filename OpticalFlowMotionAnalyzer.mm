@@ -18,12 +18,21 @@ static const size_t MaximumNumberOfFeaturePoints = 200;
 static const double DeltaMeanMovementLimit = 10.0;
 static const double DeltaStdDevMovementLimit = 10.0;
 static const NSTimeInterval IgnoreFramesPostMovementThresholdTimeInterval = 5.0;
+static const NSTimeInterval MinimumIntervalFrameInterval = 0.100;
 
 @implementation OpticalFlowMotionAnalyzer
 
+- (id)init
+{
+    if ((self = [super init])) {
+        _lastFrames = [[NSMutableArray alloc] init];
+    }
+    return self;
+}
+
 - (void)dealloc
 {
-    [_prevFrame release];
+    [_lastFrames release];
     [super dealloc];
 }
 
@@ -44,6 +53,20 @@ static const NSTimeInterval IgnoreFramesPostMovementThresholdTimeInterval = 5.0;
 
 - (BOOL)willBeginFrameProcessing:(VideoFrame *)videoFrame debugImage:(IplImage*)debugImage plateData:(PlateData *)plateData
 {
+    // Find the most recent video frame that is at least 100 ms earlier than the current and discard older frames
+    [_prevFrame release];
+    _prevFrame = nil;
+    while ([_lastFrames count] > 0) {
+        VideoFrame *aFrame = [_lastFrames objectAtIndex:0];
+        if ([videoFrame presentationTime] - [aFrame presentationTime] >= MinimumIntervalFrameInterval) {
+            [_prevFrame release];
+            _prevFrame = [aFrame retain];
+            [_lastFrames removeObjectAtIndex:0];
+        } else {
+            break;
+        }
+    }
+        
     if (!_prevFrame) {
         _lastMovementThresholdPresentationTime = -FLT_MAX;
         return NO;
@@ -210,8 +233,7 @@ static const NSTimeInterval IgnoreFramesPostMovementThresholdTimeInterval = 5.0;
 
 - (void)didEndFrameProcessing:(VideoFrame *)videoFrame plateData:(PlateData *)plateData
 {
-    [_prevFrame release];
-    _prevFrame = [videoFrame retain];
+    [_lastFrames addObject:videoFrame];
 }
 
 - (void)didEndTrackingPlateWithPlateData:(PlateData *)plateData

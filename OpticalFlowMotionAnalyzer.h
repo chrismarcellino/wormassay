@@ -12,6 +12,7 @@
 @class VideoFrame;
 
 @interface OpticalFlowMotionAnalyzer : NSObject <AssayAnalyzer> {
+    NSMutableArray *_lastFrames;
     VideoFrame *_prevFrame;
     NSTimeInterval _lastMovementThresholdPresentationTime;
 }
