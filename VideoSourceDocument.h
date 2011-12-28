@@ -23,7 +23,7 @@ extern BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device);
 
 
 @interface VideoSourceDocument : NSDocument {
-    // A document will strictly have one of captureDevice or movie and their associated objects
+    // A document will have only one of captureDevice or movie
     QTCaptureDevice *_captureDevice;
     QTCaptureSession *_captureSession;
     QTCaptureDeviceInput *_captureDeviceInput;

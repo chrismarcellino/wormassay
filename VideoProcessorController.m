@@ -168,8 +168,6 @@ static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
 - (void)videoProcessor:(VideoProcessor *)vp
 didFinishAcquiringPlateData:(PlateData *)plateData
           successfully:(BOOL)successfully
-videoTemporaryFilePath:(NSString *)recordingTempFilePath
-  recommendedExtension:(NSString *)videoExtension
 {
     dispatch_async(_queue, ^{
         BOOL movieRecordingMoved = NO;
@@ -235,9 +233,8 @@ videoTemporaryFilePath:(NSString *)recordingTempFilePath
                         [fileManager createDirectoryAtPath:videoFolder withIntermediateDirectories:YES attributes:nil error:NULL];
                     }
                     
-                    NSString *destinationPath = [[videoFolder stringByAppendingPathComponent:
-                                                    [_currentOutputFilenamePrefix stringByAppendingString:@" Video"]]
-                                                    stringByAppendingPathExtension:videoExtension];
+                    NSString *destinationPath = [videoFolder stringByAppendingPathComponent:
+                                                 [_currentOutputFilenamePrefix stringByAppendingString:@" Video.ts"]];
                     
                     NSError *error = nil;
                     movieRecordingMoved = [fileManager moveItemAtPath:recordingTempFilePath toPath:destinationPath error:&error];
@@ -339,6 +336,53 @@ videoTemporaryFilePath:(NSString *)recordingTempFilePath
             [fileManager release];
         }
     }
+}
+
+// QTCaptureFileOutput delegate methods
+
+- (void)captureOutput:(QTCaptureFileOutput *)captureOutput didStartRecordingToOutputFileAtURL:(NSURL *)fileURL forConnections:(NSArray *)connections
+{
+    
+}
+
+// "This method is called when the file recorder reaches a soft limit, i.e. the set maximum file size or duration.
+// If the delegate returns NO, the file writer will continue writing the same file. If the delegate returns YES and
+// doesn't set a new output file, captureOutput:mustChangeOutputFileAtURL:forConnections:dueToError: will be called.
+// If the delegate returns YES and sets a new output file, recording will continue on the new file."
+- (BOOL)captureOutput:(QTCaptureFileOutput *)captureOutput shouldChangeOutputFileAtURL:(NSURL *)outputFileURL forConnections:(NSArray *)connections dueToError:(NSError *)error
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        // XXXXXXXXXX SHOW ALERTS
+        
+        // XXXXXXXXXXX SET LIMITS (***NOT HERE****) BASED ON FREE SPACE (e.g. 1GB or 1%, whichever is less). 
+        // PREVENT RECORDING IN FIRST PLACE IF THAT IS THE CASE.
+    });
+    return YES;
+}
+
+// "This method is called when the file writer reaches a hard limit, such as space running out on the current disk,
+// or the stream format of the incoming media changing. If the delegate does nothing, the current output file will
+// be set to nil. If the delegate sets a new output file (on a different disk in the case of hitting a disk space limit)
+// recording will continue on the new file."
+- (void)captureOutput:(QTCaptureFileOutput *)captureOutput mustChangeOutputFileAtURL:(NSURL *)outputFileURL forConnections:(NSArray *)connections dueToError:(NSError *)error
+{
+    
+}
+
+// "This method is called whenever a file will be finished, either because recordToFile:/recordToFile:bufferDestination:
+// was called. or an error forced the file to be finished. If the file was forced to be finished due to an error, the error
+// is described in the error parameter. Otherwise, the error parameter equals nil."
+- (void)captureOutput:(QTCaptureFileOutput *)captureOutput willFinishRecordingToOutputFileAtURL:(NSURL *)outputFileURL forConnections:(NSArray *)connections dueToError:(NSError *)error
+{
+    
+}
+
+// "This method is called whenever a file is finished successfully. If the file was forced to be finished due to an error
+// (including errors that resulted in either of the above two methods being called), the error is described in the error
+// parameter. Otherwise, the error parameter equals nil."
+- (void)captureOutput:(QTCaptureFileOutput *)captureOutput didFinishRecordingToOutputFileAtURL:(NSURL *)outputFileURL forConnections:(NSArray *)connections dueToError:(NSError *)error
+{
+    
 }
 
 @end

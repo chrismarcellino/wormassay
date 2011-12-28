@@ -88,8 +88,15 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     
     // Log welcome message
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
-    RunLog(@"%@ version %@ launched.", [infoDictionary objectForKey:(id)kCFBundleNameKey], [infoDictionary objectForKey:(id)kCFBundleVersionKey]);
-    RunLog(@"VLC can be used to view the video files created when assaying using a HDV or DV camera. Download it free at http://www.videolan.org/vlc/.");
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSDictionary *fileAttributes = [fileManager attributesOfFileSystemForPath:[videoProcessorController runOutputFolderPath] error:nil];
+    unsigned long long fileSystemSize = [[fileAttributes objectForKey:NSFileSystemSize] unsignedLongLongValue];
+    unsigned long long freeSpace = [[fileAttributes objectForKey:NSFileSystemFreeSize] unsignedLongLongValue];
+    double percentFree = (double)freeSpace / (double)fileSystemSize * 100.0;
+    
+    RunLog(@"%@ version %@ launched. Data storage has %@ (%.3g%%) free space.",
+           [infoDictionary objectForKey:(id)kCFBundleNameKey], [infoDictionary objectForKey:(id)kCFBundleVersionKey], formattedDataSize(freeSpace), percentFree);
+    RunLog(@"VLC can be used to view the video files recorded when assaying using a HDV or DV camera. Download it free at http://www.videolan.org/vlc/.");
 }
 
 - (void)assayAnalyzerMenuItemSelected:(NSMenuItem *)sender
@@ -200,3 +207,15 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
 }
 
 @end
+
+NSString *formattedDataSize(unsigned long long bytes)
+{
+    NSString *factors[] = { (bytes == 1 ? @"byte" : @"bytes"), @"KB", @"MB", @"GB", @"TB", @"PB", @"EB", @"ZB", @"YB", nil };
+    int factorIndex = 0;
+    double value = bytes;
+    while (value > 1024 && factors[factorIndex + 1]) {
+        value /= 1024;
+        factorIndex++;
+    }
+    return [NSString stringWithFormat:@"%.4g %@", value, factors[factorIndex]];
+}

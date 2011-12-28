@@ -17,3 +17,5 @@
 @property(nonatomic, retain) IBOutlet NSMenu *assayAnalyzerMenu;
 
 @end
+
+NSString *formattedDataSize(unsigned long long bytes);

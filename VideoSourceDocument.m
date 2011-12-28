@@ -241,7 +241,6 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
 - (BOOL)readFromURL:(NSURL *)absoluteURL ofType:(NSString *)typeName error:(NSError **)outError
 {
     BOOL success = NO;
-    QTCaptureFileOutput *recordingCaptureOutput = nil;
     
     if (_captureDevice) {
         // Start capture
@@ -249,6 +248,13 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
         success = [_captureDevice open:outError];
         if (success) {
             _captureDeviceInput = [[QTCaptureDeviceInput alloc] initWithDevice:_captureDevice];
+            // Disable muxed audio devices
+            for (QTCaptureConnection *connection in [_captureDeviceInput connections]) {
+                if ([[connection mediaType] isEqual:QTMediaTypeSound]) {
+                    [connection setEnabled:NO];
+                }
+            }
+            
             success = [_captureSession addInput:_captureDeviceInput error:outError];
             if (success) {
                 _captureDecompressedVideoOutput = [[QTCaptureDecompressedVideoOutput alloc] init];
@@ -258,16 +264,9 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
                                                   nil];
                 [_captureDecompressedVideoOutput setPixelBufferAttributes:bufferAttributes];
                 [bufferAttributes release];
-                [_captureDecompressedVideoOutput setMinimumVideoFrameInterval:1.0 / 30.0];
                 [_captureDecompressedVideoOutput setDelegate:self];
                 success = [_captureSession addOutput:_captureDecompressedVideoOutput error:outError];
                 if (success) {
-                    recordingCaptureOutput = [[[QTCaptureFileOutput alloc] init] autorelease];
-                    NSError *captureSessionAddError = nil;
-                    if (![_captureSession addOutput:recordingCaptureOutput error:&captureSessionAddError]) {
-                        RunLog(@"Unable to add QTCaptureFileOutput to capture session: %@", captureSessionAddError);
-                        recordingCaptureOutput = nil;
-                    }
                     [_captureSession startRunning];
                 }
             }
@@ -336,7 +335,7 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
     }
     
     NSAssert(!_processor, @"processor already exists");
-    _processor = [[VideoProcessor alloc] initWithRecordingCaptureOutput:recordingCaptureOutput];
+    _processor = [[VideoProcessor alloc] initWithCaptureSession:_captureSession];
     [[VideoProcessorController sharedInstance] addVideoProcessor:_processor];
     
     return success;
