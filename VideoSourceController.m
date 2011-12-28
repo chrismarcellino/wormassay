@@ -341,13 +341,16 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 
 - (void)close
 {
-    ProcessLog(@"Closing removed device/file: %@", _sourceIdentifier);
-    [[ProcessingController sharedInstance] noteSourceIdentifierHasDisconnected:_sourceIdentifier];
-    
-    [_captureSession stopRunning];
-    [_captureDecompressedVideoOutput setDelegate:nil];
-    if (_movieFrameExtractTimer) {
-        dispatch_source_cancel(_movieFrameExtractTimer);
+    if (!closeCalled) {
+        closeCalled = YES;
+        ProcessLog(@"Closing removed device/file: %@", _sourceIdentifier);
+        [[ProcessingController sharedInstance] noteSourceIdentifierHasDisconnected:_sourceIdentifier];
+        
+        [_captureSession stopRunning];
+        [_captureDecompressedVideoOutput setDelegate:nil];
+        if (_movieFrameExtractTimer) {
+            dispatch_source_cancel(_movieFrameExtractTimer);
+        }
     }
     [super close];
 }

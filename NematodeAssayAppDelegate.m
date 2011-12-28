@@ -97,7 +97,6 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
         NSString *captureDeviceUniqueID = UniqueIDForCaptureDeviceURL(url);
         if (captureDeviceUniqueID) {
             if (![presentUniqueIds containsObject:captureDeviceUniqueID]) {
-
                 [document close];
             }
         }

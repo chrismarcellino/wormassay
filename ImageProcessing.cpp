@@ -282,11 +282,11 @@ bool plateSequentialCirclesAppearSameAndStationary(const std::vector<cv::Vec3f> 
     return distance < (radiusPrevious + radiusCurrent) / 2.0 / 10.0;
 }
 
-IplImage *createEdgeImageForWellImageFromImage(IplImage *plateImage, cv::Vec3f wellCircle, float &filledArea)
+IplImage *createEdgeImageForWellImageFromImage(IplImage *plateImage, cv::Vec3f wellCircle, float &filledArea, CvRect &boundingSquare)
 {
     // Copy the grayscale subimage corresponding to the circle's bounding square
     float radius = wellCircle[2];
-    CvRect boundingSquare = cvRect(wellCircle[0] - radius, wellCircle[1] - radius, 2 * radius, 2 * radius);
+    boundingSquare = cvRect(wellCircle[0] - radius, wellCircle[1] - radius, 2 * radius, 2 * radius);
     
     cvSetImageROI(plateImage, boundingSquare);
     IplImage* graySubimage = cvCreateImage(cvGetSize(plateImage), IPL_DEPTH_8U, 1);

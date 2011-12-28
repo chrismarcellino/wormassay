@@ -33,6 +33,7 @@ extern NSString *UniqueIDForCaptureDeviceURL(NSURL *url);
     BitmapOpenGLView *_bitmapOpenGLView;
     NSUInteger _frameDropCount;
     NSString *_sourceIdentifier;
+    BOOL closeCalled;
 }
 
 @property(nonatomic, readonly) QTCaptureDevice *captureDevice;

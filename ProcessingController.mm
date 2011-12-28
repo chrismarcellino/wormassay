@@ -20,7 +20,7 @@
     NSMutableArray *_wellFindingInProcessSourceIdentifiers;
     NSMutableArray *_barcodeFindingInProcessSourceIdentifiers;
     int _wellCountHint;
-    std::vector<cv::Vec3f> _baselineWellCircles;
+    std::vector<cv::Vec3f> _trackingWellCircles;
     std::map<std::string, std::vector<cv::Vec3f> > _lastCirclesMap;    // for debugging
     
     NSTimeInterval _firstWellFrameTime;
@@ -85,8 +85,10 @@
 
 - (void)noteSourceIdentifierHasConnected:(NSString *)sourceIdentifier
 {
-    NSAssert(![_connectedSourceIdentifiers containsObject:sourceIdentifier], @"Source identifier is already connected");
-    [_connectedSourceIdentifiers addObject:sourceIdentifier];
+    dispatch_async(_queue, ^{
+        NSAssert(![_connectedSourceIdentifiers containsObject:sourceIdentifier], @"Source identifier is already connected");
+        [_connectedSourceIdentifiers addObject:sourceIdentifier];
+    });
 }
 
 - (void)noteSourceIdentifierHasDisconnected:(NSString *)sourceIdentifier
@@ -132,18 +134,33 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callbac
                                                     presentationTime:presentationTime];
         }
         
+        // Create a copy of the frame to draw debugging info on that we will send back
+        IplImage *debugImage = cvCloneImage(videoFrame);
+        
         // Record statistics on this image syncrhounsly (at frame rate), so that we drop frames if we can't keep up.
         // It is imperative to base all statistics on the elapsed time so that the results are independent of hardware
         // performance.
-        if (_processingState == ProcessingStateTrackingMotion) {
+        if (_processingState == ProcessingStateTrackingMotion && [_wellCameraSourceIdentifier isEqual:sourceIdentifier]) {
+            for (size_t i = 0; i < _trackingWellCircles.size(); i++) {
+                float filledArea;
+                CvRect boundingSquare;
+                IplImage *wellImage = createEdgeImageForWellImageFromImage(videoFrame, _trackingWellCircles[i], filledArea, boundingSquare);
+                
+                // Draw the well image edges back in
+                cvSetImageROI(debugImage, boundingSquare);
+                cvCvtColor(wellImage, debugImage, CV_GRAY2BGRA);
+                cvResetImageROI(debugImage);
+                
+                cvReleaseImage(&wellImage);
+            }
+            
             // XXX calculate stats
         }
         
-        // Once we're done with the frame, draw debugging stuff on a copy of the plate camera's frames and send it back
-        IplImage *debugImage = cvCloneImage(videoFrame);
+        // Draw debugging well circles and labels
         if (_processingState == ProcessingStateNoPlate || [_wellCameraSourceIdentifier isEqual:sourceIdentifier]) {
             const std::vector<cv::Vec3f> circlesToDraw = (_processingState == ProcessingStateNoPlate) ?
-                        _lastCirclesMap[std::string([sourceIdentifier UTF8String])] : _baselineWellCircles;
+                        _lastCirclesMap[std::string([sourceIdentifier UTF8String])] : _trackingWellCircles;
             for (size_t i = 0; i < circlesToDraw.size(); i++) {
                 CvPoint center = cvPoint(cvRound(circlesToDraw[i][0]), cvRound(circlesToDraw[i][1]));
                 int radius = cvRound(circlesToDraw[i][2]);
@@ -204,7 +221,7 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callbac
                             NSAssert(!_wellCameraSourceIdentifier, @"In ProcessingStateNoPlate, but _wellCameraSourceIdentifier != nil");
                             _wellCameraSourceIdentifier = [sourceIdentifier copy];
                             _processingState = ProcessingStatePlateFirstFrameIdentified;
-                            _baselineWellCircles = wellCircles;     // store the first circles as the baseline for the second set
+                            _trackingWellCircles = wellCircles;     // store the first circles as the baseline for the second set
                             _firstWellFrameTime = presentationTime;
                         }
                         break;
@@ -215,17 +232,17 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callbac
                             if (plateFound) {
                                 // If the second identification yields matching results as the first, and they are spread by at least
                                 // 100 ms, begin motion tracking and video recording
-                                if (plateSequentialCirclesAppearSameAndStationary(_baselineWellCircles, wellCircles) &&
+                                if (plateSequentialCirclesAppearSameAndStationary(_trackingWellCircles, wellCircles) &&
                                     presentationTime - _firstWellFrameTime >= 0.100) {
                                     _processingState = ProcessingStateTrackingMotion;
-                                    _baselineWellCircles = wellCircles; // store the second set as the baseline for all remaining sets
+                                    _trackingWellCircles = wellCircles; // store the second set as the baseline for all remaining sets
                                     _startOfTrackingMotionTime = presentationTime;
                                     
                                     [self beginRecordingVideo];
                                 } else {
                                     // There is still a plate, but it doesn't match or more likely is still moving moved, or not enough
                                     // time has lapsed, so we stay in this state, but update the circles
-                                    _baselineWellCircles = wellCircles;
+                                    _trackingWellCircles = wellCircles;
                                 }
                             } else {
                                 // Plate is gone so reset
@@ -238,7 +255,7 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callbac
                         // Since we've seen a plate in one camera, ignore any pending results from others.
                         // But if the plate is gone, moved or different, reset
                         if ([_wellCameraSourceIdentifier isEqual:sourceIdentifier] &&
-                            (!plateFound || !plateSequentialCirclesAppearSameAndStationary(_baselineWellCircles, wellCircles))) {
+                            (!plateFound || !plateSequentialCirclesAppearSameAndStationary(_trackingWellCircles, wellCircles))) {
                             [self resetCaptureStateAndReportDataIfPossible];
                         }
                         
@@ -286,7 +303,7 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callbac
     _wellCameraSourceIdentifier = nil;
     
     _startOfTrackingMotionTime = 0.0;
-    _baselineWellCircles.clear();
+    _trackingWellCircles.clear();
     _firstWellFrameTime = 0.0;
     
     [_barcode release];
