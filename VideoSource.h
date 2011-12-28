@@ -8,6 +8,9 @@
 
 #import <Cocoa/Cocoa.h>
 #import <QTKit/QTKit.h>
+#import <QuartzCore/QuartzCore.h>
+
+@class ImageDrawingOpenGLView;
 
 extern NSString *const CaptureDeviceScheme;
 
@@ -26,6 +29,8 @@ extern NSString *UniqueIDForCaptureDeviceURL(NSURL *url);
     dispatch_queue_t movieFrameExtractQueue;
     dispatch_source_t movieFrameExtractTimer;
     QTTime nextExtractTime;
+    
+    CALayer *imageLayer;
 }
 
 - (NSSize)maximumNativeResolution;
