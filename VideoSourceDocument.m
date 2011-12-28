@@ -151,7 +151,9 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
 
 - (void)dealloc
 {
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:QTMovieDidEndNotification object:_movie];
+    if (_movie) {
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:QTMovieDidEndNotification object:_movie];
+    }
     
     [_captureDevice release];
     [_captureSession release];
@@ -340,7 +342,7 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
      withSampleBuffer:(QTSampleBuffer *)sampleBuffer
        fromConnection:(QTCaptureConnection *)connection
 {
-    [self pixelBufferOrImageHasArrived:sampleBuffer isCIImage:NO];
+    [self pixelBufferOrImageHasArrived:(id)videoFrame isCIImage:NO];
 }
 
 // Called on a background thread when using a pre-recorded movie file

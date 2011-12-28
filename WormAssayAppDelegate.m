@@ -23,12 +23,13 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
 - (void)assayAnalyzerMenuItemSelected:(NSMenuItem *)sender;
 - (void)loadCaptureDevices;
 - (void)captureDevicesChanged;
+- (void)loggingAndNotificationSettingsDidClose:(NSNotification *)note;
 
 @end
 
 @implementation WormAssayAppDelegate
 
-@synthesize assayAnalyzerMenu, runLogTextView, runLogScrollView, encodingTableView;
+@synthesize assayAnalyzerMenu, plateOrientationMenu, runLogTextView, runLogScrollView, encodingTableView;
 
 - (void)applicationWillFinishLaunching:(NSNotification *)notification
 {
@@ -48,9 +49,6 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
     [videoProcessorController setRunLogScrollView:runLogScrollView];
     [videoProcessorController setEncodingTableView:encodingTableView];
     
-    // Set analyzer menu item delegate
-    [[self assayAnalyzerMenu] setDelegate:self];
-    
     // Log welcome message
     NSBundle *mainBundle = [NSBundle mainBundle];
     NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -67,9 +65,9 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
     
     // Log that the conversion executable isn't present
     if (![[VideoProcessorController sharedInstance] supportsConversion]) {
-        RunLog(@"This version of %@ was built without video conversion support. "
-               "Instead, VLC can be used to view the video files recorded when assaying using a HDV or DV camera. "
-               "Download it at http://www.videolan.org/vlc/.", [mainBundle objectForInfoDictionaryKey:(id)kCFBundleNameKey]);
+        RunLog(@"This version of %@ was built without H.264 encoding support. "
+               "Instead, VLC (http://www.videolan.org/vlc/) can be used to view the video files recorded when assaying using a HDV or DV camera. ",
+               [mainBundle objectForInfoDictionaryKey:(id)kCFBundleNameKey]);
     }
 }
 
@@ -103,14 +101,21 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
 
 - (void)menuNeedsUpdate:(NSMenu *)menu
 {
-    // Populate analyzer menu
     if (menu == [self assayAnalyzerMenu]) {
+        // Populate analyzer menu
         [menu removeAllItems];
         
         VideoProcessorController *videoProcessorController = [VideoProcessorController sharedInstance];
         for (Class class in [videoProcessorController assayAnalyzerClasses]) {
             NSMenuItem *item = [menu addItemWithTitle:[class analyzerName] action:@selector(assayAnalyzerMenuItemSelected:) keyEquivalent:@""];
             [item setState:([class isEqual:[videoProcessorController currentAssayAnalyzerClass]] ? NSOnState : NSOffState)];
+        }
+    } else if (menu == [self plateOrientationMenu]) {
+        // Set enabled flags on plate orientation menu items
+        PlateOrientation plateOrientation = [[VideoProcessorController sharedInstance] plateOrientation];
+        for (NSInteger i = 0; i < [menu numberOfItems]; i++) {
+            NSMenuItem *item = [menu itemAtIndex:i];
+            [item setState:(i == plateOrientation) ? NSOnState : NSOffState];
         }
     }
 }
@@ -238,8 +243,26 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
 {
     if (!_loggingAndNotificationsWindowController) {
         _loggingAndNotificationsWindowController = [[LoggingAndNotificationsSettingsWindowController alloc] init];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(loggingAndNotificationSettingsDidClose:)
+                                                     name:NSWindowWillCloseNotification
+                                                   object:[_loggingAndNotificationsWindowController window]];
+        
     }
     [_loggingAndNotificationsWindowController showWindow:sender];
+}
+
+- (void)loggingAndNotificationSettingsDidClose:(NSNotification *)note
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:[note name] object:[note object]];
+    [_loggingAndNotificationsWindowController release];
+    _loggingAndNotificationsWindowController = nil;
+}
+
+- (IBAction)plateOrientationWasSelected:(id)sender
+{
+    PlateOrientation plateOrientation = (PlateOrientation)[[self plateOrientationMenu] indexOfItem:sender];
+    [[VideoProcessorController sharedInstance] setPlateOrientation:plateOrientation];
 }
 
 @end

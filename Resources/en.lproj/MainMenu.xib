@@ -1269,6 +1269,62 @@
 					</object>
 					<int key="connectionID">556</int>
 				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">plateOrientationMenu</string>
+						<reference key="source" ref="263138065"/>
+						<reference key="destination" ref="690626892"/>
+					</object>
+					<int key="connectionID">564</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">delegate</string>
+						<reference key="source" ref="721894706"/>
+						<reference key="destination" ref="263138065"/>
+					</object>
+					<int key="connectionID">565</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">delegate</string>
+						<reference key="source" ref="690626892"/>
+						<reference key="destination" ref="263138065"/>
+					</object>
+					<int key="connectionID">566</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">plateOrientationWasSelected:</string>
+						<reference key="source" ref="263138065"/>
+						<reference key="destination" ref="416621879"/>
+					</object>
+					<int key="connectionID">567</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">plateOrientationWasSelected:</string>
+						<reference key="source" ref="263138065"/>
+						<reference key="destination" ref="749248855"/>
+					</object>
+					<int key="connectionID">568</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">plateOrientationWasSelected:</string>
+						<reference key="source" ref="263138065"/>
+						<reference key="destination" ref="999644908"/>
+					</object>
+					<int key="connectionID">569</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">plateOrientationWasSelected:</string>
+						<reference key="source" ref="263138065"/>
+						<reference key="destination" ref="132288011"/>
+					</object>
+					<int key="connectionID">570</int>
+				</object>
 			</array>
 			<object class="IBMutableOrderedSet" key="objectRecords">
 				<array key="orderedObjects">
@@ -2099,6 +2155,7 @@
 				<string key="554.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="557.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="558.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
+				<string key="559.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="56.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<integer value="1" key="56.ImportedFromIB2"/>
 				<string key="560.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -2137,10 +2194,18 @@
 			<nil key="activeLocalization"/>
 			<dictionary class="NSMutableDictionary" key="localizations"/>
 			<nil key="sourceID"/>
-			<int key="maxID">562</int>
+			<int key="maxID">570</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<array class="NSMutableArray" key="referencedPartialClassDescriptions">
+				<object class="IBPartialClassDescription">
+					<string key="className">ArrayTableView</string>
+					<string key="superclassName">NSTableView</string>
+					<object class="IBClassDescriptionSource" key="sourceIdentifier">
+						<string key="majorKey">IBProjectSource</string>
+						<string key="minorKey">./Classes/ArrayTableView.h</string>
+					</object>
+				</object>
 				<object class="IBPartialClassDescription">
 					<string key="className">NSDocument</string>
 					<dictionary class="NSMutableDictionary" key="actions">
@@ -2187,11 +2252,16 @@
 					<string key="superclassName">NSObject</string>
 					<dictionary class="NSMutableDictionary" key="actions">
 						<string key="openRunOutputFolder:">id</string>
+						<string key="plateOrientationWasSelected:">id</string>
 						<string key="showLoggingAndNotificationSettings:">id</string>
 					</dictionary>
 					<dictionary class="NSMutableDictionary" key="actionInfosByName">
 						<object class="IBActionInfo" key="openRunOutputFolder:">
 							<string key="name">openRunOutputFolder:</string>
+							<string key="candidateClassName">id</string>
+						</object>
+						<object class="IBActionInfo" key="plateOrientationWasSelected:">
+							<string key="name">plateOrientationWasSelected:</string>
 							<string key="candidateClassName">id</string>
 						</object>
 						<object class="IBActionInfo" key="showLoggingAndNotificationSettings:">
@@ -2201,7 +2271,8 @@
 					</dictionary>
 					<dictionary class="NSMutableDictionary" key="outlets">
 						<string key="assayAnalyzerMenu">NSMenu</string>
-						<string key="encodingTableView">NSTableView</string>
+						<string key="encodingTableView">ArrayTableView</string>
+						<string key="plateOrientationMenu">NSMenu</string>
 						<string key="runLogScrollView">NSScrollView</string>
 						<string key="runLogTextView">NSTextView</string>
 					</dictionary>
@@ -2212,7 +2283,11 @@
 						</object>
 						<object class="IBToOneOutletInfo" key="encodingTableView">
 							<string key="name">encodingTableView</string>
-							<string key="candidateClassName">NSTableView</string>
+							<string key="candidateClassName">ArrayTableView</string>
+						</object>
+						<object class="IBToOneOutletInfo" key="plateOrientationMenu">
+							<string key="name">plateOrientationMenu</string>
+							<string key="candidateClassName">NSMenu</string>
 						</object>
 						<object class="IBToOneOutletInfo" key="runLogScrollView">
 							<string key="name">runLogScrollView</string>

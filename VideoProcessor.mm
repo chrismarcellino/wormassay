@@ -32,6 +32,7 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
     QTCaptureFileOutput *_captureFileOutput;
     NSString *_fileSourceFilename;
     Class _assayAnalyzerClass;
+    PlateOrientation _plateOrientation;
     dispatch_queue_t _queue;        // protects all state and serializes
     dispatch_queue_t _debugFrameCallbackQueue;
     
@@ -107,6 +108,14 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
     });
 }
 
+- (void)setPlateOrientation:(PlateOrientation)plateOrietation
+{
+    dispatch_async(_queue, ^{
+        _plateOrientation = plateOrietation;
+        [self resetCaptureStateAndReportResults];
+    });
+}
+
 - (void)setShouldScanForWells:(BOOL)shouldScanForWells
 {
     dispatch_async(_queue, ^{
@@ -126,6 +135,30 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
     dispatch_sync(_queue, ^{
         if (_plateData) {
             [_plateData incrementReceivedFrameCount];
+        }
+        
+        // Rotate image if necessary
+        BOOL flip = NO;
+        int flipMode;
+        switch (_plateOrientation) {
+            default:
+            case PlateOrientationTopRead:
+                break;
+            case PlateOrientationTopRead180DegreeRotated:
+                flip = YES;
+                flipMode = -1;
+                break;
+            case PlateOrientationBottomRead:
+                flip = YES;
+                flipMode = 1;
+                break;
+            case PlateOrientationBottomRead180DegreeRotated:
+                flip = YES;
+                flipMode = 0;
+                break;
+        }
+        if (flip) {
+            cvFlip([videoFrame image], NULL, flipMode);
         }
         
         // If we're not already searching for wells, and no other processor has a plate, schedule an async processing
@@ -450,6 +483,7 @@ stopRecordingWithCaptureFileOutput:_captureFileOutput];
     _processingState = ProcessingStateNoPlate;
     _firstWellFrameTime = PresentationTimeDistantPast;
     _lastBarcodeScanTime = PresentationTimeDistantPast;
+    _lastWellAnalysisBeginTime = PresentationTimeDistantPast;
     _trackingWellCircles.clear();
     _trackedImageSize = cvSize(0, 0);
 }

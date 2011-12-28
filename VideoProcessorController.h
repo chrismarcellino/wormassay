@@ -38,6 +38,7 @@
 
 - (NSArray *)assayAnalyzerClasses;
 @property(assign) Class currentAssayAnalyzerClass;
+@property(assign) PlateOrientation plateOrientation;
 @property(copy) NSString *runOutputFolderPath;
 - (NSString *)runOutputFolderPathCreatingIfNecessary:(BOOL)create;
 - (NSString *)videoFolderPathCreatingIfNecessary:(BOOL)create;

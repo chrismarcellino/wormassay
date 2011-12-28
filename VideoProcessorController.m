@@ -15,6 +15,7 @@
 
 static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
 static NSString *const NotificationEmailRecipientsKey = @"NotificationEmailRecipients";
+static NSString *const PlateOrientationKey = @"PlateOrientation";
 
 static NSString *const RunOutputFolderPathKey = @"RunOutputFolderPath";
 static NSString *const SortableLoggingDateFormat = @"yyyy-MM-dd HH:mm zzz";
@@ -143,6 +144,26 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
     }
 }
 
+- (PlateOrientation)plateOrientation
+{
+    return [[NSUserDefaults standardUserDefaults] integerForKey:PlateOrientationKey];
+}
+
+- (void)setPlateOrientation:(PlateOrientation)plateOrietation
+{
+    if (plateOrietation != [self plateOrientation]) {
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        [defaults setInteger:plateOrietation forKey:PlateOrientationKey];
+        [defaults synchronize];
+        
+        dispatch_async(_queue, ^{
+            for (VideoProcessor *videoProcessor in _videoProcessors) {
+                [videoProcessor setPlateOrientation:plateOrietation];
+            }
+        });
+    }
+}
+
 - (NSString *)runOutputFolderPath
 {
     NSString *path = [[[NSUserDefaults standardUserDefaults] stringForKey:RunOutputFolderPathKey] stringByExpandingTildeInPath];
@@ -209,6 +230,7 @@ static void createFolderIfNecessary(NSString *path)
         [_videoProcessors addObject:videoProcessor];
         [videoProcessor setDelegate:self];
         [videoProcessor setAssayAnalyzerClass:[self currentAssayAnalyzerClass]];
+        [videoProcessor setPlateOrientation:[self plateOrientation]];
         [videoProcessor setShouldScanForWells:YES];
     });
 }
@@ -397,12 +419,13 @@ stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
         if ([_filesToEmail count] > 0 && recipients && [recipients length] > 0) {
             NSBundle *mainBundle = [NSBundle mainBundle];
             NSString *subject = [NSString stringWithFormat:@"%@ email results", [mainBundle objectForInfoDictionaryKey:(id)kCFBundleNameKey]];
-            NSString *body = [NSString stringWithFormat:@"Results from the run %@ starting %@ are attached.\n\nSent by %@ %@",
+            NSString *body = [NSString stringWithFormat:@"Results from the run %@ starting %@ are attached.\n\nSent by %@ version %@ \n\n",
                               _runID,
                               _currentOutputFilenamePrefix,
                               [mainBundle objectForInfoDictionaryKey:(id)kCFBundleNameKey],
                               [mainBundle objectForInfoDictionaryKey:(id)kCFBundleVersionKey]];
             [Emailer sendMailMessageToRecipients:recipients subject:subject body:body attachmentPaths:[_filesToEmail allObjects]];
+            RunLog(@"Sent email with results as attachments to: %@", recipients);
         }
         
         [_filesToEmail removeAllObjects];

@@ -20,6 +20,13 @@ typedef enum {
     ProcessingStateTrackingMotion
 } ProcessingState;
 
+typedef enum {
+    PlateOrientationTopRead,
+    PlateOrientationTopRead180DegreeRotated,
+    PlateOrientationBottomRead,
+    PlateOrientationBottomRead180DegreeRotated
+} PlateOrientation;
+
 
 // Thread-safe.
 @interface VideoProcessor : NSObject
@@ -31,6 +38,7 @@ typedef enum {
 
 - (void)setDelegate:(id<VideoProcessorDelegate>)delegate;
 - (void)setAssayAnalyzerClass:(Class)assayAnalyzerClass;
+- (void)setPlateOrientation:(PlateOrientation)plateOrietation;
 
 - (void)setShouldScanForWells:(BOOL)shouldScanForWells;
 - (void)reportFinalResultsBeforeRemoval;
