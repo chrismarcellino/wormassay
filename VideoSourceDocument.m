@@ -43,6 +43,12 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
     return modelUniqueID && [modelUniqueID rangeOfString:@"VendorID_1452"].location != NSNotFound;
 }
 
+BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
+{
+    NSString *modelUniqueID = [device modelUniqueID];
+    return modelUniqueID && [modelUniqueID rangeOfString:@"UVC"].location != NSNotFound;
+}
+
 @interface VideoSourceDocument ()
 
 - (void)adjustWindowSizing;
@@ -409,6 +415,11 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
     
     // If our pixel buffer doesn't match this size, or we don't have a square pixel buffer, set attributes and change the requested size.
     if (!NSEqualSizes(bufferSize, squarePixelBufferSize) || !NSEqualSizes(squarePixelBufferSize, [self lastFrameSize])) {
+        // Arbitrarily limit UVC devices to 640x480 for maximum compatability. These cameras (webcams) should only be used for barcoding.
+        if (DeviceIsUVCDevice(_captureDevice)) {
+            squarePixelBufferSize = NSMakeSize(640.0, 480.0);
+        }
+        
         [self setLastFrameSize:squarePixelBufferSize];
         
         RunLog(@"Receiving %g x %g video from device \"%@\".", (double)squarePixelBufferSize.width, (double)squarePixelBufferSize.height, _sourceIdentifier);

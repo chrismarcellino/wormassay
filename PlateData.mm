@@ -224,6 +224,8 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
             }
         }
         
+        NSTimeInterval elapsedTime = [self lastPresentationTime] - [self startPresentationTime];
+        appendCSVElement(output, [NSString stringWithFormat:@"Elapsed time: %lu:%lu", (long)floor(elapsedTime / 60), lrint(fmod(elapsedTime, 60))]);
         appendCSVElement(output, [NSString stringWithFormat:@"Assay: %@, version %@",
                                   [analyzerName stringByReplacingOccurrencesOfString:@"—" withString:@"-"],
                                   [[NSBundle mainBundle] objectForInfoDictionaryKey:(id)kCFBundleVersionKey]]);
@@ -233,7 +235,7 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
         NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
         [dateFormatter setDateStyle:NSDateFormatterFullStyle];
         [dateFormatter setTimeStyle:NSDateFormatterFullStyle];
-        NSString *assayDateTime = [dateFormatter stringFromDate:[NSDate date]];
+        NSString *assayDateTime = [dateFormatter stringFromDate:[NSDate dateWithTimeIntervalSinceNow:-elapsedTime]];
         [dateFormatter release];
         
         // Write stats for each well
