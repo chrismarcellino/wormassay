@@ -66,7 +66,7 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
     return assayAnalyzerClasses;
 }
 
-- (Class)assayAnalyzerClass
+- (Class)currentAssayAnalyzerClass
 {
     NSString *string = [[NSUserDefaults standardUserDefaults] stringForKey:AssayAnalyzerClassKey];
     Class class = Nil;
@@ -84,14 +84,14 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
     return class;
 }
 
-- (void)setAssayAnalyzerClass:(Class)assayAnalyzerClass
+- (void)setCurrentAssayAnalyzerClass:(Class)assayAnalyzerClass
 {
-    if (assayAnalyzerClass != [self assayAnalyzerClass]) {
+    if (assayAnalyzerClass != [self currentAssayAnalyzerClass]) {
         NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
         [defaults setObject:NSStringFromClass(assayAnalyzerClass) forKey:AssayAnalyzerClassKey];
         [defaults synchronize];
         
-        dispatch_async(_queue, ^{
+        dispatch_sync(_queue, ^{
             for (VideoProcessor *videoProcessor in _videoProcessors) {
                 [videoProcessor setAssayAnalyzerClass:assayAnalyzerClass];
             }
@@ -101,17 +101,17 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
 
 - (void)addVideoProcessor:(VideoProcessor *)videoProcessor
 {
-    dispatch_async(_queue, ^{
+    dispatch_sync(_queue, ^{
         [_videoProcessors addObject:videoProcessor];
         [videoProcessor setDelegate:self];
-        [videoProcessor setAssayAnalyzerClass:[self assayAnalyzerClass]];
+        [videoProcessor setAssayAnalyzerClass:[self currentAssayAnalyzerClass]];
         [videoProcessor setShouldScanForWells:YES];
     });
 }
 
 - (void)removeVideoProcessor:(VideoProcessor *)videoProcessor
 {
-    dispatch_async(_queue, ^{
+    dispatch_sync(_queue, ^{
         [videoProcessor setShouldScanForWells:NO];
         [_videoProcessors removeObject:videoProcessor];
     });    
@@ -119,7 +119,7 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
 
 - (void)videoProcessorDidBeginTrackingPlate:(VideoProcessor *)vp
 {
-    dispatch_async(_queue, ^{
+    dispatch_sync(_queue, ^{
         if ([_videoProcessors containsObject:vp]) {
             for (VideoProcessor *processor in _videoProcessors) {
                 // Prevent all other processors from scanning for wells to conserve CPU time and avoid tracking more than one plate
@@ -133,7 +133,7 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
 
 - (void)videoProcessor:(VideoProcessor *)vp didFinishAcquiringPlateData:(PlateData *)plateData
 {
-    dispatch_async(_queue, ^{
+    dispatch_sync(_queue, ^{
         if ([_videoProcessors containsObject:vp]) {
             for (VideoProcessor *processor in _videoProcessors) {
                 [processor setShouldScanForWells:YES];
@@ -146,7 +146,7 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
 
 - (void)videoProcessor:(VideoProcessor *)vp didCaptureBarcodeText:(NSString *)text atTime:(NSTimeInterval)presentationTime
 {
-    dispatch_async(_queue, ^{
+    dispatch_sync(_queue, ^{
         if ([_videoProcessors containsObject:vp]) {
             // XXX DO SOME STUFF WITH THE RESULTS
         }
@@ -163,6 +163,7 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
     [string appendString:@"\n"];        // Append a newline
     
     dispatch_async(_queue, ^{
+        NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
         // XXX: Write to disk
         
         // Nested these blocks to preserve ordering between the disk file and log window
@@ -187,6 +188,7 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
             if (wasAtBottom) {
                 [textView scrollRangeToVisible:NSMakeRange([textStorage length], 0)];
             }
+            [pool release];
         });
     });
     [string release];
@@ -202,7 +204,9 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
     // XXX MIRROR TO RUN LOG
     dispatch_async(_queue, ^{
         /// XXX TODO
+        NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
         NSLog(@"%@", string);
+        [pool release];
     });
     [string release];
 }

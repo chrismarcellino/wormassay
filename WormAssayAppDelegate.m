@@ -82,7 +82,8 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     // Set up analyzer menu
     NSMenu *menu = [self assayAnalyzerMenu];
     for (Class class in [videoProcessorController assayAnalyzerClasses]) {
-        [menu addItemWithTitle:[class analyzerName] action:@selector(assayAnalyzerMenuItemSelected:) keyEquivalent:@""];
+        NSMenuItem *item = [menu addItemWithTitle:[class analyzerName] action:@selector(assayAnalyzerMenuItemSelected:) keyEquivalent:@""];
+        [item setState:([class isEqual:[videoProcessorController currentAssayAnalyzerClass]] ? NSOnState : NSOffState)];
     }
     
     // Log welcome message
@@ -92,10 +93,15 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
 
 - (void)assayAnalyzerMenuItemSelected:(NSMenuItem *)sender
 {
+    NSMenu *menu = [self assayAnalyzerMenu];
     VideoProcessorController *videoProcessorController = [VideoProcessorController sharedInstance];
-    NSUInteger index = [[self assayAnalyzerMenu] indexOfItem:sender];
-    Class class = [[videoProcessorController assayAnalyzerClasses] objectAtIndex:index];
-    [videoProcessorController setAssayAnalyzerClass:class];
+    NSInteger selectedIndex = [menu indexOfItem:sender];
+    Class class = [[videoProcessorController assayAnalyzerClasses] objectAtIndex:selectedIndex];
+    [videoProcessorController setCurrentAssayAnalyzerClass:class];
+    
+    for (NSInteger i = 0; i < [menu numberOfItems]; i++) {
+        [[menu itemAtIndex:i] setState:i == selectedIndex ? NSOnState : NSOffState];
+    }
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification

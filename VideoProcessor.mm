@@ -84,14 +84,14 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 
 - (void)setDelegate:(id<VideoProcessorDelegate>)delegate
 {
-    dispatch_async(_queue, ^{
+    dispatch_sync(_queue, ^{
         _delegate = delegate;       // not retained
     });
 }
 
 - (void)setAssayAnalyzerClass:(Class)assayAnalyzerClass
 {
-    dispatch_async(_queue, ^{
+    dispatch_sync(_queue, ^{
         _assayAnalyzerClass = assayAnalyzerClass;
         [self resetCaptureStateAndReportResults];
     });
@@ -99,7 +99,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 
 - (void)setShouldScanForWells:(BOOL)shouldScanForWells
 {
-    dispatch_async(_queue, ^{
+    dispatch_sync(_queue, ^{
         _shouldScanForWells = shouldScanForWells;
         // If no longer scanning (e.g. another camera has a plate), reset our state
         if (!shouldScanForWells) {
@@ -114,6 +114,8 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     
     // This method is synchronous so that we don't enqueue frames faster than they should be processed. QT will drop the overflow.
     dispatch_sync(_queue, ^{
+        NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+        
         if (_plateData) {
             [_plateData incrementReceivedFrameCount];
         }
@@ -217,7 +219,9 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                 
         // Dispatch the debug image asynchronously to increase parallelism 
         dispatch_async(_debugFrameCallbackQueue, ^{
+            NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
             callback(debugFrame);
+            [pool release];
         });
         [debugFrame release];
         
@@ -225,6 +229,8 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         if (_plateData) {
             [_plateData addProcessingTime:CACurrentMediaTime() - processingStartTime];
         }
+        
+        [pool release];
     });
 }
 
@@ -238,7 +244,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     bool searchAllPlateSizes = _processingState == ProcessingStateNoPlate;
     
     // Perform the calculation on a concurrent queue so that we don't block the current thread
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{        
         // Get wells in row major order
         std::vector<Circle> wellCircles;
         bool plateFound;
@@ -250,6 +256,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         
         // Process and store the results when holding _queue
         dispatch_async(_queue, ^{
+            NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
             _scanningForWells = NO;
             // If the device was removed, etc., ignore any detected plates
             if (_shouldScanForWells) {
@@ -308,6 +315,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                         }
                 }
             }
+            [pool release];
         });
     });
 }
@@ -349,6 +357,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         
         // Process and store the results when holding _queue
         dispatch_async(_queue, ^{
+            NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
             _scanningForBarcodes = NO;
             _lastBarcodeScanTime = [videoFrame presentationTime];
             [_lastBarcodeThisProcessor release];
@@ -364,9 +373,8 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
             
             if (text && _lastBarcodeThisProcessorRepeatCount >= BarcodeRepeatSuccessCount) {
                 [_delegate videoProcessor:self didCaptureBarcodeText:text atTime:[videoFrame presentationTime]];
-            } else {
-                
             }
+            [pool release];
         });
         
         [text release];

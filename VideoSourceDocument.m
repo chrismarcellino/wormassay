@@ -398,11 +398,10 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
             [self adjustWindowSizing];
         });
     } else {
-        NSTimeInterval presentationTime;
-        if (!QTGetTimeInterval([sampleBuffer presentationTime], &presentationTime)) {
-            presentationTime = CACurrentMediaTime();
-        }
-        VideoFrame *image = [[VideoFrame alloc] initByCopyingCVPixelBuffer:(CVPixelBufferRef)videoFrame resultChannelCount:4 presentationTime:presentationTime];
+        // Use CPU (Mach) time to ensure a monotonically increasing time. It can later be subtracted from the current time to determine the sample time/date.
+        VideoFrame *image = [[VideoFrame alloc] initByCopyingCVPixelBuffer:(CVPixelBufferRef)videoFrame
+                                                        resultChannelCount:4
+                                                          presentationTime:CACurrentMediaTime()];
         [self processVideoFrame:image];
         [image release];
     }
