@@ -3,7 +3,7 @@
 //  WormAssay
 //
 //  Created by Chris Marcellino on 4/5/11.
-//  Copyright 2011 Regents of the University of California. All rights reserved.
+//  Copyright 2011 Chris Marcellino. All rights reserved.
 //
 
 #import "VideoProcessor.h"
@@ -38,9 +38,8 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     NSTimeInterval _lastBarcodeScanTime;
     
     PlateData *_plateData;
-    VideoFrame *_lastFrame;     // when tracking
     std::vector<Circle> _trackingWellCircles;    // circles used for tracking
-    std::vector<Circle> _lastCircles;   // for debugging
+    std::vector<Circle> _lastCircles;       // the last circles returned by the well finder (not necessarily same as tracking)
     
     NSString *_lastBarcodeThisProcessor;
     NSUInteger _lastBarcodeThisProcessorRepeatCount;
@@ -152,14 +151,14 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                 std::vector<double> occupancyFractions = calculateCannyEdgePixelProportionForWellsFromImages([videoFrame image],
                                                                                                              _trackingWellCircles,
                                                                                                              [debugImage image]);
-                std::vector<double> movedFractions = calculateMovedWellFractionForWellsFromImages([_lastFrame image],
+                std::vector<double> movementUnits = calculateMovedWellFractionForWellsFromImages([_lastFrame image],
                                                                                                   [videoFrame image],
                                                                                                   _trackingWellCircles,
                                                                                                   [debugImage image]);
                 // If we were able to get stats, add them to the plate data
-                if (movedFractions.size() > 0) {
+                if (movementUnits.size() > 0) {
                     [_plateData addFrameOccupancyFractions:&*occupancyFractions.begin()
-                                  movedFractions:&*movedFractions.begin()
+                                  movementUnits:&*movementUnits.begin()
                                         atPresentationTime:[videoFrame presentationTime]];
                 }
                 
@@ -167,7 +166,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                 CvFont wellFont = fontForNormalizedScale(0.75, [debugImage image]);
                 for (size_t i = 0; i < _trackingWellCircles.size(); i++) {
                     double mean, stddev;
-                    [_plateData movedFractionMean:&mean stdDev:&stddev forWell:i inLastSeconds:30];
+                    [_plateData movementUnitsMean:&mean stdDev:&stddev forWell:i inLastSeconds:30];
                     
                     char text[20];
                     snprintf(text, sizeof(text), "%.0f (SD: %.0f)", mean * 1000, stddev * 1000);

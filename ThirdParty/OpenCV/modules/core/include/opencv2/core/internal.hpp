@@ -415,7 +415,7 @@ CV_INLINE  CvSize  cvGetMatSize( const CvMat* mat )
   The current implementation was derived from *BSD system qsort():
 
     * Copyright (c) 1992, 1993
-    *  The Regents of the University of California.  All rights reserved.
+    *  The Chris Marcellino.  All rights reserved.
     *
     * Redistribution and use in source and binary forms, with or without
     * modification, are permitted provided that the following conditions

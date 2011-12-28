@@ -3,7 +3,7 @@
 //  WormAssay
 //
 //  Created by Chris Marcellino on 4/18/11.
-//  Copyright 2011 Regents of the University of California. All rights reserved.
+//  Copyright 2011 Chris Marcellino. All rights reserved.
 //
 
 #import "opencv2/core/core_c.h"
