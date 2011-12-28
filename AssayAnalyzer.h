@@ -1,5 +1,5 @@
 //
-//  WellAnalyzer.h
+//  AssayAnalzyer.h
 //  WormAssay
 //
 //  Created by Chris Marcellino on 4/19/11.
@@ -15,7 +15,7 @@
 // Well analyzers will only be instantiated (using -init) when a well positions are being tracked.
 // A reference to the debug image is provided to each processing method which may be used to draw on to
 // display information to the user (e.g. movement indicators or worm contours, etc.).
-@protocol WellAnalyzer
+@protocol AssayAnalzyer
 
 // User visible analyzer name
 + (NSString *)analyzerName;

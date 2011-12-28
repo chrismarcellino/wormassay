@@ -8,10 +8,10 @@
 
 #import "VideoProcessorController.h"
 #import <objc/runtime.h>
-#import "WellAnalyzer.h"
+#import "AssayAnalzyer.h"
 #import "PlateData.h"
 
-static NSString *const WellAnalyzerClassKey = @"WellAnalyzerClass";
+static NSString *const AssayAnalzyerClassKey = @"AssayAnalzyerClass";
 
 @implementation VideoProcessorController
 
@@ -54,7 +54,7 @@ static NSString *const WellAnalyzerClassKey = @"WellAnalyzerClass";
     objc_getClassList(classList, numberOfClasses);
     for (int i = 0; i < numberOfClasses; i++) {
         Class aClass = classList[i];
-        if (class_getClassMethod(aClass, @selector(conformsToProtocol:)) && [aClass conformsToProtocol:@protocol(WellAnalyzer)]) {
+        if (class_getClassMethod(aClass, @selector(conformsToProtocol:)) && [aClass conformsToProtocol:@protocol(AssayAnalzyer)]) {
             [wellAnalyzerClasses addObject:aClass];
         } 
     }
@@ -68,7 +68,7 @@ static NSString *const WellAnalyzerClassKey = @"WellAnalyzerClass";
 
 - (Class)wellAnalyzerClass
 {
-    NSString *string = [[NSUserDefaults standardUserDefaults] stringForKey:WellAnalyzerClassKey];
+    NSString *string = [[NSUserDefaults standardUserDefaults] stringForKey:AssayAnalzyerClassKey];
     Class class = Nil;
     if (string) {
         class = NSClassFromString(string);
@@ -84,16 +84,16 @@ static NSString *const WellAnalyzerClassKey = @"WellAnalyzerClass";
     return class;
 }
 
-- (void)setWellAnalyzerClass:(Class)wellAnalyzerClass
+- (void)setAssayAnalzyerClass:(Class)wellAnalyzerClass
 {
     if (wellAnalyzerClass != [self wellAnalyzerClass]) {
         NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-        [defaults setObject:NSStringFromClass(wellAnalyzerClass) forKey:WellAnalyzerClassKey];
+        [defaults setObject:NSStringFromClass(wellAnalyzerClass) forKey:AssayAnalzyerClassKey];
         [defaults synchronize];
         
         dispatch_async(_queue, ^{
             for (VideoProcessor *videoProcessor in _videoProcessors) {
-                [videoProcessor setWellAnalyzerClass:wellAnalyzerClass];
+                [videoProcessor setAssayAnalzyerClass:wellAnalyzerClass];
             }
         });
     }
@@ -104,7 +104,7 @@ static NSString *const WellAnalyzerClassKey = @"WellAnalyzerClass";
     dispatch_async(_queue, ^{
         [_videoProcessors addObject:videoProcessor];
         [videoProcessor setDelegate:self];
-        [videoProcessor setWellAnalyzerClass:[self wellAnalyzerClass]];
+        [videoProcessor setAssayAnalzyerClass:[self wellAnalyzerClass]];
         [videoProcessor setShouldScanForWells:YES];
     });
 }

@@ -86,7 +86,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     });
 }
 
-- (void)setWellAnalyzerClass:(Class)wellAnalyzerClass
+- (void)setAssayAnalzyerClass:(Class)wellAnalyzerClass
 {
     dispatch_async(_queue, ^{
         _wellAnalyzerClass = delegate;
@@ -278,7 +278,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                                 NSAssert(!_plateData && !_wellAnalyzer, @"plate data or motion analyzer already exists");
                                 _plateData = [[PlateData alloc] initWithWellCount:wellCircles.size() startPresentationTime:[videoFrame presentationTime]];
                                 _wellAnalyzer = [[_wellAnalyzerClass alloc] init];
-                                NSAssert(_wellAnalyzer, @"failed to allocate WellAnalyzer: %@", _wellAnalyzerClass);
+                                NSAssert(_wellAnalyzer, @"failed to allocate AssayAnalzyer: %@", _wellAnalyzerClass);
                                 [_wellAnalyzer willBeginPlateTrackingWithPlateData:_plateData];
                                 // Begin recording video
                                 [self beginRecordingVideo];
