@@ -9,11 +9,12 @@
 #import "ImageProcessing.hpp"
 #import "opencv2/opencv.hpp"
 #import "CvRectUtilities.hpp"
-#import "jseg.h"
 #import <math.h>
+#import <dispatch/dispatch.h>
 
 static int sortCircleCentersByAxis(const void* a, const void* b, void* userdata);
 static int sortCirclesInRowMajorOrder(const void* a, const void* b, void* userdata);
+static inline CvRect boundingSquareForCircle(cv::Vec3f circle);
 
 // Sorted by prevalence
 std::vector<int> knownPlateWellCounts()
@@ -319,14 +320,14 @@ void drawWellCirclesAndLabelsOnDebugImage(std::vector<cv::Vec3f> circles, CvScal
     }
 }
 
-std::vector<int> calculateMovedPixelsForWellsFromImages(IplImage *plateImagePrev,
-                                                        IplImage *plateImageCur,
-                                                        const std::vector<cv::Vec3f> &circles,
-                                                        IplImage *debugImage)
+std::vector<float> calculateMovedPixelsProportionForWellsFromImages(IplImage *plateImagePrev,
+                                                                    IplImage *plateImageCur,
+                                                                    const std::vector<cv::Vec3f> &circles,
+                                                                    IplImage *debugImage)
 {
     // If there was a resolution change, report that the frame moved
     if (plateImagePrev->width != plateImageCur->width || plateImagePrev->height != plateImageCur->height || circles.size() == 0) {
-        return std::vector<int>();
+        return std::vector<float>();
     }
     
     // Subtrace the entire plate images channelwise
@@ -349,8 +350,8 @@ std::vector<int> calculateMovedPixelsForWellsFromImages(IplImage *plateImagePrev
     // Calculate the average luminance delta across the entire plate image. If this is more than about 2%, the entire plate is likely moving.
     double proportionPlateMoved = (double)cvCountNonZero(deltaThreshold) / (plateImageCur->width * plateImagePrev->height);
     
-    std::vector<int> movedPixelCounts;
-    movedPixelCounts.reserve(circles.size());
+    std::vector<float> movedPixelProportions;
+    movedPixelProportions.reserve(circles.size());
     
     if (proportionPlateMoved < 0.02) {      // Don't perform well calculations if the plate itself is moving
         // Create a circle mask with bits in the circle on
@@ -362,7 +363,7 @@ std::vector<int> calculateMovedPixelsForWellsFromImages(IplImage *plateImagePrev
         // Iterate through each well and count the pixels that pass the threshold
         for (size_t i = 0; i < circles.size(); i++) {
             // Get the subimage of the thresholded delta image for the current well using the circle mask
-            CvRect boundingSquare = cvRect(circles[i][0] - radius, circles[i][1] - radius, 2 * radius, 2 * radius);
+            CvRect boundingSquare = boundingSquareForCircle(circles[i]);
             
             cvSetImageROI(deltaThreshold, boundingSquare);
             IplImage* subimage = cvCreateImage(cvGetSize(deltaThreshold), IPL_DEPTH_8U, 1);
@@ -371,8 +372,8 @@ std::vector<int> calculateMovedPixelsForWellsFromImages(IplImage *plateImagePrev
             cvResetImageROI(deltaThreshold);
             
             // Count pixels
-            int count = cvCountNonZero(subimage);
-            movedPixelCounts.push_back(count);
+            float proportion = (float)cvCountNonZero(subimage) / (subimage->width * subimage->height);
+            movedPixelProportions.push_back(proportion);
             
             // Draw onto the debugging image
             if (debugImage) {
@@ -387,106 +388,90 @@ std::vector<int> calculateMovedPixelsForWellsFromImages(IplImage *plateImagePrev
     }
     
     cvReleaseImage(&deltaThreshold);
-    return movedPixelCounts;
+    return movedPixelProportions;
 }
 
-std::vector<int> calculateCannyEdgePixelsForWellsFromImages(IplImage *plateImage, const std::vector<cv::Vec3f> &circles, IplImage *debugImage)
+std::vector<float> calculateCannyEdgePixelProportionForWellsFromImages(IplImage *plateImage, const std::vector<cv::Vec3f> &circles, IplImage *debugImage)
 {
     if (circles.size() == 0) {
-        return std::vector<int>();
+        return std::vector<float>();
     }
     
-    // Copy the grayscale subimage corresponding to the circle's bounding square
+    // Create an inverted circle mask with 0's in the circle. Use only a portion of the circle to conservatively avoid taking the well walls.
+    float inset = 0.9;
     float radius = circles[0][2];
-    
-    // Create an inverted circle mask with 0's in the circle
     IplImage *invertedCircleMask = cvCreateImage(cvSize(radius * 2, radius * 2), IPL_DEPTH_8U, 1);
     fastFillImage(invertedCircleMask, 255);
-    cvCircle(invertedCircleMask, cvPoint(radius, radius), radius, cvRealScalar(0), CV_FILLED);
+    cvCircle(invertedCircleMask, cvPoint(radius, radius), radius * inset, cvRealScalar(0), CV_FILLED);
+    // Create a mask of just the edge pixels
+    inset = 0.6;
+    IplImage *insetInvertedCircleMask = cvCreateImage(cvSize(radius * 2, radius * 2), IPL_DEPTH_8U, 1);
+    fastFillImage(insetInvertedCircleMask, 255);
+    cvCircle(insetInvertedCircleMask, cvPoint(radius, radius), radius * inset, cvRealScalar(0), CV_FILLED);
     
-    std::vector<int> edgePixelCounts;
-    edgePixelCounts.reserve(circles.size());
-    // Iterate through each well
+    // Iterate through each well and get edge images for each serially
+    IplImage** subimages = (IplImage **)malloc(circles.size() * sizeof(IplImage*));
     for (size_t i = 0; i < circles.size(); i++) {
-        CvRect boundingSquare = cvRect(circles[i][0] - radius, circles[i][1] - radius, 2 * radius, 2 * radius);
+        CvRect boundingSquare = boundingSquareForCircle(circles[i]);
         
         cvSetImageROI(plateImage, boundingSquare);
-        IplImage* subimage = cvCreateImage(cvGetSize(plateImage), IPL_DEPTH_8U, 1);
-        cvCvtColor(plateImage, subimage, CV_BGRA2GRAY);
+        subimages[i] = cvCreateImage(cvGetSize(plateImage), IPL_DEPTH_8U, 1);
+        cvCvtColor(plateImage, subimages[i], CV_BGRA2GRAY);
         cvResetImageROI(plateImage);
-        
+    }
+    
+    // Iterare through each well subimage in parallel
+    IplImage** edges = (IplImage **)malloc(circles.size() * sizeof(IplImage*));
+    float* edgePixelPorportions = (float*)malloc(circles.size() * sizeof(float));
+    dispatch_apply(circles.size(), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(size_t i){ 
         // Mask the plate image, turning pixels outside the circle black
-        cvSet(subimage, cvRealScalar(0), invertedCircleMask);
+        cvSet(subimages[i], cvRealScalar(0), invertedCircleMask);
         
         // Find edges in the image
-        IplImage* edges = cvCreateImage(cvGetSize(subimage), IPL_DEPTH_8U, 1);
-        cvCanny(subimage, edges, 50, 100);
-        int count = cvCountNonZero(subimage);
-        edgePixelCounts.push_back(count);
+        IplImage *cannyEdges = cvCreateImage(cvGetSize(subimages[i]), IPL_DEPTH_8U, 1);
+        cvCanny(subimages[i], cannyEdges, 50, 150);
+        edges[i] = cvCreateImage(cvGetSize(subimages[i]), IPL_DEPTH_8U, 1);
         
-        // Draw onto the debugging image
-        if (debugImage) {
+        // Mask off the edge pixels that were created by the abrupt boundary at the circular mask and spurious well edge cells
+        cvSet(cannyEdges, cvRealScalar(0), insetInvertedCircleMask);
+        
+        // Dilate the edge image
+        cvDilate(cannyEdges, edges[i]);
+        cvReleaseImage(&cannyEdges);
+        
+        // Store the pixel counts
+        edgePixelPorportions[i] = (float)cvCountNonZero(edges[i]) / (edges[i]->width * edges[i]->height);
+    });
+    
+    // Iterate over each well in serial, draw debugging images and free images on one thread
+    for (size_t i = 0; i < circles.size(); i++) {
+        // If the edge pixel count is less than 0.5%, don't draw the noise
+        if (debugImage && edgePixelPorportions[i] > 0.005) {
+            CvRect boundingSquare = boundingSquareForCircle(circles[i]);
             cvSetImageROI(debugImage, boundingSquare);
-            cvSet(debugImage, CV_RGBA(0, 0, 255, 255), edges);
+            cvSet(debugImage, CV_RGBA(0, 0, 255, 255), edges[i]);
             cvResetImageROI(debugImage);
         }
         
-        cvReleaseImage(&subimage);
-        cvReleaseImage(&edges);
+        cvReleaseImage(&subimages[i]);
+        cvReleaseImage(&edges[i]);
     }
+    
+    std::vector<float> vector = std::vector<float>(edgePixelPorportions, edgePixelPorportions + circles.size());
+    
+    free(edgePixelPorportions);
+    free(subimages);
+    free(edges);
+    cvReleaseImage(&insetInvertedCircleMask);
     cvReleaseImage(&invertedCircleMask);
     
-    return edgePixelCounts;
+    return vector;
 }
 
-std::vector<int> calculateJSEGRegionEdgePixelsForWellsFromImages(IplImage *plateImage, const std::vector<cv::Vec3f> &circles, IplImage *debugImage)
+static inline CvRect boundingSquareForCircle(cv::Vec3f circle)
 {
-    if (circles.size() == 0) {
-        return std::vector<int>();
-    }
-    
-    // Copy the grayscale subimage corresponding to the circle's bounding square
-    float radius = circles[0][2];
-    
-    // Create an inverted circle mask with 0's in the circle
-    IplImage *invertedCircleMask = cvCreateImage(cvSize(radius * 2, radius * 2), IPL_DEPTH_8U, 1);
-    fastFillImage(invertedCircleMask, 255);
-    cvCircle(invertedCircleMask, cvPoint(radius, radius), radius, cvRealScalar(0), CV_FILLED);
-    
-    std::vector<int> edgePixelCounts;
-    edgePixelCounts.reserve(circles.size());
-    // Iterate through each well
-    for (size_t i = 0; i < circles.size(); i++) {
-        CvRect boundingSquare = cvRect(circles[i][0] - radius, circles[i][1] - radius, 2 * radius, 2 * radius);
-        
-        cvSetImageROI(plateImage, boundingSquare);
-        IplImage* subimage = cvCreateImage(cvGetSize(plateImage), IPL_DEPTH_8U, 1);
-        cvCvtColor(plateImage, subimage, CV_BGRA2GRAY);
-        cvResetImageROI(plateImage);
-        
-        // Mask the plate image, turning pixels outside the circle black
-        cvSet(subimage, cvRealScalar(0), invertedCircleMask);
-        
-        // Find edges in the image
-        IplImage* regionMap = createJSEGRegionMapFromImage(subimage);
-        IplImage* edges = createSegmentEdgeMaskImageForRegionMap(regionMap);
-        int count = cvCountNonZero(subimage);
-        edgePixelCounts.push_back(count);
-        
-        // Draw onto the debugging image
-        if (debugImage) {
-            cvSetImageROI(debugImage, boundingSquare);
-            cvSet(debugImage, CV_RGBA(0, 255, 255, 255), edges);
-            cvResetImageROI(debugImage);
-        }
-        
-        cvReleaseImage(&regionMap);
-        cvReleaseImage(&subimage);
-        cvReleaseImage(&edges);
-    }
-    cvReleaseImage(&invertedCircleMask);
-    
-    return edgePixelCounts;
+    float radius = circle[2];
+    return cvRect(circle[0] - radius, circle[1] - radius, 2 * radius, 2 * radius);
 }
 
 CvFont fontForNormalizedScale(double normalizedScale, IplImage *image)

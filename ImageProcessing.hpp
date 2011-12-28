@@ -37,18 +37,15 @@ extern bool plateSequentialCirclesAppearSameAndStationary(const std::vector<cv::
 // Draws circles and labels on an image
 extern void drawWellCirclesAndLabelsOnDebugImage(std::vector<cv::Vec3f> circles, CvScalar circleColor, bool drawLabels, IplImage *debugImage);
 
-// Counts the number of pixels that represent moved well contents between two frames. An empty vector is returned if the plate
+// Counts the proportion of pixels that represent moved well contents between two frames. An empty vector is returned if the plate
 // (or camera) has physically moved between the prev and cur images. 
-extern std::vector<int> calculateMovedPixelsForWellsFromImages(IplImage *plateImagePrev,
-                                                               IplImage *plateImageCur,
-                                                               const std::vector<cv::Vec3f> &circles,
-                                                               IplImage *debugImage);
+extern std::vector<float> calculateMovedPixelsProportionForWellsFromImages(IplImage *plateImagePrev,
+                                                                           IplImage *plateImageCur,
+                                                                           const std::vector<cv::Vec3f> &circles,
+                                                                           IplImage *debugImage);
 
-// Calculates the number of edge pixels in the image using the Canny edge detector. This can be used to determine well occupancy. 
-extern std::vector<int> calculateCannyEdgePixelsForWellsFromImages(IplImage *plateImage, const std::vector<cv::Vec3f> &circles, IplImage *debugImage);
-
-// Calculates the number of edge pixels in the image using the edge segments of the JSEG region map. This can be used to determine well occupancy. 
-extern std::vector<int> calculateJSEGRegionEdgePixelsForWellsFromImages(IplImage *plateImage, const std::vector<cv::Vec3f> &circles, IplImage *debugImage);
+// Calculates the proportion of edge pixels in the image using the Canny edge detector. This can be used to determine well occupancy. 
+extern std::vector<float> calculateCannyEdgePixelProportionForWellsFromImages(IplImage *plateImage, const std::vector<cv::Vec3f> &circles, IplImage *debugImage);
 
 // Returns a font with drawing size proportional to the image provided with respect to normalizedScale.
 extern CvFont fontForNormalizedScale(double normalizedScale, IplImage *image);

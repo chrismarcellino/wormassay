@@ -8,14 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		210D6E9E134BAC5300BCD6F1 /* VideoProcessor.mm in Sources */ = {isa = PBXBuildFile; fileRef = 210D6E9D134BAC5300BCD6F1 /* VideoProcessor.mm */; };
-		2112AD9D13552DE600CD12E6 /* imgutil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2112AD8E13552DE600CD12E6 /* imgutil.cpp */; };
-		2112AD9E13552DE600CD12E6 /* jfunc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2112AD9013552DE600CD12E6 /* jfunc.cpp */; };
-		2112AD9F13552DE600CD12E6 /* jseg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2112AD9113552DE600CD12E6 /* jseg.cpp */; };
-		2112ADA113552DE600CD12E6 /* mathutil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2112AD9413552DE600CD12E6 /* mathutil.cpp */; };
-		2112ADA213552DE600CD12E6 /* memutil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2112AD9613552DE600CD12E6 /* memutil.cpp */; };
-		2112ADA313552DE600CD12E6 /* quan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2112AD9813552DE600CD12E6 /* quan.cpp */; };
-		2112ADA413552DE600CD12E6 /* reggrow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2112AD9A13552DE600CD12E6 /* reggrow.cpp */; };
-		2112ADA513552DE600CD12E6 /* segment.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2112AD9B13552DE600CD12E6 /* segment.cpp */; };
 		21264FEC1353FAE600F2DCD8 /* VideoProcessorController.m in Sources */ = {isa = PBXBuildFile; fileRef = 21264FEB1353FAE600F2DCD8 /* VideoProcessorController.m */; };
 		21426FAF134683DB00AF78E5 /* VideoSourceDocument.m in Sources */ = {isa = PBXBuildFile; fileRef = 21426FAE134683DA00AF78E5 /* VideoSourceDocument.m */; };
 		2162B18613521ABD0081EFDD /* IplImageObject.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2162B18513521ABC0081EFDD /* IplImageObject.mm */; };
@@ -130,20 +122,6 @@
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		210D6E9C134BAC5300BCD6F1 /* VideoProcessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoProcessor.h; sourceTree = SOURCE_ROOT; };
 		210D6E9D134BAC5300BCD6F1 /* VideoProcessor.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = VideoProcessor.mm; sourceTree = SOURCE_ROOT; };
-		2112AD8E13552DE600CD12E6 /* imgutil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = imgutil.cpp; sourceTree = "<group>"; };
-		2112AD8F13552DE600CD12E6 /* imgutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = imgutil.h; sourceTree = "<group>"; };
-		2112AD9013552DE600CD12E6 /* jfunc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = jfunc.cpp; sourceTree = "<group>"; };
-		2112AD9113552DE600CD12E6 /* jseg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = jseg.cpp; sourceTree = "<group>"; };
-		2112AD9213552DE600CD12E6 /* jseg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = jseg.h; sourceTree = "<group>"; };
-		2112AD9413552DE600CD12E6 /* mathutil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mathutil.cpp; sourceTree = "<group>"; };
-		2112AD9513552DE600CD12E6 /* mathutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mathutil.h; sourceTree = "<group>"; };
-		2112AD9613552DE600CD12E6 /* memutil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = memutil.cpp; sourceTree = "<group>"; };
-		2112AD9713552DE600CD12E6 /* memutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = memutil.h; sourceTree = "<group>"; };
-		2112AD9813552DE600CD12E6 /* quan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = quan.cpp; sourceTree = "<group>"; };
-		2112AD9913552DE600CD12E6 /* quan.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = quan.h; sourceTree = "<group>"; };
-		2112AD9A13552DE600CD12E6 /* reggrow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = reggrow.cpp; sourceTree = "<group>"; };
-		2112AD9B13552DE600CD12E6 /* segment.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = segment.cpp; sourceTree = "<group>"; };
-		2112AD9C13552DE600CD12E6 /* segment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = segment.h; sourceTree = "<group>"; };
 		21264FEA1353FAE600F2DCD8 /* VideoProcessorController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoProcessorController.h; sourceTree = SOURCE_ROOT; };
 		21264FEB1353FAE600F2DCD8 /* VideoProcessorController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VideoProcessorController.m; sourceTree = SOURCE_ROOT; };
 		21426FAD134683DA00AF78E5 /* VideoSourceDocument.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoSourceDocument.h; sourceTree = SOURCE_ROOT; };
@@ -302,27 +280,6 @@
 			);
 			name = Products;
 			sourceTree = "<group>";
-		};
-		2112AD8D13552DE600CD12E6 /* JSEG */ = {
-			isa = PBXGroup;
-			children = (
-				2112AD9213552DE600CD12E6 /* jseg.h */,
-				2112AD9113552DE600CD12E6 /* jseg.cpp */,
-				2112AD8E13552DE600CD12E6 /* imgutil.cpp */,
-				2112AD8F13552DE600CD12E6 /* imgutil.h */,
-				2112AD9013552DE600CD12E6 /* jfunc.cpp */,
-				2112AD9413552DE600CD12E6 /* mathutil.cpp */,
-				2112AD9513552DE600CD12E6 /* mathutil.h */,
-				2112AD9613552DE600CD12E6 /* memutil.cpp */,
-				2112AD9713552DE600CD12E6 /* memutil.h */,
-				2112AD9813552DE600CD12E6 /* quan.cpp */,
-				2112AD9913552DE600CD12E6 /* quan.h */,
-				2112AD9A13552DE600CD12E6 /* reggrow.cpp */,
-				2112AD9B13552DE600CD12E6 /* segment.cpp */,
-				2112AD9C13552DE600CD12E6 /* segment.h */,
-			);
-			path = JSEG;
-			sourceTree = SOURCE_ROOT;
 		};
 		215AB44612CEC6C60047B13F /* OpenCV */ = {
 			isa = PBXGroup;
@@ -543,7 +500,6 @@
 				2162B18413521ABC0081EFDD /* IplImageObject.h */,
 				2162B18513521ABC0081EFDD /* IplImageObject.mm */,
 				21FCF94D134CBB8900ABD85C /* CvRectUtilities.hpp */,
-				2112AD8D13552DE600CD12E6 /* JSEG */,
 			);
 			name = "Image Processing";
 			path = NematodeAssay;
@@ -734,14 +690,6 @@
 				210D6E9E134BAC5300BCD6F1 /* VideoProcessor.mm in Sources */,
 				2162B18613521ABD0081EFDD /* IplImageObject.mm in Sources */,
 				21264FEC1353FAE600F2DCD8 /* VideoProcessorController.m in Sources */,
-				2112AD9D13552DE600CD12E6 /* imgutil.cpp in Sources */,
-				2112AD9E13552DE600CD12E6 /* jfunc.cpp in Sources */,
-				2112AD9F13552DE600CD12E6 /* jseg.cpp in Sources */,
-				2112ADA113552DE600CD12E6 /* mathutil.cpp in Sources */,
-				2112ADA213552DE600CD12E6 /* memutil.cpp in Sources */,
-				2112ADA313552DE600CD12E6 /* quan.cpp in Sources */,
-				2112ADA413552DE600CD12E6 /* reggrow.cpp in Sources */,
-				2112ADA513552DE600CD12E6 /* segment.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

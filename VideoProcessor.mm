@@ -104,12 +104,11 @@
         if (_processingState == ProcessingStateTrackingMotion) {
             if (_lastFrame) {
                 // XXX calculate and store stats (don't do the first every frame?)
-                calculateCannyEdgePixelsForWellsFromImages([videoFrame image], _trackingWellCircles, [debugImage image]);
-              //  calculateJSEGRegionEdgePixelsForWellsFromImages([videoFrame image], _trackingWellCircles, [debugImage image]);
-                std::vector<int> movedPixelCounts = calculateMovedPixelsForWellsFromImages([_lastFrame image],
-                                                                                           [videoFrame image],
-                                                                                           _trackingWellCircles,
-                                                                                           [debugImage image]);
+                calculateCannyEdgePixelProportionForWellsFromImages([videoFrame image], _trackingWellCircles, [debugImage image]);
+                std::vector<float> movedPixelCounts = calculateMovedPixelsProportionForWellsFromImages([_lastFrame image],
+                                                                                                       [videoFrame image],
+                                                                                                       _trackingWellCircles,
+                                                                                                       [debugImage image]);
             }
             
             // Store the current image for the next pass
