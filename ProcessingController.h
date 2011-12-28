@@ -35,6 +35,7 @@ typedef enum {
     std::map<std::string, std::vector<cv::Vec3f> > _lastCirclesMap;    // for debugging
 #endif
     
+    NSTimeInterval _firstWellFrameTime;
     NSTimeInterval _startOfTrackingMotionTime;
     NSString *_barcode;
 }

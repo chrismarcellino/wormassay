@@ -167,6 +167,7 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callbac
                         _wellCameraSourceIdentifier = [sourceIdentifier copy];
                         _processingState = ProcessingStatePlateFirstFrameIdentified;
                         _baselineWellCircles = wellCircles;     // store the first circles as the baseline for the second set
+                        _firstWellFrameTime = presentationTime;
                     }
                     break;
                     
@@ -174,14 +175,18 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callbac
                     // Since we've seen a plate in one camera, ignore any pending results from others
                     if ([_wellCameraSourceIdentifier isEqual:sourceIdentifier]) {
                         if (plateFound) {
-                            if (plateSequentialCirclesAppearSameAndStationary(_baselineWellCircles, wellCircles)) {
+                            // If the second identification yields matching results as the first, and they are spread by at least
+                            // 100 ms, begin motion tracking and video recording
+                            if (plateSequentialCirclesAppearSameAndStationary(_baselineWellCircles, wellCircles) &&
+                                presentationTime - _firstWellFrameTime >= 0.100) {
                                 _processingState = ProcessingStateTrackingMotion;
                                 _baselineWellCircles = wellCircles; // store the second set as the baseline for all remaining sets
                                 _startOfTrackingMotionTime = presentationTime;
                                 
                                 [self beginRecordingVideo];
                             } else {
-                                // There is still a plate, but it doesn't match or has moved so we stay in this state, but update the circles
+                                // There is still a plate, but it doesn't match or more likely is still moving moved, or not enough
+                                // time has lapsed, so we stay in this state, but update the circles
                                 _baselineWellCircles = wellCircles;
                             }
                         } else {
@@ -200,13 +205,6 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callbac
                     }
                             
             }
-            
-#if 1       // DEBUG
-            CvPoint center = plateCenterForWellCircles(wellCircles);
-            CvPoint benchmarkCenter = plateCenterForWellCircles(_baselineWellCircles);
-            [self logFormat:@"Avg pos (%.1f, %.1f).  Delta from benchmark: (%.1f, %.1f)",
-             (double)center.x, (double)center.y, (double)(center.x - benchmarkCenter.x), (double)(center.y - benchmarkCenter.y)];
-#endif
         });
     });
 }
@@ -224,6 +222,7 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callbac
     _wellCameraSourceIdentifier = nil;
     
     _startOfTrackingMotionTime = 0.0;
+    _firstWellFrameTime = 0.0;
     
     [_barcode release];
     _barcode = nil;
