@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		21426FAF134683DB00AF78E5 /* VideoSource.mm in Sources */ = {isa = PBXBuildFile; fileRef = 21426FAE134683DA00AF78E5 /* VideoSource.mm */; };
+		21426FAF134683DB00AF78E5 /* VideoSource.m in Sources */ = {isa = PBXBuildFile; fileRef = 21426FAE134683DA00AF78E5 /* VideoSource.m */; };
 		2180AC681346BB99008AF87B /* DocumentController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2180AC671346BB99008AF87B /* DocumentController.m */; };
 		218DD5281345253D000B6475 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD5271345253D000B6475 /* libz.dylib */; };
 		218DD53313453FC5000B6475 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD53213453FC5000B6475 /* Cocoa.framework */; };
@@ -24,6 +24,9 @@
 		218DD57613455374000B6475 /* Worm.icns in Resources */ = {isa = PBXBuildFile; fileRef = 218DD57513455374000B6475 /* Worm.icns */; };
 		21CC72061347EDD4001146DA /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CC72051347EDD4001146DA /* CoreVideo.framework */; };
 		21CC722E134836BC001146DA /* IplImageConversionUtilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21CC722C134836BC001146DA /* IplImageConversionUtilities.cpp */; };
+		21CC724913484A79001146DA /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CC724813484A79001146DA /* QuartzCore.framework */; };
+		21CC725C1348CA5F001146DA /* BitmapOpenGLView.m in Sources */ = {isa = PBXBuildFile; fileRef = 21CC725B1348CA5F001146DA /* BitmapOpenGLView.m */; };
+		21CC725E1348D40B001146DA /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CC725D1348D40B001146DA /* OpenGL.framework */; };
 		21E778AE12D322A9006C1554 /* opencv.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 215AB44812CEC7130047B13F /* opencv.hpp */; };
 		21E778AF12D322A9006C1554 /* core.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 215AB44F12CEC72B0047B13F /* core.hpp */; };
 		21E778B012D322A9006C1554 /* core_c.h in Headers */ = {isa = PBXBuildFile; fileRef = 215AB45012CEC72B0047B13F /* core_c.h */; };
@@ -114,8 +117,8 @@
 
 /* Begin PBXFileReference section */
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		21426FAD134683DA00AF78E5 /* VideoSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoSource.h; sourceTree = SOURCE_ROOT; };
-		21426FAE134683DA00AF78E5 /* VideoSource.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = VideoSource.mm; sourceTree = SOURCE_ROOT; };
+		21426FAD134683DA00AF78E5 /* VideoSource.h */ = {isa = PBXFileReference; fileEncoding = 4; path = VideoSource.h; sourceTree = SOURCE_ROOT; };
+		21426FAE134683DA00AF78E5 /* VideoSource.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VideoSource.m; sourceTree = SOURCE_ROOT; };
 		215AB44812CEC7130047B13F /* opencv.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = opencv.hpp; path = ThirdParty/OpenCV/include/opencv2/opencv.hpp; sourceTree = "<group>"; };
 		215AB44F12CEC72B0047B13F /* core.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = core.hpp; sourceTree = "<group>"; };
 		215AB45012CEC72B0047B13F /* core_c.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = core_c.h; sourceTree = "<group>"; };
@@ -202,7 +205,7 @@
 		215AB4C612CEC7800047B13F /* utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = utils.cpp; sourceTree = "<group>"; };
 		215AB4FE12CECAA60047B13F /* cvconfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cvconfig.h; path = ThirdParty/cvconfig.h; sourceTree = "<group>"; };
 		215AB59712CECC190047B13F /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
-		2180AC661346BB99008AF87B /* DocumentController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DocumentController.h; sourceTree = SOURCE_ROOT; };
+		2180AC661346BB99008AF87B /* DocumentController.h */ = {isa = PBXFileReference; fileEncoding = 4; path = DocumentController.h; sourceTree = SOURCE_ROOT; };
 		2180AC671346BB99008AF87B /* DocumentController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DocumentController.m; sourceTree = SOURCE_ROOT; };
 		218DD5271345253D000B6475 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 		218DD53013453FC5000B6475 /* NematodeAssay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NematodeAssay.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -214,12 +217,16 @@
 		218DD558134543FF000B6475 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		218DD55A13454411000B6475 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		218DD55C1345441A000B6475 /* NematodeAssay-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "NematodeAssay-Info.plist"; sourceTree = SOURCE_ROOT; };
-		218DD55D1345445B000B6475 /* NematodeAssayAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NematodeAssayAppDelegate.h; sourceTree = SOURCE_ROOT; };
-		218DD55E1345445B000B6475 /* NematodeAssayAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NematodeAssayAppDelegate.m; sourceTree = SOURCE_ROOT; };
+		218DD55D1345445B000B6475 /* NematodeAssayAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lineEnding = 0; path = NematodeAssayAppDelegate.h; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		218DD55E1345445B000B6475 /* NematodeAssayAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = NematodeAssayAppDelegate.m; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		218DD57513455374000B6475 /* Worm.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Worm.icns; sourceTree = "<group>"; };
 		21CC72051347EDD4001146DA /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		21CC722C134836BC001146DA /* IplImageConversionUtilities.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IplImageConversionUtilities.cpp; sourceTree = SOURCE_ROOT; };
-		21CC722D134836BC001146DA /* IplImageConversionUtilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; path = IplImageConversionUtilities.hpp; sourceTree = SOURCE_ROOT; };
+		21CC722D134836BC001146DA /* IplImageConversionUtilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = IplImageConversionUtilities.hpp; sourceTree = SOURCE_ROOT; };
+		21CC724813484A79001146DA /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		21CC725A1348CA5F001146DA /* BitmapOpenGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BitmapOpenGLView.h; sourceTree = SOURCE_ROOT; };
+		21CC725B1348CA5F001146DA /* BitmapOpenGLView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BitmapOpenGLView.m; sourceTree = SOURCE_ROOT; };
+		21CC725D1348D40B001146DA /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		21E7790912D322A9006C1554 /* libOpenCV.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libOpenCV.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		21E779A012D323D6006C1554 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -237,6 +244,8 @@
 				218DD55313453FE0000B6475 /* libz.dylib in Frameworks */,
 				218DD54D13453FCE000B6475 /* libOpenCV.a in Frameworks */,
 				21CC72061347EDD4001146DA /* CoreVideo.framework in Frameworks */,
+				21CC724913484A79001146DA /* QuartzCore.framework in Frameworks */,
+				21CC725E1348D40B001146DA /* OpenGL.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -463,9 +472,11 @@
 				2180AC661346BB99008AF87B /* DocumentController.h */,
 				2180AC671346BB99008AF87B /* DocumentController.m */,
 				21426FAD134683DA00AF78E5 /* VideoSource.h */,
-				21426FAE134683DA00AF78E5 /* VideoSource.mm */,
+				21426FAE134683DA00AF78E5 /* VideoSource.m */,
 				21CC722D134836BC001146DA /* IplImageConversionUtilities.hpp */,
 				21CC722C134836BC001146DA /* IplImageConversionUtilities.cpp */,
+				21CC725A1348CA5F001146DA /* BitmapOpenGLView.h */,
+				21CC725B1348CA5F001146DA /* BitmapOpenGLView.m */,
 			);
 			path = NematodeAssay;
 			sourceTree = "<group>";
@@ -504,6 +515,8 @@
 			children = (
 				218DD53213453FC5000B6475 /* Cocoa.framework */,
 				1D30AB110D05D00D00671497 /* Foundation.framework */,
+				21CC724813484A79001146DA /* QuartzCore.framework */,
+				21CC725D1348D40B001146DA /* OpenGL.framework */,
 				218DD55413454180000B6475 /* QTKit.framework */,
 				21CC72051347EDD4001146DA /* CoreVideo.framework */,
 				21E779A012D323D6006C1554 /* ApplicationServices.framework */,
@@ -641,9 +654,10 @@
 			files = (
 				218DD55B13454411000B6475 /* main.m in Sources */,
 				218DD55F1345445B000B6475 /* NematodeAssayAppDelegate.m in Sources */,
-				21426FAF134683DB00AF78E5 /* VideoSource.mm in Sources */,
+				21426FAF134683DB00AF78E5 /* VideoSource.m in Sources */,
 				2180AC681346BB99008AF87B /* DocumentController.m in Sources */,
 				21CC722E134836BC001146DA /* IplImageConversionUtilities.cpp in Sources */,
+				21CC725C1348CA5F001146DA /* BitmapOpenGLView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

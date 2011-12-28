@@ -20,17 +20,17 @@ extern NSString *UniqueIDForCaptureDeviceURL(NSURL *url);
 
 @interface VideoSource : NSDocument {
     // A document will strictly have one of captureDevice or movie and their associated objects
-    QTCaptureDevice *captureDevice;
-    QTCaptureSession *captureSession;
-    QTCaptureDeviceInput *captureDeviceInput;
-    QTCaptureDecompressedVideoOutput *captureDecompressedVideoOutput;
+    QTCaptureDevice *_captureDevice;
+    QTCaptureSession *_captureSession;
+    QTCaptureDeviceInput *_captureDeviceInput;
+    QTCaptureDecompressedVideoOutput *_captureDecompressedVideoOutput;
     
-    QTMovie *movie;
-    dispatch_queue_t movieFrameExtractQueue;
-    dispatch_source_t movieFrameExtractTimer;
-    QTTime nextExtractTime;
+    QTMovie *_movie;
+    dispatch_queue_t _movieFrameExtractQueue;
+    dispatch_source_t _movieFrameExtractTimer;
+    QTTime _nextExtractTime;
     
-    CALayer *imageLayer;
+    NSOpenGLView *_bitmapOpenGLView;
 }
 
 - (NSSize)maximumNativeResolution;

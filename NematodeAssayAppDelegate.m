@@ -22,7 +22,7 @@
 
 - (void)applicationWillFinishLaunching:(NSNotification *)notification
 {
-    registeredDevices = [[NSMutableArray alloc] init];
+    _registeredDevices = [[NSMutableArray alloc] init];
     
     // Create our NSDocumentController subclass first
     [[[DocumentController alloc] init] autorelease];
@@ -53,7 +53,7 @@
         
         // Only consider devices capable of video output and that meet our built-in device criteria
         if (([device hasMediaType:QTMediaTypeVideo] || [device hasMediaType:QTMediaTypeMuxed]) && 
-            (!isBuiltInDevice || !ignoreBuiltInDevices)) {
+            (!isBuiltInDevice || !_ignoreBuiltInDevices)) {
             [presentUniqueIds addObject:uniqueID];
             
             // Construct the URL for the capture device

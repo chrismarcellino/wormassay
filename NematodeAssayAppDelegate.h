@@ -9,8 +9,8 @@
 #import <Cocoa/Cocoa.h>
 
 @interface NematodeAssayAppDelegate : NSObject <NSApplicationDelegate> {
-    NSMutableSet *registeredDevices;
-    BOOL ignoreBuiltInDevices;
+    NSMutableSet *_registeredDevices;
+    BOOL _ignoreBuiltInDevices;
 }
 
 @end

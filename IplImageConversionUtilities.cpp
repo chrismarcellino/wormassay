@@ -8,7 +8,7 @@
 
 #import "IplImageConversionUtilities.hpp"
 
-static void releaseImage(void *info, const void *data, size_t size);
+static void releaseImage(void *releaseRefCon, const void *baseAddress);
 
 
 IplImage *CreateIplImageFromCVPixelBuffer(CVPixelBufferRef cvImageBuffer, int outChannels)
@@ -34,7 +34,7 @@ IplImage *CreateIplImageFromCVPixelBuffer(CVPixelBufferRef cvImageBuffer, int ou
     IplImage *iplImageHeader = cvCreateImageHeader(cvSize(width, height), IPL_DEPTH_8U, bufferChannels);
     iplImageHeader->widthStep = bytesPerRow;
     iplImageHeader->imageSize = bytesPerRow * height;
-    iplImageHeader->imageData = iplImage->imageDataOrigin = (char *)baseAddress;
+    iplImageHeader->imageData = iplImageHeader->imageDataOrigin = (char *)baseAddress;
     
     IplImage *iplImage = NULL;
     if (outChannels == bufferChannels) {
@@ -58,46 +58,50 @@ IplImage *CreateIplImageFromCVPixelBuffer(CVPixelBufferRef cvImageBuffer, int ou
         iplImage = cvCreateImage(cvGetSize(iplImageHeader), IPL_DEPTH_8U, 4);
         cvCvtColor(iplImageHeader, iplImage, CV_BGRA2BGR);
     }
-    cvReleaseImageHeader(iplImageHeader);
+    cvReleaseImageHeader(&iplImageHeader);
     
     CVPixelBufferUnlockBaseAddress(cvImageBuffer, kCVPixelBufferLock_ReadOnly);
     
     return iplImage;
 }
 
-CGImageRef CreateCGImageFromIplImage(IplImage *iplImage)
+CVPixelBufferRef CreateCVPixelBufferFromIplImage(IplImage *iplImage)
 {
-    return CreateCGImageFromIplImagePassingOwnership(iplImage, false);
+    return CreateCVPixelBufferFromIplImagePassingOwnership(iplImage, false);
 }
 
-CGImageRef CreateCGImageFromIplImagePassingOwnership(IplImage *iplImage, bool passOwnership)
+CVPixelBufferRef CreateCVPixelBufferFromIplImagePassingOwnership(IplImage *iplImage, bool passOwnership)
 {
     if (!passOwnership) {
         iplImage = cvCloneImage(iplImage);
     }
     
-    CGDataProviderRef provider = CGDataProviderCreateWithData(iplImage, iplImage->imageData, iplImage->imageSize, releaseImage);
+    OSType pixelFormatType = 0;
+    if (iplImage->nChannels == 1) {
+        pixelFormatType = kCVPixelFormatType_8Indexed;
+    } else if (iplImage->nChannels == 3) {
+        pixelFormatType = kCVPixelFormatType_24BGR;
+    } else if (iplImage->nChannels == 4) {
+        pixelFormatType = kCVPixelFormatType_32BGRA;
+    }
+    assert(pixelFormatType != 0);
     
-    CGBitmapInfo bitmapInfo = (iplImage->nChannels == 4) ? (kCGImageAlphaFirst | kCGBitmapByteOrder32Little) : kCGImageAlphaNone;
-    CGColorSpaceRef colorSpace = (iplImage->nChannels == 1) ? CGColorSpaceCreateDeviceGray() : CGColorSpaceCreateDeviceRGB();    
-    CGImageRef cgImage = CGImageCreate(iplImage->width,
-                                       iplImage->height,
-                                       iplImage->depth,
-                                       iplImage->depth * iplImage->nChannels,
-                                       iplImage->widthStep,
-                                       colorSpace,
-                                       bitmapInfo,
-                                       provider,
-                                       NULL,
-                                       false,
-                                       kCGRenderingIntentDefault);
-    CGColorSpaceRelease(colorSpace);
-    CGDataProviderRelease(provider);
-    return cgImage;
+    CVPixelBufferRef pixelBufferOut = NULL;
+    CVPixelBufferCreateWithBytes(NULL,
+                                 iplImage->width,
+                                 iplImage->height,
+                                 pixelFormatType,
+                                 iplImage->imageData,
+                                 iplImage->widthStep,
+                                 releaseImage,
+                                 iplImage,
+                                 NULL,
+                                 &pixelBufferOut);
+    return pixelBufferOut;
 }
 
-static void releaseImage(void *info, const void *data, size_t size)
+static void releaseImage(void *releaseRefCon, const void *baseAddress)
 {
-    IplImage *image = (IplImage *)info;
+    IplImage *image = (IplImage *)releaseRefCon;
     cvReleaseImage(&image);
 }

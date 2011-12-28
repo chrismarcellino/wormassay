@@ -7,9 +7,22 @@
 //
 
 #import <CoreVideo/CoreVideo.h>
+#import <ApplicationServices/ApplicationServices.h>
+#ifdef __cplusplus
 #import "opencv2/opencv.hpp"
+#else
+typedef void *IplImage;
+#endif
 
-extern IplImage *CreateIplImageFromCVPixelBuffer(CVPixelBufferRef cvImageBuffer);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-extern CGImageRef CreateCGImageFromIplImage(IplImage *iplImage);
-extern CGImageRef CreateCGImageFromIplImagePassingOwnership(IplImage *iplImage, bool passOwnership);
+extern IplImage *CreateIplImageFromCVPixelBuffer(CVPixelBufferRef cvImageBuffer, int outChannels);
+
+extern CVPixelBufferRef CreateCVPixelBufferFromIplImage(IplImage *iplImage);
+extern CVPixelBufferRef CreateCVPixelBufferFromIplImagePassingOwnership(IplImage *iplImage, bool passOwnership);
+
+#ifdef __cplusplus
+}
+#endif
