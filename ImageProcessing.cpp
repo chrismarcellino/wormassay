@@ -300,7 +300,7 @@ bool plateSequentialCirclesAppearSameAndStationary(const std::vector<Circle> &ci
     float radiusPrevious = circlesPrevious[0].radius;
     float radiusCurrent = circlesCurrent[0].radius;
     float radiusRatio = radiusPrevious / radiusCurrent;
-    if (radiusRatio > 1.25 || radiusRatio < 0.8) {
+    if (radiusRatio > 1.1 || radiusRatio < 0.9) {
         return false;
     }
     
@@ -338,10 +338,11 @@ void drawWellCirclesAndLabelsOnDebugImage(std::vector<Circle> circles, CvScalar 
     }
 }
 
-std::vector<float> calculateMovedPixelsProportionForWellsFromImages(IplImage *plateImagePrev,
-                                                                    IplImage *plateImageCur,
-                                                                    const std::vector<Circle> &circles,
-                                                                    IplImage *debugImage)
+std::vector<float> calculateMovedWellFractionPerSecondForWellsFromImages(IplImage *plateImagePrev,
+                                                                        IplImage *plateImageCur,
+                                                                        float timeDelta,
+                                                                        const std::vector<Circle> &circles,
+                                                                        IplImage *debugImage)
 {
     // If there was a resolution change, report that the frame moved
     if (plateImagePrev->width != plateImageCur->width || plateImagePrev->height != plateImageCur->height || circles.size() == 0) {
@@ -391,7 +392,7 @@ std::vector<float> calculateMovedPixelsProportionForWellsFromImages(IplImage *pl
             cvResetImageROI(deltaThreshold);
             
             // Count pixels
-            float proportion = (float)cvCountNonZero(subimage) / (subimage->width * subimage->height);
+            float proportion = (float)cvCountNonZero(subimage) / (M_PI * radius * radius) / timeDelta;
             movedPixelProportions.push_back(proportion);
             
             // Draw onto the debugging image

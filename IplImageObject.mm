@@ -9,8 +9,6 @@
 #import "IplImageObject.h"
 #import "opencv2/opencv.hpp"
 
-#define MIN_VM_COPY_SIZE (16 * PAGE_SIZE)
-
 static inline void premultiplyImage(IplImage *img, bool reverse);
 
 @implementation IplImageObject
@@ -19,31 +17,25 @@ static inline void premultiplyImage(IplImage *img, bool reverse);
 
 - (id)initWithIplImageTakingOwnership:(IplImage *)image
 {
-    self = [super init];
-    NSAssert(self, @"allocation failure");
-    NSAssert(image, @"image is required");
-    _image = image;    
+    if ((self = [super init])) {
+        NSAssert(image, @"image is required");
+        _image = image;
+    }
     return self;
 }
 
 - (void)dealloc
 {
-    if (_dataIfVMCopiedAttempted) {
-        cvReleaseImageHeader(&_image);
-        [_dataIfVMCopiedAttempted release];
-    } else {
-        cvReleaseImage(&_image);
-    }
+    cvReleaseImage(&_image);
     [super dealloc];
 }
 
 - (id)copyWithZone:(NSZone *)zone
 {
-    // Don't VM copy since this method is onlyr reasonably used by clients that wish to modify the resulting copy (see comments in header)
     return [[[self class] alloc] initWithIplImageTakingOwnership:cvCloneImage(_image)];
 }
 
-- (id)initByCopyingCVPixelBuffer:(CVPixelBufferRef)cvPixelBuffer resultChannelCount:(int)outChannels vmCopyIfPossible:(BOOL)attemptVmCopy
+- (id)initByCopyingCVPixelBuffer:(CVPixelBufferRef)cvPixelBuffer resultChannelCount:(int)outChannels
 {
     CVPixelBufferLockBaseAddress(cvPixelBuffer, kCVPixelBufferLock_ReadOnly);    
     
@@ -66,51 +58,39 @@ static inline void premultiplyImage(IplImage *img, bool reverse);
     size_t bytesPerRow = CVPixelBufferGetBytesPerRow(cvPixelBuffer);
     
     IplImage *iplImage = NULL;
-    NSData *vmCopiedData = nil;
     
-    if (attemptVmCopy && outChannels == bufferChannels && bytesPerRow * height > MIN_VM_COPY_SIZE) {
-        iplImage = cvCreateImageHeader(cvSize(width, height), IPL_DEPTH_8U, outChannels);
-        iplImage->widthStep = bytesPerRow;
-        iplImage->imageSize = bytesPerRow * height;
-        // NSData will vm_copy when possible and handle deallocation correctly. See benchmark results in this class' header file.
-        vmCopiedData = [[NSData alloc] initWithBytes:baseAddress length:bytesPerRow * height];              // XXXXXXX BENCHMARK AGAINST REGULAR COPY!
-        iplImage->imageData = iplImage->imageDataOrigin = (char *)[vmCopiedData bytes];
+    // Create a header to hold the source image
+    IplImage *iplImageHeader = cvCreateImageHeader(cvSize(width, height), IPL_DEPTH_8U, bufferChannels);
+    iplImageHeader->widthStep = bytesPerRow;
+    iplImageHeader->imageSize = bytesPerRow * height;
+    iplImageHeader->imageData = iplImageHeader->imageDataOrigin = (char *)baseAddress;
+    
+    if (outChannels == bufferChannels) {
+        iplImage = cvCloneImage(iplImageHeader);
     } else {
-        // Create a header to hold the source image
-        IplImage *iplImageHeader = cvCreateImageHeader(cvSize(width, height), IPL_DEPTH_8U, bufferChannels);
-        iplImageHeader->widthStep = bytesPerRow;
-        iplImageHeader->imageSize = bytesPerRow * height;
-        iplImageHeader->imageData = iplImageHeader->imageDataOrigin = (char *)baseAddress;
-        
-        if (outChannels == bufferChannels) {
-            iplImage = cvCloneImage(iplImageHeader);
-        } else {
-            int conversionCode = -1;
-            if (outChannels == 1 && bufferChannels == 3) {
-                conversionCode = CV_BGR2GRAY;
-            } else if (outChannels == 1 && bufferChannels == 4) {
-                conversionCode = CV_BGRA2GRAY;
-            } else if (outChannels == 3 && bufferChannels == 1) {
-                conversionCode = CV_GRAY2BGR;
-            } else if (outChannels == 3 && bufferChannels == 4) {
-                conversionCode = CV_BGRA2BGR;
-            } else if (outChannels == 4 && bufferChannels == 1) {
-                conversionCode = CV_GRAY2BGRA;
-            } else if (outChannels == 4 && bufferChannels == 3) {
-                conversionCode = CV_BGRA2BGR;
-            }
-            
-            iplImage = cvCreateImage(cvGetSize(iplImageHeader), IPL_DEPTH_8U, outChannels);
-            cvCvtColor(iplImageHeader, iplImage, conversionCode);
+        int conversionCode = -1;
+        if (outChannels == 1 && bufferChannels == 3) {
+            conversionCode = CV_BGR2GRAY;
+        } else if (outChannels == 1 && bufferChannels == 4) {
+            conversionCode = CV_BGRA2GRAY;
+        } else if (outChannels == 3 && bufferChannels == 1) {
+            conversionCode = CV_GRAY2BGR;
+        } else if (outChannels == 3 && bufferChannels == 4) {
+            conversionCode = CV_BGRA2BGR;
+        } else if (outChannels == 4 && bufferChannels == 1) {
+            conversionCode = CV_GRAY2BGRA;
+        } else if (outChannels == 4 && bufferChannels == 3) {
+            conversionCode = CV_BGRA2BGR;
         }
-        cvReleaseImageHeader(&iplImageHeader);
+        
+        iplImage = cvCreateImage(cvGetSize(iplImageHeader), IPL_DEPTH_8U, outChannels);
+        cvCvtColor(iplImageHeader, iplImage, conversionCode);
     }
+    cvReleaseImageHeader(&iplImageHeader);
     
     CVPixelBufferUnlockBaseAddress(cvPixelBuffer, kCVPixelBufferLock_ReadOnly);
     
-    self = [self initWithIplImageTakingOwnership:iplImage];
-    _dataIfVMCopiedAttempted = vmCopiedData;
-    return self;
+    return [self initWithIplImageTakingOwnership:iplImage];
 }
 
 - (id)initByCopyingCGImage:(CGImageRef)cgImage resultChannelCount:(int)outChannels

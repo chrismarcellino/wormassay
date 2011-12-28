@@ -33,6 +33,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     int _wellCountHint;
     NSTimeInterval _firstWellFrameTime;
     NSTimeInterval _lastBarcodeScanTime;
+    NSTimeInterval _lastFrameTime;
     
     IplImageObject *_lastFrame;     // when tracking
     std::vector<Circle> _trackingWellCircles;    // circles used for tracking
@@ -127,10 +128,11 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                 std::vector<float> occupancyProportions = calculateCannyEdgePixelProportionForWellsFromImages([videoFrame image],
                                                                                                               _trackingWellCircles,
                                                                                                               [debugImage image]);
-                std::vector<float> movedProportions = calculateMovedPixelsProportionForWellsFromImages([_lastFrame image],
-                                                                                                       [videoFrame image],
-                                                                                                       _trackingWellCircles,
-                                                                                                       [debugImage image]);
+                std::vector<float> movedProportions = calculateMovedWellFractionPerSecondForWellsFromImages([_lastFrame image],
+                                                                                                            [videoFrame image],
+                                                                                                            presentationTime - _lastFrameTime,
+                                                                                                            _trackingWellCircles,
+                                                                                                            [debugImage image]);
                 
                 // XXX TEST
                 CvFont wellFont = fontForNormalizedScale(1.0, [debugImage image]);
@@ -148,6 +150,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
             // Store the current image for the next pass
             [_lastFrame release];
             _lastFrame = [videoFrame retain];
+            _lastFrameTime = presentationTime;
         }
                 
         // Dispatch the debug image asynchronously to increase parallelism 

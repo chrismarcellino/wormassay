@@ -272,6 +272,7 @@ static NSPoint upperLeftForFrame(NSRect frame)
                                                   nil];
                 [_captureDecompressedVideoOutput setPixelBufferAttributes:bufferAttributes];
                 [bufferAttributes release];
+                [_captureDecompressedVideoOutput setMinimumVideoFrameInterval:1.0 / 30.0];
                 [_captureDecompressedVideoOutput setDelegate:self];
                 success = [_captureSession addOutput:_captureDecompressedVideoOutput error:outError];
                 if (success) {
@@ -408,9 +409,7 @@ static NSPoint upperLeftForFrame(NSRect frame)
         });
     } else {
         NSTimeInterval t = [NSDate timeIntervalSinceReferenceDate];     //XXXXXXXXXXXXXXXXXXXXXX
-        IplImageObject *image = [[IplImageObject alloc] initByCopyingCVPixelBuffer:(CVPixelBufferRef)videoFrame
-                                                                resultChannelCount:4
-                                                                  vmCopyIfPossible:YES];
+        IplImageObject *image = [[IplImageObject alloc] initByCopyingCVPixelBuffer:(CVPixelBufferRef)videoFrame resultChannelCount:4];
         
         NSTimeInterval presentationTimeInterval;
         if (!QTGetTimeInterval([sampleBuffer presentationTime], &presentationTimeInterval)) {
@@ -425,7 +424,7 @@ static NSPoint upperLeftForFrame(NSRect frame)
 didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
        fromConnection:(QTCaptureConnection *)connection
 {
-    [_processor incrementFrameDropCount];
+    [_processor incrementFrameDropCount];   RunLog(@"Dropping frame");
 }
 
 // This method will be called on a background thread. It will not be called again until the current call returns.
