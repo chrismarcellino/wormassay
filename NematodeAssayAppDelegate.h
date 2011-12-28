@@ -10,7 +10,6 @@
 
 @interface NematodeAssayAppDelegate : NSObject <NSApplicationDelegate> {
     NSMutableSet *_registeredDevices;
-    BOOL _ignoreBuiltInDevices;
 }
 
 @end

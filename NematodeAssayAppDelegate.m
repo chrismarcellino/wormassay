@@ -11,6 +11,8 @@
 #import "DocumentController.h"
 #import <QTKit/QTKit.h>
 
+static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCameras";
+
 @interface NematodeAssayAppDelegate ()
 
 - (void)loadCaptureDevices;
@@ -23,21 +25,41 @@
 - (void)applicationWillFinishLaunching:(NSNotification *)notification
 {
     _registeredDevices = [[NSMutableArray alloc] init];
+
+    // Register default user defaults
+    NSDictionary *defaults = [[NSDictionary alloc] initWithObjectsAndKeys:
+                              [NSNumber numberWithBool:YES], IgnoreBuiltInCamerasUserDefaultsKey, nil];
+    [[NSUserDefaults standardUserDefaults] registerDefaults:defaults];
+    [defaults release];
     
     // Create our NSDocumentController subclass first
     [[[DocumentController alloc] init] autorelease];
+    
+    // Get the capture system started as early as possible so we can try to avoid resolution changes
+    [QTCaptureDevice inputDevices];
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
-{    
+{
     // Register for camera notifications and create windows for each camera
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center addObserver:self selector:@selector(captureDevicesChanged) name:QTCaptureDeviceWasConnectedNotification object:nil];
     [center addObserver:self selector:@selector(captureDevicesChanged) name:QTCaptureDeviceWasDisconnectedNotification object:nil];
     
+    // Register for defaults changes
+    [[NSUserDefaultsController sharedUserDefaultsController] addObserver:self
+                                                              forKeyPath:[@"values." stringByAppendingString:IgnoreBuiltInCamerasUserDefaultsKey]
+                                                                 options:0
+                                                                 context:NULL];
+    
     [self loadCaptureDevices];
     
     // XX TILE WINDOWS
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+    [self loadCaptureDevices];
 }
 
 - (void)loadCaptureDevices
@@ -45,15 +67,18 @@
     NSDocumentController *documentController = [NSDocumentController sharedDocumentController];
     NSMutableSet *presentUniqueIds = [[NSMutableSet alloc] init];
     
+    BOOL ignoreBuiltInCameras = [[NSUserDefaults standardUserDefaults] boolForKey:IgnoreBuiltInCamerasUserDefaultsKey];
+    
     // Iterate through current capture devices, creating new documents for new ones
     for (QTCaptureDevice *device in [QTCaptureDevice inputDevices]) {
         NSString *modelUniqueID = [device modelUniqueID];
         NSString *uniqueID = [device uniqueID];
-        BOOL isBuiltInDevice = [modelUniqueID rangeOfString:@"VendorID_1452"].location != NSNotFound;  // Apple USB devices
+        
+        BOOL isBuiltInCamera = [modelUniqueID rangeOfString:@"VendorID_1452"].location != NSNotFound;  // Apple USB devices
         
         // Only consider devices capable of video output and that meet our built-in device criteria
         if (([device hasMediaType:QTMediaTypeVideo] || [device hasMediaType:QTMediaTypeMuxed]) && 
-            (!isBuiltInDevice || !_ignoreBuiltInDevices)) {
+            (!isBuiltInCamera || !ignoreBuiltInCameras)) {
             [presentUniqueIds addObject:uniqueID];
             
             // Construct the URL for the capture device

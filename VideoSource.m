@@ -13,6 +13,7 @@
 #import <QuartzCore/QuartzCore.h>   //XXXXXXXXX
 
 NSString *const CaptureDeviceScheme = @"capturedevice";
+NSString *const CaptureDeviceFileType = @"capturedevice";
 static NSPoint LastCascadePoint = { 0.0, 0.0 };
 
 static void releaseIplImage(void *baseAddress, void *context);
@@ -46,6 +47,16 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 
 
 @implementation VideoSource
+
++ (NSArray *)readableTypes
+{
+    return [[QTMovie movieFileTypes:QTIncludeCommonTypes] arrayByAddingObject:CaptureDeviceFileType];
+}
+
++ (NSArray *)writableTypes
+{
+    return [NSArray array];
+}
 
 - (id)init
 {
@@ -287,6 +298,16 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
        fromConnection:(QTCaptureConnection *)connection
 {
     [self processVideoFrame:(CVPixelBufferRef)videoFrame presentationTime:[sampleBuffer presentationTime]];
+}
+
+- (void)captureOutput:(QTCaptureOutput *)captureOutput
+didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
+       fromConnection:(QTCaptureConnection *)connection
+{
+    frameDropCount++;
+    if (frameDropCount == 1 || frameDropCount % 10 == 0) {
+        NSLog(@"Device \"%@\" dropped %llu total frames", [_captureDevice localizedDisplayName], (unsigned long long)frameDropCount);
+    }
 }
 
 // This method will be called on a background thread. It will not be called again until the current call returns.

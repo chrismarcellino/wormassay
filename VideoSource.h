@@ -13,6 +13,7 @@
 @class BitmapOpenGLView;
 
 extern NSString *const CaptureDeviceScheme;
+extern NSString *const CaptureDeviceFileType;
 
 extern NSURL *URLForCaptureDeviceUniqueID(NSString *uniqueID);
 extern NSString *UniqueIDForCaptureDeviceURL(NSURL *url);
@@ -31,6 +32,7 @@ extern NSString *UniqueIDForCaptureDeviceURL(NSURL *url);
     QTTime _nextExtractTime;
     
     BitmapOpenGLView *_bitmapOpenGLView;
+    NSUInteger frameDropCount;
 }
 
 - (NSSize)lastKnownResolution;

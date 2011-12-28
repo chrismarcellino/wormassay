@@ -15,9 +15,14 @@
 - (NSString *)typeForContentsOfURL:(NSURL *)inAbsoluteURL error:(NSError **)outError
 {
     if ([[inAbsoluteURL scheme] caseInsensitiveCompare:CaptureDeviceScheme] == NSOrderedSame) {
-        return @"video";
+        return CaptureDeviceFileType;
     }
     return [super typeForContentsOfURL:inAbsoluteURL error:outError];
+}
+
+- (NSArray *)documentClassNames
+{
+    return [NSArray arrayWithObject:NSStringFromClass([VideoSource class])];
 }
 
 @end
