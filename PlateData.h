@@ -29,7 +29,7 @@ typedef enum {
 
 // Adds results to a specific column, creating the column if necessary.
 - (void)setReportingStyle:(ReportingStyle)style forDataColumnID:(const char *)columnID;
-- (ReportingStyle)reportingStyleForDataColumnID:(const char *)columnID
+- (ReportingStyle)reportingStyleForDataColumnID:(const char *)columnID;
 - (void)appendResult:(double)result toDataColumnID:(const char *)columnID forWell:(int)well;
 
 // Allows reporting of non-formatted results text to be provided with the results and in the log files. Most MotionAnalyzers are
@@ -50,6 +50,6 @@ typedef enum {
 
 // Results Output
 - (NSArray *)sortedColumnIDsWithData;
-- (NSString *)csvOutputForPlateID:(NSString *)plateID withAdditionalRawDataOutput:(NSDictionary *)filenamesToDataStrings;
+- (NSString *)csvOutputForPlateID:(NSString *)plateID withAdditionalRawDataOutput:(NSMutableDictionary *)rawColumnIDsToCSVStrings;
 
 @end
