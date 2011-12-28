@@ -228,8 +228,8 @@ CV_IMPL void cvCanny( const void* srcarr, void* dstarr,
             int s = x ^ y;
             int m = _mag[j];
 
-            x = abs(x);
-            y = abs(y);
+            x = CV_FAST_ABS(x);
+            y = CV_FAST_ABS(y);
             if( m > low )
             {
                 int tg22x = x * TG22;

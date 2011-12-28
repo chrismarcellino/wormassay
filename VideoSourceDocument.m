@@ -42,7 +42,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 @interface VideoSourceDocument ()
 
 - (void)adjustWindowSizing;
-- (void)processVideoFrame:(IplImageObject *)image presentationTime:(QTTime)presentationTime;
+- (void)processVideoFrame:(IplImageObject *)image presentationTime:(NSTimeInterval)presentationTime;
 
 @end
 
@@ -292,6 +292,11 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
         NSTimeInterval firstFrameTimeInterval, secondFrameTimeInterval;
         if (QTGetTimeInterval(firstFrameTime, &firstFrameTimeInterval) && QTGetTimeInterval(secondFrameTime, &secondFrameTimeInterval)) {
             frameDuration = secondFrameTimeInterval - firstFrameTimeInterval;
+            // For still images (or single frame movies), simulate 30p
+            NSTimeInterval movieDuration;
+            if (QTGetTimeInterval([_movie duration], &movieDuration) && movieDuration <= frameDuration) {
+                frameDuration = 1.0 / 30.0;
+            }
         }
         
         if (frameDuration > 0.0) {
@@ -318,7 +323,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
                 }
                 if (videoFrame) {
                     IplImageObject *image = [[IplImageObject alloc] initByCopyingCGImage:videoFrame resultChannelCount:4];
-                    [self processVideoFrame:image presentationTime:currentFrameTime];
+                    [self processVideoFrame:image presentationTime:CACurrentMediaTime()];       // use CPU time since the video will loop
                     [image release];
                 }
                 
@@ -367,7 +372,11 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
     IplImageObject *image = [[IplImageObject alloc] initByCopyingCVPixelBuffer:(CVPixelBufferRef)videoFrame
                                                             resultChannelCount:4
                                                               vmCopyIfPossible:YES];
-    [self processVideoFrame:image presentationTime:[sampleBuffer presentationTime]];
+    NSTimeInterval presentationTimeInterval;
+    if (!QTGetTimeInterval([sampleBuffer presentationTime], &presentationTimeInterval)) {
+        presentationTimeInterval = CACurrentMediaTime();
+    }
+    [self processVideoFrame:image presentationTime:presentationTimeInterval];
     [image release];
 }
 
@@ -383,16 +392,15 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
 
 // This method will be called on a background thread. It will not be called again until the current call returns.
 // Interviening frames may be dropped if the video is a live capture device source. 
-- (void)processVideoFrame:(IplImageObject *)image presentationTime:(QTTime)presentationTime
+- (void)processVideoFrame:(IplImageObject *)image presentationTime:(NSTimeInterval)presentationTime
 {
-    NSTimeInterval presentationTimeInterval;
-    if (!QTGetTimeInterval(presentationTime, &presentationTimeInterval)) {
-        presentationTimeInterval = CACurrentMediaTime();
-    }
-    
-    [_processor processVideoFrame:image presentationTime:presentationTimeInterval debugFrameCallback:^(IplImageObject *image) {
+    NSTimeInterval time = CACurrentMediaTime();
+    [_processor processVideoFrame:image presentationTime:presentationTime debugFrameCallback:^(IplImageObject *image) {
         [_bitmapOpenGLView renderImage:image];
     }];
+    
+    NSTimeInterval delta = CACurrentMediaTime() - time;
+    NSLog(@"######## FRAME PROCESSING TIME: %.0f ms (%.1f fps)", delta * 1000, 1.0 / delta);  // XXX
 }
 
 - (NSString *)displayName
