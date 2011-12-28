@@ -181,7 +181,6 @@ static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
 - (void)videoProcessor:(VideoProcessor *)vp willBeginRecordingWithCaptureOutput:(QTCaptureFileOutput *)captureFileOutput
 {
     [captureFileOutput setDelegate:self];
-    [captureFileOutput setMaximumRecordedFileSize:10*1024*1024];
 }
 
 - (void)videoProcessor:(VideoProcessor *)vp
