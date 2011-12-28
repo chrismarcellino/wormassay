@@ -38,7 +38,7 @@ static const NSTimeInterval MinimumIntervalFrameInterval = 0.100;
 
 + (NSString *)analyzerName
 {
-    return NSLocalizedString(@"Lucas—Kanade Optical Flow", nil);
+    return NSLocalizedString(@"Lucas—Kanade Optical Flow (Velocity, 1 organism per well)", nil);
 }
 
 - (BOOL)canProcessInParallel

@@ -13,7 +13,7 @@
 #import "CvUtilities.hpp"
 
 static const double WellEdgeFindingInsetProportion = 0.7;
-static const double PlateMovingProportionAboveThresholdLimit = 0.04;
+static const double PlateMovingProportionAboveThresholdLimit = 0.06;
 static const char* WellOccupancyID = "Well Occupancy";
 
 @implementation ConsensusLuminanceMotionAnalyzer
@@ -47,7 +47,7 @@ static const char* WellOccupancyID = "Well Occupancy";
 
 + (NSString *)analyzerName
 {
-    return NSLocalizedString(@"Consensus Voting Luminance Difference", nil);
+    return NSLocalizedString(@"Consensus Voting Luminance Difference (dArea)", nil);
 }
 
 - (BOOL)canProcessInParallel

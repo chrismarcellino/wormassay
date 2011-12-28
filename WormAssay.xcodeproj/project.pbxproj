@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		2102C86A13792D21000E3D53 /* ffmpeg in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2102C86813792D15000E3D53 /* ffmpeg */; };
 		210D6E9E134BAC5300BCD6F1 /* VideoProcessor.mm in Sources */ = {isa = PBXBuildFile; fileRef = 210D6E9D134BAC5300BCD6F1 /* VideoProcessor.mm */; };
-		210E8AF5135EB58700FEE49F /* LuminanceMotionAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 210E8AF4135EB58700FEE49F /* LuminanceMotionAnalyzer.mm */; };
 		2119D2CC135A101E00C5B32F /* PlateData.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2119D2CB135A101E00C5B32F /* PlateData.mm */; };
 		2124FF7F13848D700027EB2C /* NullMotionAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2124FF7E13848D700027EB2C /* NullMotionAnalyzer.mm */; };
 		21264FEC1353FAE600F2DCD8 /* VideoProcessorController.m in Sources */ = {isa = PBXBuildFile; fileRef = 21264FEB1353FAE600F2DCD8 /* VideoProcessorController.m */; };
@@ -326,8 +325,6 @@
 		2102C86813792D15000E3D53 /* ffmpeg */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = ffmpeg; path = "ThirdParty/ffmpeg-x264/ffmpeg"; sourceTree = "<group>"; };
 		210D6E9C134BAC5300BCD6F1 /* VideoProcessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoProcessor.h; sourceTree = SOURCE_ROOT; };
 		210D6E9D134BAC5300BCD6F1 /* VideoProcessor.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = VideoProcessor.mm; sourceTree = SOURCE_ROOT; };
-		210E8AF3135EB58700FEE49F /* LuminanceMotionAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LuminanceMotionAnalyzer.h; sourceTree = SOURCE_ROOT; };
-		210E8AF4135EB58700FEE49F /* LuminanceMotionAnalyzer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = LuminanceMotionAnalyzer.mm; sourceTree = SOURCE_ROOT; };
 		2119D2CA135A101E00C5B32F /* PlateData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlateData.h; sourceTree = SOURCE_ROOT; };
 		2119D2CB135A101E00C5B32F /* PlateData.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = PlateData.mm; sourceTree = SOURCE_ROOT; };
 		2124FF7D13848D700027EB2C /* NullMotionAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NullMotionAnalyzer.h; sourceTree = SOURCE_ROOT; };
@@ -1089,8 +1086,6 @@
 			isa = PBXGroup;
 			children = (
 				21910734135E2B5600A12F1F /* AssayAnalyzer.h */,
-				210E8AF3135EB58700FEE49F /* LuminanceMotionAnalyzer.h */,
-				210E8AF4135EB58700FEE49F /* LuminanceMotionAnalyzer.mm */,
 				21B611D613612082002A47FB /* ConsensusLuminanceMotionAnalyzer.h */,
 				21B611D713612082002A47FB /* ConsensusLuminanceMotionAnalyzer.mm */,
 				21DC6F3E137CE50000D38B13 /* OpticalFlowMotionAnalyzer.h */,
@@ -1501,7 +1496,6 @@
 				21264FEC1353FAE600F2DCD8 /* VideoProcessorController.m in Sources */,
 				2119D2CC135A101E00C5B32F /* PlateData.mm in Sources */,
 				215CD57D135D157400A558E3 /* WellFinding.cpp in Sources */,
-				210E8AF5135EB58700FEE49F /* LuminanceMotionAnalyzer.mm in Sources */,
 				21B611D813612082002A47FB /* ConsensusLuminanceMotionAnalyzer.mm in Sources */,
 				2176AC3A1373672D00E51F2B /* Emailer.m in Sources */,
 				21B5165F137A061B0055CFE7 /* ArrayTableView.m in Sources */,
