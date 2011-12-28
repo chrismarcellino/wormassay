@@ -34,16 +34,9 @@ extern CvPoint plateCenterForWellCircles(const std::vector<cv::Vec3f> &circles);
 extern bool plateSequentialCirclesAppearSameAndStationary(const std::vector<cv::Vec3f> &circlesPrevious,
                                                           const std::vector<cv::Vec3f> &circlesCurrent);
 
-// Creates the image containing connected-component filled edges for anaylsis by the next function. FilledArea is in
-// units of pixels (area units). The image returned is a binary image, where 1's correspond to filled area.
-extern IplImage *createEdgeImageForWellImageFromImage(IplImage *plateImage, cv::Vec3f wellCircle, float &filledArea, IplImage *debugImage);
-
 // XXXX EXPERIMENTATION
-extern IplImage *createDeltaImageForWellFromImages(IplImage *plateImagePrev, IplImage *plateImageCur, cv::Vec3f wellCircle, IplImage *debugImage);
+extern float calculateMovedPixelsForWellFromImages(IplImage *plateImagePrev, IplImage *plateImageCur, cv::Vec3f wellCircle, IplImage *debugImage);
 
-// Calcuates change in filled pixels (area units) between two connected-components filled edge images.
-extern float getMotionDeltaBetweenEdgeFrames(IplImage *previousFrame, IplImage *currentFrame);
-    
 #ifdef __cplusplus
 }
 #endif

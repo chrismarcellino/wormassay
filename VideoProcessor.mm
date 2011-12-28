@@ -148,11 +148,10 @@ debugVideoFrameCompletion:(void (^)(IplImageObject *image))callback;
             if (_lastTrackingPlateFrame) {
                 for (size_t i = 0; i < _trackingWellCircles.size(); i++) {
                     //                IplImage *wellImage = createEdgeImageForWellImageFromImage(videoFrame, _trackingWellCircles[i], filledArea, [debugImage image]);
-                    IplImage *wellImage = createDeltaImageForWellFromImages([_lastTrackingPlateFrame image],
+                    float wellImage = calculateMovedPixelsForWellFromImages([_lastTrackingPlateFrame image],
                                                                             [videoFrame image],
                                                                             _trackingWellCircles[i],
                                                                             [debugImage image]);
-                    cvReleaseImage(&wellImage);
                 }
             }
             
@@ -203,11 +202,19 @@ debugVideoFrameCompletion:(void (^)(IplImageObject *image))callback;
     
     // Get instance variables while holding _queue
     int wellCountHint = _wellCountHint;
+    bool searchAllPlateSizes = _processingState == ProcessingStateNoPlate;
     
     // Perform the calculation on a concurrent queue so that we don't block the current thread
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         std::vector<cv::Vec3f> wellCircles;
-        bool plateFound = findWellCircles([videoFrame image], wellCircles, wellCountHint);        // gets wells in row major order
+        
+        bool plateFound;
+        if (searchAllPlateSizes) {
+            plateFound = findWellCircles([videoFrame image], wellCircles, wellCountHint);        // gets wells in row major order
+        } else {
+            float score;
+            plateFound = findWellCirclesForPlateCount([videoFrame image], wellCountHint, wellCircles, score);
+        }
         
         // Process and store the results when holding _queue
         dispatch_async(_queue, ^{

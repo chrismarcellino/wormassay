@@ -56,7 +56,7 @@ static inline CvRect outsetRect(CvRect rect, int dx, int dy)
     return rect;
 }
 
-static inline void fastSetImageZero(IplImage *image)
+static inline void fastZeroImage(IplImage *image)
 {
     assert(image->nChannels != 4);
     memset(image->imageData, 0, image->imageSize);

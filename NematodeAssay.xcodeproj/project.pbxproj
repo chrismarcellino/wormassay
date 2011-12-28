@@ -119,7 +119,7 @@
 
 /* Begin PBXFileReference section */
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		210D6E9C134BAC5300BCD6F1 /* VideoProcessor.h */ = {isa = PBXFileReference; fileEncoding = 4; path = VideoProcessor.h; sourceTree = SOURCE_ROOT; };
+		210D6E9C134BAC5300BCD6F1 /* VideoProcessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoProcessor.h; sourceTree = SOURCE_ROOT; };
 		210D6E9D134BAC5300BCD6F1 /* VideoProcessor.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = VideoProcessor.mm; sourceTree = SOURCE_ROOT; };
 		21426FAD134683DA00AF78E5 /* VideoSourceDocument.h */ = {isa = PBXFileReference; fileEncoding = 4; path = VideoSourceDocument.h; sourceTree = SOURCE_ROOT; };
 		21426FAE134683DA00AF78E5 /* VideoSourceDocument.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VideoSourceDocument.m; sourceTree = SOURCE_ROOT; };
@@ -462,16 +462,16 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
-		21A45B0A134F5F3800A075BF /* NematodeAssay Views */ = {
+		21A45B0A134F5F3800A075BF /* Views */ = {
 			isa = PBXGroup;
 			children = (
 				21CC725A1348CA5F001146DA /* BitmapOpenGLView.h */,
 				21CC725B1348CA5F001146DA /* BitmapOpenGLView.m */,
 			);
-			name = "NematodeAssay Views";
+			name = Views;
 			sourceTree = "<group>";
 		};
-		21A96B7912D1696D002E1DC6 /* NematodeAssay Controllers */ = {
+		21A96B7912D1696D002E1DC6 /* Controllers */ = {
 			isa = PBXGroup;
 			children = (
 				218DD55D1345445B000B6475 /* NematodeAssayAppDelegate.h */,
@@ -483,7 +483,7 @@
 				210D6E9C134BAC5300BCD6F1 /* VideoProcessor.h */,
 				210D6E9D134BAC5300BCD6F1 /* VideoProcessor.mm */,
 			);
-			name = "NematodeAssay Controllers";
+			name = Controllers;
 			path = NematodeAssay;
 			sourceTree = "<group>";
 		};
@@ -511,8 +511,8 @@
 		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
 			isa = PBXGroup;
 			children = (
-				21A96B7912D1696D002E1DC6 /* NematodeAssay Controllers */,
-				21A45B0A134F5F3800A075BF /* NematodeAssay Views */,
+				21A96B7912D1696D002E1DC6 /* Controllers */,
+				21A45B0A134F5F3800A075BF /* Views */,
 				21EBDA26134AD3BA00736245 /* Image Processing */,
 				29B97315FDCFA39411CA2CEA /* Other Sources */,
 				21FA749512CD579300D11B6D /* Third Party */,

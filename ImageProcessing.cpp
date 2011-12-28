@@ -67,6 +67,7 @@ std::string wellIdentifierStringForIndex(int index, int wellCount)
 
 bool findWellCircles(IplImage *inputImage, std::vector<cv::Vec3f> &circles, int wellCountHint)
 {
+    // Create the array of counts that we will try in order, but move the hinted value to the front
     std::vector<int> wellCounts = knownPlateWellCounts();
     if (wellCountHint > 0) {
         for (int i = 0; i < wellCounts.size(); i++) {
@@ -78,6 +79,7 @@ bool findWellCircles(IplImage *inputImage, std::vector<cv::Vec3f> &circles, int 
         wellCounts.insert(wellCounts.begin(), wellCountHint);
     }
     
+    // Iterate through all well count values
     float bestScore = -1.0;
     float score;
     std::vector<cv::Vec3f> bestCircles;
@@ -160,19 +162,20 @@ bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vect
     // First sort the centers by X value so that lines vertically colinear are adjacent in the seq. On the second pass, do the opposite. 
     bool allColinearCirclesFound = true;
     
+    CvSeq* filteredCircles = circles;
     for (int axis = 0; axis <= 1; axis++) {
-        cvSeqSort(circles, sortCircleCentersByAxis, &axis);
+        cvSeqSort(filteredCircles, sortCircleCentersByAxis, &axis);
         
         // Iterate through list and move circles colinear along Y lines to a new seq, and hence have similar X values (and then vice versa)
         CvSeq* colinearCircles = cvCreateSeq(CV_32FC3, sizeof(CvSeq), 3 * sizeof(float), storage);
         
-        for (int i = 0; i < circles->total; i++) {
-            float* current = (float*)cvGetSeqElem(circles, i);
+        for (int i = 0; i < filteredCircles->total; i++) {
+            float* current = (float*)cvGetSeqElem(filteredCircles, i);
             
             int numberOfColinearCircles = 0;
             int j;
-            for (j = i + 1; j < circles->total; j++) {
-                float *partner = (float*)cvGetSeqElem(circles, j);
+            for (j = i + 1; j < filteredCircles->total; j++) {
+                float *partner = (float*)cvGetSeqElem(filteredCircles, j);
                 if (fabsf(current[axis] - partner[axis]) <= colinearityThreshold) {
                     if (numberOfColinearCircles == 0) {
                         // Push the 'current' element
@@ -191,25 +194,23 @@ bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vect
             // Determine if we saw as many colinear circles as we expected
             int expectedNumberOfColinearCircles = (axis == 1) ? columns : rows;
             if (numberOfColinearCircles != expectedNumberOfColinearCircles) {
-                allColinearCirclesFound = false;
+                allColinearCirclesFound = false;            // XXXXXXXXXXXXXXXX DO THIS AFTER THE FACT TO BE LIENLIENT
             }
         }
         
-        circles = colinearCircles;
+        filteredCircles = colinearCircles;
     }
     
-    // Sort the circles in row major order
-    cvSeqSort(circles, sortCirclesInRowMajorOrder, &colinearityThreshold);
-    
-    cv::Seq<cv::Vec3f>(circles).copyTo(circlesVec);
-    cvReleaseMemStorage(&storage);
-    
     // Determine if this is a valid plate and provide scores for debugging
-    bool success = circles->total == wellCount && allColinearCirclesFound;
-    score = MAX(1.0 - (float)abs(circles->total - wellCount) / wellCount, 0.0) - (allColinearCirclesFound ? 0.0 : 1.0);
+    bool success = filteredCircles->total == wellCount && allColinearCirclesFound;
+    score = MAX(1.0 - (float)abs(circles->total - wellCount) / wellCount - (allColinearCirclesFound ? 0.0 : 0.1), 0.0);
     
     if (success) {
-    // Set the wells' area to be the mean under the assumption that there is no perspective distortion
+        // If successful, sort the circles in row major order
+        cvSeqSort(filteredCircles, sortCirclesInRowMajorOrder, &colinearityThreshold);        
+        cv::Seq<cv::Vec3f>(filteredCircles).copyTo(circlesVec);
+        
+        // Set the wells' area to be the mean under the assumption that there is no perspective distortion
         int sum = 0;
         for (int i = 0; i < circlesVec.size(); i++) {
             sum += circlesVec[i][2];
@@ -218,7 +219,11 @@ bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vect
         for (int i = 0; i < circlesVec.size(); i++) {
             circlesVec[i][2] = sum;
         }
+    } else {
+        // Otherwise return the detected circles at this plate size for debugging visualization
+        cv::Seq<cv::Vec3f>(circles).copyTo(circlesVec);
     }
+    cvReleaseMemStorage(&storage);
         
     return success;
 }
@@ -308,10 +313,11 @@ IplImage *createEdgeImageForWellImageFromImage(IplImage *plateImage, cv::Vec3f w
     /// XXXX FIND CONNECTED IMAGES
     
     // Draw onto the debugging image
-    cvSetImageROI(debugImage, boundingSquare);
-    cvCvtColor(edges, debugImage, CV_GRAY2BGRA);
-    cvResetImageROI(debugImage);
-    
+    if (debugImage) {
+        cvSetImageROI(debugImage, boundingSquare);
+        cvCvtColor(edges, debugImage, CV_GRAY2BGRA);
+        cvResetImageROI(debugImage);
+    }
     
 //    cvReleaseImage(&edges);
     cvReleaseImage(&circleMask);
@@ -320,53 +326,57 @@ IplImage *createEdgeImageForWellImageFromImage(IplImage *plateImage, cv::Vec3f w
     return edges;
 }
 
-IplImage *createDeltaImageForWellFromImages(IplImage *plateImagePrev, IplImage *plateImageCur, cv::Vec3f wellCircle, IplImage *debugImage)
+float calculateMovedPixelsForWellFromImages(IplImage *plateImagePrev, IplImage *plateImageCur, cv::Vec3f wellCircle, IplImage *debugImage)
 {
-    // Copy the grayscale subimage corresponding to the circle's bounding square
+    // Copy the subimages corresponding to the circle's bounding square
     float radius = wellCircle[2];
     CvRect boundingSquare = cvRect(wellCircle[0] - radius, wellCircle[1] - radius, 2 * radius, 2 * radius);
     
+    // Create a circle mask with bits in the circle on
+    IplImage *circleMask = cvCreateImage(cvSize(boundingSquare.width, boundingSquare.height), IPL_DEPTH_8U, 1);
+    fastZeroImage(circleMask);
+    cvCircle(circleMask, cvPoint(radius, radius), radius, cvRealScalar(255), CV_FILLED);
+    
     // Make the subimages for the previous plate
     cvSetImageROI(plateImagePrev, boundingSquare);
-    IplImage* subimagePrev = cvCreateImage(cvGetSize(plateImagePrev), IPL_DEPTH_8U, 3);
-    if (plateImagePrev->nChannels == 3) {
-        cvCopy(plateImagePrev, subimagePrev);
-    } else {
-        cvCvtColor(plateImagePrev, subimagePrev,  CV_BGRA2BGR);
-    }
+    IplImage* subimagePrev = cvCreateImage(cvGetSize(plateImagePrev), IPL_DEPTH_8U, 4);
+    cvCopy(plateImagePrev, subimagePrev, circleMask);
     cvResetImageROI(plateImagePrev);
     
     // Make the subimages for the current plate
     cvSetImageROI(plateImageCur, boundingSquare);
-    IplImage* subimageCur = cvCreateImage(cvGetSize(plateImageCur), IPL_DEPTH_8U, 3);
-    if (plateImageCur->nChannels == 3) {
-        cvCopy(plateImageCur, subimageCur);
-    } else {
-        cvCvtColor(plateImageCur, subimageCur,  CV_BGRA2BGR);
-    }
+    IplImage* subimageCur = cvCreateImage(cvGetSize(plateImageCur), IPL_DEPTH_8U, 4);
+    cvCopy(plateImageCur, subimageCur, circleMask);
     cvResetImageROI(plateImageCur);
     
-    // Create a circle mask with 255's in the circle
-    IplImage *circleMask = cvCreateImage(cvGetSize(subimagePrev), IPL_DEPTH_8U, 1);
-    fastFillImage(circleMask, 255);
-    cvCircle(circleMask, cvPoint(radius, radius), radius, cvRealScalar(0), CV_FILLED);
-    
-    // Mask the subimages, turning pixels outside the circle black
-    cvSet(subimagePrev, cvRealScalar(0), circleMask);
-    cvSet(subimageCur, cvRealScalar(0), circleMask);
-    cvReleaseImage(&circleMask);
-    
-    // Subtract the images
-    IplImage* delta = cvCreateImage(cvGetSize(plateImageCur), IPL_DEPTH_8U, 3);
+    // Subtract the images channelwise
+    IplImage* delta = cvCreateImage(cvGetSize(subimageCur), IPL_DEPTH_8U, 4);
     cvAbsDiff(subimageCur, subimagePrev, delta);
     
     cvReleaseImage(&subimagePrev);
     cvReleaseImage(&subimageCur);
     
-    return delta;
-}
+    // Convert the delta to luminance
+    IplImage *deltaLuminance = cvCreateImage(cvGetSize(delta), IPL_DEPTH_8U, 1);
+    cvCvtColor(delta, deltaLuminance, CV_BGR2GRAY);
+    cvReleaseImage(&delta);
+    
+    // Threshold the image to isolate 'moved' pixels
+    IplImage *deltaLumThreshold = cvCreateImage(cvGetSize(deltaLuminance), IPL_DEPTH_8U, 1);
+    cvThreshold(deltaLuminance, deltaLumThreshold, 10, 255, CV_THRESH_BINARY);
+    
+    // Draw onto the debugging image
+    if (debugImage) {
+        cvSetImageROI(debugImage, boundingSquare);
+        IplImage *rgbaDeltaLumThreshood = cvCreateImage(cvGetSize(deltaLumThreshold), IPL_DEPTH_8U, 4);
+        cvCvtColor(deltaLumThreshold, rgbaDeltaLumThreshood, CV_GRAY2BGRA);
+        cvCopy(rgbaDeltaLumThreshood, debugImage, circleMask);
+        cvReleaseImage(&deltaLumThreshold);
+        cvResetImageROI(debugImage);
+    }
+    
+    cvReleaseImage(&circleMask);
 
-float getMotionDeltaBetweenEdgeFrames(IplImage *previousFrame, IplImage *currentFrame)
-{
-    return 0.0;     ///XXXXXXXXXXXXXXXX TODO
+    
+    return 0.0;
 }
