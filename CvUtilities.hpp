@@ -8,14 +8,6 @@
 
 #import "opencv2/opencv.hpp"
 
-// Returns a stack copy of the image header. Valid until image is released.
-static inline IplImage temporaryImageHeaderCopy(IplImage *image)
-{
-    IplImage headerCopy;
-    std::memcpy(&headerCopy, image, sizeof(headerCopy));
-    return headerCopy;        // return structure. this will be inlined to prevent an extra copy.
-}
-
 static inline int rectArea(const CvRect& rect)
 {
     return rect.width * rect.height;

@@ -157,23 +157,28 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         // Analyze tracked images synchronously (at frame rate), so that we drop frames if we can't keep up.
         if (_processingState == ProcessingStateTrackingMotion && sizeEqualsSize(_trackedImageSize, cvGetSize([videoFrame image]))) {
             if ([_assayAnalyzer willBeginFrameProcessing:videoFrame debugImage:[debugFrame image] plateData:_plateData]) {
-                BOOL parallel = [_assayAnalyzer canProcessInParallel];
-                dispatch_queue_t processingQueue = parallel ? dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0) : dispatch_queue_create(NULL, NULL);
-                dispatch_apply(_trackingWellCircles.size(), processingQueue, ^(size_t i){
+                void (^processWellBlock)(size_t) = ^(size_t i){
                     // Make stack copies of the headers so that they can have their own ROI's, etc.
                     CvRect boundingSquare = boundingSquareForCircle(_trackingWellCircles[i]);
-                    IplImage wellImage = temporaryImageHeaderCopy([videoFrame image]);
+                    IplImage wellImage = *[videoFrame image];
                     cvSetImageROI(&wellImage, boundingSquare);
-                    IplImage debugImage = temporaryImageHeaderCopy([debugFrame image]);
+                    IplImage debugImage = *[debugFrame image];
                     cvSetImageROI(&debugImage, boundingSquare);
                     [_assayAnalyzer processVideoFrameWellSynchronously:&wellImage
                                                                forWell:i
                                                             debugImage:&debugImage
                                                       presentationTime:[videoFrame presentationTime]
                                                              plateData:_plateData];
-                });
-                if (!parallel) {
-                    dispatch_release(processingQueue);
+                };
+                
+                // Only parallelize well analysis if we have at least 4 (virtual) cores to be conservative, since doing so on
+                // a 2.1 ghz Core 2 Duo (with 2 virtual and physical cores) decreased performance 50% due to contention with decoding threads.
+                if ([_assayAnalyzer canProcessInParallel] && [[NSProcessInfo processInfo] activeProcessorCount] >= 4) {
+                    dispatch_apply(_trackingWellCircles.size(), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), processWellBlock);
+                } else {
+                    for (size_t i = 0; i < _trackingWellCircles.size(); i++) {
+                        processWellBlock(i);
+                    }
                 }
             }
             [_assayAnalyzer didEndFrameProcessing:videoFrame plateData:_plateData];

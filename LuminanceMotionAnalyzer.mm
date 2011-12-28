@@ -40,7 +40,7 @@ static const char* WellOccupancyID = "WellOccupancy";
 
 - (BOOL)canProcessInParallel
 {
-    return NO;
+    return YES;
 }
 
 - (void)willBeginPlateTrackingWithPlateData:(PlateData *)plateData
@@ -148,7 +148,7 @@ static const char* WellOccupancyID = "WellOccupancy";
     }
     
     // Mask the threshold subimage (using a local stack copy of the header for threadsafety)
-    IplImage wellDeltaThresholded = temporaryImageHeaderCopy(_deltaThresholded);
+    IplImage wellDeltaThresholded = *_deltaThresholded;
     cvSetImageROI(&wellDeltaThresholded, cvGetImageROI(wellImage));
     cvSet(&wellDeltaThresholded, cvRealScalar(0), _invertedCircleMask);
     
