@@ -29,7 +29,7 @@ static const NSTimeInterval IgnoreFramesPostMovementThresholdTimeInterval = 5.0;
 
 + (NSString *)analyzerName
 {
-    return NSLocalizedString(@"Lucas–Kanade Optical Flow", nil);
+    return NSLocalizedString(@"Lucas—Kanade Optical Flow", nil);
 }
 
 - (BOOL)canProcessInParallel

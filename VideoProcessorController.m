@@ -348,7 +348,10 @@ stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
                 
                 // Get the run CSV data and log it out to disk
                 NSMutableDictionary *rawOutputDictionary = [[NSMutableDictionary alloc] init];
-                NSString *runOutput = [plateData csvOutputForPlateID:plateID scanID:scanID withAdditionalRawDataOutput:rawOutputDictionary];
+                NSString *runOutput = [plateData csvOutputForPlateID:plateID
+                                                              scanID:scanID
+                                         withAdditionalRawDataOutput:rawOutputDictionary
+                                                        analyzerName:[[self currentAssayAnalyzerClass] analyzerName]];
                 
                 NSString *folder = [self runOutputFolderPath];
                 NSString *runOutputPath = [folder stringByAppendingPathComponent:

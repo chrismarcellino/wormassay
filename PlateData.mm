@@ -196,7 +196,10 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
     }
 }
 
-- (NSString *)csvOutputForPlateID:(NSString *)plateID scanID:(NSString *)scanID withAdditionalRawDataOutput:(NSMutableDictionary *)rawColumnIDsToCSVStrings
+- (NSString *)csvOutputForPlateID:(NSString *)plateID
+                           scanID:(NSString *)scanID
+      withAdditionalRawDataOutput:(NSMutableDictionary *)rawColumnIDsToCSVStrings
+                     analyzerName:(NSString *)analyzerName
 {
     @synchronized(self) {
         NSMutableString *output = [NSMutableString string];
@@ -220,6 +223,9 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
             }
         }
         
+        appendCSVElement(output, [NSString stringWithFormat:@"Assay: %@, version %@",
+                                  [analyzerName stringByReplacingOccurrencesOfString:@"—" withString:@"-"],
+                                  [[NSBundle mainBundle] objectForInfoDictionaryKey:(id)kCFBundleVersionKey]]);
         [output appendString:@"\n"];
         
         // Get the assay date/time
