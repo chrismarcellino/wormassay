@@ -120,7 +120,7 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
     }
     
     if (!class) {
-        class = NSClassFromString(@"ConsensusLuminanceMotionAnalyzer");
+        class = NSClassFromString(@"OpticalFlowMotionAnalyzer");
     }
     if (!class) {
         class = [[self assayAnalyzerClasses] objectAtIndex:0];
