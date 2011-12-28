@@ -27,7 +27,7 @@ extern NSString *UniqueIDForCaptureDeviceURL(NSURL *url);
     QTCaptureDecompressedVideoOutput *_captureDecompressedVideoOutput;
     
     QTMovie *_movie;
-    dispatch_queue_t _movieFrameExtractQueue;
+    dispatch_queue_t _movieQueue;
     dispatch_source_t _movieFrameExtractTimer;
     
     BitmapOpenGLView *_bitmapOpenGLView;

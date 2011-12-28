@@ -51,5 +51,6 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callbac
 - (void)noteSourceIdentifierHasDisconnected:(NSString *)sourceIdentifier;
 
 - (void)logFormat:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2);
+//- (void)outputFormatToCurrentCSVFile:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2);
 
 @end

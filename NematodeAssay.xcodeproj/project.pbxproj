@@ -462,17 +462,16 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
-		218DD53413453FC5000B6475 /* Other Frameworks */ = {
+		21A45B0A134F5F3800A075BF /* NematodeAssay Views */ = {
 			isa = PBXGroup;
 			children = (
-				218DD53513453FC5000B6475 /* AppKit.framework */,
-				218DD53613453FC5000B6475 /* CoreData.framework */,
-				218DD53713453FC5000B6475 /* Foundation.framework */,
+				21CC725A1348CA5F001146DA /* BitmapOpenGLView.h */,
+				21CC725B1348CA5F001146DA /* BitmapOpenGLView.m */,
 			);
-			name = "Other Frameworks";
+			name = "NematodeAssay Views";
 			sourceTree = "<group>";
 		};
-		21A96B7912D1696D002E1DC6 /* NematodeAssay */ = {
+		21A96B7912D1696D002E1DC6 /* NematodeAssay Controllers */ = {
 			isa = PBXGroup;
 			children = (
 				218DD55D1345445B000B6475 /* NematodeAssayAppDelegate.h */,
@@ -483,9 +482,8 @@
 				2180AC671346BB99008AF87B /* DocumentController.m */,
 				21426FAD134683DA00AF78E5 /* VideoSourceController.h */,
 				21426FAE134683DA00AF78E5 /* VideoSourceController.m */,
-				21CC725A1348CA5F001146DA /* BitmapOpenGLView.h */,
-				21CC725B1348CA5F001146DA /* BitmapOpenGLView.m */,
 			);
+			name = "NematodeAssay Controllers";
 			path = NematodeAssay;
 			sourceTree = "<group>";
 		};
@@ -513,7 +511,8 @@
 		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
 			isa = PBXGroup;
 			children = (
-				21A96B7912D1696D002E1DC6 /* NematodeAssay */,
+				21A96B7912D1696D002E1DC6 /* NematodeAssay Controllers */,
+				21A45B0A134F5F3800A075BF /* NematodeAssay Views */,
 				21EBDA26134AD3BA00736245 /* Image Processing */,
 				29B97315FDCFA39411CA2CEA /* Other Sources */,
 				21FA749512CD579300D11B6D /* Third Party */,
@@ -544,8 +543,10 @@
 				21CC72051347EDD4001146DA /* CoreVideo.framework */,
 				21E779A012D323D6006C1554 /* ApplicationServices.framework */,
 				215AB59712CECC190047B13F /* Accelerate.framework */,
+				218DD53513453FC5000B6475 /* AppKit.framework */,
+				218DD53613453FC5000B6475 /* CoreData.framework */,
+				218DD53713453FC5000B6475 /* Foundation.framework */,
 				218DD5271345253D000B6475 /* libz.dylib */,
-				218DD53413453FC5000B6475 /* Other Frameworks */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";

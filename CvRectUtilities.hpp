@@ -55,3 +55,10 @@ static inline CvRect outsetRect(CvRect rect, int dx, int dy)
     rect.height += dy * 2;
     return rect;
 }
+
+static inline void fastSetImageZero(IplImage *image)
+{
+    assert(image->nChannels != 4);
+    memset(image->imageData, 0, image->imageSize);
+}
+

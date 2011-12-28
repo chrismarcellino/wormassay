@@ -68,6 +68,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 {
     if ((self = [super init])) {
         [self setHasUndoManager:NO];
+        _bitmapOpenGLView = [[BitmapOpenGLView alloc] init];
     }
     
     return self;
@@ -98,13 +99,13 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
         
         ProcessLog(@"Opened device \"%@\" with model ID \"%@\"", _sourceIdentifier, [_captureDevice modelUniqueID]);
     } else if ([absoluteURL isFileURL]) {
-        _movieFrameExtractQueue = dispatch_queue_create("Movie frame extraction queue", NULL);
         NSDictionary *attributes = [[NSDictionary alloc] initWithObjectsAndKeys:
                                     absoluteURL, QTMovieURLAttribute,
                                     [NSNumber numberWithBool:YES], QTMovieOpenForPlaybackAttribute,
                                     [NSNumber numberWithBool:NO], QTMovieOpenAsyncOKAttribute,
                                     nil];
         _movie = [[QTMovie alloc] initWithAttributes:attributes error:outError];
+        _movieQueue = dispatch_queue_create("Movie frame extraction queue", NULL);
         [attributes release];
         
         _sourceIdentifier = [[absoluteURL path] retain];
@@ -147,8 +148,8 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
     [_captureDecompressedVideoOutput release];
     
     [_movie release];
-    if (_movieFrameExtractQueue) {
-        dispatch_release(_movieFrameExtractQueue);
+    if (_movieQueue) {
+        dispatch_release(_movieQueue);
     }
     if (_movieFrameExtractTimer) {
         dispatch_release(_movieFrameExtractTimer);
@@ -172,8 +173,8 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 	[window useOptimizedDrawing:YES];       // since there are no overlapping subviews
     [window setOpaque:YES];
     
-    // Create the subview and sets its layer
-    _bitmapOpenGLView = [[BitmapOpenGLView alloc] initWithFrame:contentRect];
+    // Insert the bitmap view into the window (the view is created in init so that it is safe to access by the capture threads without locking)
+    [_bitmapOpenGLView setFrame:contentRect];
     [_bitmapOpenGLView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
     [window setContentView:_bitmapOpenGLView];
     
@@ -209,20 +210,19 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
         NSWindow *window = [[windowControllers objectAtIndex:0] window];
         
         NSSize existingContentMaxSize = [window contentMaxSize];
-        
-        // If the content size is changing, reset the frame
-        if (existingContentMaxSize.width != contentSize.width && existingContentMaxSize.height != contentSize.height) {
-            NSRect existingFrame = [window frame];
-            NSPoint existingTopLeftPoint = NSMakePoint(existingFrame.origin.x, existingFrame.origin.y + existingFrame.size.height);
-            
-            [window setContentSize:contentSize];
-            [window setFrameTopLeftPoint:existingTopLeftPoint];
-        }
-        
         [window setContentMaxSize:contentSize];
         [window setContentMinSize:NSMakeSize(MAX(contentSize.width / 4, MIN(contentSize.width, 256)),
                                              MAX(contentSize.height / 4, MIN(contentSize.height, 256)))];
         [window setContentAspectRatio:contentSize];
+                
+        // If the content size is changing, reset the frame
+        if (existingContentMaxSize.width != contentSize.width && existingContentMaxSize.height != contentSize.height) {
+            NSRect existingFrame = [window frame];
+            NSRect newFrame = [window frameRectForContentRect:NSMakeRect(0.0, 0.0, contentSize.width, contentSize.height)];
+            newFrame.origin.x = existingFrame.origin.x;
+            newFrame.origin.y = existingFrame.origin.y + existingFrame.size.height - newFrame.size.height;
+            [window setFrame:[window constrainFrameRect:newFrame toScreen:[window screen]] display:YES];
+        }
     }
 }
 
@@ -238,6 +238,12 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
                 size = formatSize;
             }
         }
+        
+        // Use a better pre-roll placeholder size
+        NSUInteger formatCount = [[_captureDevice formatDescriptions] count];
+        if (formatCount == 0 || (formatCount == 1 && size.width == 160 && size.height == 120)) {
+            size = NSMakeSize(640.0, 480.0);
+        }
     } else {
         size = [[_movie attributeForKey:QTMovieNaturalSizeAttribute] sizeValue];
     }
@@ -247,7 +253,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 
 - (BOOL)readFromURL:(NSURL *)absoluteURL ofType:(NSString *)typeName error:(NSError **)outError
 {
-    BOOL success;
+    BOOL success = NO;
     
     if (_captureDevice) {
         // Start capture
@@ -272,16 +278,27 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
             }
         }
     } else {
-        // Ensure that we are able to read at least one frame
-        NSDictionary *attributes = [[NSDictionary alloc] initWithObjectsAndKeys:
-                                    QTMovieFrameImageTypeCGImageRef, QTMovieFrameImageType,
-                                    nil];
-        success = [_movie frameImageAtTime:[_movie currentTime] withAttributes:attributes error:outError] != nil;
+        // Calculate a representative retrievable frame time delta. Note that some formats have time scales that vary (which isn't a concern here).
+        [_movie gotoBeginning];
+        QTTime firstFrameTime = [_movie currentTime];
+        [_movie stepForward];
+        QTTime secondFrameTime = [_movie currentTime];
+        [_movie gotoBeginning];
+        NSTimeInterval frameDuration = 0.0;
+        NSTimeInterval firstFrameTimeInterval, secondFrameTimeInterval;
+        if (QTGetTimeInterval(firstFrameTime, &firstFrameTimeInterval) && QTGetTimeInterval(secondFrameTime, &secondFrameTimeInterval)) {
+            frameDuration = secondFrameTimeInterval - firstFrameTimeInterval;
+        }
         
-        if (success) {
+        if (frameDuration > 0.0) {
+            success = YES;
             [_movie detachFromCurrentThread];
             
-            _movieFrameExtractTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, _movieFrameExtractQueue);
+            NSDictionary *attributes = [[NSDictionary alloc] initWithObjectsAndKeys:
+                                        QTMovieFrameImageTypeCGImageRef, QTMovieFrameImageType,
+                                        nil];
+            
+            _movieFrameExtractTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, _movieQueue);
             dispatch_source_set_event_handler(_movieFrameExtractTimer, ^{
                 NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
                 // Migrate the movie to this thread
@@ -311,11 +328,10 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
                 [QTMovie exitQTKitOnThread];
                 [pool release];
             });
-            // Assume 30 fps input source (if we can decode frame by frame that fast, which is unlikely)
-            dispatch_source_set_timer(_movieFrameExtractTimer, 0, 1.0 / 30.0 * NSEC_PER_SEC, 0);
+            dispatch_source_set_timer(_movieFrameExtractTimer, 0, frameDuration * NSEC_PER_SEC, 0);
             dispatch_resume(_movieFrameExtractTimer);
+            [attributes release];
         }
-        [attributes release];
     }
     
     return success;
