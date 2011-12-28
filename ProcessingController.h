@@ -42,13 +42,13 @@ typedef enum {
 
 + (ProcessingController *)sharedInstance;
 
+- (void)noteSourceIdentifierHasDisconnected:(NSString *)sourceIdentifier;
+
 // Caller is responsible for calling cvReleaseImage() on debugFrame. Block will be called on an arbitrary thread. 
 - (void)processVideoFrame:(IplImage *)videoFrame
      fromSourceIdentifier:(NSString *)sourceIdentifier
         presentationTime:(NSTimeInterval)presentationTime
 debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callback;
-
-- (void)noteSourceIdentifierHasDisconnected:(NSString *)sourceIdentifier;
 
 - (void)logFormat:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2);
 //- (void)outputFormatToCurrentCSVFile:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2);

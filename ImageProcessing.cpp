@@ -282,7 +282,7 @@ bool plateSequentialCirclesAppearSameAndStationary(const std::vector<cv::Vec3f> 
     return distance < (radiusPrevious + radiusCurrent) / 2.0 / 10.0;
 }
 
-extern IplImage *createEdgeImageForWellImageFromImage(IplImage *plateImage, cv::Vec3f wellCircle, float &filledArea)
+IplImage *createEdgeImageForWellImageFromImage(IplImage *plateImage, cv::Vec3f wellCircle, float &filledArea)
 {
     // Copy the grayscale subimage corresponding to the circle's bounding square
     float radius = wellCircle[2];
@@ -306,9 +306,15 @@ extern IplImage *createEdgeImageForWellImageFromImage(IplImage *plateImage, cv::
     IplImage* edges = cvCreateImage(cvGetSize(graySubimage), IPL_DEPTH_8U, 1);
     cvCanny(graySubimage, edges, 50, 100);
     
+    /// XXXX FIND CONNECTED IMAGES
     
-    
-    cvReleaseImage(&edges);
+//    cvReleaseImage(&edges);
     cvReleaseImage(&graySubimage);
     
+    return edges;
+}
+
+float getMotionDeltaBetweenEdgeFrames(IplImage *previousFrame, IplImage *currentFrame)
+{
+    return 0.0;     ///XXXXXXXXXXXXXXXX TODO
 }
