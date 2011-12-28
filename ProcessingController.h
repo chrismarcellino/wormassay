@@ -20,26 +20,8 @@ typedef enum {
 
 
 // Thread-safe.
-@interface ProcessingController : NSObject {
-    dispatch_queue_t _queue;        // protects all state and serializes
-    dispatch_queue_t _debugFrameCallbackQueue;
-    CvFont debugImageFont;
-    
-    ProcessingState _processingState;
-    NSString *_wellCameraSourceIdentifier;
-    NSMutableArray *_connectedSourceIdentifiers;
-    NSMutableArray *_wellFindingInProcessSourceIdentifiers;
-    NSMutableArray *_barcodeFindingInProcessSourceIdentifiers;
-    int _wellCountHint;
-#if __cplusplus     // hide C++ ivars from non C++ clients. This is only safe to do on the 64-bit Objective-C ABI, which this app requires.
-    std::vector<cv::Vec3f> _baselineWellCircles;
-    std::map<std::string, std::vector<cv::Vec3f> > _lastCirclesMap;    // for debugging
-#endif
-    
-    NSTimeInterval _firstWellFrameTime;
-    NSTimeInterval _startOfTrackingMotionTime;
-    NSString *_barcode;
-}
+@interface ProcessingController : NSObject
+// Instance variables are in the implementation file as they contain C++ objects
 
 + (ProcessingController *)sharedInstance;
 

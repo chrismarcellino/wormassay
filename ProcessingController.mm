@@ -9,7 +9,24 @@
 #import "ProcessingController.h"
 #import "ImageProcessing.hpp"
 
-@interface ProcessingController()
+@interface ProcessingController() {
+    dispatch_queue_t _queue;        // protects all state and serializes
+    dispatch_queue_t _debugFrameCallbackQueue;
+    CvFont debugImageFont;
+    
+    ProcessingState _processingState;
+    NSString *_wellCameraSourceIdentifier;
+    NSMutableArray *_connectedSourceIdentifiers;
+    NSMutableArray *_wellFindingInProcessSourceIdentifiers;
+    NSMutableArray *_barcodeFindingInProcessSourceIdentifiers;
+    int _wellCountHint;
+    std::vector<cv::Vec3f> _baselineWellCircles;
+    std::map<std::string, std::vector<cv::Vec3f> > _lastCirclesMap;    // for debugging
+    
+    NSTimeInterval _firstWellFrameTime;
+    NSTimeInterval _startOfTrackingMotionTime;
+    NSString *_barcode;
+}
 
 - (void)performWellDeterminationCalculationAsyncWithFrameTakingOwnership:(IplImage *)videoFrame
                                                     fromSourceIdentifier:(NSString *)sourceIdentifier
@@ -107,7 +124,9 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callbac
         }
         
         // If we are capturing, begin searching frames for a barcode until we obtrain one for this plate
-        if (!_barcode && _processingState == ProcessingStateTrackingMotion && ![_barcodeFindingInProcessSourceIdentifiers containsObject:sourceIdentifier]) {
+        if (!_barcode &&
+            _processingState == ProcessingStateTrackingMotion &&
+            ![_barcodeFindingInProcessSourceIdentifiers containsObject:sourceIdentifier]) {
             [self performBarcodeReadingAsyncWithFrameTakingOwnership:cvCloneImage(videoFrame)
                                                 fromSourceIdentifier:sourceIdentifier
                                                     presentationTime:presentationTime];
