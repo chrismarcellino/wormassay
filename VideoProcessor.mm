@@ -411,25 +411,25 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
                                                                                                          grayscaleImage->width,
                                                                                                          grayscaleImage->height));
         
+        NSString *text = nil;
         // Binarize the image
-        zxing::Ref<zxing::Binarizer> binarizer(new zxing::HybridBinarizer(luminanceSource));
-        zxing::Ref<zxing::BinaryBitmap> binaryBitmap (new zxing::BinaryBitmap(binarizer));
-        
-        // Search for barcodes
-        zxing::Ref<zxing::MultiFormatReader> reader(new zxing::MultiFormatReader());
-        zxing::DecodeHints hints;
-        hints.addFormat(zxing::BarcodeFormat_QR_CODE);
-        hints.addFormat(zxing::BarcodeFormat_DATA_MATRIX);
-        hints.addFormat(zxing::BarcodeFormat_CODE_128);
-        hints.addFormat(zxing::BarcodeFormat_CODE_39);
-        hints.setTryHarder(true);           // rotate images in search of barcodes, etc.
-        NSString *text;
         try {
+            zxing::Ref<zxing::Binarizer> binarizer(new zxing::HybridBinarizer(luminanceSource));
+            zxing::Ref<zxing::BinaryBitmap> binaryBitmap (new zxing::BinaryBitmap(binarizer));
+            
+            // Search for barcodes
+            zxing::Ref<zxing::MultiFormatReader> reader(new zxing::MultiFormatReader());
+            zxing::DecodeHints hints;
+            hints.addFormat(zxing::BarcodeFormat_QR_CODE);
+            hints.addFormat(zxing::BarcodeFormat_DATA_MATRIX);
+            hints.addFormat(zxing::BarcodeFormat_CODE_128);
+            hints.addFormat(zxing::BarcodeFormat_CODE_39);
+            hints.setTryHarder(true);           // rotate images in search of barcodes, etc.
+            
             zxing::Ref<zxing::Result> barcodeResult = reader->decode(binaryBitmap, hints);
-            text = [[NSString alloc] initWithUTF8String:barcodeResult->getText()->getText().c_str()];
-        } catch (zxing::ReaderException &e) {
-            // No barcode found
-            text = nil;
+            text = [NSString stringWithUTF8String:barcodeResult->getText()->getText().c_str()];
+        } catch (...) {
+            // No barcode found or error binarizing image
         }
         
         // Process and store the results when holding _queue
@@ -452,7 +452,6 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
             }
         });
         
-        [text release];
         cvReleaseImage(&grayscaleImage);
     });
 }
