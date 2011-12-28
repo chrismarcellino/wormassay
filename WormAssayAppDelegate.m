@@ -16,8 +16,6 @@
 #import <IOKit/pwr_mgt/IOPMLib.h>
 
 static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCameras";
-static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
-static NSString *const EncodingWindowAutosaveName = @"EncodingWindow";
 
 @interface WormAssayAppDelegate ()
 
@@ -29,7 +27,7 @@ static NSString *const EncodingWindowAutosaveName = @"EncodingWindow";
 
 @implementation WormAssayAppDelegate
 
-@synthesize assayAnalyzerMenu;
+@synthesize assayAnalyzerMenu, runLogTextView, runLogScrollView, encodingTableView;
 
 - (void)applicationWillFinishLaunching:(NSNotification *)notification
 {
@@ -42,57 +40,13 @@ static NSString *const EncodingWindowAutosaveName = @"EncodingWindow";
     // Create our NSDocumentController subclass first
     [[[DocumentController alloc] init] autorelease];
     
-    // Create the logging window and associate it with the VideoProcessorController
-    NSRect screenFrame = [[NSScreen mainScreen] visibleFrame];
-    NSRect rect = screenFrame;
-    rect.size.width = MIN(1000, rect.size.width);
-    rect.size.height = MIN(200, rect.size.height);
-    NSUInteger styleMask = NSTitledWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask | NSUtilityWindowMask;
-    _loggingPanel = [[NSPanel alloc] initWithContentRect:rect styleMask:styleMask backing:NSBackingStoreBuffered defer:YES];
-    [_loggingPanel setTitle:NSLocalizedString(@"Run Log", nil)];
-    [_loggingPanel setFrameUsingName:LoggingWindowAutosaveName];
-    [_loggingPanel setFrameAutosaveName:LoggingWindowAutosaveName];
-    
-    rect.origin = NSZeroPoint;
-    NSScrollView *scrollView = [[NSScrollView alloc] initWithFrame:rect];
-    [scrollView setBorderType:NSNoBorder];
-    [scrollView setHasVerticalScroller:YES];
-    [scrollView setHasHorizontalScroller:YES];
-    [scrollView setAutohidesScrollers:YES];
-    [scrollView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-    NSTextView *textView = [[NSTextView alloc] initWithFrame:rect];
-    [textView setEditable:NO];
-    [textView setVerticallyResizable:YES];
-    [textView setHorizontallyResizable:YES];
-    [textView setContinuousSpellCheckingEnabled:NO];
-    [textView setAllowsUndo:NO];
-    [textView setAutoresizingMask:NSViewWidthSizable];
-    [[textView textContainer] setWidthTracksTextView:NO];
-    [[textView textContainer] setContainerSize:NSMakeSize(FLT_MAX, FLT_MAX)];
-    [scrollView setDocumentView:textView];
-    [_loggingPanel setContentView:scrollView];
-    [_loggingPanel orderFront:self];
-        
+    // Set up the logging panel
+    _loggingPanelWindowController = [[NSWindowController alloc] initWithWindowNibName:@"LoggingPanel" owner:self];
+    [_loggingPanelWindowController showWindow:self];
     VideoProcessorController *videoProcessorController = [VideoProcessorController sharedInstance];
-    [videoProcessorController setRunLogTextView:textView];
-    [videoProcessorController setRunLogScrollView:scrollView];
-    
-    [textView release];
-    [scrollView release];
-
-    // Create the encoding panel
-    rect.origin.x = NSMaxX(rect) + 10;
-    rect.size.width = 170;
-    _encodingPanel = [[NSPanel alloc] initWithContentRect:rect styleMask:styleMask backing:NSBackingStoreBuffered defer:YES];
-    [_encodingPanel setTitle:NSLocalizedString(@"Encoding", nil)];
-    [_encodingPanel setFrameUsingName:EncodingWindowAutosaveName];
-    [_encodingPanel setFrameAutosaveName:EncodingWindowAutosaveName];
-    NSTableView *tableView = [[NSTableView alloc] initWithFrame:rect];
-    [tableView setUsesAlternatingRowBackgroundColors:YES];
-    [_encodingPanel setContentView:tableView];
-    [tableView release];
-    [_encodingPanel orderFront:self];
-    [videoProcessorController setEncodingTableView:tableView];
+    [videoProcessorController setRunLogTextView:runLogTextView];
+    [videoProcessorController setRunLogScrollView:runLogScrollView];
+    [videoProcessorController setEncodingTableView:encodingTableView];
     
     // Set analyzer menu item delegate
     [[self assayAnalyzerMenu] setDelegate:self];
@@ -267,6 +221,11 @@ static NSString *const EncodingWindowAutosaveName = @"EncodingWindow";
     }
     
     return reply;
+}
+
+- (void)applicationWillTerminate:(NSNotification *)notification
+{
+    [[VideoProcessorController sharedInstance] terminateAllConversionJobsForAppTerminationSynchronously];
 }
 
 - (IBAction)openRunOutputFolder:(id)sender

@@ -28,7 +28,7 @@ static const char* WellOccupancyID = "Well Occupancy";
     if ((self = [super init])) {
         _numberOfVotingFrames = 5;
         _quorum = 3;
-        _evaluateFramesAmongLastSeconds = 2.0;
+        _evaluateFramesAmongLastSeconds = 1.0;
         _deltaThresholdCutoff = 10;
 
         _lastFrames = [[NSMutableArray alloc] init];

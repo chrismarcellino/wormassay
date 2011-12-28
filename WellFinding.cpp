@@ -283,8 +283,8 @@ static bool findWellCirclesForWellCountUsingImage(IplImage* image,
             circlesVec[i].radius = meanRadius;
         }
     } else {
-        // Otherwise return all of the detected circles at this plate size for debugging
-        score = MAX(1.0 - (double)abs(unfilteredCircles->total - wellCount) / wellCount, 0.0);
+        // Otherwise return all of the detected circles at this plate size for debugging. Use the filtered circles to derive the score.
+        score = MAX(1.0 - (double)abs(circles->total - wellCount) / wellCount, 0.0);
         circlesVec = convertCvVec3fSeqToCircleVector(unfilteredCircles);
     }
     cvReleaseMemStorage(&storage);

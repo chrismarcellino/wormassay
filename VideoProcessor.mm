@@ -1,5 +1,5 @@
 //
-//  VideoProcessor.m
+//  VideoProcessor.mm
 //  WormAssay
 //
 //  Created by Chris Marcellino on 4/5/11.
@@ -24,6 +24,8 @@ static const NSTimeInterval MinimumWellMatchTimeToBeginTracking = 0.500; // 500 
 static const NSTimeInterval BarcodeScanningPeriod = 0.5;
 static const NSTimeInterval BarcodeRepeatSuccessCount = 3;
 static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
+static const double WellDetectingAverageDeltaEndIdleThreshold = 5.0;
+static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
 
 @interface VideoProcessor() {
     id<VideoProcessorDelegate> _delegate;        // not retained
@@ -40,8 +42,10 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     
     ProcessingState _processingState;
     int _wellCountHint;
+    CvScalar _lastWellAnalyzedFrameAverageValues;
     NSTimeInterval _firstWellFrameTime;     // not the begining of tracking
     NSTimeInterval _lastBarcodeScanTime;
+    NSTimeInterval _lastWellAnalysisBeginTime;  // the last time a well finding analysis was started. used to do idling when no plates present.
     
     id<AssayAnalyzer> _assayAnalyzer;
     PlateData *_plateData;
@@ -73,6 +77,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         [_recordingCaptureOutput setDelegate:self];
         _queue = dispatch_queue_create("video-processor", NULL);
         _debugFrameCallbackQueue = dispatch_queue_create("video-processor-callback", NULL);
+        _lastWellAnalysisBeginTime = PresentationTimeDistantPast;
     }
     return self;
 }
@@ -128,9 +133,25 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         
         // If we're not already searching for wells, and no other processor has a plate, schedule an async processing
         if (!_scanningForWells && _shouldScanForWells) {
-            VideoFrame *copy = [videoFrame copy];
-            [self performWellDeterminationCalculationAsyncWithFrame:copy];
-            [copy release];
+            // See if this plate looks grossly different from the last one we scanned.
+            // If so, scan immediately, otherwise conserve CPU by scanning periodically.
+            CvScalar currentAvg = cvAvg([videoFrame image]);
+            double averageDelta = ABS(currentAvg.val[0] - _lastWellAnalyzedFrameAverageValues.val[0]) +
+                                    ABS(currentAvg.val[1] - _lastWellAnalyzedFrameAverageValues.val[1]) +
+                                    ABS(currentAvg.val[2] - _lastWellAnalyzedFrameAverageValues.val[2]) / 3;
+            
+            // Always scan if we are not idle, and scan if the average values change signifigantly or if we haven't scanned in a while
+            if (_processingState != ProcessingStateNoPlate ||
+                averageDelta > WellDetectingAverageDeltaEndIdleThreshold ||
+                _lastWellAnalysisBeginTime + WellDetectingUnconditionalSearchPeriod < CACurrentMediaTime()) {
+                // Begin an async well finding analysis
+                _lastWellAnalysisBeginTime = CACurrentMediaTime();
+                _lastWellAnalyzedFrameAverageValues = currentAvg;
+                
+                VideoFrame *copy = [videoFrame copy];
+                [self performWellDeterminationCalculationAsyncWithFrame:copy];
+                [copy release];
+            }
         }
         
         // Always look for barcodes since another camera might have a plate

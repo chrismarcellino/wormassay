@@ -33,6 +33,7 @@
     NSMutableArray *_pendingConversionPaths;
     NSTask *_conversionTask;
     BOOL _pauseJobs;
+    BOOL _isAppTerminating;
     
     NSDictionary *_runLogTextAttributes;    // main thread only
 }
@@ -50,6 +51,7 @@
 - (BOOL)isTracking;
 - (BOOL)supportsConversion;
 - (BOOL)hasConversionJobsQueuedOrRunning;
+- (void)terminateAllConversionJobsForAppTerminationSynchronously;
 
 @property(retain) NSTextView *runLogTextView;
 @property(retain) NSScrollView *runLogScrollView;

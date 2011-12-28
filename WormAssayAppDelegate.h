@@ -11,12 +11,14 @@
 @class VideoProcessor;
 
 @interface WormAssayAppDelegate : NSObject <NSApplicationDelegate, NSMenuDelegate> {
-    NSPanel *_loggingPanel;
-    NSPanel *_encodingPanel;
+    NSWindowController *_loggingPanelWindowController;
     NSWindowController *_loggingAndNotificationWindowController;
 }
 
 @property(nonatomic, retain) IBOutlet NSMenu *assayAnalyzerMenu;
+@property(nonatomic, retain) IBOutlet NSTextView *runLogTextView;
+@property(nonatomic, retain) IBOutlet NSScrollView *runLogScrollView;
+@property(nonatomic, retain) IBOutlet NSTableView *encodingTableView;
 
 - (IBAction)openRunOutputFolder:(id)sender;
 - (IBAction)showLoggingAndNotificationSettings:(id)sender;

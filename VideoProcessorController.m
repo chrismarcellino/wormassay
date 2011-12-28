@@ -27,10 +27,14 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
 @interface VideoProcessorController ()
 
 - (void)emailRecentResults;
-- (void)enqueueConversionJobForPath:(NSURL *)sourceVideoURL;
+
+- (void)enqueueConversionJobForPath:(NSString *)sourceVideoPath;
 - (void)dequeueNextConversionJobIfNecessary;
-- (void)conversionTaskEnded;
+- (void)setConversionJobsPaused:(BOOL)paused;;
+- (void)taskDidTerminate:(NSNotification *)note;
+- (void)handleConversionTaskTermination;
 - (void)updateEncodingTableView;
+
 - (void)appendString:(NSString *)string toPath:(NSString *)path;
 
 @end
@@ -62,6 +66,8 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
         _captureDevicesToSessions = [[NSMapTable mapTableWithStrongToStrongObjects] retain]; 
         _filesToEmail = [[NSMutableSet alloc] init];
         _pendingConversionPaths = [[NSMutableArray alloc] init];
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(taskDidTerminate:) name:NSTaskDidTerminateNotification object:nil];
     }
     
     return self;
@@ -69,6 +75,8 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
 
 - (void)dealloc
 {
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:NSTaskDidTerminateNotification object:nil];
+    
     [_videoProcessors release];
     [_currentlyTrackingProcessor release];
     [_barcodesSinceTrackingBegan release];
@@ -205,6 +213,8 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
                     [processor setShouldScanForWells:NO];
                 }
             }
+            
+            [self setConversionJobsPaused:YES];
         }
     });
 }
@@ -233,6 +243,7 @@ stopRecordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
             for (VideoProcessor *processor in _videoProcessors) {
                 [processor setShouldScanForWells:YES];
             }
+            [self setConversionJobsPaused:NO];
             
             // Determine the filename prefix to log to. Rotate the log files if we've been idle for a time and update the run date if necessary
             if (!_currentOutputFilenamePrefix || _currentOutputLastWriteTime + LogTurnoverIdleInterval < CACurrentMediaTime()) {
@@ -419,7 +430,7 @@ stopRecordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
         if (destinationURL) {
             // Move the file into place
             if ([fileManager moveItemAtURL:outputFileURL toURL:destinationURL error:&fileManagerError]) {
-                RunLog(@"Wrote video at \"%@\" to disk.", [outputFileURL path]);
+                RunLog(@"Wrote video at \"%@\" to disk.", [destinationURL path]);
                 
                 [self enqueueConversionJobForPath:[destinationURL path]];
             } else {
@@ -455,6 +466,9 @@ static inline BOOL isValidPath(NSString *path, NSFileManager *fileManager)
     
     NSString *path = [[NSBundle mainBundle] pathForAuxiliaryExecutable:@"HandBrakeCLI"];
     if (!isValidPath(path, fileManager)) {
+        path = [[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"HandBrakeCLI"];
+    }
+    if (!isValidPath(path, fileManager)) {
         path = [@"~/Applications/HandBrakeCLI" stringByExpandingTildeInPath];
     }
     if (!isValidPath(path, fileManager)) {
@@ -485,6 +499,7 @@ static inline BOOL isValidPath(NSString *path, NSFileManager *fileManager)
         dispatch_async(_queue, ^{
             [_pendingConversionPaths addObject:sourceVideoPath];
             [self dequeueNextConversionJobIfNecessary];
+            [self updateEncodingTableView];
         });
     }
     
@@ -499,7 +514,7 @@ static NSString *outputPathForInputJobPath(NSString *inputPath)
 - (void)dequeueNextConversionJobIfNecessary
 {
     dispatch_async(_queue, ^{
-        if (!_pauseJobs && !_conversionTask && [_pendingConversionPaths count] > 0) {
+        if (!_isAppTerminating && !_pauseJobs && !_conversionTask && [_pendingConversionPaths count] > 0) {
             NSString *inputPath = [_pendingConversionPaths objectAtIndex:0];
             NSString *outputPath = outputPathForInputJobPath(inputPath);
             
@@ -515,10 +530,11 @@ static NSString *outputPathForInputJobPath(NSString *inputPath)
                                       @"--encoder", @"x264", @"--format", @"mp4", @"--quality", @"22", @"--strict-anamorphic",
                                       @"--audio", @"none", @"--large-file", nil];
                 [_conversionTask setArguments:arguments];
-                
-                [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(conversionTaskEnded) name:NSTaskDidTerminateNotification object:_conversionTask];
-                [_conversionTask launch];
-                RunLog(@"Started H.264 encoding job for \"%@\".", sourceVideoPath);
+                // Must launch task on main thread to ensure that a thread is around to service the death notification
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [_conversionTask launch];
+                });
+                RunLog(@"Started H.264 encoding job for \"%@\".", inputPath);
                 
                 [self updateEncodingTableView];
             }
@@ -526,38 +542,46 @@ static NSString *outputPathForInputJobPath(NSString *inputPath)
     });
 }
 
-- (void)conversionTaskEnded
+- (void)taskDidTerminate:(NSNotification *)note
 {
-     dispatch_async(_queue, ^{
-         NSAssert(![_conversionTask isRunning], @"task is running");
-         NSString *inputPath = [_pendingConversionPaths objectAtIndex:0];
-         NSString *outputPath = outputPathForInputJobPath(inputPath);
-         NSAssert([[_conversionTask arguments] containsObject:inputPath] && [[_conversionTask arguments] containsObject:outputPath],
-                  @"task doesn't match head of queue");
-         
-         [[NSNotificationCenter defaultCenter] removeObserver:self name:NSTaskDidTerminateNotification object:_conversionTask];
-         
-         // Delete the input file if the output file exists and the process exited without an error code or crashing
-         NSFileManager *fileManager = [[NSFileManager alloc] init];
-         if ([_conversionTask terminationReason] == NSTaskTerminationReasonExit &&
-             [_conversionTask terminationStatus] == 0 &&
-             [fileManager fileExistsAtPath:inputPath]) {
-             RunLog(@"H.264 encoding completed successfully for \"%@\"", outputPath);
-             [fileManager removeItemAtPath:inputPath error:NULL];
-         } else {
-             // Otherwise delete the output and leave the input file
-             RunLog(@"H.264 encoding failed for \"%@\". See the Console application for more information. Leaving unencoded original file in place.", inputPath);
-             [fileManager removeItemAtPath:outputPath error:NULL];
-         }
-         [fileManager release];
-         
-         [_conversionTask release];
-         _conversionTask = nil;
-         
-         // Start the next job
-         [self dequeueNextConversionJobIfNecessary];
-         [self updateEncodingTableView];
-     });
+    dispatch_async(_queue, ^{
+        if (_conversionTask == [note object]) {
+            [self handleConversionTaskTermination];
+        }
+    });
+}
+
+// requires _queue to be held
+- (void)handleConversionTaskTermination
+{
+    NSAssert(_conversionTask && ![_conversionTask isRunning], @"no terminated task");
+    NSString *inputPath = [_pendingConversionPaths objectAtIndex:0];
+    NSString *outputPath = outputPathForInputJobPath(inputPath);
+    NSAssert([[_conversionTask arguments] containsObject:inputPath] && [[_conversionTask arguments] containsObject:outputPath],
+             @"task doesn't match head of queue");
+    
+    [_pendingConversionPaths removeObjectAtIndex:0];
+    
+    // Delete the input file if the output file exists and the process exited without an error code or crashing
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    if ([_conversionTask terminationReason] == NSTaskTerminationReasonExit &&
+        [_conversionTask terminationStatus] == 0 &&
+        [fileManager fileExistsAtPath:inputPath]) {
+        RunLog(@"H.264 encoding completed successfully for \"%@\"", outputPath);
+        [fileManager removeItemAtPath:inputPath error:NULL];
+    } else {
+        // Otherwise delete the output and leave the input file
+        RunLog(@"H.264 encoding failed for \"%@\". See the Console application for more information. Leaving unencoded original file in place.", inputPath);
+        [fileManager removeItemAtPath:outputPath error:NULL];
+    }
+    [fileManager release];
+    
+    [_conversionTask release];
+    _conversionTask = nil;
+    
+    // Start the next job
+    [self dequeueNextConversionJobIfNecessary];
+    [self updateEncodingTableView];
 }
 
 - (void)setConversionJobsPaused:(BOOL)paused
@@ -579,18 +603,34 @@ static NSString *outputPathForInputJobPath(NSString *inputPath)
     });
 }
 
+- (BOOL)hasConversionJobsQueuedOrRunning
+{
+    __block BOOL result;
+    dispatch_sync(_queue, ^{
+        result = [_pendingConversionPaths count] > 0;
+    });
+    return result;
+}
+
+- (void)terminateAllConversionJobsForAppTerminationSynchronously
+{
+    dispatch_sync(_queue, ^{
+        if (_conversionTask) {
+            [[_conversionTask retain] autorelease];
+            [_conversionTask terminate];
+            [_conversionTask waitUntilExit];
+            [self handleConversionTaskTermination];
+        }
+        
+        _isAppTerminating = YES;
+    });
+}
+
 - (void)updateEncodingTableView
 {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSTableView *tableView = [self encodingTableView];
-        // Initial table view setup
-        if ([tableView dataSource] != self) {
-            [tableView setDataSource:self];
-            [tableView setAutosaveName:@"EncodingTableView"];
-            [tableView setAutosaveTableColumns:YES];
-            [tableView addTableColumn:[[[NSTableColumn alloc] initWithIdentifier:@"Path"] autorelease]];
-            [tableView addTableColumn:[[[NSTableColumn alloc] initWithIdentifier:@"Status"] autorelease]];
-        }
+        [tableView setDataSource:self];
         [tableView reloadData];
     });
 }
@@ -608,24 +648,13 @@ static NSString *outputPathForInputJobPath(NSString *inputPath)
 {
     __block id value = nil;
     dispatch_sync(_queue, ^{
-        if ([[tableColumn identifier] isEqual:@"Path"]) {
-            value = [[[_pendingConversionPaths objectAtIndex:row] retain] autorelease];
-        } else if (row == 0) {
-            value = [[NSProgressIndicator alloc] init];
-            [value setStyle:NSProgressIndicatorSpinningStyle];
-            [value startAnimation:nil];
+        value = [[_pendingConversionPaths objectAtIndex:row] lastPathComponent];
+        if (row == 0) {
+            NSString *status = _pauseJobs ? NSLocalizedString(@" (paused)", nil) : NSLocalizedString(@" (processing…)", nil);
+            value = [value stringByAppendingString:status];
         }
     });
-    return value;    
-}
-
-- (BOOL)hasConversionJobsQueuedOrRunning
-{
-    __block BOOL result;
-    dispatch_sync(_queue, ^{
-        result = [_pendingConversionPaths count] > 0;
-    });
-    return result;
+    return value;
 }
 
 // Logging

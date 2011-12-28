@@ -180,6 +180,7 @@
 		21CC724913484A79001146DA /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CC724813484A79001146DA /* QuartzCore.framework */; };
 		21CC725C1348CA5F001146DA /* BitmapOpenGLView.m in Sources */ = {isa = PBXBuildFile; fileRef = 21CC725B1348CA5F001146DA /* BitmapOpenGLView.m */; };
 		21CC725E1348D40B001146DA /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CC725D1348D40B001146DA /* OpenGL.framework */; };
+		21CDD25A1378A83B0000DBEE /* LoggingPanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = 21CDD2581378A83B0000DBEE /* LoggingPanel.xib */; };
 		21E778AE12D322A9006C1554 /* opencv.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 215AB44812CEC7130047B13F /* opencv.hpp */; };
 		21E778AF12D322A9006C1554 /* core.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 215AB44F12CEC72B0047B13F /* core.hpp */; };
 		21E778B012D322A9006C1554 /* core_c.h in Headers */ = {isa = PBXBuildFile; fileRef = 215AB45012CEC72B0047B13F /* core_c.h */; };
@@ -557,6 +558,7 @@
 		21CC725A1348CA5F001146DA /* BitmapOpenGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BitmapOpenGLView.h; sourceTree = SOURCE_ROOT; };
 		21CC725B1348CA5F001146DA /* BitmapOpenGLView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BitmapOpenGLView.m; sourceTree = SOURCE_ROOT; };
 		21CC725D1348D40B001146DA /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		21CDD2591378A83B0000DBEE /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/LoggingPanel.xib; sourceTree = "<group>"; };
 		21E7790912D322A9006C1554 /* libOpenCV.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libOpenCV.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		21E779A012D323D6006C1554 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
 		21EBDA37134AE0F000736245 /* WormAssay-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "WormAssay-Prefix.pch"; sourceTree = "<group>"; };
@@ -795,6 +797,7 @@
 				218DD55C1345441A000B6475 /* WormAssay-Info.plist */,
 				21FF202C137776C1008B819B /* Credits.rtf */,
 				218DD557134543FF000B6475 /* MainMenu.xib */,
+				21CDD2581378A83B0000DBEE /* LoggingPanel.xib */,
 				21400835136E2B650066B8B3 /* LoggingAndNotifications.xib */,
 				218DD57513455374000B6475 /* Worm.icns */,
 			);
@@ -1348,6 +1351,7 @@
 				218DD57613455374000B6475 /* Worm.icns in Resources */,
 				21400837136E2B650066B8B3 /* LoggingAndNotifications.xib in Resources */,
 				21FF202E137776C1008B819B /* Credits.rtf in Resources */,
+				21CDD25A1378A83B0000DBEE /* LoggingPanel.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1559,6 +1563,14 @@
 				218DD558134543FF000B6475 /* en */,
 			);
 			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+		21CDD2581378A83B0000DBEE /* LoggingPanel.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				21CDD2591378A83B0000DBEE /* en */,
+			);
+			name = LoggingPanel.xib;
 			sourceTree = "<group>";
 		};
 		21FF202C137776C1008B819B /* Credits.rtf */ = {
