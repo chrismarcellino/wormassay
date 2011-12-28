@@ -123,7 +123,7 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
             [_movieView setMovie:_movie];
             [_movieView setControllerVisible:NO];
             [_movieView setPreservesAspectRatio:YES];
-            [_movieView setDelegate:self];
+            [_movieView setDelegate:[self retain]];         // released in -close
             
             _sourceIdentifier = [[absoluteURL path] retain];
             RunLog(@"Opened file \"%@\".", _sourceIdentifier);
@@ -308,7 +308,10 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
         [_captureSession stopRunning];
         [_captureDecompressedVideoOutput setDelegate:nil];
         [_movieView pause:self];
-        [_movieView setDelegate:nil];
+        if ([_movieView delegate] == self) {
+            [self autorelease];
+            [_movieView setDelegate:nil];
+        }
     }
     [super close];
 }
@@ -386,6 +389,7 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
     
     VideoFrame *frame = [[VideoFrame alloc] initByCopyingCIImage:image
                                                   usingCIContext:_ciContext
+                                                      bitmapSize:[[_movie attributeForKey:QTMovieNaturalSizeAttribute] sizeValue]
                                               resultChannelCount:4
                                                 presentationTime:CACurrentMediaTime()];
     [self processVideoFrame:frame];
