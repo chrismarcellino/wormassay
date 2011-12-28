@@ -398,13 +398,13 @@ std::vector<float> calculateCannyEdgePixelProportionForWellsFromImages(IplImage 
     }
     
     // Create an inverted circle mask with 0's in the circle. Use only a portion of the circle to conservatively avoid taking the well walls.
-    float inset = 0.9;
+    float inset = 0.85;
     float radius = circles[0][2];
     IplImage *invertedCircleMask = cvCreateImage(cvSize(radius * 2, radius * 2), IPL_DEPTH_8U, 1);
     fastFillImage(invertedCircleMask, 255);
     cvCircle(invertedCircleMask, cvPoint(radius, radius), radius * inset, cvRealScalar(0), CV_FILLED);
     // Create a mask of just the edge pixels
-    inset = 0.6;
+    inset = 0.7;
     IplImage *insetInvertedCircleMask = cvCreateImage(cvSize(radius * 2, radius * 2), IPL_DEPTH_8U, 1);
     fastFillImage(insetInvertedCircleMask, 255);
     cvCircle(insetInvertedCircleMask, cvPoint(radius, radius), radius * inset, cvRealScalar(0), CV_FILLED);
