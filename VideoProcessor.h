@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <QTKit/QTKit.h>
 #import "opencv2/core/core_c.h"
 
 @class VideoFrame;
@@ -25,6 +26,8 @@ typedef enum {
 // Instance variables are declared in the implementation file as they contain C++ objects
 // which would prevent importation by C/Obj-C compilation units
 
+- (id)initWithRecordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput;
+
 - (void)setDelegate:(id<VideoProcessorDelegate>)delegate;
 - (void)setAssayAnalyzerClass:(Class)assayAnalyzerClass;
 
@@ -42,7 +45,11 @@ typedef enum {
 @protocol VideoProcessorDelegate
 
 - (void)videoProcessor:(VideoProcessor *)vp didBeginTrackingPlateAtPresentationTime:(NSTimeInterval)presentationTime;
-- (void)videoProcessor:(VideoProcessor *)vp didFinishAcquiringPlateData:(PlateData *)plateData successfully:(BOOL)successfully;
+- (void)videoProcessor:(VideoProcessor *)vp
+didFinishAcquiringPlateData:(PlateData *)plateData
+          successfully:(BOOL)successfully
+videoTemporaryFilePath:(NSString *)recordingTempFilePath
+  recommendedExtension:(NSString *)videoExtension;
 - (void)videoProcessor:(VideoProcessor *)vp didCaptureBarcodeText:(NSString *)text atTime:(NSTimeInterval)presentationTime;
 
 @end

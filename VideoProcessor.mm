@@ -13,6 +13,7 @@
 #import "AssayAnalyzer.h"
 #import "WellFinding.hpp"
 #import "VideoProcessorController.h"   // for RunLog()
+#import <QTKit/QTKit.h>
 #import "zxing/common/GreyscaleLuminanceSource.h"
 #import "zxing/MultiFormatReader.h"
 #import "zxing/DecodeHints.h"
@@ -26,6 +27,8 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 
 @interface VideoProcessor() {
     id<VideoProcessorDelegate> _delegate;        // not retained
+    QTCaptureFileOutput *_recordingCaptureOutput;
+    NSString *_temporaryRecordingPath;
     Class _assayAnalyzerClass;
     dispatch_queue_t _queue;        // protects all state and serializes
     dispatch_queue_t _debugFrameCallbackQueue;
@@ -59,9 +62,11 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 
 @implementation VideoProcessor
 
-- (id)init
+- (id)initWithRecordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
 {
     if ((self = [super init])) {
+        _recordingCaptureOutput = [recordingCaptureOutput retain];
+        [_recordingCaptureOutput setDelegate:self];
         _queue = dispatch_queue_create("video-processor", NULL);
         _debugFrameCallbackQueue = dispatch_queue_create("video-processor-callback", NULL);
     }
@@ -70,6 +75,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 
 - (void)dealloc
 {
+    [_recordingCaptureOutput release];
     dispatch_release(_queue);
     dispatch_release(_debugFrameCallbackQueue);
     [_plateData release];
@@ -283,6 +289,14 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                                 _assayAnalyzer = [[_assayAnalyzerClass alloc] init];
                                 NSAssert1(_assayAnalyzer, @"failed to allocate AssayAnalyzer %@", _assayAnalyzerClass);
                                 [_assayAnalyzer willBeginPlateTrackingWithPlateData:_plateData];
+                                
+                                // Start recording
+                                if (_recordingCaptureOutput) {
+                                    NSAssert(!_temporaryRecordingPath, @"_temporaryRecordingPath already exists");
+                                    NSString *filename = [NSString stringWithFormat:@"WormAssayTempVideoRecording-%x%x", arc4random(), arc4random()];
+                                    _temporaryRecordingPath = [[NSTemporaryDirectory() stringByAppendingPathComponent:filename] retain];
+                                    [_recordingCaptureOutput recordToOutputFileURL:[NSURL fileURLWithPath:_temporaryRecordingPath]];
+                                }
                             } else {
                                 // There is still a plate, but it doesn't match or more likely is still moving moved, or not enough
                                 // time has lapsed, so we stay in this state, but update the circles
@@ -372,27 +386,45 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 {
     [_assayAnalyzer didEndTrackingPlateWithPlateData:_plateData];
     
-    // Send the stats unconditionally and let the controller sort it out
+    // Send the stats and video file information to the video controller
     if (_plateData) {
         NSTimeInterval trackingDuration = [_plateData lastPresentationTime] - [_plateData startPresentationTime];
         BOOL longEnough = trackingDuration >= [_assayAnalyzer minimumTimeIntervalProcessedToReportData] &&
                             [_plateData sampleCount] > [_assayAnalyzer minimumSamplesProcessedToReportData];
+        
+        
+        NSString *extension = nil;
         if (longEnough) {
             RunLog(@"Ended tracking after %.3f seconds (%.1f fps, %.0f%% dropped)",
-                   trackingDuration, [_plateData averageFramesPerSecond], [_plateData droppedFrameProportion] * 100);            
+                   trackingDuration, [_plateData averageFramesPerSecond], [_plateData droppedFrameProportion] * 100);
+            
+            extension = @"m2ts";      // VLC has a default viewer association for this transport file extension, so use it when the video is DV or HDV
         } else {
             RunLog(@"Ignoring truncated run of %.3f seconds", trackingDuration);
         }
-        [_delegate videoProcessor:self didFinishAcquiringPlateData:_plateData successfully:longEnough];
+        
+        [_delegate videoProcessor:self
+      didFinishAcquiringPlateData:_plateData
+                     successfully:longEnough
+           videoTemporaryFilePath:_temporaryRecordingPath
+             recommendedExtension:extension];
     }
     
+    // Stop recording
+    if (_recordingCaptureOutput) {
+        [_recordingCaptureOutput recordToOutputFileURL:nil];
+    }
+    [_temporaryRecordingPath release];
+    _temporaryRecordingPath = nil;
+    
+    // Release the analyzer
     [_assayAnalyzer release];
     _assayAnalyzer = nil;
     
+    // Reset our state and data
     _processingState = ProcessingStateNoPlate;
     [_plateData release];
     _plateData = nil;
-    
     _firstWellFrameTime = PresentationTimeDistantPast;
     _lastBarcodeScanTime = PresentationTimeDistantPast;
     _trackingWellCircles.clear();
@@ -414,6 +446,53 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
             [_plateData incrementFrameDropCount];
         }
     });
+}
+
+// QTCaptureFileOutput delegate methods
+
+- (void)captureOutput:(QTCaptureFileOutput *)captureOutput didStartRecordingToOutputFileAtURL:(NSURL *)fileURL forConnections:(NSArray *)connections
+{
+    
+}
+
+// "This method is called when the file recorder reaches a soft limit, i.e. the set maximum file size or duration.
+// If the delegate returns NO, the file writer will continue writing the same file. If the delegate returns YES and
+// doesn't set a new output file, captureOutput:mustChangeOutputFileAtURL:forConnections:dueToError: will be called.
+// If the delegate returns YES and sets a new output file, recording will continue on the new file."
+- (BOOL)captureOutput:(QTCaptureFileOutput *)captureOutput shouldChangeOutputFileAtURL:(NSURL *)outputFileURL forConnections:(NSArray *)connections dueToError:(NSError *)error
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        // XXXXXXXXXX SHOW ALERTS
+        
+        // XXXXXXXXXXX SET LIMITS (***NOT HERE****) BASED ON FREE SPACE (e.g. 1GB or 1%, whichever is less). 
+        // PREVENT RECORDING IN FIRST PLACE IF THAT IS THE CASE.
+    });
+    return YES;
+}
+
+// "This method is called when the file writer reaches a hard limit, such as space running out on the current disk,
+// or the stream format of the incoming media changing. If the delegate does nothing, the current output file will
+// be set to nil. If the delegate sets a new output file (on a different disk in the case of hitting a disk space limit)
+// recording will continue on the new file."
+- (void)captureOutput:(QTCaptureFileOutput *)captureOutput mustChangeOutputFileAtURL:(NSURL *)outputFileURL forConnections:(NSArray *)connections dueToError:(NSError *)error
+{
+    
+}
+
+// "This method is called whenever a file will be finished, either because recordToFile:/recordToFile:bufferDestination:
+// was called. or an error forced the file to be finished. If the file was forced to be finished due to an error, the error
+// is described in the error parameter. Otherwise, the error parameter equals nil."
+- (void)captureOutput:(QTCaptureFileOutput *)captureOutput willFinishRecordingToOutputFileAtURL:(NSURL *)outputFileURL forConnections:(NSArray *)connections dueToError:(NSError *)error
+{
+    
+}
+
+// "This method is called whenever a file is finished successfully. If the file was forced to be finished due to an error
+// (including errors that resulted in either of the above two methods being called), the error is described in the error
+// parameter. Otherwise, the error parameter equals nil."
+- (void)captureOutput:(QTCaptureFileOutput *)captureOutput didFinishRecordingToOutputFileAtURL:(NSURL *)outputFileURL forConnections:(NSArray *)connections dueToError:(NSError *)error
+{
+    
 }
 
 @end

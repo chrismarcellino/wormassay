@@ -89,6 +89,7 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     // Log welcome message
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
     RunLog(@"%@ version %@ launched.", [infoDictionary objectForKey:(id)kCFBundleNameKey], [infoDictionary objectForKey:(id)kCFBundleVersionKey]);
+    RunLog(@"VLC can be used to view the video files created when assaying using a HDV or DV camera. Download it free at http://www.videolan.org/vlc/.");
 }
 
 - (void)assayAnalyzerMenuItemSelected:(NSMenuItem *)sender

@@ -241,10 +241,7 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
 - (BOOL)readFromURL:(NSURL *)absoluteURL ofType:(NSString *)typeName error:(NSError **)outError
 {
     BOOL success = NO;
-    
-    NSAssert(!_processor, @"processor already exists");
-    _processor = [[VideoProcessor alloc] init];
-    [[VideoProcessorController sharedInstance] addVideoProcessor:_processor];
+    QTCaptureFileOutput *recordingCaptureOutput = nil;
     
     if (_captureDevice) {
         // Start capture
@@ -265,6 +262,12 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
                 [_captureDecompressedVideoOutput setDelegate:self];
                 success = [_captureSession addOutput:_captureDecompressedVideoOutput error:outError];
                 if (success) {
+                    recordingCaptureOutput = [[[QTCaptureFileOutput alloc] init] autorelease];
+                    NSError *captureSessionAddError = nil;
+                    if (![_captureSession addOutput:recordingCaptureOutput error:&captureSessionAddError]) {
+                        RunLog(@"Unable to add QTCaptureFileOutput to capture session: %@", captureSessionAddError);
+                        recordingCaptureOutput = nil;
+                    }
                     [_captureSession startRunning];
                 }
             }
@@ -331,6 +334,10 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
             [attributes release];
         }
     }
+    
+    NSAssert(!_processor, @"processor already exists");
+    _processor = [[VideoProcessor alloc] initWithRecordingCaptureOutput:recordingCaptureOutput];
+    [[VideoProcessorController sharedInstance] addVideoProcessor:_processor];
     
     return success;
 }

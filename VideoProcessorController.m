@@ -165,9 +165,15 @@ static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
     });
 }
 
-- (void)videoProcessor:(VideoProcessor *)vp didFinishAcquiringPlateData:(PlateData *)plateData successfully:(BOOL)successfully
+- (void)videoProcessor:(VideoProcessor *)vp
+didFinishAcquiringPlateData:(PlateData *)plateData
+          successfully:(BOOL)successfully
+videoTemporaryFilePath:(NSString *)recordingTempFilePath
+  recommendedExtension:(NSString *)videoExtension
 {
     dispatch_async(_queue, ^{
+        BOOL movieRecordingMoved = NO;
+        
         if (_currentlyTrackingProcessor == vp) {        // may have already been removed from _videoProcessors if device was unplugged/file closed
             for (VideoProcessor *processor in _videoProcessors) {
                 [processor setShouldScanForWells:YES];
@@ -220,10 +226,40 @@ static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
                     [self appendString:rawDataCSVOutput toPath:rawOutputPath];
                 }
                 [rawOutputDictionary release];
+                
+                // Move the video to its destination if necessary. It is safe to move() the file while it may still be open.
+                if (recordingTempFilePath) {
+                    NSFileManager *fileManager = [[NSFileManager alloc] init];
+                    NSString *videoFolder = [folder stringByAppendingPathComponent:@"Videos"];
+                    if (![fileManager fileExistsAtPath:videoFolder]) {
+                        [fileManager createDirectoryAtPath:videoFolder withIntermediateDirectories:YES attributes:nil error:NULL];
+                    }
+                    
+                    NSString *destinationPath = [[videoFolder stringByAppendingPathComponent:
+                                                    [_currentOutputFilenamePrefix stringByAppendingString:@" Video"]]
+                                                    stringByAppendingPathExtension:videoExtension];
+                    
+                    NSError *error = nil;
+                    movieRecordingMoved = [fileManager moveItemAtPath:recordingTempFilePath toPath:destinationPath error:&error];
+                    if (!movieRecordingMoved) {
+                        RunLog(@"Unable to move recording at \"%@\" to \"%@\": %@", recordingTempFilePath, destinationPath, error);
+                    }
+                    [fileManager release];
+                }
             }
             
             [_currentlyTrackingProcessor release];
             _currentlyTrackingProcessor = nil;
+        }
+        
+        if (!movieRecordingMoved && recordingTempFilePath) {
+            NSFileManager *fileManager = [[NSFileManager alloc] init];
+            NSError *error = nil;
+            [fileManager removeItemAtPath:recordingTempFilePath error:&error];
+            if (error) {
+                RunLog(@"Unable to delete recording at \"%@\": %@", recordingTempFilePath, error);
+            }
+            [fileManager release];
         }
     });
 }
