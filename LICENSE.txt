@@ -1,4 +1,4 @@
-WormAssay, Chris Marcellino, McKerrow Lab, UCSF
+WormAssay, Chris Marcellino, Sandler Center, UCSF
 Copyright (C) 2011 Chris Marcellino
 
 This program is free software; you can redistribute it and/or modify
