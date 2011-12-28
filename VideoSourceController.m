@@ -41,7 +41,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 @interface VideoSourceController ()
 
 - (void)adjustWindowSizing;
-- (void)processVideoFrame:(CVImageBufferRef)videoFrame presentationTime:(QTTime)presentationTime;
+- (void)processVideoFrame:(IplImage *)iplImage presentationTime:(QTTime)presentationTime;
 
 @end
 
@@ -92,9 +92,14 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
         }
     } else if ([absoluteURL isFileURL]) {
         _movieFrameExtractQueue = dispatch_queue_create("movie frame extract queue", NULL);
-        _movie = [[QTMovie alloc] initWithURL:absoluteURL error:outError];
+        NSDictionary *attributes = [[NSDictionary alloc] initWithObjectsAndKeys:
+                                    absoluteURL, QTMovieURLAttribute,
+                                    [NSNumber numberWithBool:YES], QTMovieOpenForPlaybackAttribute,
+                                    [NSNumber numberWithBool:NO], QTMovieOpenAsyncOKAttribute,
+                                    nil];
+        _movie = [[QTMovie alloc] initWithAttributes:attributes error:outError];
+        [attributes release];
     }
-    
     
     if (_captureDevice) {
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -232,7 +237,6 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 - (BOOL)readFromURL:(NSURL *)absoluteURL ofType:(NSString *)typeName error:(NSError **)outError
 {
     BOOL success;
-    // XXX Set up analysis machinery here
     
     if (_captureDevice) {
         // Start capture
@@ -262,35 +266,44 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
         QTTime start = { 0, duration.timeScale, 0 };
 
         // Ensure that we are able to read at least one frame
-        NSDictionary *attributes = [[NSDictionary alloc] initWithObjectsAndKeys:QTMovieFrameImageTypeCVPixelBufferRef, QTMovieFrameImageType, nil];
-        success = [_movie frameImageAtTime:_nextExtractTime withAttributes:attributes error:outError] != nil;
+        NSDictionary *attributes = [[NSDictionary alloc] initWithObjectsAndKeys:QTMovieFrameImageTypeCGImageRef, QTMovieFrameImageType, nil];
+        success = [_movie frameImageAtTime:[_movie currentTime] withAttributes:attributes error:outError] != nil;
         
-        [_movie detachFromCurrentThread];
-        
-        _movieFrameExtractTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, _movieFrameExtractQueue);
-        dispatch_source_set_event_handler(_movieFrameExtractTimer, ^{
-            NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-            // Migrate the movie to this thread
-            [QTMovie enterQTKitOnThread];
-            [_movie attachToCurrentThread];
-            
-            CVPixelBufferRef videoFrame = (CVPixelBufferRef)[_movie frameImageAtTime:_nextExtractTime withAttributes:attributes error:nil];
-            [self processVideoFrame:videoFrame presentationTime:_nextExtractTime];
-            QTTime increment = { 1, duration.timeScale, 0 };
-            QTTimeIncrement(_nextExtractTime, increment);
-            
-            // Loop back to the begining if past the end
-            QTTimeRange range = { start, duration };
-            if (!QTTimeInTimeRange(increment, range)) {
-                _nextExtractTime = start;
-            }
-
+        if (success) {
             [_movie detachFromCurrentThread];
-            [QTMovie exitQTKitOnThread];
-            [pool release];
-        });
-        dispatch_source_set_timer(_movieFrameExtractTimer, 0, NSEC_PER_SEC * 1000ull / duration.timeScale, 0);
-        dispatch_resume(_movieFrameExtractTimer);
+            
+            _movieFrameExtractTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, _movieFrameExtractQueue);
+            dispatch_source_set_event_handler(_movieFrameExtractTimer, ^{
+                NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+                // Migrate the movie to this thread
+                [QTMovie enterQTKitOnThread];
+                [_movie attachToCurrentThread];
+                
+                NSError *error = nil;
+                CGImageRef videoFrame = (CGImageRef)[_movie frameImageAtTime:[_movie currentTime] withAttributes:attributes error:&error];
+                if (error) {
+                    NSLog(@"Video frame decode error: %@", error);
+                }
+                if (videoFrame) {
+                    IplImage *iplImage = CreateIplImageFromCGImage(videoFrame, 4);
+                    [self processVideoFrame:iplImage presentationTime:_nextExtractTime];
+                }
+                QTTime increment = { 1, duration.timeScale, 0 };
+                QTTimeIncrement(_nextExtractTime, increment);
+                
+                // Loop back to the begining if past the end
+                QTTimeRange range = { start, duration };
+                if (!QTTimeInTimeRange(increment, range)) {
+                    _nextExtractTime = start;
+                }
+                
+                [_movie detachFromCurrentThread];
+                [QTMovie exitQTKitOnThread];
+                [pool release];
+            });
+            dispatch_source_set_timer(_movieFrameExtractTimer, 0, NSEC_PER_SEC * 1000ull / duration.timeScale, 0);
+            dispatch_resume(_movieFrameExtractTimer);
+        }
         [attributes release];
     }
     
@@ -314,7 +327,8 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
      withSampleBuffer:(QTSampleBuffer *)sampleBuffer
        fromConnection:(QTCaptureConnection *)connection
 {
-    [self processVideoFrame:(CVPixelBufferRef)videoFrame presentationTime:[sampleBuffer presentationTime]];
+    IplImage *iplImage = CreateIplImageFromCVPixelBuffer((CVPixelBufferRef)videoFrame, 4);
+    [self processVideoFrame:iplImage presentationTime:[sampleBuffer presentationTime]];
 }
 
 - (void)captureOutput:(QTCaptureOutput *)captureOutput
@@ -329,12 +343,9 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
 
 // This method will be called on a background thread. It will not be called again until the current call returns.
 // Interviening frames may be dropped if the video is a live capture device source. 
-- (void)processVideoFrame:(CVPixelBufferRef)videoFrame presentationTime:(QTTime)presentationTime
+- (void)processVideoFrame:(IplImage *)iplImage presentationTime:(QTTime)presentationTime
 {
-    // XXX IF ONLY NEED GRAYSCALE, CAN REQUEST YUV NATIVE FORMAT
-    IplImage *iplImage = CreateIplImageFromCVPixelBuffer(videoFrame, 4);
-    
-    assert(iplImage->width * 4 == iplImage->widthStep);     // XXXX TODO ADD CONVERTER
+    NSAssert(iplImage->width * iplImage->nChannels == iplImage->widthStep, @"packed images are required");
     BitmapDrawingData drawingData = { iplImage->imageData, iplImage->width, iplImage->height, GL_BGRA, GL_UNSIGNED_BYTE, releaseIplImage, iplImage };
     [_bitmapOpenGLView drawBitmapTexture:&drawingData];
     

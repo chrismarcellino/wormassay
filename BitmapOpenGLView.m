@@ -69,7 +69,9 @@
     // Create the texture
     glGenTextures(1, &_imageTexture);
     glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _imageTexture);
+    // Enable DMA'ing of the pixel buffers, which requires that we keep the buffer around until the texture is overwritten
     glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
+    glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
     
     CGLUnlockContext(glContext);
 }
@@ -85,37 +87,16 @@
     CGLSetCurrentContext(glContext);
     
     if (drawingData->baseAddress) {
-        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _imageTexture);
-        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-        
-        // If we're changing sizes, formats or types, we need to set the texture data anew
-        if (drawingData->width != _lastDrawingData.width ||
-            drawingData->height != _lastDrawingData.height ||
-            drawingData->glPixelFormat != _lastDrawingData.glPixelFormat ||
-            drawingData->glPixelType != _lastDrawingData.glPixelType) {
-            
-            // Set the texture image
-            glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
-                         0,
-                         4,
-                         drawingData->width,
-                         drawingData->height,
-                         0,
-                         drawingData->glPixelFormat,
-                         drawingData->glPixelType,
-                         drawingData->baseAddress);
-        } else {
-            // Update the existing texture image
-            glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB,
-                            0,
-                            0,
-                            0,
-                            drawingData->width,
-                            drawingData->height,
-                            drawingData->glPixelFormat,
-                            drawingData->glPixelType,
-                            drawingData->baseAddress);
-        }
+        // Set the texture image
+        glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
+                     0,
+                     4,
+                     drawingData->width,
+                     drawingData->height,
+                     0,
+                     drawingData->glPixelFormat,
+                     drawingData->glPixelType,
+                     drawingData->baseAddress);
         
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
@@ -148,7 +129,9 @@
     // Exchange the back buffer for the front buffer
     CGLFlushDrawable(glContext);
     
-    // Save the image for redrawing if necessary and release the previous, unless we are internally performing a re-draw
+    // Save the image for redrawing if necessary and release the previous, unless we are internally performing a re-draw.
+    // We get rid of the previous data after uploading the new texture so that we don't incur a copy of the pixels that we
+    // may have DMA'd. 
     if (drawingData != &_lastDrawingData) {
         [self freeDrawingData];
         _lastDrawingData = *drawingData;

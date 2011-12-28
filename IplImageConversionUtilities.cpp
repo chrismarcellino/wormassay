@@ -9,7 +9,7 @@
 #import "IplImageConversionUtilities.hpp"
 #import "opencv2/opencv.hpp"
 
-static void releaseImage(void *releaseRefCon, const void *baseAddress);
+static inline void premultiplyImage(IplImage *img, bool reverse);
 
 
 IplImage *CreateIplImageFromCVPixelBuffer(CVPixelBufferRef cvImageBuffer, int outChannels)
@@ -22,7 +22,9 @@ IplImage *CreateIplImageFromCVPixelBuffer(CVPixelBufferRef cvImageBuffer, int ou
         bufferChannels = 1;
     } else if (formatType == kCVPixelFormatType_24BGR) {
         bufferChannels = 3;
-    } else if (formatType == kCVPixelFormatType_32BGRA || formatType == kCVPixelFormatType_32ARGB) {        //XXXXXXXXXXXXXX
+    } else if (formatType == kCVPixelFormatType_32BGRA) {
+        bufferChannels = 4;
+    } else if (formatType == kCVPixelFormatType_32ARGB) {
         bufferChannels = 4;
     }
     assert(bufferChannels > 0);
@@ -40,24 +42,24 @@ IplImage *CreateIplImageFromCVPixelBuffer(CVPixelBufferRef cvImageBuffer, int ou
     IplImage *iplImage = NULL;
     if (outChannels == bufferChannels) {
         iplImage = cvCloneImage(iplImageHeader);
-    } else if (outChannels == 1 && bufferChannels == 3) {
-        iplImage = cvCreateImage(cvGetSize(iplImageHeader), IPL_DEPTH_8U, 1);
-        cvCvtColor(iplImageHeader, iplImage, CV_BGR2GRAY);
-    } else if (outChannels == 1 && bufferChannels == 4) {
-        iplImage = cvCreateImage(cvGetSize(iplImageHeader), IPL_DEPTH_8U, 1);
-        cvCvtColor(iplImageHeader, iplImage, CV_BGRA2GRAY);
-    } else if (outChannels == 3 && bufferChannels == 1) {
-        iplImage = cvCreateImage(cvGetSize(iplImageHeader), IPL_DEPTH_8U, 3);
-        cvCvtColor(iplImageHeader, iplImage, CV_GRAY2BGR);
-    } else if (outChannels == 3 && bufferChannels == 4) {
-        iplImage = cvCreateImage(cvGetSize(iplImageHeader), IPL_DEPTH_8U, 3);
-        cvCvtColor(iplImageHeader, iplImage, CV_BGRA2BGR);
-    } else if (outChannels == 4 && bufferChannels == 1) {
-        iplImage = cvCreateImage(cvGetSize(iplImageHeader), IPL_DEPTH_8U, 4);
-        cvCvtColor(iplImageHeader, iplImage, CV_GRAY2BGRA);
-    } else if (outChannels == 4 && bufferChannels == 3) {
-        iplImage = cvCreateImage(cvGetSize(iplImageHeader), IPL_DEPTH_8U, 4);
-        cvCvtColor(iplImageHeader, iplImage, CV_BGRA2BGR);
+    } else {
+        int conversionCode = -1;
+        if (outChannels == 1 && bufferChannels == 3) {
+            conversionCode = CV_BGR2GRAY;
+        } else if (outChannels == 1 && bufferChannels == 4) {
+            conversionCode = CV_BGRA2GRAY;
+        } else if (outChannels == 3 && bufferChannels == 1) {
+            conversionCode = CV_GRAY2BGR;
+        } else if (outChannels == 3 && bufferChannels == 4) {
+            conversionCode = CV_BGRA2BGR;
+        } else if (outChannels == 4 && bufferChannels == 1) {
+            conversionCode = CV_GRAY2BGRA;
+        } else if (outChannels == 4 && bufferChannels == 3) {
+            conversionCode = CV_BGRA2BGR;
+        }
+        
+        iplImage = cvCreateImage(cvGetSize(iplImageHeader), IPL_DEPTH_8U, outChannels);
+        cvCvtColor(iplImageHeader, iplImage, conversionCode);
     }
     cvReleaseImageHeader(&iplImageHeader);
     
@@ -66,43 +68,72 @@ IplImage *CreateIplImageFromCVPixelBuffer(CVPixelBufferRef cvImageBuffer, int ou
     return iplImage;
 }
 
-CVPixelBufferRef CreateCVPixelBufferFromIplImage(IplImage *iplImage)
+IplImage *CreateIplImageFromCGImage(CGImageRef cgImage, int outChannels)
 {
-    return CreateCVPixelBufferFromIplImagePassingOwnership(iplImage, false);
-}
-
-CVPixelBufferRef CreateCVPixelBufferFromIplImagePassingOwnership(IplImage *iplImage, bool passOwnership)
-{
-    if (!passOwnership) {
-        iplImage = cvCloneImage(iplImage);
+    CvSize size = cvSize(CGImageGetWidth(cgImage), CGImageGetHeight(cgImage));
+    // CG can only write into 4 byte aligned bitmaps. We'll convert it later for 3 channels.
+    IplImage *iplImage = cvCreateImage(size, IPL_DEPTH_8U, (outChannels == 3) ? 4 : outChannels);
+    
+    CGBitmapInfo bitmapInfo = kCGImageAlphaNone;
+    if (outChannels == 3) {
+        bitmapInfo = kCGImageAlphaNoneSkipFirst | kCGBitmapByteOrder32Little;        // BGRX. CV_BGRA2BGR will discard the uninitialized alpha channel data.
+    } else if (outChannels == 4) {
+        bitmapInfo = kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little;   // BGRA. Must unpremultiply the image.
     }
     
-    OSType pixelFormatType = 0;
-    if (iplImage->nChannels == 1) {
-        pixelFormatType = kCVPixelFormatType_8Indexed;
-    } else if (iplImage->nChannels == 3) {
-        pixelFormatType = kCVPixelFormatType_24BGR;
-    } else if (iplImage->nChannels == 4) {
-        pixelFormatType = kCVPixelFormatType_32BGRA;
-    }
-    assert(pixelFormatType != 0);
+    CGColorSpaceRef colorSpace = (outChannels == 1) ? CGColorSpaceCreateDeviceGray() : CGColorSpaceCreateDeviceRGB();
+    CGContextRef bitmapContext = CGBitmapContextCreate(iplImage->imageData,
+                                                       iplImage->width,
+                                                       iplImage->height,
+                                                       iplImage->depth,
+                                                       iplImage->widthStep,
+                                                       colorSpace,
+                                                       bitmapInfo);
+    CGColorSpaceRelease(colorSpace);
     
-    CVPixelBufferRef pixelBufferOut = NULL;
-    CVPixelBufferCreateWithBytes(NULL,
-                                 iplImage->width,
-                                 iplImage->height,
-                                 pixelFormatType,
-                                 iplImage->imageData,
-                                 iplImage->widthStep,
-                                 releaseImage,
-                                 iplImage,
-                                 NULL,
-                                 &pixelBufferOut);
-    return pixelBufferOut;
+    // Copy the source bitmap into the destination, ignoring any data in the uninitialized destination
+    CGContextSetBlendMode(bitmapContext, kCGBlendModeCopy);
+    
+    // Drawing CGImage to CGContext
+    CGRect rect = CGRectMake(0.0, 0.0, CGImageGetWidth(cgImage), CGImageGetHeight(cgImage));
+    CGContextDrawImage(bitmapContext, rect, cgImage);
+    CGContextRelease(bitmapContext);
+    
+    // Unpremultiply the alpha channel if the source image had one (since otherwise the alphas are 1)
+    CGImageAlphaInfo alphaInfo = CGImageGetAlphaInfo(cgImage);
+    if (outChannels == 4 && (alphaInfo != kCGImageAlphaNone && alphaInfo != kCGImageAlphaNoneSkipFirst && alphaInfo != kCGImageAlphaNoneSkipLast)) {
+        premultiplyImage(iplImage, true);
+    }
+    
+    // Convert BGRA images to BGR
+    if (outChannels == 3) {
+        IplImage *temp = cvCreateImage(cvGetSize(iplImage), IPL_DEPTH_8U, outChannels);
+        cvCvtColor(iplImage, temp, CV_BGRA2BGR);
+        cvReleaseImage(&iplImage);
+        iplImage = temp;
+    }
+    
+    return iplImage;
 }
 
-static void releaseImage(void *releaseRefCon, const void *baseAddress)
+static inline void premultiplyImage(IplImage *img, bool reverse)
 {
-    IplImage *image = (IplImage *)releaseRefCon;
-    cvReleaseImage(&image);
+    assert(img->depth == IPL_DEPTH_8U);
+    uchar *row = (uchar *)img->imageData;
+    
+    for (int i = 0; i < img->height; i++) {
+        for (int j = 0; j < img->width; j+= img->nChannels) {
+            uchar alpha = row[j + 3];
+            if (alpha != UCHAR_MAX && (!reverse || alpha != 0)) {
+                for (int k = 0; k < 3; k++) {
+                    if (reverse) {
+                        row[j + k] = ((int)row[j + k] * UCHAR_MAX + alpha / 2 - 1) / alpha;
+                    } else {
+                        row[j + k] = ((int)row[j + k] * alpha + UCHAR_MAX / 2 - 1) / UCHAR_MAX;
+                    }
+                }
+            }
+        }
+        row += img->widthStep;
+    }
 }

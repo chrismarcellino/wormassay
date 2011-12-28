@@ -473,10 +473,10 @@
 				2180AC671346BB99008AF87B /* DocumentController.m */,
 				21426FAD134683DA00AF78E5 /* VideoSourceController.h */,
 				21426FAE134683DA00AF78E5 /* VideoSourceController.m */,
-				21CC722D134836BC001146DA /* IplImageConversionUtilities.hpp */,
-				21CC722C134836BC001146DA /* IplImageConversionUtilities.cpp */,
 				21CC725A1348CA5F001146DA /* BitmapOpenGLView.h */,
 				21CC725B1348CA5F001146DA /* BitmapOpenGLView.m */,
+				21CC722D134836BC001146DA /* IplImageConversionUtilities.hpp */,
+				21CC722C134836BC001146DA /* IplImageConversionUtilities.cpp */,
 			);
 			path = NematodeAssay;
 			sourceTree = "<group>";

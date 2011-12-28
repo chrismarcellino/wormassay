@@ -15,12 +15,12 @@ typedef struct {
     size_t height;
     GLenum glPixelFormat;       // e.g. GL_BGRA
     GLenum glPixelType;         // e.g. GL_UNSIGNED_BYTE
-    void (*freeCallback)(void *baseAddress, void *context);     // May be NULL. May be called from any thread.
+    void (*freeCallback)(void *baseAddress, void *context);     // May be NULL. Will be called from any thread.
     void *context;
 } BitmapDrawingData;
 
 
-// Methods are thread-safe (superclass methods are not necessarily)
+// Methods are thread-safe (AppKit superclass methods are not necessarily)
 @interface BitmapOpenGLView : NSOpenGLView {
     // All protected by the context lock
     GLuint _imageTexture;

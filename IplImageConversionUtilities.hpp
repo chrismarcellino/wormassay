@@ -14,10 +14,9 @@
 extern "C" {
 #endif
 
+// CVPixelBuffer conversions that are 32-bit 4bpp packed are optimal straight memcpy()s.
 extern IplImage *CreateIplImageFromCVPixelBuffer(CVPixelBufferRef cvImageBuffer, int outChannels);
-
-extern CVPixelBufferRef CreateCVPixelBufferFromIplImage(IplImage *iplImage);
-extern CVPixelBufferRef CreateCVPixelBufferFromIplImagePassingOwnership(IplImage *iplImage, bool passOwnership);
+extern IplImage *CreateIplImageFromCGImage(CGImageRef cgImage, int outChannels);
 
 #ifdef __cplusplus
 }
