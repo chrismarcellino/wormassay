@@ -46,6 +46,9 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
 @interface VideoSourceDocument ()
 
 - (void)adjustWindowSizing;
+- (void)pixelBufferOrImageHasArrived:(id)pixelBufferOrCIImage isCIImage:(BOOL)isCIImage;
+- (void)processCVPixelBufferSynchronously:(CVPixelBufferRef)pixelBuffer;
+- (void)processCIImageSynchronously:(CIImage *)image;
 - (void)processVideoFrame:(VideoFrame *)image;
 - (void)movieDidEnd;
 
@@ -74,6 +77,7 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
     if ((self = [super init])) {
         [self setHasUndoManager:NO];
         _bitmapOpenGLView = [[BitmapOpenGLView alloc] init];
+        _frameArrivalQueue = dispatch_queue_create("frame-arrival-queue", NULL);
     }
     
     return self;
@@ -147,12 +151,14 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
 
 - (void)dealloc
 {
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:QTMovieDidEndNotification object:_movie];
+    
     [_captureDevice release];
     [_captureSession release];
     [_captureDeviceInput release];
     [_captureDecompressedVideoOutput release];
+    dispatch_release(_frameArrivalQueue);
     
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:QTMovieDidEndNotification object:_movie];
     [_movie release];
     [_movieInvisibleWindow release];
     [_movieView release];
@@ -267,7 +273,6 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
             success = [_captureSession addInput:_captureDeviceInput error:outError];
             if (success) {
                 _captureDecompressedVideoOutput = [[QTCaptureDecompressedVideoOutput alloc] init];
-                [_captureDecompressedVideoOutput setAutomaticallyDropsLateVideoFrames:YES];
                 NSDictionary *bufferAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:
                                                   [NSNumber numberWithInt:kCVPixelFormatType_32BGRA], kCVPixelBufferPixelFormatTypeKey,
                                                   nil];
@@ -335,14 +340,51 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
      withSampleBuffer:(QTSampleBuffer *)sampleBuffer
        fromConnection:(QTCaptureConnection *)connection
 {
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    
+    [self pixelBufferOrImageHasArrived:sampleBuffer isCIImage:NO];
+}
+
+// Called on a background thread when using a pre-recorded movie file
+- (CIImage *)view:(QTMovieView *)view willDisplayImage:(CIImage *)image
+{
+    [self pixelBufferOrImageHasArrived:image isCIImage:YES];
+    return nil;
+}
+
+- (void)pixelBufferOrImageHasArrived:(id)pixelBufferOrCIImage isCIImage:(BOOL)isCIImage
+{
+    dispatch_sync(_frameArrivalQueue, ^{
+        if (_currentlyProcessingFrame) {
+            [_processor noteVideoFrameWasDropped];
+        } else {
+            _currentlyProcessingFrame = YES;
+            
+            // Do processing work on another queue so the arrival queue isn't blocked and new frames can be dropped in the interim
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+                if (isCIImage) {
+                    [self processCIImageSynchronously:(CIImage *)pixelBufferOrCIImage];
+                } else {
+                    [self processCVPixelBufferSynchronously:(CVPixelBufferRef)pixelBufferOrCIImage];
+                }
+                [pool release];
+                
+                // Mark that we're done
+                dispatch_sync(_frameArrivalQueue, ^{
+                    _currentlyProcessingFrame = NO;
+                });
+            });
+        }
+    });
+}
+
+- (void)processCVPixelBufferSynchronously:(CVPixelBufferRef)pixelBuffer
+{
     // Ensure we have the proper frame size for this device, correcting for non-square pixels.
     // QTCaptureDecompressedVideoOutput is guaranteed to be a CVPixelBufferRef.
-    NSSize bufferSize = NSMakeSize(CVPixelBufferGetWidth((CVPixelBufferRef)videoFrame), CVPixelBufferGetHeight((CVPixelBufferRef)videoFrame));
+    NSSize bufferSize = NSMakeSize(CVPixelBufferGetWidth(pixelBuffer), CVPixelBufferGetHeight(pixelBuffer));
     NSSize squarePixelBufferSize = bufferSize;
     
-    CFDictionaryRef aspectRatioDict = CVBufferGetAttachment(videoFrame, kCVImageBufferPixelAspectRatioKey, NULL);
+    CFDictionaryRef aspectRatioDict = CVBufferGetAttachment(pixelBuffer, kCVImageBufferPixelAspectRatioKey, NULL);
     if (aspectRatioDict) {
         CFNumberRef horizontalPixelNumber = CFDictionaryGetValue(aspectRatioDict, kCVImageBufferPixelAspectRatioHorizontalSpacingKey);
         CFNumberRef verticalPixelNumber = CFDictionaryGetValue(aspectRatioDict, kCVImageBufferPixelAspectRatioVerticalSpacingKey);
@@ -379,31 +421,16 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
         });
     } else {
         // Use CPU (Mach) time to ensure a monotonically increasing time. It can later be subtracted from the current time to determine the sample time/date.
-        VideoFrame *image = [[VideoFrame alloc] initByCopyingCVPixelBuffer:(CVPixelBufferRef)videoFrame
+        VideoFrame *frame = [[VideoFrame alloc] initByCopyingCVPixelBuffer:pixelBuffer
                                                         resultChannelCount:4
                                                           presentationTime:CACurrentMediaTime()];
-        [self processVideoFrame:image];
-        [image release];
+        [self processVideoFrame:frame];
+        [frame release];
     }
-    
-    [pool release];
 }
 
-- (void)captureOutput:(QTCaptureOutput *)captureOutput
-didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
-       fromConnection:(QTCaptureConnection *)connection
+- (void)processCIImageSynchronously:(CIImage *)image
 {
-    [_processor noteVideoFrameWasDropped];
-}
-
-// Called on a background thread when using a pre-recorded movie file
-- (CIImage *)view:(QTMovieView *)view willDisplayImage:(CIImage *)image
-{
-    if (_closeCalled) {
-        return nil;
-    }
- 
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     // Reuse the context for performance reasons
     if (!_ciContext) {
         _ciContext = [[CIContext contextWithCGLContext:NULL pixelFormat:NULL colorSpace:NULL options:nil] retain];
@@ -416,9 +443,13 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
                                                 presentationTime:CACurrentMediaTime()];
     [self processVideoFrame:frame];
     [frame release];
-    
-    [pool release];
-    return nil;
+}
+
+- (void)processVideoFrame:(VideoFrame *)image
+{
+    [_processor processVideoFrame:image debugFrameCallback:^(VideoFrame *image) {
+        [_bitmapOpenGLView renderImage:image];
+    }];
 }
 
 - (void)movieDidEnd
@@ -427,15 +458,6 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
     dispatch_async(dispatch_get_main_queue(), ^{
         [self close];
     });
-}
-
-// This method will be called on a background thread. It will not be called again until the current call returns.
-// Interviening frames may be dropped if the video is a live capture device source. 
-- (void)processVideoFrame:(VideoFrame *)image
-{
-    [_processor processVideoFrame:image debugFrameCallback:^(VideoFrame *image) {
-        [_bitmapOpenGLView renderImage:image];
-    }];
 }
 
 - (NSString *)displayName

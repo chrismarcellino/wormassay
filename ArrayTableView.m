@@ -11,7 +11,7 @@
 
 @implementation ArrayTableView
 
-@synthesize contents =_contents;
+@synthesize contents = _contents;
 
 - (id)init
 {

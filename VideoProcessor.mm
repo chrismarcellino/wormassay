@@ -122,7 +122,7 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
 {
     NSTimeInterval processingStartTime = CACurrentMediaTime();
     
-    // This method is synchronous so that we don't enqueue frames faster than they should be processed. QT will drop the overflow.
+    // This method is synchronous so that we don't enqueue frames faster than they should be processed. The document will drop the overflow.
     dispatch_sync(_queue, ^{
         if (_plateData) {
             [_plateData incrementReceivedFrameCount];
