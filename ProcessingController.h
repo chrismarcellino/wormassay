@@ -9,6 +9,9 @@
 #import <Foundation/Foundation.h>
 #import "opencv2/core/core_c.h"
 
+// Convienience macro
+#define ProcessLog(format, args...) [[ProcessingController sharedInstance] logFormat:format, ## args]
+
 // Thread-safe.
 @interface ProcessingController : NSObject {
     dispatch_queue_t _queue;        // protects all state and serializes

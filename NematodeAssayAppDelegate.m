@@ -84,13 +84,7 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
             NSURL *url = URLForCaptureDeviceUniqueID(uniqueID);
             
             // If there is no open VideoSourceController document for this URL, create one
-            if (![documentController documentForURL:url]) {
-                // Log enumerated devices
-                NSLog(@"Enumerated device \"%@\" with model ID \"%@\", unique ID %@",
-                      [device localizedDisplayName],
-                      modelUniqueID,
-                      uniqueID);
-                
+            if (![documentController documentForURL:url]) {                
                 NSError *error = nil;
                 [documentController openDocumentWithContentsOfURL:url display:YES error:&error];
                 if (error) {
@@ -106,7 +100,7 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
         NSString *captureDeviceUniqueID = UniqueIDForCaptureDeviceURL(url);
         if (captureDeviceUniqueID) {
             if (![presentUniqueIds containsObject:captureDeviceUniqueID]) {
-                NSLog(@"Closing removed device with unique ID %@", captureDeviceUniqueID);
+
                 [document close];
             }
         }

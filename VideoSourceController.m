@@ -51,6 +51,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 
 @synthesize captureDevice = _captureDevice;
 @synthesize movie = _movie;
+@synthesize sourceIdentifier = _sourceIdentifier;
 
 + (NSArray *)readableTypes
 {
@@ -93,6 +94,8 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
         }
         
         _sourceIdentifier = [[NSString alloc] initWithFormat:@"\"%@\" (%@)", [_captureDevice localizedDisplayName], captureDeviceUniqueID];
+        
+        ProcessLog(@"Opened device \"%@\" with model ID \"%@\"", _sourceIdentifier, [_captureDevice modelUniqueID]);
     } else if ([absoluteURL isFileURL]) {
         _movieFrameExtractQueue = dispatch_queue_create("Movie frame extraction queue", NULL);
         NSDictionary *attributes = [[NSDictionary alloc] initWithObjectsAndKeys:
@@ -104,6 +107,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
         [attributes release];
         
         _sourceIdentifier = [[absoluteURL relativeString] copy];
+        ProcessLog(@"Opened file \"%@\"", _sourceIdentifier);
     }
     
     if (_captureDevice) {
@@ -319,7 +323,9 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 }
 
 - (void)close
-{  
+{
+    ProcessLog(@"Closing removed device/file: %@", _sourceIdentifier);
+    
     [_captureSession stopRunning];
     [_captureDecompressedVideoOutput setDelegate:nil];
     if (_movieFrameExtractTimer) {
@@ -344,7 +350,7 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
 {
     _frameDropCount++;
     if (_frameDropCount == 1 || _frameDropCount % 10 == 0) {
-        NSLog(@"Device %@ dropped %llu total frames", _sourceIdentifier, (unsigned long long)_frameDropCount);
+        ProcessLog(@"Device %@ dropped %llu total frames", _sourceIdentifier, (unsigned long long)_frameDropCount);
     }
 }
 

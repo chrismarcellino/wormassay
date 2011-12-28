@@ -6,7 +6,7 @@
 //  Copyright 2011 Regents of the University of California. All rights reserved.
 //
 
-#import "IplImageConversionUtilities.hpp"
+#import "IplImageConversionUtilities.h"
 #import "opencv2/opencv.hpp"
 
 static inline void premultiplyImage(IplImage *img, bool reverse);
