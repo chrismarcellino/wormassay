@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2102C86A13792D21000E3D53 /* ffmpeg in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2102C86813792D15000E3D53 /* ffmpeg */; };
 		210D6E9E134BAC5300BCD6F1 /* VideoProcessor.mm in Sources */ = {isa = PBXBuildFile; fileRef = 210D6E9D134BAC5300BCD6F1 /* VideoProcessor.mm */; };
 		210E8AF5135EB58700FEE49F /* LuminanceMotionAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 210E8AF4135EB58700FEE49F /* LuminanceMotionAnalyzer.mm */; };
 		2119D2CC135A101E00C5B32F /* PlateData.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2119D2CB135A101E00C5B32F /* PlateData.mm */; };
@@ -287,8 +288,22 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		2102C866137910E0000E3D53 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				2102C86A13792D21000E3D53 /* ffmpeg in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		2102C86813792D15000E3D53 /* ffmpeg */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = ffmpeg; path = "ThirdParty/ffmpeg-x264/ffmpeg"; sourceTree = "<group>"; };
 		210D6E9C134BAC5300BCD6F1 /* VideoProcessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoProcessor.h; sourceTree = SOURCE_ROOT; };
 		210D6E9D134BAC5300BCD6F1 /* VideoProcessor.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = VideoProcessor.mm; sourceTree = SOURCE_ROOT; };
 		210E8AF3135EB58700FEE49F /* LuminanceMotionAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LuminanceMotionAnalyzer.h; sourceTree = SOURCE_ROOT; };
@@ -1087,6 +1102,7 @@
 			children = (
 				215AB44612CEC6C60047B13F /* OpenCV */,
 				219098A913575AED00EEE2BB /* zxing */,
+				2102C86813792D15000E3D53 /* ffmpeg */,
 			);
 			name = "Third Party";
 			sourceTree = "<group>";
@@ -1256,6 +1272,7 @@
 				218DD52C13453FC5000B6475 /* Sources */,
 				218DD52D13453FC5000B6475 /* Frameworks */,
 				218DD52E13453FC5000B6475 /* Resources */,
+				2102C866137910E0000E3D53 /* CopyFiles */,
 			);
 			buildRules = (
 			);

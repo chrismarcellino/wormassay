@@ -464,21 +464,21 @@ static inline BOOL isValidPath(NSString *path, NSFileManager *fileManager)
 {
     NSFileManager *fileManager = [[NSFileManager alloc] init];
     
-    NSString *path = [[NSBundle mainBundle] pathForAuxiliaryExecutable:@"HandBrakeCLI"];
+    NSString *path = [[NSBundle mainBundle] pathForAuxiliaryExecutable:@"ffmpeg"];
     if (!isValidPath(path, fileManager)) {
-        path = [[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"HandBrakeCLI"];
+        path = [[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"ffmpeg"];
     }
     if (!isValidPath(path, fileManager)) {
-        path = [@"~/Applications/HandBrakeCLI" stringByExpandingTildeInPath];
+        path = [@"~/Applications/ffmpeg" stringByExpandingTildeInPath];
     }
     if (!isValidPath(path, fileManager)) {
-        path = @"/Applications/HandBrakeCLI";
+        path = @"/Applications/ffmpeg";
     }
     if (!isValidPath(path, fileManager)) {
-        path = @"/usr/bin/HandBrakeCLI";
+        path = @"/usr/bin/ffmpeg";
     }
     if (!isValidPath(path, fileManager)) {
-        path = @"/usr/local/bin/HandBrakeCLI";
+        path = @"/usr/local/bin/ffmpeg";
     }
     [fileManager release];
     
@@ -526,13 +526,19 @@ static NSString *outputPathForInputJobPath(NSString *inputPath)
                 _conversionTask = [[NSTask alloc] init];
                 [_conversionTask setLaunchPath:[self conversionToolPath]];
                 
-                NSArray *arguments = [NSArray arrayWithObjects:@"--input", inputPath, @"--output", outputPath,
-                                      @"--encoder", @"x264", @"--format", @"mp4", @"--quality", @"22", @"--strict-anamorphic",
-                                      @"--audio", @"none", @"--large-file", nil];
+                NSArray *arguments = [NSArray arrayWithObjects:@"-i", inputPath, @"-vcodec", @"libx264", @"-crf", @"22",
+                                      @"-threads", @"0", @"-y", @"-xerror", outputPath, nil];
                 [_conversionTask setArguments:arguments];
                 // Must launch task on main thread to ensure that a thread is around to service the death notification
                 dispatch_async(dispatch_get_main_queue(), ^{
+                    // If possible and we haven't already, create a new session with us as the session leader and a new group with us as the group leader
+                    pid_t group = setsid();
+                    if (group == -1) {
+                        group = getpgrp();
+                    }
                     [_conversionTask launch];
+                    // Place the launched process in our group if possible so that it is terminated if we crash
+                    setpgid([_conversionTask processIdentifier], group);
                 });
                 RunLog(@"Started H.264 encoding job for \"%@\".", inputPath);
                 
