@@ -159,51 +159,58 @@ bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vect
     // in both dimensions. Discard all others.
     int colinearityThreshold = maxRadius / 2;
     
-    // First sort the centers by X value so that lines vertically colinear are adjacent in the seq. On the second pass, do the opposite. 
     bool allColinearCirclesFound = true;
     
     CvSeq* filteredCircles = circles;
-    for (int axis = 0; axis <= 1; axis++) {
-        cvSeqSort(filteredCircles, sortCircleCentersByAxis, &axis);
-        
-        // Iterate through list and move circles colinear along Y lines to a new seq, and hence have similar X values (and then vice versa)
-        CvSeq* colinearCircles = cvCreateSeq(CV_32FC3, sizeof(CvSeq), 3 * sizeof(float), storage);
-        
-        for (int i = 0; i < filteredCircles->total; i++) {
-            float* current = (float*)cvGetSeqElem(filteredCircles, i);
+    // Do two passes so that we only reject a non-rectangular grid once we've filtered out spurious circles
+    for (int pass = 0; pass < 2; pass++) {
+        // First sort the centers by X value so that lines vertically colinear are adjacent in the seq. Next do the opposite. 
+        for (int axis = 0; axis <= 1; axis++) {
+            cvSeqSort(filteredCircles, sortCircleCentersByAxis, &axis);
             
-            int numberOfColinearCircles = 0;
-            int j;
-            for (j = i + 1; j < filteredCircles->total; j++) {
-                float *partner = (float*)cvGetSeqElem(filteredCircles, j);
-                if (fabsf(current[axis] - partner[axis]) <= colinearityThreshold) {
-                    if (numberOfColinearCircles == 0) {
-                        // Push the 'current' element
-                        cvSeqPush(colinearCircles, current);
+            // Iterate through list and move circles colinear along Y lines to a new seq, and hence have similar X values (and then vice versa)
+            CvSeq* colinearCircles = cvCreateSeq(CV_32FC3, sizeof(CvSeq), 3 * sizeof(float), storage);
+            
+            // Iterate through the current list
+            for (int i = 0; i < filteredCircles->total; i++) {
+                float* current = (float*)cvGetSeqElem(filteredCircles, i);
+                
+                // Iterate along a colinear line
+                int numberOfColinearCircles = 0;
+                for (int j = i + 1; j < filteredCircles->total; j++) {
+                    float *partner = (float*)cvGetSeqElem(filteredCircles, j);
+                    if (fabsf(current[axis] - partner[axis]) <= colinearityThreshold) {
+                        if (numberOfColinearCircles == 0) {
+                            // Push the 'current' element
+                            cvSeqPush(colinearCircles, current);
+                            numberOfColinearCircles++;
+                        }
+                        
+                        // Push each partner and advance i so these matching partners aren't unnecessarily reconsidered
+                        cvSeqPush(colinearCircles, partner);
                         numberOfColinearCircles++;
+                        i++;
+                    } else {
+                        break;
                     }
-                    
-                    // Push each partner and advance i so these matching partners aren't unnecessarily reconsidered
-                    cvSeqPush(colinearCircles, partner);
-                    numberOfColinearCircles++;
-                    i++;
-                } else {
-                    break;
+                }
+                
+                if (pass >= 1) {
+                    // On the second pass, determine if we saw as many colinear circles as we expected
+                    int expectedNumberOfColinearCircles = (axis == 1) ? columns : rows;
+                    if (numberOfColinearCircles != expectedNumberOfColinearCircles) {
+                        allColinearCirclesFound = false;
+                    }
                 }
             }
-            // Determine if we saw as many colinear circles as we expected
-            int expectedNumberOfColinearCircles = (axis == 1) ? columns : rows;
-            if (numberOfColinearCircles != expectedNumberOfColinearCircles) {
-                allColinearCirclesFound = false;            // XXXXXXXXXXXXXXXX DO THIS AFTER THE FACT TO BE LIENLIENT
-            }
+            
+            filteredCircles = colinearCircles;
         }
-        
-        filteredCircles = colinearCircles;
     }
     
     // Determine if this is a valid plate and provide scores for debugging
     bool success = filteredCircles->total == wellCount && allColinearCirclesFound;
-    score = MAX(1.0 - (float)abs(circles->total - wellCount) / wellCount - (allColinearCirclesFound ? 0.0 : 0.1), 0.0);
+    score = MAX(1.0 - (float)abs(circles->total - wellCount) / wellCount - (allColinearCirclesFound ? 0.0 : 0.01), 0.0);
     
     if (success) {
         // If successful, sort the circles in row major order

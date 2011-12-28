@@ -177,7 +177,7 @@ debugVideoFrameCompletion:(void (^)(IplImageObject *image))callback;
                 
                 // Draw text in the circle
                 if (_processingState == ProcessingStateTrackingMotion) {
-                    CvPoint textPoint = cvPoint(center.x - radius / 2, center.y - radius / 2);
+                    CvPoint textPoint = cvPoint(center.x - radius, center.y - radius);
                     cvPutText([debugImage image],
                               wellIdentifierStringForIndex(i, circlesToDraw.size()).c_str(),
                               textPoint,
