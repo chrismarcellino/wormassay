@@ -70,7 +70,7 @@ bool findWellCircles(IplImage *inputImage, std::vector<cv::Vec3f> &circles, int 
     // Create the array of counts that we will try in order, but move the hinted value to the front
     std::vector<int> wellCounts = knownPlateWellCounts();
     if (wellCountHint > 0) {
-        for (int i = 0; i < wellCounts.size(); i++) {
+        for (size_t i = 0; i < wellCounts.size(); i++) {
             if (wellCounts[i] == wellCountHint) {
                 wellCounts.erase(wellCounts.begin() + i);
                 break;
@@ -84,7 +84,7 @@ bool findWellCircles(IplImage *inputImage, std::vector<cv::Vec3f> &circles, int 
     float score;
     std::vector<cv::Vec3f> bestCircles;
     
-    for (int i = 0; i < wellCounts.size(); i++) {
+    for (size_t i = 0; i < wellCounts.size(); i++) {
         if (findWellCirclesForPlateCount(inputImage, wellCounts[i], circles, &score)) {
             return true;
         }
@@ -256,7 +256,7 @@ static int sortCirclesInRowMajorOrder(const void* a, const void* b, void* userda
 CvPoint plateCenterForWellCircles(const std::vector<cv::Vec3f> &circles)
 {
     CvPoint average = cvPoint(0,0);
-    for (int i = 0; i < circles.size(); i++) {
+    for (size_t i = 0; i < circles.size(); i++) {
         average.x += circles[i][0];
         average.y += circles[i][1];
     }
