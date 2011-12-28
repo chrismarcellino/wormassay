@@ -274,7 +274,6 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
         // Ensure that we are able to read at least one frame
         NSDictionary *attributes = [[NSDictionary alloc] initWithObjectsAndKeys:
                                     QTMovieFrameImageTypeCGImageRef, QTMovieFrameImageType,
-                                    [NSNumber numberWithBool:NO], QTMovieFrameImageSingleField,
                                     [NSNumber numberWithBool:NO], QTMovieFrameImageHighQuality,
                                     [NSNumber numberWithBool:NO], QTMovieFrameImageDeinterlaceFields,
                                     nil];
@@ -313,7 +312,8 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
                 [QTMovie exitQTKitOnThread];
                 [pool release];
             });
-            dispatch_source_set_timer(_movieFrameExtractTimer, 0, 1.0 / 29.97 * NSEC_PER_SEC, 0);       // XXX hardcoded assumption
+            // Assume 30 fps input source (if we can decode frame by frame that fast, which is unlikely)
+            dispatch_source_set_timer(_movieFrameExtractTimer, 0, 1.0 / 30.0 * NSEC_PER_SEC, 0);
             dispatch_resume(_movieFrameExtractTimer);
         }
         [attributes release];

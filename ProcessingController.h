@@ -23,7 +23,7 @@
 // Caller is responsible for calling cvReleaseImage() on debugFrame. Block will be called on an arbitrary thread. 
 - (void)processVideoFrame:(IplImage *)videoFrame
      fromSourceIdentifier:(NSString *)sourceIdentifier
-debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))block;
+debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callback;
 
 - (void)logFormat:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2);
 
