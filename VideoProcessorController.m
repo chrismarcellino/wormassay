@@ -103,13 +103,16 @@
         
         // Nested these blocks to preserve ordering between the disk file and log window
         dispatch_async(dispatch_get_main_queue(), ^{
-            BOOL wasAtBottom = [[self runLogScrollView] documentVisibleRect].origin.x == 0;
+            NSTextView *textView = [self runLogTextView];
+            NSScrollView *scrollView = [self runLogScrollView];
+            BOOL wasAtBottom = ![scrollView hasVerticalScroller] || 
+                            [textView frame].size.height <= [scrollView frame].size.height ||
+                            [[scrollView verticalScroller] floatValue] >= 1.0;
             
             if (!_runLogTextAttributes) {
                 _runLogTextAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:
                                          [NSFont fontWithName:@"Menlo Regular" size:12], NSFontAttributeName, nil];
             }
-            NSTextView *textView = [self runLogTextView];
             NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:string attributes:_runLogTextAttributes];
             NSTextStorage *textStorage = [textView textStorage];
             [textStorage beginEditing];
