@@ -19,7 +19,7 @@ static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &
     NSUInteger _frameDropCount;
     std::vector<double> _presentationTimes;
     std::vector<std::vector<double> > _occupancyFractionsByWell;
-    std::vector<std::vector<double> > _normalizedMovedFractionsByWell;
+    std::vector<std::vector<double> > _movedFractionsByWell;
     std::vector<double> _processingTimes;
 }
 
@@ -40,12 +40,12 @@ static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &
         _startPresentationTime = presentationTime;
         
         _occupancyFractionsByWell.resize(wellCount);
-        _normalizedMovedFractionsByWell.resize(wellCount);
+        _movedFractionsByWell.resize(wellCount);
         _presentationTimes.reserve(InitialVectorSize);
         _processingTimes.reserve(InitialVectorSize);
         for (size_t i = 0; i < wellCount; i++) {
             _occupancyFractionsByWell[i].reserve(InitialVectorSize);
-            _normalizedMovedFractionsByWell[i].reserve(InitialVectorSize);
+            _movedFractionsByWell[i].reserve(InitialVectorSize);
         }
     }
     return self;
@@ -57,7 +57,7 @@ static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &
 }
 
 - (void)addFrameOccupancyFractions:(double *)occupancyFraction
-          normalizedMovedFractions:(double *)normalizedMovedFractions
+          movedFractions:(double *)movedFractions
                 atPresentationTime:(NSTimeInterval)presentationTime
 {
     NSAssert(presentationTime >= [self lastPresentationTime], @"out of order presentation times");
@@ -65,7 +65,7 @@ static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &
     _presentationTimes.push_back(presentationTime);
     for (NSUInteger well = 0; well < _wellCount; well++) {
         _occupancyFractionsByWell[well].push_back(occupancyFraction[well]);
-        _normalizedMovedFractionsByWell[well].push_back(normalizedMovedFractions[well]);
+        _movedFractionsByWell[well].push_back(movedFractions[well]);
     }
 }
 
@@ -105,14 +105,14 @@ static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &
     meanAndStdDev(_occupancyFractionsByWell[well], *mean, *stddev, [self sampleIndexStartingAtSecondsFromEnd:seconds]);
 }
 
-- (void)normalizedMovedFractionMean:(double *)mean stdDev:(double *)stddev forWell:(NSUInteger)well
+- (void)movedFractionMean:(double *)mean stdDev:(double *)stddev forWell:(NSUInteger)well
 {
-    meanAndStdDev(_normalizedMovedFractionsByWell[well], *mean, *stddev);
+    meanAndStdDev(_movedFractionsByWell[well], *mean, *stddev);
 }
 
-- (void)normalizedMovedFractionMean:(double *)mean stdDev:(double *)stddev forWell:(NSUInteger)well inLastSeconds:(NSTimeInterval)seconds
+- (void)movedFractionMean:(double *)mean stdDev:(double *)stddev forWell:(NSUInteger)well inLastSeconds:(NSTimeInterval)seconds
 {
-    meanAndStdDev(_normalizedMovedFractionsByWell[well], *mean, *stddev, [self sampleIndexStartingAtSecondsFromEnd:seconds]);
+    meanAndStdDev(_movedFractionsByWell[well], *mean, *stddev, [self sampleIndexStartingAtSecondsFromEnd:seconds]);
 }
 
 - (void)processingTimeMean:(double *)mean stdDev:(double *)stddev inLastFrames:(NSUInteger)lastFrames

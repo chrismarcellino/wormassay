@@ -21,7 +21,7 @@
 @property(readonly) NSUInteger sampleCount;
 
 - (void)addFrameOccupancyFractions:(double *)occupancyFraction
-          normalizedMovedFractions:(double *)normalizedMovedFractions
+          movedFractions:(double *)movedFractions
                 atPresentationTime:(NSTimeInterval)presentationTime;
 
 - (void)addProcessingTime:(NSTimeInterval)processingTime;
@@ -31,8 +31,8 @@
 
 - (void)occupancyFractionMean:(double *)mean stdDev:(double *)stddev forWell:(NSUInteger)well;
 - (void)occupancyFractionMean:(double *)mean stdDev:(double *)stddev forWell:(NSUInteger)well inLastSeconds:(NSTimeInterval)seconds;
-- (void)normalizedMovedFractionMean:(double *)mean stdDev:(double *)stddev forWell:(NSUInteger)well;
-- (void)normalizedMovedFractionMean:(double *)mean stdDev:(double *)stddev forWell:(NSUInteger)well inLastSeconds:(NSTimeInterval)seconds;
+- (void)movedFractionMean:(double *)mean stdDev:(double *)stddev forWell:(NSUInteger)well;
+- (void)movedFractionMean:(double *)mean stdDev:(double *)stddev forWell:(NSUInteger)well inLastSeconds:(NSTimeInterval)seconds;
 
 - (void)processingTimeMean:(double *)mean stdDev:(double *)stddev inLastFrames:(NSUInteger)lastFrames;
 

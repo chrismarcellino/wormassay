@@ -11,6 +11,7 @@
 		2119D2CC135A101E00C5B32F /* PlateData.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2119D2CB135A101E00C5B32F /* PlateData.mm */; };
 		21264FEC1353FAE600F2DCD8 /* VideoProcessorController.m in Sources */ = {isa = PBXBuildFile; fileRef = 21264FEB1353FAE600F2DCD8 /* VideoProcessorController.m */; };
 		21426FAF134683DB00AF78E5 /* VideoSourceDocument.m in Sources */ = {isa = PBXBuildFile; fileRef = 21426FAE134683DA00AF78E5 /* VideoSourceDocument.m */; };
+		215CD57D135D157400A558E3 /* WellFinding.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215CD57B135D157400A558E3 /* WellFinding.cpp */; };
 		2162B18613521ABD0081EFDD /* VideoFrame.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2162B18513521ABC0081EFDD /* VideoFrame.mm */; };
 		2180AC681346BB99008AF87B /* DocumentController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2180AC671346BB99008AF87B /* DocumentController.m */; };
 		218DD5281345253D000B6475 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD5271345253D000B6475 /* libz.dylib */; };
@@ -261,7 +262,7 @@
 		21E7790212D322A9006C1554 /* undistort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB4C512CEC7800047B13F /* undistort.cpp */; };
 		21E7790312D322A9006C1554 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB4C612CEC7800047B13F /* utils.cpp */; };
 		21E7790512D322A9006C1554 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 215AB59712CECC190047B13F /* Accelerate.framework */; };
-		21EBDA25134AD32300736245 /* ImageProcessing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21EBDA24134AD32300736245 /* ImageProcessing.cpp */; };
+		21EBDA25134AD32300736245 /* MotionAnalysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21EBDA24134AD32300736245 /* MotionAnalysis.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -377,6 +378,8 @@
 		215AB4C612CEC7800047B13F /* utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = utils.cpp; sourceTree = "<group>"; };
 		215AB4FE12CECAA60047B13F /* cvconfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cvconfig.h; path = ThirdParty/cvconfig.h; sourceTree = "<group>"; };
 		215AB59712CECC190047B13F /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
+		215CD57B135D157400A558E3 /* WellFinding.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WellFinding.cpp; sourceTree = SOURCE_ROOT; };
+		215CD57C135D157400A558E3 /* WellFinding.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = WellFinding.hpp; sourceTree = SOURCE_ROOT; };
 		2162B18413521ABC0081EFDD /* VideoFrame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoFrame.h; sourceTree = SOURCE_ROOT; };
 		2162B18513521ABC0081EFDD /* VideoFrame.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = VideoFrame.mm; sourceTree = SOURCE_ROOT; };
 		2180AC661346BB99008AF87B /* DocumentController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DocumentController.h; sourceTree = SOURCE_ROOT; };
@@ -545,10 +548,10 @@
 		21CC725D1348D40B001146DA /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		21E7790912D322A9006C1554 /* libOpenCV.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libOpenCV.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		21E779A012D323D6006C1554 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
-		21EBDA23134AD32300736245 /* ImageProcessing.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ImageProcessing.hpp; sourceTree = SOURCE_ROOT; };
-		21EBDA24134AD32300736245 /* ImageProcessing.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ImageProcessing.cpp; sourceTree = SOURCE_ROOT; };
+		21EBDA23134AD32300736245 /* MotionAnalysis.hpp */ = {isa = PBXFileReference; fileEncoding = 4; path = MotionAnalysis.hpp; sourceTree = SOURCE_ROOT; };
+		21EBDA24134AD32300736245 /* MotionAnalysis.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MotionAnalysis.cpp; sourceTree = SOURCE_ROOT; };
 		21EBDA37134AE0F000736245 /* WormAssay-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "WormAssay-Prefix.pch"; sourceTree = "<group>"; };
-		21FCF94D134CBB8900ABD85C /* CvRectUtilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CvRectUtilities.hpp; sourceTree = SOURCE_ROOT; };
+		21FCF94D134CBB8900ABD85C /* CvUtilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; path = CvUtilities.hpp; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1039,11 +1042,13 @@
 				210D6E9D134BAC5300BCD6F1 /* VideoProcessor.mm */,
 				2119D2CA135A101E00C5B32F /* PlateData.h */,
 				2119D2CB135A101E00C5B32F /* PlateData.mm */,
-				21EBDA23134AD32300736245 /* ImageProcessing.hpp */,
-				21EBDA24134AD32300736245 /* ImageProcessing.cpp */,
+				21EBDA23134AD32300736245 /* MotionAnalysis.hpp */,
+				21EBDA24134AD32300736245 /* MotionAnalysis.cpp */,
+				215CD57C135D157400A558E3 /* WellFinding.hpp */,
+				215CD57B135D157400A558E3 /* WellFinding.cpp */,
 				2162B18413521ABC0081EFDD /* VideoFrame.h */,
 				2162B18513521ABC0081EFDD /* VideoFrame.mm */,
-				21FCF94D134CBB8900ABD85C /* CvRectUtilities.hpp */,
+				21FCF94D134CBB8900ABD85C /* CvUtilities.hpp */,
 			);
 			name = "Image Processing";
 			path = WormAssay;
@@ -1331,11 +1336,12 @@
 				21426FAF134683DB00AF78E5 /* VideoSourceDocument.m in Sources */,
 				2180AC681346BB99008AF87B /* DocumentController.m in Sources */,
 				21CC725C1348CA5F001146DA /* BitmapOpenGLView.m in Sources */,
-				21EBDA25134AD32300736245 /* ImageProcessing.cpp in Sources */,
+				21EBDA25134AD32300736245 /* MotionAnalysis.cpp in Sources */,
 				210D6E9E134BAC5300BCD6F1 /* VideoProcessor.mm in Sources */,
 				2162B18613521ABD0081EFDD /* VideoFrame.mm in Sources */,
 				21264FEC1353FAE600F2DCD8 /* VideoProcessorController.m in Sources */,
 				2119D2CC135A101E00C5B32F /* PlateData.mm in Sources */,
+				215CD57D135D157400A558E3 /* WellFinding.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

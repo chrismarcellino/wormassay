@@ -7,7 +7,8 @@
 //
 
 #import "VideoProcessor.h"
-#import "ImageProcessing.hpp"
+#import "MotionAnalysis.hpp"
+#import "CvUtilities.hpp"
 #import "VideoFrame.h"
 #import "PlateData.h"
 #import "VideoProcessorController.h"   // for RunLog()
@@ -152,16 +153,14 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                 std::vector<double> occupancyFractions = calculateCannyEdgePixelProportionForWellsFromImages([videoFrame image],
                                                                                                              _trackingWellCircles,
                                                                                                              [debugImage image]);
-                NSTimeInterval delta = [videoFrame presentationTime] - [_lastFrame presentationTime];
-                std::vector<double> normalizedMovedFractions = calculateMovedWellFractionPerSecondForWellsFromImages([_lastFrame image],
-                                                                                                                     [videoFrame image],
-                                                                                                                     delta,
-                                                                                                                     _trackingWellCircles,
-                                                                                                                     [debugImage image]);
+                std::vector<double> movedFractions = calculateMovedWellFractionForWellsFromImages([_lastFrame image],
+                                                                                                  [videoFrame image],
+                                                                                                  _trackingWellCircles,
+                                                                                                  [debugImage image]);
                 // If we were able to get stats, add them to the plate data
-                if (normalizedMovedFractions.size() > 0) {
+                if (movedFractions.size() > 0) {
                     [_plateData addFrameOccupancyFractions:&*occupancyFractions.begin()
-                                  normalizedMovedFractions:&*normalizedMovedFractions.begin()
+                                  movedFractions:&*movedFractions.begin()
                                         atPresentationTime:[videoFrame presentationTime]];
                 }
                 
@@ -169,10 +168,10 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                 CvFont wellFont = fontForNormalizedScale(0.75, [debugImage image]);
                 for (size_t i = 0; i < _trackingWellCircles.size(); i++) {
                     double mean, stddev;
-                    [_plateData normalizedMovedFractionMean:&mean stdDev:&stddev forWell:i inLastSeconds:10];
+                    [_plateData movedFractionMean:&mean stdDev:&stddev forWell:i inLastSeconds:30];
                     
                     char text[20];
-                    snprintf(text, sizeof(text), "%.0f%% (SD: %.0f%%)", mean * 100, stddev * 100);
+                    snprintf(text, sizeof(text), "%.0f (SD: %.0f)", mean * 1000, stddev * 1000);
                     
                     float radius = _trackingWellCircles[i].radius;
                     CvPoint textPoint = cvPoint(_trackingWellCircles[i].center[0] - radius * 0.5, _trackingWellCircles[i].center[1]);
@@ -234,7 +233,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         if (searchAllPlateSizes) {
             plateFound = findWellCircles([videoFrame image], wellCircles, wellCountHint);
         } else {
-            plateFound = findWellCirclesForPlateCount([videoFrame image], wellCountHint, wellCircles, wellRadiusHint);
+            plateFound = findWellCirclesForWellCount([videoFrame image], wellCountHint, wellCircles, wellRadiusHint);
         }
         
         // Process and store the results when holding _queue
