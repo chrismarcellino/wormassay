@@ -233,9 +233,10 @@
 		21CC725D1348D40B001146DA /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		21E7790912D322A9006C1554 /* libOpenCV.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libOpenCV.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		21E779A012D323D6006C1554 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
-		21EBDA23134AD32300736245 /* ImageProcessing.hpp */ = {isa = PBXFileReference; fileEncoding = 4; path = ImageProcessing.hpp; sourceTree = SOURCE_ROOT; };
+		21EBDA23134AD32300736245 /* ImageProcessing.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ImageProcessing.hpp; sourceTree = SOURCE_ROOT; };
 		21EBDA24134AD32300736245 /* ImageProcessing.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ImageProcessing.cpp; sourceTree = SOURCE_ROOT; };
 		21EBDA37134AE0F000736245 /* NematodeAssay-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NematodeAssay-Prefix.pch"; sourceTree = "<group>"; };
+		21FCF94D134CBB8900ABD85C /* CvRectUtilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CvRectUtilities.hpp; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -495,6 +496,7 @@
 				21EBDA24134AD32300736245 /* ImageProcessing.cpp */,
 				21CC722D134836BC001146DA /* IplImageConversionUtilities.h */,
 				21CC722C134836BC001146DA /* IplImageConversionUtilities.cpp */,
+				21FCF94D134CBB8900ABD85C /* CvRectUtilities.hpp */,
 			);
 			name = "Image Processing";
 			path = NematodeAssay;

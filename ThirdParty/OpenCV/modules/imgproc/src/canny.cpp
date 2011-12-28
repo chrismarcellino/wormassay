@@ -187,7 +187,7 @@ CV_IMPL void cvCanny( const void* srcarr, void* dstarr,
                 for( j = 0; j < size.width; j++ )
                 {
                     x = _dx[j]; y = _dy[j];
-                    _magf[j] = (float)std::sqrt((double)x*x + (double)y*y);
+                    _magf[j] = sqrtf(x*x + y*y);     // CRM 1/15/11 Performance optimization
                 }
             }
         }

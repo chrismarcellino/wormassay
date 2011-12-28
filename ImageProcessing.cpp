@@ -50,6 +50,20 @@ bool getPlateConfigurationForWellCount(int wellCount, int &rows, int &columns)
     return valid;
 }
 
+std::string wellIdentifierStringForIndex(int index, int wellCount)
+{
+    int rows, columns;
+    getPlateConfigurationForWellCount(wellCount, rows, columns);
+    
+    std::stringstream ss;
+    ss << (char)('A' + index / columns);
+    ss << 1 + index % columns;
+    
+    std::string str;
+    ss >> str;
+    return str;
+}
+
 bool findWellCircles(IplImage *inputImage, int &wellCount, std::vector<cv::Vec3f> &circles, int wellCountHint)
 {
     std::vector<int> wellCounts = knownPlateWellCounts();
@@ -69,6 +83,7 @@ bool findWellCircles(IplImage *inputImage, int &wellCount, std::vector<cv::Vec3f
     
     for (int i = 0; i < wellCounts.size(); i++) {
         if (findWellCirclesForPlateCount(inputImage, wellCounts[i], circles, score)) {
+            wellCount = wellCounts[i];
             return true;
         }
         
@@ -223,4 +238,43 @@ static int sortCirclesInRowMajorOrder(const void* a, const void* b, void* userda
     // If the Y values are approximately equal, then the wells are in the same column, so sort by x value. 
     // Otherwise we are differentiating rows. 
     return (fabsf(aVec[1] - bVec[1]) <= *(int*)userdata) ? (aVec[0] - bVec[0]) : (aVec[1] - bVec[1]);
+}
+
+CvPoint plateCenterForWellCircles(std::vector<cv::Vec3f> &circles)
+{
+    CvPoint average = cvPoint(0,0);
+    for (int i = 0; i < circles.size(); i++) {
+        average.x += circles[i][0];
+        average.y += circles[i][1];
+    }
+    
+    if (circles.size() > 0) {
+        average.x /= circles.size();
+        average.y /= circles.size();
+    }
+    return average;
+}
+
+extern bool plateSequentialCirclesAppearSameAndStationary(std::vector<cv::Vec3f> &circlesPrevious, std::vector<cv::Vec3f> &circlesNext)
+{
+    // Return false if the number of circles have changed
+    if (circlesPrevious.size() != circlesNext.size() || circlesPrevious.size() == 0 || circlesNext.size() == 0) {
+        return false;
+    }
+    
+    // Return false if the radius has changed signifigantly
+    float radiusPrevious = circlesPrevious[0][2];
+    float radiusNext = circlesNext[0][2];
+    float radiusRatio = radiusPrevious / radiusNext;
+    if (radiusRatio > 1.25 || radiusRatio < 0.8) {
+        return false;
+    }
+    
+    // Return false if the center of the plate has moved more than the (mean radius) / 10 pxiels
+    CvPoint centerPrevious = plateCenterForWellCircles(circlesPrevious);
+    CvPoint centerNext = plateCenterForWellCircles(circlesNext);
+    float deltaX = centerPrevious.x - centerNext.x;
+    float deltaY = centerPrevious.y - centerNext.y;
+    float distance = sqrtf(deltaX * deltaX + deltaY * deltaY);
+    return distance < (radiusPrevious + radiusNext) / 2.0 / 10.0;
 }
