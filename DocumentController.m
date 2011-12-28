@@ -7,7 +7,7 @@
 //
 
 #import "DocumentController.h"
-#import "VideoSourceController.h"
+#import "VideoSourceDocument.h"
 
 
 @implementation DocumentController
@@ -22,7 +22,7 @@
 
 - (NSArray *)documentClassNames
 {
-    return [NSArray arrayWithObject:NSStringFromClass([VideoSourceController class])];
+    return [NSArray arrayWithObject:NSStringFromClass([VideoSourceDocument class])];
 }
 
 @end

@@ -3,7 +3,7 @@
 //  TextAssist
 //
 //  Created by Chris Marcellino on 1/24/11.
-//  Copyright 2011 Chris Marcellino. All rights reserved.
+//  Copyright 2011 Regents of the University of California. All rights reserved.
 //
 
 #import "opencv2/opencv.hpp"

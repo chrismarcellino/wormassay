@@ -8,12 +8,8 @@
 
 #import "BitmapOpenGLView.h"
 #import <OpenGL/glu.h>
-
-@interface BitmapOpenGLView ()
-
-- (void)freeDrawingData;
-
-@end
+#import "opencv2/core/core_c.h"
+#import "IplImageObject.h"
 
 
 @implementation BitmapOpenGLView
@@ -46,7 +42,7 @@
 
 - (void)dealloc
 {
-    [self freeDrawingData];
+    [_lastImage release];
     [super dealloc];
 }
 
@@ -76,34 +72,32 @@
     CGLUnlockContext(glContext);
 }
 
-- (void)drawBitmapTexture:(BitmapDrawingData *)drawingData
+- (void)renderImage:(IplImageObject *)image
 {
-    if (!drawingData) {
-        drawingData = &_lastDrawingData;
-    }
+    IplImage *iplImage = image ? [image image] : [_lastImage image];
     
     CGLContextObj glContext = [[self openGLContext] CGLContextObj];
     CGLLockContext(glContext);
     CGLSetCurrentContext(glContext);
     
-    if (drawingData->baseAddress) {
+    if (iplImage) {
         // Set the texture image
         glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
                      0,
                      4,
-                     drawingData->width,
-                     drawingData->height,
+                     iplImage->width,
+                     iplImage->height,
                      0,
-                     drawingData->glPixelFormat,
-                     drawingData->glPixelType,
-                     drawingData->baseAddress);
+                     iplImage->nChannels == 4 ? GL_BGRA : GL_LUMINANCE,
+                     GL_UNSIGNED_BYTE,
+                     iplImage->imageData);
         
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
         
         // Invert the image
-        glOrtho(0, drawingData->width, drawingData->height, 0, -1, 1);
+        glOrtho(0, iplImage->width, iplImage->height, 0, -1, 1);
         // Set the viewport
         glViewport(_viewport.origin.x, _viewport.origin.y, _viewport.size.width, _viewport.size.height);
         
@@ -111,12 +105,12 @@
         
         glTexCoord2d(0, 0);
         glVertex2f(0, 0);
-        glTexCoord2d(drawingData->width, 0);
-        glVertex2f(drawingData->width, 0);
-        glTexCoord2d(drawingData->width, drawingData->height);
-        glVertex2f(drawingData->width, drawingData->height);
-        glTexCoord2d(0, drawingData->height);
-        glVertex2f(0, drawingData->height);
+        glTexCoord2d(iplImage->width, 0);
+        glVertex2f(iplImage->width, 0);
+        glTexCoord2d(iplImage->width, iplImage->height);
+        glVertex2f(iplImage->width, iplImage->height);
+        glTexCoord2d(0, iplImage->height);
+        glVertex2f(0, iplImage->height);
         
         glEnd();
         
@@ -132,9 +126,9 @@
     // Save the image for redrawing if necessary and release the previous, unless we are internally performing a re-draw.
     // We get rid of the previous data after uploading the new texture so that we don't incur a copy of the pixels that we
     // may have DMA'd. 
-    if (drawingData != &_lastDrawingData) {
-        [self freeDrawingData];
-        _lastDrawingData = *drawingData;
+    if (image) {
+        [_lastImage release];
+        _lastImage = [image retain];
     }
     
     GLenum error = glGetError();
@@ -146,18 +140,9 @@
     CGLUnlockContext(glContext);
 }
 
-// requires lock
-- (void)freeDrawingData
-{
-    if (_lastDrawingData.freeCallback) {
-        _lastDrawingData.freeCallback(_lastDrawingData.baseAddress, _lastDrawingData.context);
-    }
-    _lastDrawingData.baseAddress = _lastDrawingData.freeCallback = NULL;
-}
-
 - (void)drawRect:(NSRect)dirtyRect
 {
-    [self drawBitmapTexture:NULL];
+    [self renderImage:nil];
 }
 
 - (void)update

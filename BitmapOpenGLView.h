@@ -9,25 +9,16 @@
 #import <Foundation/Foundation.h>
 #import <OpenGL/gl.h>
 
-typedef struct {
-    void *baseAddress;         // packed pixels
-    size_t width;
-    size_t height;
-    GLenum glPixelFormat;       // e.g. GL_BGRA or GL_LUMINANCE
-    GLenum glPixelType;         // e.g. GL_UNSIGNED_BYTE
-    void (*freeCallback)(void *baseAddress, void *context);     // May be NULL. Will be called from any thread.
-    void *context;
-} BitmapDrawingData;
-
+@class IplImageObject;
 
 // Methods are thread-safe (AppKit superclass methods are not necessarily)
 @interface BitmapOpenGLView : NSOpenGLView {
     // All protected by the context lock
+    IplImageObject *_lastImage;
     GLuint _imageTexture;
-    BitmapDrawingData _lastDrawingData;
     NSRect _viewport;
 }
 
-- (void)drawBitmapTexture:(BitmapDrawingData *)drawingData;
+- (void)renderImage:(IplImageObject *)image;
 
 @end

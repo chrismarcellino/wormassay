@@ -7,9 +7,9 @@
 //
 
 #import "NematodeAssayAppDelegate.h"
-#import "VideoSourceController.h"
+#import "VideoSourceDocument.h"
 #import "DocumentController.h"
-#import "ProcessingController.h"
+#import "VideoProcessor.h"
 #import <QTKit/QTKit.h>
 
 static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCameras";
@@ -80,7 +80,7 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
             // Construct the URL for the capture device
             NSURL *url = URLForCaptureDeviceUniqueID(uniqueID);
             
-            // If there is no open VideoSourceController document for this URL, create one
+            // If there is no open VideoSourceDocument document for this URL, create one
             if (![documentController documentForURL:url]) {                
                 NSError *error = nil;
                 [documentController openDocumentWithContentsOfURL:url display:YES error:&error];

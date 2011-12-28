@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-@class ProcessingController;
+@class VideoProcessor;
 
 @interface NematodeAssayAppDelegate : NSObject <NSApplicationDelegate> {
     NSMutableSet *_registeredDevices;

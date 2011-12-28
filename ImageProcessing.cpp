@@ -346,6 +346,16 @@ IplImage *createDeltaImageForWellFromImages(IplImage *plateImagePrev, IplImage *
     }
     cvResetImageROI(plateImageCur);
     
+    // Create a circle mask with 255's in the circle
+    IplImage *circleMask = cvCreateImage(cvGetSize(subimagePrev), IPL_DEPTH_8U, 1);
+    fastFillImage(circleMask, 255);
+    cvCircle(circleMask, cvPoint(radius, radius), radius, cvRealScalar(0), CV_FILLED);
+    
+    // Mask the subimages, turning pixels outside the circle black
+    cvSet(subimagePrev, cvRealScalar(0), circleMask);
+    cvSet(subimageCur, cvRealScalar(0), circleMask);
+    cvReleaseImage(&circleMask);
+    
     // Subtract the images
     IplImage* delta = cvCreateImage(cvGetSize(plateImageCur), IPL_DEPTH_8U, 1);
     cvAbsDiff(plateImageCur, plateImagePrev, delta);
