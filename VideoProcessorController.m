@@ -186,10 +186,8 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
         [defaults synchronize];
         
         dispatch_async(_queue, ^{
-            for (VideoProcessor *videoProcessor in _videoProcessors) {
-                if (![videoProcessor fileSourceFilename]) {
-                    [videoProcessor setPlateOrientation:plateOrietation];
-                }
+            if (_currentlyTrackingProcessor && ![_currentlyTrackingProcessor fileSourceFilename]) {
+                [_currentlyTrackingProcessor setPlateOrientation:plateOrietation];
             }
         });
     }
@@ -261,9 +259,6 @@ static void createFolderIfNecessary(NSString *path)
         [_videoProcessors addObject:videoProcessor];
         [videoProcessor setDelegate:self];
         [videoProcessor setAssayAnalyzerClass:[self currentAssayAnalyzerClass]];
-        if (![videoProcessor fileSourceFilename]) {
-            [videoProcessor setPlateOrientation:[self plateOrientation]];
-        }
         [videoProcessor setShouldScanForWells:YES];
     });
 }
@@ -291,6 +286,7 @@ static void createFolderIfNecessary(NSString *path)
         if ([_videoProcessors containsObject:vp] && !_currentlyTrackingProcessor) {
             _currentlyTrackingProcessor = [vp retain];
             _trackingBeginTime = presentationTime;
+            [vp setPlateOrientation:[self plateOrientation]];
             
             // Clear the past barcodes
             [_barcodesSinceTrackingBegan removeAllObjects];
@@ -345,7 +341,6 @@ stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
                 [dateFormatter setDateFormat:SortableLoggingFilenameSafeDateFormat];
                 [_currentOutputFilenamePrefix release];
                 _currentOutputFilenamePrefix = [[dateFormatter stringFromDate:_runStartDate] retain];
-                _currentOutputLastWriteTime = CACurrentMediaTime();
                 
                 // Create the run ID for thisInfo run
                 [dateFormatter setDateFormat:RunIDDateFormat];
@@ -356,6 +351,7 @@ stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
                 // Reset the plate counter
                 _plateInRunNumber = 1;
             }
+            _currentOutputLastWriteTime = CACurrentMediaTime();     // update the time uncondtionally since we're interested in the idle period
             
             // Write the results to disk and the run log if successful
             if (successfully) {
@@ -420,6 +416,8 @@ stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
                 }
             }
             
+            // Reset the plate orientation to identity for non-tracking cameras
+            [_currentlyTrackingProcessor setPlateOrientation:PlateOrientationTopRead];
             [_currentlyTrackingProcessor release];
             _currentlyTrackingProcessor = nil;
         }
