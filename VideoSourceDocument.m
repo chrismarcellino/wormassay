@@ -52,6 +52,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 @synthesize captureDevice = _captureDevice;
 @synthesize movie = _movie;
 @synthesize sourceIdentifier = _sourceIdentifier;
+@synthesize lastFrameSize;
 
 + (NSArray *)readableTypes
 {
@@ -96,7 +97,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
         
         _sourceIdentifier = [[NSString alloc] initWithFormat:@"\"%@\" (%@)", [_captureDevice localizedDisplayName], captureDeviceUniqueID];
         
-        RunLog(@"Opened device \"%@\" with model ID \"%@\"", _sourceIdentifier, [_captureDevice modelUniqueID]);
+        RunLog(@"Opened device \"%@\" with model ID \"%@\".", _sourceIdentifier, [_captureDevice modelUniqueID] ? [_captureDevice modelUniqueID] : @"(none)");
     } else if ([absoluteURL isFileURL]) {
         NSDictionary *attributes = [[NSDictionary alloc] initWithObjectsAndKeys:
                                     absoluteURL, QTMovieURLAttribute,
@@ -108,14 +109,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
         [attributes release];
         
         _sourceIdentifier = [[absoluteURL path] retain];
-        RunLog(@"Opened file \"%@\"", _sourceIdentifier);
-    }
-    
-    if (_captureDevice) {
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(adjustWindowSizing)
-                                                     name:QTCaptureDeviceFormatDescriptionsDidChangeNotification
-                                                   object:_captureDevice];
+        RunLog(@"Opened file \"%@\".", _sourceIdentifier);
     }
     
     if (!_captureDevice && !_movie) {
@@ -135,12 +129,6 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 
 - (void)dealloc
 {
-    if (_captureDevice) {
-        [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                        name:QTCaptureDeviceFormatDescriptionsDidChangeNotification
-                                                      object:_captureDevice];
-    }
-    
     [_captureDevice release];
     [_captureSession release];
     [_captureDeviceInput release];
@@ -164,7 +152,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 {
     NSRect visibleScreenFrame = [[NSScreen mainScreen] visibleFrame];
     NSRect contentRect;
-    contentRect.size = [self lastKnownResolution];
+    contentRect.size = [self expectedFrameSize];
     contentRect.origin = NSMakePoint(visibleScreenFrame.origin.x,
                                      visibleScreenFrame.origin.y + visibleScreenFrame.size.height - contentRect.size.height);
     
@@ -196,9 +184,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
         [window setRepresentedURL:nil];
     }
     
-    [self adjustWindowSizing];
-    
-    // Cascade the window if it is has the same upper left point as another window
+    // Cascade the window if it is has the same upper left point as another window      XXXXXXXXXXX FIX ME??
     NSPoint windowUpperLeft = upperLeftForFrame([window frame]);
     for (NSWindow *anotherWindow in [NSApp windows]) {
         if (window != anotherWindow && NSEqualPoints(windowUpperLeft, upperLeftForFrame([anotherWindow frame]))) {
@@ -215,7 +201,7 @@ static NSPoint upperLeftForFrame(NSRect frame)
 
 - (void)adjustWindowSizing
 {
-    NSSize contentSize = [self lastKnownResolution];
+    NSSize contentSize = [self expectedFrameSize];
     
     // Adjust the main window controllers's window (currently only window)
     NSArray *windowControllers = [self windowControllers];
@@ -239,26 +225,16 @@ static NSPoint upperLeftForFrame(NSRect frame)
     }
 }
 
-- (NSSize)lastKnownResolution
+- (NSSize)expectedFrameSize
 {
-    NSSize size;
+    NSSize size = [self lastFrameSize];
     
-    if (_captureDevice) {
-        size = NSZeroSize;
-        for (QTFormatDescription *formatDescription in [_captureDevice formatDescriptions]) {
-            NSSize formatSize = [[formatDescription attributeForKey:QTFormatDescriptionVideoEncodedPixelsSizeAttribute] sizeValue];
-            if (formatSize.width > size.width && formatSize.height > size.height) {
-                size = formatSize;
-            }
+    if (size.width == 0 || size.height == 0) {
+        if (_captureDevice) {
+            size = NSMakeSize(720.0, 480.0);
+        } else {
+            size = [[_movie attributeForKey:QTMovieNaturalSizeAttribute] sizeValue];
         }
-        
-        // Use a better pre-roll placeholder size
-        NSUInteger formatCount = [[_captureDevice formatDescriptions] count];
-        if (formatCount == 0 || (formatCount == 1 && size.width == 160 && size.height == 120)) {
-            size = NSMakeSize(640.0, 480.0);
-        }
-    } else {
-        size = [[_movie attributeForKey:QTMovieNaturalSizeAttribute] sizeValue];
     }
     
     return size;
@@ -362,8 +338,8 @@ static NSPoint upperLeftForFrame(NSRect frame)
 - (void)close
 {
     // Work around AppKit calling close twice in succession
-    if (!closeCalled) {
-        closeCalled = YES;
+    if (!_closeCalled) {
+        _closeCalled = YES;
         RunLog(@"Closing removed device/file: %@", _sourceIdentifier);
         [[VideoProcessorController sharedInstance] removeVideoProcessor:_processor];
         
@@ -380,17 +356,27 @@ static NSPoint upperLeftForFrame(NSRect frame)
   didOutputVideoFrame:(CVImageBufferRef)videoFrame
      withSampleBuffer:(QTSampleBuffer *)sampleBuffer
        fromConnection:(QTCaptureConnection *)connection
-{
+{       NSTimeInterval t = [NSDate timeIntervalSinceReferenceDate];     //XXXXXXXXXXXXXXXXXXXXXX
     // QTCaptureDecompressedVideoOutput is guaranteed to be a CVPixelBufferRef
     IplImageObject *image = [[IplImageObject alloc] initByCopyingCVPixelBuffer:(CVPixelBufferRef)videoFrame
                                                             resultChannelCount:4
                                                               vmCopyIfPossible:YES];
+    // Ensure we have the proper frame size for this device
+    NSSize frameSize = NSMakeSize([image image]->width, [image image]->height);
+    if (!NSEqualSizes(frameSize, [self lastFrameSize])) {
+        [self setLastFrameSize:frameSize];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            RunLog(@"Receiving %g x %g video from device \"%@\".", (double)frameSize.width, (double)frameSize.height);
+            [self adjustWindowSizing];
+        });
+    }
+    
     NSTimeInterval presentationTimeInterval;
     if (!QTGetTimeInterval([sampleBuffer presentationTime], &presentationTimeInterval)) {
         presentationTimeInterval = CACurrentMediaTime();
     }
     [self processVideoFrame:image presentationTime:presentationTimeInterval];
-    [image release];
+    [image release];        RunLog(@"Elapsed frame time:  %.0f ms  (%.1f fps)", ([NSDate timeIntervalSinceReferenceDate] - t) * 1000, 1/ ([NSDate timeIntervalSinceReferenceDate] - t));
 }
 
 - (void)captureOutput:(QTCaptureOutput *)captureOutput

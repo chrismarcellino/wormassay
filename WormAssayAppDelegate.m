@@ -90,7 +90,6 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     // Log welcome message
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
     RunLog(@"%@ version %@ launched.", [infoDictionary objectForKey:(id)kCFBundleNameKey], [infoDictionary objectForKey:(id)kCFBundleVersionKey]);
-    RunLog(@"");
     
     [self loadCaptureDevices];
 }
@@ -112,7 +111,7 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
         NSString *modelUniqueID = [device modelUniqueID];
         NSString *uniqueID = [device uniqueID];
         
-        BOOL isBuiltInCamera = [modelUniqueID rangeOfString:@"VendorID_1452"].location != NSNotFound;  // Apple USB devices
+        BOOL isBuiltInCamera = modelUniqueID && [modelUniqueID rangeOfString:@"VendorID_1452"].location != NSNotFound;  // Apple USB devices
         
         // Only consider devices capable of video output and that meet our built-in device criteria
         if (([device hasMediaType:QTMediaTypeVideo] || [device hasMediaType:QTMediaTypeMuxed]) && 

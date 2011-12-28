@@ -73,7 +73,8 @@ static inline void premultiplyImage(IplImage *img, bool reverse);
         iplImage->widthStep = bytesPerRow;
         iplImage->imageSize = bytesPerRow * height;
         // NSData will vm_copy when possible and handle deallocation correctly. See benchmark results in this class' header file.
-        vmCopiedData = [[NSData alloc] initWithBytes:baseAddress length:bytesPerRow * height];
+        vmCopiedData = [[NSData alloc] initWithBytes:baseAddress length:bytesPerRow * height];              // XXXXXXX BENCHMARK AGAINST REGULAR COPY!
+        iplImage->imageData = iplImage->imageDataOrigin = (char *)[vmCopiedData bytes];
     } else {
         // Create a header to hold the source image
         IplImage *iplImageHeader = cvCreateImageHeader(cvSize(width, height), IPL_DEPTH_8U, bufferChannels);
