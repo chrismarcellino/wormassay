@@ -7,13 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		210BB4AB12DA187D0017E026 /* CvCannyQcPlugin.mm in Sources */ = {isa = PBXBuildFile; fileRef = 210BB49F12DA187D0017E026 /* CvCannyQcPlugin.mm */; };
-		210BB4AC12DA187D0017E026 /* CvChannelSplitterQcPlugin.mm in Sources */ = {isa = PBXBuildFile; fileRef = 210BB4A112DA187D0017E026 /* CvChannelSplitterQcPlugin.mm */; };
-		210BB4AD12DA187D0017E026 /* CvOrQcPlugin.mm in Sources */ = {isa = PBXBuildFile; fileRef = 210BB4A312DA187D0017E026 /* CvOrQcPlugin.mm */; };
-		210BB4B012DA187D0017E026 /* OpenCVOutputImage.mm in Sources */ = {isa = PBXBuildFile; fileRef = 210BB4A912DA187D0017E026 /* OpenCVOutputImage.mm */; };
-		21416C3412D5566E0028913E /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 215AB59712CECC190047B13F /* Accelerate.framework */; };
 		218DD5281345253D000B6475 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD5271345253D000B6475 /* libz.dylib */; };
-		218DD52913452590000B6475 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD5271345253D000B6475 /* libz.dylib */; };
+		218DD53313453FC5000B6475 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD53213453FC5000B6475 /* Cocoa.framework */; };
+		218DD54913453FC6000B6475 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 218DD54713453FC6000B6475 /* MainMenu.xib */; };
+		218DD54D13453FCE000B6475 /* libOpenCV.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 21E7790912D322A9006C1554 /* libOpenCV.a */; };
+		218DD54E13453FD3000B6475 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
+		218DD55113453FDD000B6475 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21E779A012D323D6006C1554 /* ApplicationServices.framework */; };
+		218DD55213453FDE000B6475 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 215AB59712CECC190047B13F /* Accelerate.framework */; };
+		218DD55313453FE0000B6475 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD5271345253D000B6475 /* libz.dylib */; };
+		218DD55513454180000B6475 /* QTKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD55413454180000B6475 /* QTKit.framework */; };
+		218DD559134543FF000B6475 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 218DD557134543FF000B6475 /* MainMenu.xib */; };
+		218DD55B13454411000B6475 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 218DD55A13454411000B6475 /* main.m */; };
+		218DD55F1345445B000B6475 /* NematodeAssayAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 218DD55E1345445B000B6475 /* NematodeAssayAppDelegate.m */; };
 		21E778AE12D322A9006C1554 /* opencv.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 215AB44812CEC7130047B13F /* opencv.hpp */; };
 		21E778AF12D322A9006C1554 /* core.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 215AB44F12CEC72B0047B13F /* core.hpp */; };
 		21E778B012D322A9006C1554 /* core_c.h in Headers */ = {isa = PBXBuildFile; fileRef = 215AB45012CEC72B0047B13F /* core_c.h */; };
@@ -100,35 +105,10 @@
 		21E7790212D322A9006C1554 /* undistort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB4C512CEC7800047B13F /* undistort.cpp */; };
 		21E7790312D322A9006C1554 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB4C612CEC7800047B13F /* utils.cpp */; };
 		21E7790512D322A9006C1554 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 215AB59712CECC190047B13F /* Accelerate.framework */; };
-		21E7791C12D322F7006C1554 /* libOpenCV.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 21E7790912D322A9006C1554 /* libOpenCV.a */; };
-		21E7797512D3239B006C1554 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
-		21E779A112D323D6006C1554 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21E779A012D323D6006C1554 /* ApplicationServices.framework */; };
-		21E779A612D32415006C1554 /* Quartz.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21E779A512D32415006C1554 /* Quartz.framework */; };
-		21F4A0AC12ED084200E97969 /* CvSmooth.mm in Sources */ = {isa = PBXBuildFile; fileRef = 21F4A0AB12ED084200E97969 /* CvSmooth.mm */; };
-		21F4A0D812ED091B00E97969 /* CvNot.mm in Sources */ = {isa = PBXBuildFile; fileRef = 21F4A0D712ED091B00E97969 /* CvNot.mm */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXContainerItemProxy section */
-		21E7791A12D322E2006C1554 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 21E778AC12D322A9006C1554;
-			remoteInfo = "OpenCV-MacOSX";
-		};
-/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		210BB49E12DA187D0017E026 /* CvCannyQcPlugin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CvCannyQcPlugin.h; sourceTree = "<group>"; };
-		210BB49F12DA187D0017E026 /* CvCannyQcPlugin.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CvCannyQcPlugin.mm; sourceTree = "<group>"; };
-		210BB4A012DA187D0017E026 /* CvChannelSplitterQcPlugin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CvChannelSplitterQcPlugin.h; sourceTree = "<group>"; };
-		210BB4A112DA187D0017E026 /* CvChannelSplitterQcPlugin.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CvChannelSplitterQcPlugin.mm; sourceTree = "<group>"; };
-		210BB4A212DA187D0017E026 /* CvOrQcPlugin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CvOrQcPlugin.h; sourceTree = "<group>"; };
-		210BB4A312DA187D0017E026 /* CvOrQcPlugin.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CvOrQcPlugin.mm; sourceTree = "<group>"; };
-		210BB4A812DA187D0017E026 /* OpenCVOutputImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OpenCVOutputImage.h; sourceTree = "<group>"; };
-		210BB4A912DA187D0017E026 /* OpenCVOutputImage.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = OpenCVOutputImage.mm; sourceTree = "<group>"; };
-		212041F912D45C7B00CD07EE /* NematodeAssayQC_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NematodeAssayQC_Prefix.pch; sourceTree = "<group>"; };
 		215AB44812CEC7130047B13F /* opencv.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = opencv.hpp; path = ThirdParty/OpenCV/include/opencv2/opencv.hpp; sourceTree = "<group>"; };
 		215AB44F12CEC72B0047B13F /* core.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = core.hpp; sourceTree = "<group>"; };
 		215AB45012CEC72B0047B13F /* core_c.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = core_c.h; sourceTree = "<group>"; };
@@ -215,31 +195,34 @@
 		215AB4C612CEC7800047B13F /* utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = utils.cpp; sourceTree = "<group>"; };
 		215AB4FE12CECAA60047B13F /* cvconfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cvconfig.h; path = ThirdParty/cvconfig.h; sourceTree = "<group>"; };
 		215AB59712CECC190047B13F /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
-		218DD526134521E8000B6475 /* NematodeAssayQC-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "NematodeAssayQC-Info.plist"; sourceTree = SOURCE_ROOT; };
 		218DD5271345253D000B6475 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
-		218DD52B13452762000B6475 /* ActivityAssay.qtz */ = {isa = PBXFileReference; lastKnownFileType = "video.quartz-composer"; path = ActivityAssay.qtz; sourceTree = "<group>"; };
-		21C1B5CB12DD9FE400D0604B /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
-		21E29C4612D31B3B005EB412 /* NematodeAssayQC.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NematodeAssayQC.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
+		218DD53013453FC5000B6475 /* NematodeAssay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NematodeAssay.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		218DD53213453FC5000B6475 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		218DD53513453FC5000B6475 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
+		218DD53613453FC5000B6475 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
+		218DD53713453FC5000B6475 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		218DD55413454180000B6475 /* QTKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QTKit.framework; path = System/Library/Frameworks/QTKit.framework; sourceTree = SDKROOT; };
+		218DD558134543FF000B6475 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		218DD55A13454411000B6475 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		218DD55C1345441A000B6475 /* NematodeAssay-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "NematodeAssay-Info.plist"; sourceTree = SOURCE_ROOT; };
+		218DD55D1345445B000B6475 /* NematodeAssayAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NematodeAssayAppDelegate.h; sourceTree = SOURCE_ROOT; };
+		218DD55E1345445B000B6475 /* NematodeAssayAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NematodeAssayAppDelegate.m; sourceTree = SOURCE_ROOT; };
 		21E7790912D322A9006C1554 /* libOpenCV.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libOpenCV.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		21E779A012D323D6006C1554 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
-		21E779A512D32415006C1554 /* Quartz.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Quartz.framework; path = System/Library/Frameworks/Quartz.framework; sourceTree = SDKROOT; };
-		21F4A0AA12ED084200E97969 /* CvSmooth.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CvSmooth.h; sourceTree = "<group>"; };
-		21F4A0AB12ED084200E97969 /* CvSmooth.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CvSmooth.mm; sourceTree = "<group>"; };
-		21F4A0D612ED091B00E97969 /* CvNot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CvNot.h; sourceTree = "<group>"; };
-		21F4A0D712ED091B00E97969 /* CvNot.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CvNot.mm; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		21E29C4412D31B3B005EB412 /* Frameworks */ = {
+		218DD52D13453FC5000B6475 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				21E7791C12D322F7006C1554 /* libOpenCV.a in Frameworks */,
-				21E7797512D3239B006C1554 /* Foundation.framework in Frameworks */,
-				21E779A112D323D6006C1554 /* ApplicationServices.framework in Frameworks */,
-				21E779A612D32415006C1554 /* Quartz.framework in Frameworks */,
-				21416C3412D5566E0028913E /* Accelerate.framework in Frameworks */,
-				218DD52913452590000B6475 /* libz.dylib in Frameworks */,
+				218DD54E13453FD3000B6475 /* Foundation.framework in Frameworks */,
+				218DD53313453FC5000B6475 /* Cocoa.framework in Frameworks */,
+				218DD55513454180000B6475 /* QTKit.framework in Frameworks */,
+				218DD55113453FDD000B6475 /* ApplicationServices.framework in Frameworks */,
+				218DD55213453FDE000B6475 /* Accelerate.framework in Frameworks */,
+				218DD55313453FE0000B6475 /* libz.dylib in Frameworks */,
+				218DD54D13453FCE000B6475 /* libOpenCV.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -258,8 +241,8 @@
 		19C28FACFE9D520D11CA2CBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				21E29C4612D31B3B005EB412 /* NematodeAssayQC.plugin */,
 				21E7790912D322A9006C1554 /* libOpenCV.a */,
+				218DD53013453FC5000B6475 /* NematodeAssay.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -441,43 +424,29 @@
 		2161366312CD7BFD006687D3 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				218DD526134521E8000B6475 /* NematodeAssayQC-Info.plist */,
+				218DD55C1345441A000B6475 /* NematodeAssay-Info.plist */,
+				218DD557134543FF000B6475 /* MainMenu.xib */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
 		};
-		218DD52A1345274F000B6475 /* QC Compositions */ = {
+		218DD53413453FC5000B6475 /* Other Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				218DD52B13452762000B6475 /* ActivityAssay.qtz */,
+				218DD53513453FC5000B6475 /* AppKit.framework */,
+				218DD53613453FC5000B6475 /* CoreData.framework */,
+				218DD53713453FC5000B6475 /* Foundation.framework */,
 			);
-			name = "QC Compositions";
+			name = "Other Frameworks";
 			sourceTree = "<group>";
 		};
 		21A96B7912D1696D002E1DC6 /* NematodeAssay */ = {
 			isa = PBXGroup;
 			children = (
+				218DD55D1345445B000B6475 /* NematodeAssayAppDelegate.h */,
+				218DD55E1345445B000B6475 /* NematodeAssayAppDelegate.m */,
 			);
 			path = NematodeAssay;
-			sourceTree = "<group>";
-		};
-		21E29C6712D31C53005EB412 /* QuartzComposerPlugins */ = {
-			isa = PBXGroup;
-			children = (
-				210BB49E12DA187D0017E026 /* CvCannyQcPlugin.h */,
-				210BB49F12DA187D0017E026 /* CvCannyQcPlugin.mm */,
-				210BB4A012DA187D0017E026 /* CvChannelSplitterQcPlugin.h */,
-				210BB4A112DA187D0017E026 /* CvChannelSplitterQcPlugin.mm */,
-				21F4A0D612ED091B00E97969 /* CvNot.h */,
-				21F4A0D712ED091B00E97969 /* CvNot.mm */,
-				210BB4A212DA187D0017E026 /* CvOrQcPlugin.h */,
-				210BB4A312DA187D0017E026 /* CvOrQcPlugin.mm */,
-				21F4A0AA12ED084200E97969 /* CvSmooth.h */,
-				21F4A0AB12ED084200E97969 /* CvSmooth.mm */,
-				210BB4A812DA187D0017E026 /* OpenCVOutputImage.h */,
-				210BB4A912DA187D0017E026 /* OpenCVOutputImage.mm */,
-			);
-			path = QuartzComposerPlugins;
 			sourceTree = "<group>";
 		};
 		21FA749512CD579300D11B6D /* Third Party */ = {
@@ -492,10 +461,8 @@
 			isa = PBXGroup;
 			children = (
 				21A96B7912D1696D002E1DC6 /* NematodeAssay */,
-				218DD52A1345274F000B6475 /* QC Compositions */,
-				21E29C6712D31C53005EB412 /* QuartzComposerPlugins */,
-				21FA749512CD579300D11B6D /* Third Party */,
 				29B97315FDCFA39411CA2CEA /* Other Sources */,
+				21FA749512CD579300D11B6D /* Third Party */,
 				2161366312CD7BFD006687D3 /* Resources */,
 				29B97323FDCFA39411CA2CEA /* Frameworks */,
 				19C28FACFE9D520D11CA2CBB /* Products */,
@@ -506,7 +473,7 @@
 		29B97315FDCFA39411CA2CEA /* Other Sources */ = {
 			isa = PBXGroup;
 			children = (
-				212041F912D45C7B00CD07EE /* NematodeAssayQC_Prefix.pch */,
+				218DD55A13454411000B6475 /* main.m */,
 			);
 			name = "Other Sources";
 			sourceTree = "<group>";
@@ -514,12 +481,13 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				218DD53213453FC5000B6475 /* Cocoa.framework */,
 				1D30AB110D05D00D00671497 /* Foundation.framework */,
-				21C1B5CB12DD9FE400D0604B /* SystemConfiguration.framework */,
-				21E779A512D32415006C1554 /* Quartz.framework */,
+				218DD55413454180000B6475 /* QTKit.framework */,
 				21E779A012D323D6006C1554 /* ApplicationServices.framework */,
 				215AB59712CECC190047B13F /* Accelerate.framework */,
 				218DD5271345253D000B6475 /* libz.dylib */,
+				218DD53413453FC5000B6475 /* Other Frameworks */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -559,23 +527,22 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		21E29C4512D31B3B005EB412 /* NematodeAssayQC */ = {
+		218DD52F13453FC5000B6475 /* NematodeAssay */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 21E29C4A12D31B3C005EB412 /* Build configuration list for PBXNativeTarget "NematodeAssayQC" */;
+			buildConfigurationList = 218DD54A13453FC6000B6475 /* Build configuration list for PBXNativeTarget "NematodeAssay" */;
 			buildPhases = (
-				21E29C4212D31B3B005EB412 /* Resources */,
-				21E29C4312D31B3B005EB412 /* Sources */,
-				21E29C4412D31B3B005EB412 /* Frameworks */,
+				218DD52C13453FC5000B6475 /* Sources */,
+				218DD52D13453FC5000B6475 /* Frameworks */,
+				218DD52E13453FC5000B6475 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				21E7791B12D322E2006C1554 /* PBXTargetDependency */,
 			);
-			name = NematodeAssayQC;
-			productName = NematodeAssayQC;
-			productReference = 21E29C4612D31B3B005EB412 /* NematodeAssayQC.plugin */;
-			productType = "com.apple.product-type.bundle";
+			name = NematodeAssay;
+			productName = NematodeAssay;
+			productReference = 218DD53013453FC5000B6475 /* NematodeAssay.app */;
+			productType = "com.apple.product-type.application";
 		};
 		21E778AC12D322A9006C1554 /* OpenCV */ = {
 			isa = PBXNativeTarget;
@@ -626,33 +593,31 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				21E29C4512D31B3B005EB412 /* NematodeAssayQC */,
 				21E778AC12D322A9006C1554 /* OpenCV */,
+				218DD52F13453FC5000B6475 /* NematodeAssay */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		21E29C4212D31B3B005EB412 /* Resources */ = {
+		218DD52E13453FC5000B6475 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				218DD54913453FC6000B6475 /* MainMenu.xib in Resources */,
+				218DD559134543FF000B6475 /* MainMenu.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		21E29C4312D31B3B005EB412 /* Sources */ = {
+		218DD52C13453FC5000B6475 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				210BB4AB12DA187D0017E026 /* CvCannyQcPlugin.mm in Sources */,
-				210BB4AC12DA187D0017E026 /* CvChannelSplitterQcPlugin.mm in Sources */,
-				210BB4AD12DA187D0017E026 /* CvOrQcPlugin.mm in Sources */,
-				210BB4B012DA187D0017E026 /* OpenCVOutputImage.mm in Sources */,
-				21F4A0AC12ED084200E97969 /* CvSmooth.mm in Sources */,
-				21F4A0D812ED091B00E97969 /* CvNot.mm in Sources */,
+				218DD55B13454411000B6475 /* main.m in Sources */,
+				218DD55F1345445B000B6475 /* NematodeAssayAppDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -728,55 +693,46 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
-/* Begin PBXTargetDependency section */
-		21E7791B12D322E2006C1554 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 21E778AC12D322A9006C1554 /* OpenCV */;
-			targetProxy = 21E7791A12D322E2006C1554 /* PBXContainerItemProxy */;
+/* Begin PBXVariantGroup section */
+		218DD54713453FC6000B6475 /* MainMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+			);
+			name = MainMenu.xib;
+			path = /Users/chrismarcellino/Documents/NematodeAssay/Source/NematodeAssay;
+			sourceTree = "<absolute>";
 		};
-/* End PBXTargetDependency section */
+		218DD557134543FF000B6475 /* MainMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				218DD558134543FF000B6475 /* en */,
+			);
+			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
-		21E29C4812D31B3B005EB412 /* Debug */ = {
+		218DD54B13453FC6000B6475 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
-				GCC_ENABLE_OBJC_GC = supported;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = NematodeAssayQC_Prefix.pch;
-				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
-				INFOPLIST_FILE = "NematodeAssayQC-Info.plist";
-				PRODUCT_NAME = NematodeAssayQC;
-				WARNING_CFLAGS = (
-					"-Wall",
-					"-Wextra",
-					"-Wno-unused-parameter",
-					"-Wno-unused-value",
-				);
-				WRAPPER_EXTENSION = plugin;
+				GCC_PREFIX_HEADER = "NematodeAssay-Prefix.pch";
+				INFOPLIST_FILE = "NematodeAssay-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
 		};
-		21E29C4912D31B3B005EB412 /* Release */ = {
+		218DD54C13453FC6000B6475 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
-				GCC_ENABLE_OBJC_GC = supported;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = NematodeAssayQC_Prefix.pch;
-				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
-				INFOPLIST_FILE = "NematodeAssayQC-Info.plist";
-				PRODUCT_NAME = NematodeAssayQC;
-				WARNING_CFLAGS = (
-					"-Wall",
-					"-Wextra",
-					"-Wno-unused-parameter",
-					"-Wno-unused-value",
-				);
-				WRAPPER_EXTENSION = plugin;
+				GCC_PREFIX_HEADER = "NematodeAssay-Prefix.pch";
+				INFOPLIST_FILE = "NematodeAssay-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
 		};
@@ -816,6 +772,7 @@
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
 				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				RUN_CLANG_STATIC_ANALYZER = YES;
@@ -833,6 +790,7 @@
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
 				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				RUN_CLANG_STATIC_ANALYZER = YES;
@@ -845,14 +803,13 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		21E29C4A12D31B3C005EB412 /* Build configuration list for PBXNativeTarget "NematodeAssayQC" */ = {
+		218DD54A13453FC6000B6475 /* Build configuration list for PBXNativeTarget "NematodeAssay" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				21E29C4812D31B3B005EB412 /* Debug */,
-				21E29C4912D31B3B005EB412 /* Release */,
+				218DD54B13453FC6000B6475 /* Debug */,
+				218DD54C13453FC6000B6475 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
 		};
 		21E7790612D322A9006C1554 /* Build configuration list for PBXNativeTarget "OpenCV" */ = {
 			isa = XCConfigurationList;
