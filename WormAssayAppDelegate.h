@@ -17,6 +17,7 @@
 
 @property(nonatomic, retain) IBOutlet NSMenu *assayAnalyzerMenu;
 
+- (IBAction)openRunOutputFolder:(id)sender;
 - (IBAction)showLoggingAndNotificationSettings:(id)sender;
 
 @end

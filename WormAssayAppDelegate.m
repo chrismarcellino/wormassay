@@ -237,6 +237,12 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     return reply;
 }
 
+- (IBAction)openRunOutputFolder:(id)sender
+{
+    NSString *folder = [[VideoProcessorController sharedInstance] runOutputFolderPath];
+    [[NSWorkspace sharedWorkspace] openFile:folder];
+}
+
 - (IBAction)showLoggingAndNotificationSettings:(id)sender
 {
     if (!_loggingAndNotificationWindowController) {
