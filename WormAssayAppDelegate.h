@@ -9,6 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 @class VideoProcessor;
+@class ArrayTableView;
 
 @interface WormAssayAppDelegate : NSObject <NSApplicationDelegate, NSMenuDelegate> {
     NSWindowController *_loggingPanelWindowController;
@@ -18,7 +19,7 @@
 @property(nonatomic, retain) IBOutlet NSMenu *assayAnalyzerMenu;
 @property(nonatomic, retain) IBOutlet NSTextView *runLogTextView;
 @property(nonatomic, retain) IBOutlet NSScrollView *runLogScrollView;
-@property(nonatomic, retain) IBOutlet NSTableView *encodingTableView;
+@property(nonatomic, retain) IBOutlet ArrayTableView *encodingTableView;
 
 - (IBAction)openRunOutputFolder:(id)sender;
 - (IBAction)showLoggingAndNotificationSettings:(id)sender;

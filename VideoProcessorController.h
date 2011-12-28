@@ -9,10 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "VideoProcessor.h"
 
-
-// Convienience macro
-#define RunLog(format, args...) [[VideoProcessorController sharedInstance] appendToRunLog:format, ## args]
-
+@class ArrayTableView;
 
 @interface VideoProcessorController : NSObject <VideoProcessorDelegate> {
     dispatch_queue_t _queue;     // protects all state and serializes
@@ -54,7 +51,11 @@
 
 @property(retain) NSTextView *runLogTextView;
 @property(retain) NSScrollView *runLogScrollView;
-@property(retain) NSTableView *encodingTableView;
+@property(retain) ArrayTableView *encodingTableView;
 - (void)appendToRunLog:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2);
 
 @end
+
+
+// Convienience macro
+#define RunLog(format, args...) [[VideoProcessorController sharedInstance] appendToRunLog:format, ## args]

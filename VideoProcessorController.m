@@ -11,7 +11,7 @@
 #import "AssayAnalyzer.h"
 #import "PlateData.h"
 #import "Emailer.h"
-#import "ArrayTableViewDataSource.h"
+#import "ArrayTableView.h"
 
 static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
 static NSString *const EmailRecipieintsKey = @"EmailRecipieints";
@@ -637,16 +637,10 @@ static NSString *outputPathForInputJobPath(NSString *inputPath)
         [array addObject:value];
     }
     
-    ArrayTableViewDataSource *dataSource = [[ArrayTableViewDataSource alloc] initByCopyingArray:array];
-    [array release];
-    
     dispatch_async(dispatch_get_main_queue(), ^{
-        NSTableView *tableView = [self encodingTableView];
-        [[tableView dataSource] autorelease];
-        [tableView setDataSource:[dataSource retain]];
-        [tableView reloadData];
+        [[self encodingTableView] setContents:array];
     });
-    [dataSource release];
+    [array release];
 }
 
 // Logging
