@@ -137,7 +137,6 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
     NSWindow *window = [[NSWindow alloc] initWithContentRect:contentRect styleMask:styleMask backing:NSBackingStoreBuffered defer:YES];
     
     // Enable multi-threaded drawing
-	[window setAllowsConcurrentViewDrawing:YES];
     [window setPreferredBackingLocation:NSWindowBackingLocationVideoMemory];
 	[window useOptimizedDrawing:YES];       // since there are no overlapping subviews
     [window setOpaque:YES];

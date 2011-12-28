@@ -17,8 +17,7 @@
 
 @implementation BitmapOpenGLView
 
-// PERF DIFFERENCE??????
-/*+ (NSOpenGLPixelFormat *)defaultPixelFormat
++ (NSOpenGLPixelFormat *)defaultPixelFormat
 {
     NSOpenGLPixelFormatAttribute attributes[] =  {
         NSOpenGLPFANoRecovery,
@@ -33,12 +32,19 @@
         (NSOpenGLPixelFormatAttribute)0
     };
     return [[[NSOpenGLPixelFormat alloc] initWithAttributes:attributes] autorelease];
-}*/
+}
+
+static uint8_t emptyColor[] = { 0, 1, 0, 1 };
 
 - (id)initWithFrame:(NSRect)frameRect pixelFormat:(NSOpenGLPixelFormat *)format
 {
     if ((self = [super initWithFrame:frameRect pixelFormat:format])) {
         [self setCanDrawConcurrently:YES];
+        
+        // Create a black texture
+        _lastDrawingData.baseAddress = emptyColor;
+        _lastDrawingData.width = _lastDrawingData.height = 1;
+        _lastDrawingData.glPixelFormat = GL_BGRA;
     }
     
     return self;
@@ -55,8 +61,9 @@
     CGLContextObj glContext = [[self openGLContext] CGLContextObj];
     CGLLockContext(glContext);
     
+    // Turn on v-sync
     GLint value = 1;
-    CGLSetParameter(glContext, kCGLCPSwapInterval, &value);            // XXX CPU UTIL??????
+    CGLSetParameter(glContext, kCGLCPSwapInterval, &value);
     
     // Enable non-power-of-two textures
     glEnable(GL_TEXTURE_RECTANGLE_ARB);
@@ -84,34 +91,23 @@
     CGLLockContext(glContext);
     CGLSetCurrentContext(glContext);
     
+    // If we're changing sizes or formats, or if we've never draw before,
+    // we need to set the texture data anew
     if (drawingData->width != _lastDrawingData.width ||
         drawingData->height != _lastDrawingData.height ||
-        drawingData->glPixelFormat != _lastDrawingData.glPixelFormat) {
+        drawingData->glPixelFormat != _lastDrawingData.glPixelFormat ||
+        drawingData->baseAddress == emptyColor) {
         
         // Set the texture image
-        if (drawingData->baseAddress) {
-            glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
-                         0,
-                         GL_RGBA,
-                         drawingData->width,
-                         drawingData->height,
-                         0,
-                         drawingData->glPixelFormat,
-                         GL_UNSIGNED_INT_8_8_8_8_REV,
-                         drawingData->baseAddress);
-        } else {
-            // Create a black texture
-            uint8_t black[] = { 0, 0, 0, 1 };
-            glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
-                         0,
-                         GL_RGBA,
-                         1,
-                         1,
-                         0,
-                         GL_BGRA,
-                         GL_UNSIGNED_INT_8_8_8_8_REV,
-                         &black);
-        }
+        glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
+                     0,
+                     GL_RGBA,
+                     drawingData->width,
+                     drawingData->height,
+                     0,
+                     drawingData->glPixelFormat,
+                     GL_UNSIGNED_INT_8_8_8_8_REV,
+                     drawingData->baseAddress);
     } else {
         // Update the existing texture image
         glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB,
@@ -140,7 +136,7 @@
     glVertex2f(0, 0);
     
     glTexCoord2d(drawingData->width, 0);
-    glVertex2f(drawingData->height, 0);
+    glVertex2f(drawingData->width, 0);
     
     glTexCoord2d(drawingData->width, drawingData->height);
     glVertex2f(drawingData->width, drawingData->height);
@@ -169,7 +165,8 @@
 {
     if (_lastDrawingData.freeCallback) {
         _lastDrawingData.freeCallback(_lastDrawingData.baseAddress, _lastDrawingData.context);
-    }   
+    }
+    _lastDrawingData.baseAddress = _lastDrawingData.freeCallback = NULL;
 }
 
 - (void)drawRect:(NSRect)dirtyRect
@@ -189,12 +186,14 @@
 
 - (void)reshape
 {
-    CGLContextObj glContext = [[self openGLContext] CGLContextObj];
+    NSOpenGLContext *context = [self openGLContext];
+    CGLContextObj glContext = [context CGLContextObj];
     CGLLockContext(glContext);
     CGLSetCurrentContext(glContext);
     
     [super reshape];
     _viewport = [self bounds];
+    [context update];
     
     CGLSetCurrentContext(NULL);
     CGLUnlockContext(glContext);

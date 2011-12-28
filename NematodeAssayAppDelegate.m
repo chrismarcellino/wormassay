@@ -62,11 +62,10 @@
             // If there is no open VideoSource document for this URL, create one
             if (![documentController documentForURL:url]) {
                 // Log enumerated devices
-                NSLog(@"Enumerated device \"%@\" with model ID \"%@\", unique ID %@, format descriptions: %@",
+                NSLog(@"Enumerated device \"%@\" with model ID \"%@\", unique ID %@",
                       [device localizedDisplayName],
                       modelUniqueID,
-                      uniqueID,
-                      [[device formatDescriptions] valueForKey:@"formatDescriptionAttributes"]);
+                      uniqueID);
                 
                 NSError *error = nil;
                 [documentController openDocumentWithContentsOfURL:url display:YES error:&error];
