@@ -47,7 +47,8 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callbac
     
     std::vector<cv::Vec3f> wellCircles;
     int wellCount;
-    bool success = findWellCircles(videoFrame, wellCount, wellCircles);        // gets wells in row major order
+    bool success = findWellCircles(videoFrame, wellCount, wellCircles, _wellCountHint);        // gets wells in row major order
+    _wellCountHint = wellCount;
     
     // FONT
     CvFont font;

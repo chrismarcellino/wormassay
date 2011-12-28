@@ -13,8 +13,12 @@
 static int sortCircleCentersByAxis(const void* a, const void* b, void* userdata);
 static int sortCirclesInRowMajorOrder(const void* a, const void* b, void* userdata);
 
-// Sorted by prevalence, so that we try more common configurations first to speed detection
-static int knownPlateWellCounts[] = { 24, 96, 48, 12, 6, 0 };     // zero terminated
+// Sorted by prevalence
+std::vector<int> knownPlateWellCounts()
+{
+    int counts[] = { 96, 24, 48, 12, 6 };
+    return std::vector<int>(counts, counts + sizeof(counts)/sizeof(*counts));
+}
 
 bool getPlateConfigurationForWellCount(int wellCount, int &rows, int &columns)
 {
@@ -46,15 +50,25 @@ bool getPlateConfigurationForWellCount(int wellCount, int &rows, int &columns)
     return valid;
 }
 
-bool findWellCircles(IplImage *inputImage, int &wellCount, std::vector<cv::Vec3f> &circles)
+bool findWellCircles(IplImage *inputImage, int &wellCount, std::vector<cv::Vec3f> &circles, int wellCountHint)
 {
+    std::vector<int> wellCounts = knownPlateWellCounts();
+    if (wellCountHint > 0) {
+        for (int i = 0; i < wellCounts.size(); i++) {
+            if (wellCounts[i] == wellCountHint) {
+                wellCounts.erase(wellCounts.begin() + i);
+                break;
+            }
+        }
+        wellCounts.insert(wellCounts.begin(), wellCountHint);
+    }
+    
     float bestScore = -1.0;
     float score;
     std::vector<cv::Vec3f> bestCircles;
     
-    int *currentCount = knownPlateWellCounts;
-    while (*currentCount != 0) {
-        if (findWellCirclesForPlateCount(inputImage, *currentCount, circles, score)) {
+    for (int i = 0; i < wellCounts.size(); i++) {
+        if (findWellCirclesForPlateCount(inputImage, wellCounts[i], circles, score)) {
             return true;
         }
         
@@ -66,7 +80,6 @@ bool findWellCircles(IplImage *inputImage, int &wellCount, std::vector<cv::Vec3f
         
         // Clear to try again
         circles.clear();
-        currentCount++;
     }
     
     // Return the best circles on failure
@@ -130,7 +143,7 @@ bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vect
     int colinearityThreshold = maxRadius / 2;
     
     // First sort the centers by X value so that lines vertically colinear are adjacent in the seq. On the second pass, do the opposite. 
-    bool expectedNumbersOfColinearCirclesFoundEverywhere = true;
+    bool allColinearCirclesFound = true;
     
     for (int axis = 0; axis <= 1; axis++) {
         cvSeqSort(circles, sortCircleCentersByAxis, &axis);
@@ -163,7 +176,7 @@ bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vect
             // Determine if we saw as many colinear circles as we expected
             int expectedNumberOfColinearCircles = (axis == 1) ? columns : rows;
             if (numberOfColinearCircles != expectedNumberOfColinearCircles) {
-                expectedNumbersOfColinearCirclesFoundEverywhere = false;
+                allColinearCirclesFound = false;
             }
         }
         
@@ -173,13 +186,26 @@ bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vect
     // Sort the circles in row major order
     cvSeqSort(circles, sortCirclesInRowMajorOrder, &colinearityThreshold);
     
-    vector<cv::Vec3f> circleVec;
-    cv::Seq<cv::Vec3f>(circles).copyTo(circleVec);
+    cv::Seq<cv::Vec3f>(circles).copyTo(circlesVec);
     cvReleaseMemStorage(&storage);
     
-    // Provide scores for debugging
-    score = MAX(0.9 - (float)abs(circles->total - wellCount) / wellCount, 0.0);
-    return circles->total == wellCount && expectedNumbersOfColinearCirclesFoundEverywhere;
+    // Determine if this is a valid plate and provide scores for debugging
+    bool success = circles->total == wellCount && allColinearCirclesFound;
+    score = MAX(1.0 - (float)abs(circles->total - wellCount) / wellCount, 0.0) - (allColinearCirclesFound ? 0.0 : 1.0);
+    
+    if (success) {
+    // Set the wells' area to be the mean under the assumption that there is no perspective distortion
+        int sum = 0;
+        for (int i = 0; i < circlesVec.size(); i++) {
+            sum += circlesVec[i][2];
+        }
+        sum /= wellCount;
+        for (int i = 0; i < circlesVec.size(); i++) {
+            circlesVec[i][2] = sum;
+        }
+    }
+        
+    return success;
 }
 
 static int sortCircleCentersByAxis(const void* a, const void* b, void* userdata)        // userdata is pointer to axis

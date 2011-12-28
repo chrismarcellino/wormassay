@@ -16,6 +16,8 @@
 @interface ProcessingController : NSObject {
     dispatch_queue_t _queue;        // protects all state and serializes
     dispatch_queue_t _debugFrameCallbackQueue;
+    
+    int _wellCountHint;
 }
 
 + (ProcessingController *)sharedInstance;
