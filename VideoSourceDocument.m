@@ -17,8 +17,6 @@
 NSString *const CaptureDeviceScheme = @"capturedevice";
 NSString *const CaptureDeviceFileType = @"dyn.capturedevice";
 
-static NSPoint upperLeftForFrame(NSRect frame);
-
 NSURL *URLForCaptureDeviceUniqueID(NSString *uniqueID)
 {
     return [[[NSURL alloc] initWithScheme:CaptureDeviceScheme
@@ -193,24 +191,10 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
         [window setRepresentedURL:nil];
     }
     
-    // Cascade the window if it is has the same upper left point as another window      XXXXXXXXXXX FIX ME??
-    NSPoint windowUpperLeft = upperLeftForFrame([window frame]);
-    for (NSWindow *anotherWindow in [NSApp windows]) {
-        if (window != anotherWindow && NSEqualPoints(windowUpperLeft, upperLeftForFrame([anotherWindow frame]))) {
-            [window setFrameTopLeftPoint:[window cascadeTopLeftFromPoint:windowUpperLeft]];
-            break;
-        }
-    }
-    
     // Capture devices will adjust their window constraints when the first frame arrives
     if (!_captureDevice) {
         [self adjustWindowSizing];
     }
-}
-
-static NSPoint upperLeftForFrame(NSRect frame)
-{
-    return NSMakePoint(frame.origin.x, frame.origin.y + frame.size.height);
 }
 
 - (void)adjustWindowSizing

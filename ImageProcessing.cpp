@@ -156,7 +156,7 @@ bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vect
                                     CV_HOUGH_GRADIENT,
                                     2,      // inverse accumulator resolution ratio
                                     minRadius * 2,  // min dist between centers
-                                    100,    // Canny high threshold
+                                    200,    // Canny high threshold
                                     200,    // Accumulator threshold
                                     minRadius, // min radius
                                     maxRadius); // max radius
@@ -164,7 +164,7 @@ bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vect
     
     // Take the set of all circles whose centers are approximately colinear with other circles along axis aligned lines
     // in both dimensions. Discard all others.
-    int colinearityThreshold = maxRadius / 4;
+    int colinearityThreshold = maxRadius / 2;
     
     bool allColinearCirclesFound = true;
     
