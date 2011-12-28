@@ -13,7 +13,6 @@
 
 static int sortCircleCentersByAxis(const void* a, const void* b, void* userdata);
 static int sortCirclesInRowMajorOrder(const void* a, const void* b, void* userdata);
-static int countOfContainedChildrenWithMinSize(CvContour* contour, int maxChildrenToCount, int minSize);
 
 // Sorted by prevalence
 std::vector<int> knownPlateWellCounts()
@@ -86,7 +85,7 @@ bool findWellCircles(IplImage *inputImage, std::vector<cv::Vec3f> &circles, int 
     std::vector<cv::Vec3f> bestCircles;
     
     for (int i = 0; i < wellCounts.size(); i++) {
-        if (findWellCirclesForPlateCount(inputImage, wellCounts[i], circles, score)) {
+        if (findWellCirclesForPlateCount(inputImage, wellCounts[i], circles, &score)) {
             return true;
         }
         
@@ -105,7 +104,7 @@ bool findWellCircles(IplImage *inputImage, std::vector<cv::Vec3f> &circles, int 
     return false;
 }
 
-bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vector<cv::Vec3f> &circlesVec, float &score)
+bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vector<cv::Vec3f> &circlesVec, float *score)
 {
     // Conver the input image to grayscale
     IplImage *grayInputImage = cvCreateImage(cvGetSize(inputImage), IPL_DEPTH_8U, 1);
@@ -162,24 +161,23 @@ bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vect
     
     bool allColinearCirclesFound = true;
     
-    CvSeq* filteredCircles = circles;
     // Do two passes so that we only reject a non-rectangular grid once we've filtered out spurious circles
     for (int pass = 0; pass < 2; pass++) {
         // First sort the centers by X value so that lines vertically colinear are adjacent in the seq. Next do the opposite. 
         for (int axis = 0; axis <= 1; axis++) {
-            cvSeqSort(filteredCircles, sortCircleCentersByAxis, &axis);
+            cvSeqSort(circles, sortCircleCentersByAxis, &axis);
             
             // Iterate through list and move circles colinear along Y lines to a new seq, and hence have similar X values (and then vice versa)
             CvSeq* colinearCircles = cvCreateSeq(CV_32FC3, sizeof(CvSeq), 3 * sizeof(float), storage);
             
             // Iterate through the current list
-            for (int i = 0; i < filteredCircles->total; i++) {
-                float* current = (float*)cvGetSeqElem(filteredCircles, i);
+            for (int i = 0; i < circles->total; i++) {
+                float* current = (float*)cvGetSeqElem(circles, i);
                 
                 // Iterate along a colinear line
                 int numberOfColinearCircles = 0;
-                for (int j = i + 1; j < filteredCircles->total; j++) {
-                    float *partner = (float*)cvGetSeqElem(filteredCircles, j);
+                for (int j = i + 1; j < circles->total; j++) {
+                    float *partner = (float*)cvGetSeqElem(circles, j);
                     if (fabsf(current[axis] - partner[axis]) <= colinearityThreshold) {
                         if (numberOfColinearCircles == 0) {
                             // Push the 'current' element
@@ -205,18 +203,20 @@ bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vect
                 }
             }
             
-            filteredCircles = colinearCircles;
+            circles = colinearCircles;
         }
     }
     
     // Determine if this is a valid plate and provide scores for debugging
-    bool success = filteredCircles->total == wellCount && allColinearCirclesFound;
-    score = MAX(1.0 - (float)abs(circles->total - wellCount) / wellCount - (allColinearCirclesFound ? 0.0 : 0.01), 0.0);
+    bool success = circles->total == wellCount && allColinearCirclesFound;
+    if (score) {
+        *score = MAX(1.0 - (float)abs(circles->total - wellCount) / wellCount - (allColinearCirclesFound ? 0.0 : 0.01), 0.0);
+    }
     
     if (success) {
         // If successful, sort the circles in row major order
-        cvSeqSort(filteredCircles, sortCirclesInRowMajorOrder, &colinearityThreshold);        
-        cv::Seq<cv::Vec3f>(filteredCircles).copyTo(circlesVec);
+        cvSeqSort(circles, sortCirclesInRowMajorOrder, &colinearityThreshold);        
+        cv::Seq<cv::Vec3f>(circles).copyTo(circlesVec);
         
         // Set the wells' area to be the mean under the assumption that there is no perspective distortion
         int sum = 0;
@@ -293,6 +293,29 @@ bool plateSequentialCirclesAppearSameAndStationary(const std::vector<cv::Vec3f> 
     float deltaY = centerPrevious.y - centerCurrent.y;
     float distance = sqrtf(deltaX * deltaX + deltaY * deltaY);
     return distance < (radiusPrevious + radiusCurrent) / 2.0 / 10.0;
+}
+
+void drawWellCirclesAndLabelsOnDebugImage(std::vector<cv::Vec3f> circles, CvScalar circleColor, bool drawLabels, IplImage *debugImage)
+{
+    CvFont wellFont = fontForNormalizedScale(1.0, debugImage);
+    
+    for (size_t i = 0; i < circles.size(); i++) {
+        CvPoint center = cvPoint(cvRound(circles[i][0]), cvRound(circles[i][1]));
+        int radius = cvRound(circles[i][2]);
+        
+        // Draw the circle outline
+        cvCircle(debugImage, center, radius, circleColor, 3, 8, 0);
+        
+        // Draw the well labels
+        if (drawLabels) {
+            CvPoint textPoint = cvPoint(center.x - radius, center.y - 0.9 * radius);
+            cvPutText(debugImage,
+                      wellIdentifierStringForIndex(i, circles.size()).c_str(),
+                      textPoint,
+                      &wellFont,
+                      cvScalar(255, 255, 0));
+        }
+    }
 }
 
 std::vector<int> calculateMovedPixelsForWellsFromImages(IplImage *plateImagePrev,
@@ -413,25 +436,6 @@ std::vector<int> calculateEdgePixelsForWellsFromImages(IplImage *plateImage, con
     cvReleaseImage(&invertedCircleMask);
     
     return filledEdgePixelCounts;
-}
-
-static int countOfContainedChildrenWithMinSize(CvContour* contour, int maxChildrenToCount, int minSize)
-{
-    int count = 0;
-    
-    for (CvContour* child = (CvContour*)contour->v_next; child && count < maxChildrenToCount; child = (CvContour*)child->h_next) {
-        CvRect childRect = cvBoundingRect(child);
-        int largerDimension = MAX(childRect.width, childRect.height);
-        // The child edge box must be completely cotained with the parent edge box.
-        if (largerDimension > minSize && rectContainsRect(cvBoundingRect(contour), childRect)) {
-            count++;
-            if (count < maxChildrenToCount) {
-                count += countOfContainedChildrenWithMinSize(child, maxChildrenToCount - count, minSize);
-            }
-        }
-    }
-    
-    return count;
 }
 
 CvFont fontForNormalizedScale(double normalizedScale, IplImage *image)

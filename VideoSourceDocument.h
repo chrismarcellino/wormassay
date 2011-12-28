@@ -10,6 +10,7 @@
 #import <QTKit/QTKit.h>
 #import <QuartzCore/QuartzCore.h>
 
+@class VideoProcessor;
 @class BitmapOpenGLView;
 
 extern NSString *const CaptureDeviceScheme;
@@ -30,6 +31,7 @@ extern NSString *UniqueIDForCaptureDeviceURL(NSURL *url);
     dispatch_queue_t _movieQueue;
     dispatch_source_t _movieFrameExtractTimer;
     
+    VideoProcessor *_processor;
     BitmapOpenGLView *_bitmapOpenGLView;
     NSUInteger _frameDropCount;
     NSString *_sourceIdentifier;

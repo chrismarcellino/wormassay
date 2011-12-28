@@ -10,6 +10,7 @@
 #import "opencv2/core/core_c.h"
 #import <QuartzCore/QuartzCore.h>
 #import "BitmapOpenGLView.h"
+#import "VideoProcessorController.h"
 #import "VideoProcessor.h"
 #import "IplImageObject.h"
 
@@ -95,7 +96,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
         
         _sourceIdentifier = [[NSString alloc] initWithFormat:@"\"%@\" (%@)", [_captureDevice localizedDisplayName], captureDeviceUniqueID];
         
-        ProcessLog(@"Opened device \"%@\" with model ID \"%@\"", _sourceIdentifier, [_captureDevice modelUniqueID]);
+        RunLog(@"Opened device \"%@\" with model ID \"%@\"", _sourceIdentifier, [_captureDevice modelUniqueID]);
     } else if ([absoluteURL isFileURL]) {
         NSDictionary *attributes = [[NSDictionary alloc] initWithObjectsAndKeys:
                                     absoluteURL, QTMovieURLAttribute,
@@ -103,11 +104,11 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
                                     [NSNumber numberWithBool:NO], QTMovieOpenAsyncOKAttribute,
                                     nil];
         _movie = [[QTMovie alloc] initWithAttributes:attributes error:outError];
-        _movieQueue = dispatch_queue_create("Movie frame extraction queue", NULL);
+        _movieQueue = dispatch_queue_create("edu.ucsf.chrismarcellino.nematodeassay.fileframeextract", NULL);
         [attributes release];
         
         _sourceIdentifier = [[absoluteURL path] retain];
-        ProcessLog(@"Opened file \"%@\"", _sourceIdentifier);
+        RunLog(@"Opened file \"%@\"", _sourceIdentifier);
     }
     
     if (_captureDevice) {
@@ -153,6 +154,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
         dispatch_release(_movieFrameExtractTimer);
     }
     
+    [_processor release];
     [_bitmapOpenGLView release];
     [_sourceIdentifier release];
     [super dealloc];
@@ -253,7 +255,9 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 {
     BOOL success = NO;
     
-    [[VideoProcessor sharedInstance] noteSourceIdentifierHasConnected:_sourceIdentifier];
+    NSAssert(!_processor, @"processor already exists");
+    _processor = [[VideoProcessor alloc] initWithSourceIdentifier:_sourceIdentifier];
+    [[VideoProcessorController sharedInstance] addVideoProcessor:_processor];
     
     if (_captureDevice) {
         // Start capture
@@ -342,8 +346,8 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
     // Work around AppKit calling close twice in succession
     if (!closeCalled) {
         closeCalled = YES;
-        ProcessLog(@"Closing removed device/file: %@", _sourceIdentifier);
-        [[VideoProcessor sharedInstance] noteSourceIdentifierHasDisconnected:_sourceIdentifier];
+        RunLog(@"Closing removed device/file: %@", _sourceIdentifier);
+        [[VideoProcessorController sharedInstance] removeVideoProcessor:_processor];
         
         [_captureSession stopRunning];
         [_captureDecompressedVideoOutput setDelegate:nil];
@@ -373,7 +377,7 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
 {
     _frameDropCount++;
     if (_frameDropCount == 10 || _frameDropCount == 100 || _frameDropCount % 1000 == 0) {
-        ProcessLog(@"Device %@ dropped %llu total frames", _sourceIdentifier, (unsigned long long)_frameDropCount);
+        RunLog(@"Device %@ dropped %llu total frames", _sourceIdentifier, (unsigned long long)_frameDropCount);
     }
 }
 
@@ -386,10 +390,7 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
         presentationTimeInterval = CACurrentMediaTime();
     }
     
-    [[VideoProcessor sharedInstance] processVideoFrame:image
-                                        fromSourceIdentifier:_sourceIdentifier
-                                            presentationTime:presentationTimeInterval
-                                   debugVideoFrameCompletion:^(IplImageObject *image) {
+    [_processor processVideoFrame:image presentationTime:presentationTimeInterval debugFrameCallback:^(IplImageObject *image) {
         [_bitmapOpenGLView renderImage:image];
     }];
 }

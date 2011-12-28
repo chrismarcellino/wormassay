@@ -11,177 +11,122 @@
 #import "IplImageObject.h"
 
 @interface VideoProcessor() {
+    NSString *_sourceIdentifier;
+    id<VideoProcessorDelegate> _delegate;        // not retained
     dispatch_queue_t _queue;        // protects all state and serializes
     dispatch_queue_t _debugFrameCallbackQueue;
     
+    BOOL _shouldScanForWells;
+    BOOL _scanningForWells;
+    BOOL _scanningForBarcodes;
+    
     ProcessingState _processingState;
-    NSString *_wellCameraSourceIdentifier;
-    NSMutableArray *_connectedSourceIdentifiers;
-    NSMutableArray *_wellFindingInProcessSourceIdentifiers;
-    NSMutableArray *_barcodeFindingInProcessSourceIdentifiers;
     int _wellCountHint;
-    
-    IplImageObject *_lastTrackingPlateFrame;
-    std::vector<cv::Vec3f> _trackingWellCircles;
-    std::map<std::string, std::vector<cv::Vec3f> > _lastCirclesMap;    // for debugging
-    
     NSTimeInterval _firstWellFrameTime;
     NSTimeInterval _startOfTrackingMotionTime;
-    NSString *_barcode;
+    
+    IplImageObject *_lastFrame;     // when tracking
+    std::vector<cv::Vec3f> _trackingWellCircles;    // circles used for tracking
+    std::vector<cv::Vec3f> _lastCircles;   // for debugging
 }
 
-- (void)performWellDeterminationCalculationAsyncWithFrame:(IplImageObject *)videoFrame
-                                     fromSourceIdentifier:(NSString *)sourceIdentifier
-                                         presentationTime:(NSTimeInterval)presentationTime;
+- (void)performWellDeterminationCalculationAsyncWithFrame:(IplImageObject *)videoFrame presentationTime:(NSTimeInterval)presentationTime;
+- (void)performBarcodeReadingAsyncWithFrame:(IplImageObject *)videoFrame presentationTime:(NSTimeInterval)presentationTime;
 
-- (void)performBarcodeReadingAsyncWithFrame:(IplImageObject *)videoFrame
-                       fromSourceIdentifier:(NSString *)sourceIdentifier
-                           presentationTime:(NSTimeInterval)presentationTime;
-
-- (void)resetCaptureStateAndReportDataIfPossible;
-
+- (void)resetCaptureStateAndReportResults;
 - (void)beginRecordingVideo;
-
-- (void)appendString:(NSString *)string toPath:(NSString *)path;
 
 @end
 
 
 @implementation VideoProcessor
 
-+ (VideoProcessor *)sharedInstance
-{
-    static dispatch_once_t pred = 0;
-    static VideoProcessor *sharedInstance = nil;
-    dispatch_once(&pred, ^{
-        sharedInstance = [[self alloc] init];
-    });
-    return sharedInstance;
-}
-
-- (id)init
+- (id)initWithSourceIdentifier:(NSString *)sourceIdentifier
 {
     if ((self = [super init])) {
-        _queue = dispatch_queue_create("VideoProcessor queue", NULL);
-        _debugFrameCallbackQueue = dispatch_queue_create("Debug frame callback queue", NULL);
+        _sourceIdentifier = [sourceIdentifier copy];
+        _queue = dispatch_queue_create("edu.ucsf.chrismarcellino.nematodeassay.videoprocessor", NULL);
+        _debugFrameCallbackQueue = dispatch_queue_create("edu.ucsf.chrismarcellino.nematodeassay.callback", NULL);
         _processingState = ProcessingStateNoPlate;
-        _connectedSourceIdentifiers = [[NSMutableArray alloc] init];
-        _wellFindingInProcessSourceIdentifiers = [[NSMutableArray alloc] init];
-        _barcodeFindingInProcessSourceIdentifiers = [[NSMutableArray alloc] init];
     }
     return self;
 }
 
 - (void)dealloc
 {
+    [_sourceIdentifier release];
     dispatch_release(_queue);
     dispatch_release(_debugFrameCallbackQueue);
-    [_wellFindingInProcessSourceIdentifiers release];
-    [_barcodeFindingInProcessSourceIdentifiers release];
-    [_wellCameraSourceIdentifier release];
-    [_lastTrackingPlateFrame release];
+    [_lastFrame release];
     [super dealloc];
 }
 
-- (void)noteSourceIdentifierHasConnected:(NSString *)sourceIdentifier
+- (void)setDelegate:(id<VideoProcessorDelegate>)delegate
 {
     dispatch_async(_queue, ^{
-        NSAssert(![_connectedSourceIdentifiers containsObject:sourceIdentifier], @"Source identifier is already connected");
-        [_connectedSourceIdentifiers addObject:sourceIdentifier];
+        _delegate = delegate;       // not retained
     });
 }
 
-- (void)noteSourceIdentifierHasDisconnected:(NSString *)sourceIdentifier
+- (void)setShouldScanForWells:(BOOL)shouldScanForWells
 {
     dispatch_async(_queue, ^{
-        NSAssert([_connectedSourceIdentifiers containsObject:sourceIdentifier], @"Source identifier is not connected");
-        [_connectedSourceIdentifiers removeObject:sourceIdentifier];
-        
-        _lastCirclesMap.erase(std::string([sourceIdentifier UTF8String]));
-        [_wellFindingInProcessSourceIdentifiers removeObject:sourceIdentifier];
-        [_barcodeFindingInProcessSourceIdentifiers removeObject:sourceIdentifier];
-        
-        if ([_wellCameraSourceIdentifier isEqual:sourceIdentifier]) {
-            [self resetCaptureStateAndReportDataIfPossible];
+        _shouldScanForWells = shouldScanForWells;
+        // If no longer scanning (e.g. another camera has a plate), reset our state
+        if (!shouldScanForWells) {
+            [self resetCaptureStateAndReportResults];
         }
     });
 }
 
-// Caller is responsible for calling cvReleaseImage() on debugFrame. Block will be called on an arbitrary thread. 
 - (void)processVideoFrame:(IplImageObject *)videoFrame
-     fromSourceIdentifier:(NSString *)sourceIdentifier
          presentationTime:(NSTimeInterval)presentationTime
-debugVideoFrameCompletion:(void (^)(IplImageObject *image))callback;
+       debugFrameCallback:(void (^)(IplImageObject *image))callback
 {
+    // This method is synchronous so that we don't enqueue frames faster than they should be processed. QT will drop the overflow.
     dispatch_sync(_queue, ^{
-        // If we're not already in the process of anaylzing a frame from this source for wells, and we are interested
-        // in this source, start an asynchronous analysis using a copy of the image (since the copy will persist pass
-        // the return of this method.)
-        bool alreadySearchingForThisSouce = [_wellFindingInProcessSourceIdentifiers containsObject:sourceIdentifier];
-        bool interestedInThisSouce = _processingState == ProcessingStateNoPlate || [_wellCameraSourceIdentifier isEqual:sourceIdentifier];
-        if (!alreadySearchingForThisSouce && interestedInThisSouce) {
-            [self performWellDeterminationCalculationAsyncWithFrame:videoFrame
-                                               fromSourceIdentifier:sourceIdentifier
-                                                   presentationTime:presentationTime];
+        // If we're not already processing an image for wells, and no other processor has a plate, schedule an async processing
+        if (!_scanningForWells && _shouldScanForWells) {
+            [self performWellDeterminationCalculationAsyncWithFrame:videoFrame presentationTime:presentationTime];
         }
         
         // If we are capturing, begin searching frames for a barcode until we obtrain one for this plate
-        if (!_barcode &&
-            _processingState == ProcessingStateTrackingMotion &&
-            ![_barcodeFindingInProcessSourceIdentifiers containsObject:sourceIdentifier]) {
-            [self performBarcodeReadingAsyncWithFrame:videoFrame
-                                 fromSourceIdentifier:sourceIdentifier
-                                     presentationTime:presentationTime];
+        if (!_scanningForBarcodes && _processingState == ProcessingStateTrackingMotion) {
+            [self performBarcodeReadingAsyncWithFrame:videoFrame presentationTime:presentationTime];
         }
         
-        // Create a copy of the frame to draw debugging info on that we will send back
+        // Create a copy of the frame to draw debugging info on, which we will send back
         IplImageObject *debugImage = [videoFrame copy];
         
         // Record statistics on the tracked image synchronously (at frame rate), so that we drop frames if we can't keep up.
         // It is important to base all statistics on the elapsed time so that the results are independent of hardware
         // performance.
-        if (_processingState == ProcessingStateTrackingMotion && [_wellCameraSourceIdentifier isEqual:sourceIdentifier]) {
-            if (_lastTrackingPlateFrame) {
+        if (_processingState == ProcessingStateTrackingMotion) {
+            if (_lastFrame) {
+                // XXX calculate and store stats (don't do the first every frame?)
                 calculateEdgePixelsForWellsFromImages([videoFrame image], _trackingWellCircles, [debugImage image]);
-                std::vector<int> movedPixelCounts = calculateMovedPixelsForWellsFromImages([_lastTrackingPlateFrame image],
+                std::vector<int> movedPixelCounts = calculateMovedPixelsForWellsFromImages([_lastFrame image],
                                                                                            [videoFrame image],
                                                                                            _trackingWellCircles,
                                                                                            [debugImage image]);
             }
             
-            // XXX calculate stats
-            
             // Store the current image for the next pass
-            [_lastTrackingPlateFrame release];
-            _lastTrackingPlateFrame = [videoFrame retain];
+            [_lastFrame release];
+            _lastFrame = [videoFrame retain];
         }
         
-        // Draw debugging well circles and labels
-        if (_processingState == ProcessingStateNoPlate || [_wellCameraSourceIdentifier isEqual:sourceIdentifier]) {
-            CvFont debugImageFont = fontForNormalizedScale(1.0, [debugImage image]);
-            
-            const std::vector<cv::Vec3f> circlesToDraw = (_processingState == ProcessingStateNoPlate) ?
-                        _lastCirclesMap[std::string([sourceIdentifier UTF8String])] : _trackingWellCircles;
-            for (size_t i = 0; i < circlesToDraw.size(); i++) {
-                CvPoint center = cvPoint(cvRound(circlesToDraw[i][0]), cvRound(circlesToDraw[i][1]));
-                int radius = cvRound(circlesToDraw[i][2]);
-                // Draw the circle outline
-                CvScalar color = (_processingState == ProcessingStateNoPlate) ? 
-                        CV_RGBA(255, 0, 0, 255) :
-                        ((_processingState == ProcessingStatePlateFirstFrameIdentified) ? CV_RGBA(255, 255, 0, 255) : CV_RGBA(0, 255, 0, 255));
-                cvCircle([debugImage image], center, radius, color, 3, 8, 0);
-                
-                // Draw the well labels
-                if (_processingState == ProcessingStateTrackingMotion) {
-                    CvPoint textPoint = cvPoint(center.x - radius, center.y - 0.9 * radius);
-                    cvPutText([debugImage image],
-                              wellIdentifierStringForIndex(i, circlesToDraw.size()).c_str(),
-                              textPoint,
-                              &debugImageFont,
-                              cvScalar(255, 255, 0));
-                }
-            }
+        // Draw debugging well circles and labels on each frame
+        if (_shouldScanForWells) {
+            CvScalar circleColor = _processingState == ProcessingStateNoPlate ? CV_RGBA(255, 0, 0, 255) :
+                (_processingState == ProcessingStatePlateFirstFrameIdentified ? CV_RGBA(255, 255, 0, 255) : CV_RGBA(0, 255, 0, 255));
+            drawWellCirclesAndLabelsOnDebugImage(_processingState == ProcessingStateNoPlate ? _lastCircles : _trackingWellCircles,
+                                                 circleColor,
+                                                 _processingState == ProcessingStateTrackingMotion,
+                                                 [debugImage image]);
         }
+        
+        // Dispatch the debug image asynchronously to increase parallelism 
         dispatch_async(_debugFrameCallbackQueue, ^{
             callback(debugImage);
         });
@@ -190,35 +135,32 @@ debugVideoFrameCompletion:(void (^)(IplImageObject *image))callback;
 }
 
 // requires _queue to be held
-- (void)performWellDeterminationCalculationAsyncWithFrame:(IplImageObject *)videoFrame
-                                     fromSourceIdentifier:(NSString *)sourceIdentifier
-                                         presentationTime:(NSTimeInterval)presentationTime
+- (void)performWellDeterminationCalculationAsyncWithFrame:(IplImageObject *)videoFrame presentationTime:(NSTimeInterval)presentationTime
 {
-    [_wellFindingInProcessSourceIdentifiers addObject:sourceIdentifier];
+    _scanningForWells = YES;
     
-    // Get instance variables while holding _queue
+    // Get instance variables while holding _queue for thread-safety
     int wellCountHint = _wellCountHint;
     bool searchAllPlateSizes = _processingState == ProcessingStateNoPlate;
     
     // Perform the calculation on a concurrent queue so that we don't block the current thread
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        // Get wells in row major order
         std::vector<cv::Vec3f> wellCircles;
-        
         bool plateFound;
         if (searchAllPlateSizes) {
-            plateFound = findWellCircles([videoFrame image], wellCircles, wellCountHint);        // gets wells in row major order
+            plateFound = findWellCircles([videoFrame image], wellCircles, wellCountHint);
         } else {
-            float score;
-            plateFound = findWellCirclesForPlateCount([videoFrame image], wellCountHint, wellCircles, score);
+            plateFound = findWellCirclesForPlateCount([videoFrame image], wellCountHint, wellCircles);
         }
         
         // Process and store the results when holding _queue
         dispatch_async(_queue, ^{
-            [_wellFindingInProcessSourceIdentifiers removeObject:sourceIdentifier];
+            _scanningForWells = NO;
             // If the device was removed, etc., ignore any detected plates
-            if ([_connectedSourceIdentifiers containsObject:sourceIdentifier]) {
+            if (_shouldScanForWells) {
                 // Store the circles for debugging later
-                _lastCirclesMap[std::string([sourceIdentifier UTF8String])] = wellCircles;
+                _lastCircles = wellCircles;
                 
                 // If we've found a plate, store the well count to improve the performance of future searches
                 if (plateFound) {
@@ -228,8 +170,6 @@ debugVideoFrameCompletion:(void (^)(IplImageObject *image))callback;
                 switch (_processingState) {
                     case ProcessingStateNoPlate:
                         if (plateFound) {
-                            NSAssert(!_wellCameraSourceIdentifier, @"In ProcessingStateNoPlate, but _wellCameraSourceIdentifier != nil");
-                            _wellCameraSourceIdentifier = [sourceIdentifier copy];
                             _processingState = ProcessingStatePlateFirstFrameIdentified;
                             _trackingWellCircles = wellCircles;     // store the first circles as the baseline for the second set
                             _firstWellFrameTime = presentationTime;
@@ -237,38 +177,33 @@ debugVideoFrameCompletion:(void (^)(IplImageObject *image))callback;
                         break;
                         
                     case ProcessingStatePlateFirstFrameIdentified:
-                        // Since we've seen a plate in one camera, ignore any pending results from others
-                        if ([_wellCameraSourceIdentifier isEqual:sourceIdentifier]) {
-                            if (plateFound) {
-                                // If the second identification yields matching results as the first, and they are spread by at least
-                                // 100 ms, begin motion tracking and video recording
-                                if (plateSequentialCirclesAppearSameAndStationary(_trackingWellCircles, wellCircles) &&
-                                    presentationTime - _firstWellFrameTime >= 0.100) {
-                                    _processingState = ProcessingStateTrackingMotion;
-                                    _trackingWellCircles = wellCircles; // store the second set as the baseline for all remaining sets
-                                    _startOfTrackingMotionTime = presentationTime;
-                                    
-                                    [self beginRecordingVideo];
-                                } else {
-                                    // There is still a plate, but it doesn't match or more likely is still moving moved, or not enough
-                                    // time has lapsed, so we stay in this state, but update the circles
-                                    _trackingWellCircles = wellCircles;
-                                }
+                        if (plateFound) {
+                            // If the second identification yields matching results as the first, and they are spread by at least
+                            // 100 ms, begin motion tracking and video recording
+                            if (plateSequentialCirclesAppearSameAndStationary(_trackingWellCircles, wellCircles) &&
+                                presentationTime - _firstWellFrameTime >= 0.100) {
+                                _processingState = ProcessingStateTrackingMotion;
+                                _trackingWellCircles = wellCircles; // store the second set as the baseline for all remaining sets
+                                _startOfTrackingMotionTime = presentationTime;
+                                
+                                [self beginRecordingVideo];
                             } else {
-                                // Plate is gone so reset
-                                [self resetCaptureStateAndReportDataIfPossible];
+                                // There is still a plate, but it doesn't match or more likely is still moving moved, or not enough
+                                // time has lapsed, so we stay in this state, but update the circles
+                                _trackingWellCircles = wellCircles;
                             }
+                        } else {
+                            // Plate is gone so reset
+                            [self resetCaptureStateAndReportResults];
                         }
                         break;
                         
                     case ProcessingStateTrackingMotion:
                         // Since we've seen a plate in one camera, ignore any pending results from others.
                         // But if the plate is gone, moved or different, reset
-                        if ([_wellCameraSourceIdentifier isEqual:sourceIdentifier] &&
-                            (!plateFound || !plateSequentialCirclesAppearSameAndStationary(_trackingWellCircles, wellCircles))) {
-                            [self resetCaptureStateAndReportDataIfPossible];
+                        if (!plateFound || !plateSequentialCirclesAppearSameAndStationary(_trackingWellCircles, wellCircles)) {
+                            [self resetCaptureStateAndReportResults];
                         }
-                        
                 }
             }
         });
@@ -276,108 +211,42 @@ debugVideoFrameCompletion:(void (^)(IplImageObject *image))callback;
 }
 
 // requires _queue to be held
-- (void)performBarcodeReadingAsyncWithFrame:(IplImageObject *)videoFrame
-                       fromSourceIdentifier:(NSString *)sourceIdentifier
-                           presentationTime:(NSTimeInterval)presentationTime
+- (void)performBarcodeReadingAsyncWithFrame:(IplImageObject *)videoFrame presentationTime:(NSTimeInterval)presentationTime
 {
-    [_barcodeFindingInProcessSourceIdentifiers addObject:sourceIdentifier];
+    _scanningForBarcodes = YES;
     
     // Perform the calculation on a concurrent queue so that we don't block the current thread
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        // XXX DO BARCODE FIND HERE (SYNC)
+        // XXX DO BARCODE FIND HERE (SYNC).   FIGURE OUT A WAY TO PREVENT FROM OVER BARCODE SEARCHING!!
         sleep(1);
         
         // Process and store the results when holding _queue
         dispatch_async(_queue, ^{
-            [_barcodeFindingInProcessSourceIdentifiers removeObject:sourceIdentifier];
-            if ([_connectedSourceIdentifiers containsObject:sourceIdentifier]) {
-            
-                if (presentationTime >= _startOfTrackingMotionTime) {
-                    // XXX STORE BARCODE RESULT TO BARCODE
-                }
+            _scanningForBarcodes = NO;
+            if (presentationTime >= _startOfTrackingMotionTime) {
+                // XXX STORE BARCODE RESULT TO BARCODE
             }
         });
     });
 }
 
 // requires _queue to be held
-- (void)resetCaptureStateAndReportDataIfPossible
+- (void)resetCaptureStateAndReportResults
 {
     // XXX IF RECORDING
     //[self endRecordingVideoWithName];
-    
     // XXX if (RECORCORDING && > 5 seconds total), save the stats and stuff
     
     _processingState = ProcessingStateNoPlate;
-    [_wellCameraSourceIdentifier release];
-    _wellCameraSourceIdentifier = nil;
     
-    _startOfTrackingMotionTime = 0.0;
+    _startOfTrackingMotionTime = _firstWellFrameTime = 0.0;
     _trackingWellCircles.clear();
-    _firstWellFrameTime = 0.0;
-    
-    [_barcode release];
-    _barcode = nil;
+    _lastCircles.clear();
 }
 
 - (void)beginRecordingVideo
 {
     
-}
-
-- (void)logFormat:(NSString *)format, ...
-{
-    // XXX: todo, write documents folder appropriately, and show on screen in a window.
-    // for now, syslog.  (remember to add locking)
-    va_list args;
-    va_start(args, format);
-    NSString *string = [[NSString alloc] initWithFormat:format arguments:args];
-    NSLog(@"%@", string);
-    [string release];
-    va_end(args);
-}
-
-- (void)outputFormatToCurrentCSVFile:(NSString *)format, ...
-{
-    /// XXX TODO
-    va_list args;
-    va_start(args, format);
-    NSLogv(format, args);
-    va_end(args);   
-}
-
-- (void)appendString:(NSString *)string toPath:(NSString *)path
-{
-    bool success = false;
-    
-    for (int i = 0; i < 2 && !success; i++) {
-        int fd = open([path fileSystemRepresentation], O_WRONLY | O_CREAT | O_SHLOCK, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-        if (fd != -1) {
-            NSFileHandle *handle = [[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES];
-            @try {
-                [handle seekToEndOfFile];
-                [handle writeData:[string dataUsingEncoding:NSUTF8StringEncoding]];
-                [handle closeFile];
-                success = true;
-            } @catch (NSException *e) {
-                [self logFormat:@"Unable to write to file '%@': %@", path, e];
-            }
-            [handle release];
-        } else if (i > 0) {
-            [self logFormat:@"Unable to open file '%@': %s", path, strerror(errno)];
-        }
-        
-        // Try creating the directory hiearchy if there was an issue and try again
-        if (!success) {
-            NSFileManager *fileManager = [[NSFileManager alloc] init];
-            NSString *directory = [path stringByDeletingLastPathComponent];
-            if (![fileManager fileExistsAtPath:directory]) {
-                [fileManager createDirectoryAtPath:directory withIntermediateDirectories:YES attributes:nil error:NULL];
-            }
-            [fileManager release];
-            
-        }
-    }
 }
 
 @end

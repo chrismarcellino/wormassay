@@ -25,7 +25,7 @@ extern std::string wellIdentifierStringForIndex(int index, int wellCount);
 // Returns true if the circles found correspond to the intended plate configuration. Well circles are returned in 
 // row major order, as (x-center, y-center, radius) triples. The first version determines the well count automatically. 
 extern bool findWellCircles(IplImage *inputImage, std::vector<cv::Vec3f> &circles, int wellCountHint = 0);
-extern bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vector<cv::Vec3f> &circlesVec, float &score);
+extern bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vector<cv::Vec3f> &circlesVec, float *score = NULL);
 
 // Calcualtes the arithmetic mean of the circles' centers
 extern CvPoint plateCenterForWellCircles(const std::vector<cv::Vec3f> &circles);
@@ -33,6 +33,9 @@ extern CvPoint plateCenterForWellCircles(const std::vector<cv::Vec3f> &circles);
 // Returns true if the plate corresponding to the circle sets has moved or been removed during two sequential sets of samplings.
 extern bool plateSequentialCirclesAppearSameAndStationary(const std::vector<cv::Vec3f> &circlesPrevious,
                                                           const std::vector<cv::Vec3f> &circlesCurrent);
+
+// Draws circles and labels on an image
+extern void drawWellCirclesAndLabelsOnDebugImage(std::vector<cv::Vec3f> circles, CvScalar circleColor, bool drawLabels, IplImage *debugImage);
 
 // Counts the number of pixels that represent moved well contents between two frames. An empty vector is returned if the plate
 // (or camera) has physically moved between the prev and cur images. 

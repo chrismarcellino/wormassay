@@ -10,9 +10,7 @@
 #import "opencv2/core/core_c.h"
 
 @class IplImageObject;
-
-// Convienience macro
-#define ProcessLog(format, args...) [[VideoProcessor sharedInstance] logFormat:format, ## args]
+@protocol VideoProcessorDelegate;
 
 typedef enum {
     ProcessingStateNoPlate,
@@ -23,20 +21,26 @@ typedef enum {
 
 // Thread-safe.
 @interface VideoProcessor : NSObject
-// Instance variables are in the implementation file as they contain C++ objects
+// Instance variables are declared in the implementation file as they contain C++ objects
+// which would prevent importation by C/Obj-C compilation units
 
-+ (VideoProcessor *)sharedInstance;
+- (id)initWithSourceIdentifier:(NSString *)sourceIdentifier;
+- (void)setDelegate:(id<VideoProcessorDelegate>)delegate;
 
-- (void)noteSourceIdentifierHasConnected:(NSString *)sourceIdentifier;
-- (void)noteSourceIdentifierHasDisconnected:(NSString *)sourceIdentifier;
+- (void)setShouldScanForWells:(BOOL)shouldScanForWells;
 
-// Caller is responsible for calling cvReleaseImage() on debugFrame. Block will be called on an arbitrary thread. 
+// Synchronously processes a video frame (e.g. at frame rate)
 - (void)processVideoFrame:(IplImageObject *)videoFrame
-     fromSourceIdentifier:(NSString *)sourceIdentifier
          presentationTime:(NSTimeInterval)presentationTime
-debugVideoFrameCompletion:(void (^)(IplImageObject *image))callback;
+       debugFrameCallback:(void (^)(IplImageObject *image))callback;    // callback will be called on a background queue
 
-- (void)logFormat:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2);
-//- (void)outputFormatToCurrentCSVFile:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2);
+@end
+
+
+@protocol VideoProcessorDelegate
+
+- (void)videoProcessorDidBeginTrackingPlate:(VideoProcessor *)vp;
+- (void)videoProcessor:(VideoProcessor *)vp didFinishAcquiringPlateResults:(id)something;
+- (void)videoProcessor:(VideoProcessor *)vp didCaptureBarcode:(NSString *)barcode atTime:(NSTimeInterval)presentationTime;
 
 @end
