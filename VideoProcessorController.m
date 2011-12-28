@@ -91,7 +91,7 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
         [defaults setObject:NSStringFromClass(assayAnalyzerClass) forKey:AssayAnalyzerClassKey];
         [defaults synchronize];
         
-        dispatch_sync(_queue, ^{
+        dispatch_async(_queue, ^{
             for (VideoProcessor *videoProcessor in _videoProcessors) {
                 [videoProcessor setAssayAnalyzerClass:assayAnalyzerClass];
             }
@@ -101,7 +101,7 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
 
 - (void)addVideoProcessor:(VideoProcessor *)videoProcessor
 {
-    dispatch_sync(_queue, ^{
+    dispatch_async(_queue, ^{
         [_videoProcessors addObject:videoProcessor];
         [videoProcessor setDelegate:self];
         [videoProcessor setAssayAnalyzerClass:[self currentAssayAnalyzerClass]];
@@ -111,7 +111,7 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
 
 - (void)removeVideoProcessor:(VideoProcessor *)videoProcessor
 {
-    dispatch_sync(_queue, ^{
+    dispatch_async(_queue, ^{
         [videoProcessor setShouldScanForWells:NO];
         [_videoProcessors removeObject:videoProcessor];
     });    
@@ -119,7 +119,7 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
 
 - (void)videoProcessorDidBeginTrackingPlate:(VideoProcessor *)vp
 {
-    dispatch_sync(_queue, ^{
+    dispatch_async(_queue, ^{
         if ([_videoProcessors containsObject:vp]) {
             for (VideoProcessor *processor in _videoProcessors) {
                 // Prevent all other processors from scanning for wells to conserve CPU time and avoid tracking more than one plate
@@ -133,7 +133,7 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
 
 - (void)videoProcessor:(VideoProcessor *)vp didFinishAcquiringPlateData:(PlateData *)plateData
 {
-    dispatch_sync(_queue, ^{
+    dispatch_async(_queue, ^{
         if ([_videoProcessors containsObject:vp]) {
             for (VideoProcessor *processor in _videoProcessors) {
                 [processor setShouldScanForWells:YES];
@@ -146,7 +146,7 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
 
 - (void)videoProcessor:(VideoProcessor *)vp didCaptureBarcodeText:(NSString *)text atTime:(NSTimeInterval)presentationTime
 {
-    dispatch_sync(_queue, ^{
+    dispatch_async(_queue, ^{
         if ([_videoProcessors containsObject:vp]) {
             // XXX DO SOME STUFF WITH THE RESULTS
         }
@@ -188,8 +188,8 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
             if (wasAtBottom) {
                 [textView scrollRangeToVisible:NSMakeRange([textStorage length], 0)];
             }
-            [pool release];
         });
+        [pool release];
     });
     [string release];
 }

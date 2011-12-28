@@ -84,14 +84,14 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 
 - (void)setDelegate:(id<VideoProcessorDelegate>)delegate
 {
-    dispatch_sync(_queue, ^{
+    dispatch_async(_queue, ^{
         _delegate = delegate;       // not retained
     });
 }
 
 - (void)setAssayAnalyzerClass:(Class)assayAnalyzerClass
 {
-    dispatch_sync(_queue, ^{
+    dispatch_async(_queue, ^{
         _assayAnalyzerClass = assayAnalyzerClass;
         [self resetCaptureStateAndReportResults];
     });
@@ -99,7 +99,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 
 - (void)setShouldScanForWells:(BOOL)shouldScanForWells
 {
-    dispatch_sync(_queue, ^{
+    dispatch_async(_queue, ^{
         _shouldScanForWells = shouldScanForWells;
         // If no longer scanning (e.g. another camera has a plate), reset our state
         if (!shouldScanForWells) {

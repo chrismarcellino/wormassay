@@ -8,28 +8,39 @@
 
 #import "ConsensusLuminanceMotionAnalyzer.h"
 #import "PlateData.h"
+#import "VideoFrame.h"
 #import "opencv2/opencv.hpp"
 #import "CvUtilities.hpp"
 
-static const double PlateMovingProportionAboveThresholdLimit = 0.02;
+static const double PlateMovingProportionAboveThresholdLimit = 0.10;
 static const double WellEdgeFindingInsetProportion = 0.7;
-static const double EvaluateFramesAmongLastSeconds = 2.0;
+static const double EvaluateFramesAmongAtLeastLastSeconds = 2.0;        // exactly this value, except if there aren't _numberOfVotingFrames in that period
 
 static const char* WellOccupancyID = "WellOccupancy";
 
 @implementation ConsensusLuminanceMotionAnalyzer
 
+@synthesize numberOfVotingFrames = _numberOfVotingFrames;
+@synthesize quorum = _quorum;
+
+- (id)init
+{
+    if ((self = [super init])) {
+        _numberOfVotingFrames = 5;
+        _quorum = 3;
+    }
+    return self;
+}
+
 - (void)dealloc
 {
     [_lastFrames release];
+    [_deltaThresholded release];
     if (_insetInvertedCircleMask) {
         cvReleaseImage(&_insetInvertedCircleMask);
     }
-    if (_invertedCircleMask) {
-        cvReleaseImage(&_invertedCircleMask);
-    }
-    if (_deltaThresholded) {
-        cvReleaseImage(&_deltaThresholded);
+    if (_circleMask) {
+        cvReleaseImage(&_circleMask);
     }
     [super dealloc];
 }
@@ -52,30 +63,30 @@ static const char* WellOccupancyID = "WellOccupancy";
 
 - (BOOL)willBeginFrameProcessing:(VideoFrame *)videoFrame debugImage:(IplImage*)debugImage plateData:(PlateData *)plateData
 {
-    // Remove frames that are too old to consider
-    while ([_lastFrames count] > 0) {
-        VideoFrame *pastFrame = [_lastFrames objectAtIndex:0];
-        if ([pastFrame presentationTime] < [VideoFrame presentationTime] - EvaluateFramesAmongLastSeconds) {
-            [_lastFrames removeObjectAtIndex:0];
-        }
-    }
-    
-    if ([_lastFrames count] == 0) {
-        if (_hadEnoughFramesAtLeastOnce) {
-            cvPutText(debugImage,
-                      "TOO MANY DROPPED FRAMES",
-                      cvPoint(debugImage->width * 0.1, debugImage->height * 0.55),
-                      &wellFont,
-                      CV_RGBA(232, 0, 217, 255));
-        }
+    if ([_lastFrames count] < _numberOfVotingFrames) {
+        CvFont wellFont = fontForNormalizedScale(3.5, debugImage);
+        cvPutText(debugImage,
+                  "ACQUIRING IMAGES",
+                  cvPoint(debugImage->width * 0.2, debugImage->height * 0.55),
+                  &wellFont,
+                  CV_RGBA(232, 0, 217, 255));
         return NO;
     }
-   _hadEnoughFramesAtLeastOnce = YES;
     
-    // Randomly choose a subset of FRAME_MAX_SAMPLE_SIZE recent images
-    NSMutableArray *frameSet = [_lastFrames copy];
+    // Remove frames that are too old to consider
+    while ([_lastFrames count] > _numberOfVotingFrames) {
+        VideoFrame *oldestFrame = [_lastFrames objectAtIndex:0];
+        if ([oldestFrame presentationTime] < [videoFrame presentationTime] - EvaluateFramesAmongAtLeastLastSeconds) {
+            [_lastFrames removeObjectAtIndex:0];
+        } else {
+            break;
+        }
+    }
+    
+    // Randomly choose a subset of _numberOfVotingFrames recent images. We choose the subset once per place to minimize inter-well noise.
+    NSMutableArray *frameSet = [_lastFrames mutableCopy];
     NSMutableArray *randomlyChosenFrames = [[NSMutableArray alloc] init];
-    for (int i = 0; i < FRAME_MAX_SAMPLE_SIZE && [frameSet count] > 0; i++) {
+    for (NSUInteger i = 0; i < _numberOfVotingFrames && [frameSet count] > 0; i++) {
         NSUInteger randomIndex = random() % [frameSet count];
         VideoFrame *frame = [frameSet objectAtIndex:randomIndex];
         [randomlyChosenFrames addObject:frame];
@@ -84,8 +95,11 @@ static const char* WellOccupancyID = "WellOccupancy";
     
     // ===== Plate movement and illumination change detection =====
     
-    BOOL plateMovedOrIlluminationChanged = NO;
+    __block double meanProportionPlateMoved = 0.0;
     
+    NSAssert(!_deltaThresholded, @"_deltaThresholded array already exists");
+    _deltaThresholded = [[NSMutableArray alloc] init];
+    dispatch_queue_t criticalSection = dispatch_queue_create(NULL, NULL);
     dispatch_apply([randomlyChosenFrames count], dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(size_t i){
         VideoFrame *pastFrame = [randomlyChosenFrames objectAtIndex:i];
         // Subtract the entire plate images channelwise
@@ -100,23 +114,28 @@ static const char* WellOccupancyID = "WellOccupancy";
         cvCvtColor(plateDelta, deltaLuminance, CV_BGR2GRAY);
         cvReleaseImage(&plateDelta);
         
-        // Threshold the image to isolate difference pixels corresponding to movement as opposed to noise
-        NSAssert(!_deltaThresholded[i], @"_deltaThresholded[i] image already exists");
-        _deltaThresholded[i] = cvCreateImage(cvGetSize(deltaLuminance), IPL_DEPTH_8U, 1);
-        cvThreshold(deltaLuminance, _deltaThresholded[i], 15, 255, CV_THRESH_BINARY);
+        // Threshold the image to isolate difference pixels corresponding to movement as opposed to noise,
+        // setting each pixel that passes the threshold to 1 (for ease in summing later.)
+        IplImage *deltaThresholdedImage = cvCreateImage(cvGetSize(deltaLuminance), IPL_DEPTH_8U, 1);
+        cvThreshold(deltaLuminance, deltaThresholdedImage, 15, 1, CV_THRESH_BINARY);
         cvReleaseImage(&deltaLuminance);
         
-        double proportionPlateMoved = (double)cvCountNonZero(_deltaThresholded[i]) / (_deltaThresholded->width * _deltaThresholded->height);
-        if (proportionPlateMoved > PlateMovingProportionAboveThresholdLimit) {
-            plateMovedOrIlluminationChanged = YES;
-        }
+        VideoFrame *deltaThresholdedImageFrame = [[VideoFrame alloc] initWithIplImageTakingOwnership:deltaThresholdedImage
+                                                                                    presentationTime:[videoFrame presentationTime]];
+        dispatch_sync(criticalSection, ^{
+            [_deltaThresholded addObject:deltaThresholdedImageFrame];
+            meanProportionPlateMoved += (double)cvCountNonZero(deltaThresholdedImage) / (deltaThresholdedImage->width * deltaThresholdedImage->height);
+        });
+        [deltaThresholdedImageFrame release];
     });
+    dispatch_release(criticalSection);
     
+    meanProportionPlateMoved /= [randomlyChosenFrames count];
     [randomlyChosenFrames release];
     [frameSet release];
     
-    // Calculate the average luminance delta across the entire plate image. If this is more than about 2%, the entire plate is likely moving.
-    if (plateMovedOrIlluminationChanged) {
+    // If the average luminance delta across the set of entire plate images is more than about 2%, the entire plate is likely moving.
+    if (meanProportionPlateMoved > PlateMovingProportionAboveThresholdLimit) {               NSLog(@"####### %f", meanProportionPlateMoved * 100);
         // Draw the movement text
         CvFont wellFont = fontForNormalizedScale(3.5, debugImage);
         cvPutText(debugImage,
@@ -175,38 +194,44 @@ static const char* WellOccupancyID = "WellOccupancy";
     
     // ======== Motion measurement =========
     
-    // If we haven't already, create an inverted circle mask with all bits on in the circle (but not inset)
-    if (!_invertedCircleMask || !sizeEqualsSize(cvGetSize(_invertedCircleMask), cvGetSize(wellImage))) {
-        if (_invertedCircleMask) {
-            cvReleaseImage(&_invertedCircleMask);
+    // If we haven't already, create an circle mask with all bits on in the circle (but not inset)
+    if (!_circleMask || !sizeEqualsSize(cvGetSize(_circleMask), cvGetSize(wellImage))) {
+        if (_circleMask) {
+            cvReleaseImage(&_circleMask);
         }
-        _invertedCircleMask = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
-        fastFillImage(_invertedCircleMask, 255);
-        cvCircle(_invertedCircleMask, cvPoint(radius, radius), radius, cvRealScalar(0), CV_FILLED);
+        _circleMask = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
+        fastZeroImage(_circleMask);
+        cvCircle(_circleMask, cvPoint(radius, radius), radius, cvRealScalar(255), CV_FILLED);
     }
     
-    // Mask the threshold subimages (using a local stack copy of the header for threadsafety)
-    IplImage wellDeltaThresholded[FRAME_MAX_SAMPLE_SIZE];
-    for (int i = 0; i < FRAME_MAX_SAMPLE_SIZE; i++) {
-        wellDeltaThresholded[i] = *_deltaThresholded[i];
-        cvSetImageROI(&wellDeltaThresholded[i], cvGetImageROI(wellImage));
-        cvSet(&wellDeltaThresholded[i], cvRealScalar(0), _invertedCircleMask);
+    // Sum the threshold subimages from the random set delta from the current frame (using a local stack copy of the header for threadsafety).
+    // The luminance sum at each pixel will equal the number of votes, since we set the pixels that passed the threshold to 1.
+    IplImage *pixelwiseSum = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
+    fastZeroImage(pixelwiseSum);
+    for (VideoFrame *deltaThresholdedImage in _deltaThresholded) {
+        IplImage wellDeltaThresholded = *[deltaThresholdedImage image];
+        cvSetImageROI(&wellDeltaThresholded, cvGetImageROI(wellImage));
+        cvAdd(pixelwiseSum, &wellDeltaThresholded, pixelwiseSum, _circleMask);
     }
+    
+    // Keep the pixels that have a quorum
+    IplImage *quorumPixels = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
+    cvThreshold(pixelwiseSum, quorumPixels, _quorum - 0.5, 255, CV_THRESH_BINARY);
+    double movedFraction = (double)cvCountNonZero(quorumPixels) / (M_PI * radius * radius);
     
     // Count pixels and draw onto the debugging image
-    double movedFraction = (double)cvCountNonZero(&wellDeltaThresholded) / (M_PI * radius * radius);
     [plateData appendMovementUnit:movedFraction atPresentationTime:presentationTime forWell:well];
-    cvSet(debugImage, CV_RGBA(255, 0, 0, 255), &wellDeltaThresholded);
+    cvSet(debugImage, CV_RGBA(255, 0, 0, 255), quorumPixels);
+    
+    cvReleaseImage(&pixelwiseSum);
+    cvReleaseImage(&quorumPixels);
 }
 
 - (void)didEndFrameProcessing:(VideoFrame *)videoFrame plateData:(PlateData *)plateData
 {
     [_lastFrames addObject:videoFrame];
-    for (int i = 0; i < FRAME_MAX_SAMPLE_SIZE; i++) {
-        if (_deltaThresholded[i]) {
-            cvReleaseImage(&_deltaThresholded[i]);
-        }
-    }
+    [_deltaThresholded release];
+    _deltaThresholded = nil;
 }
 
 - (void)didEndTrackingPlateWithPlateData:(PlateData *)plateData

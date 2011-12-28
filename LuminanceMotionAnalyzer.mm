@@ -136,7 +136,7 @@ static const char* WellOccupancyID = "WellOccupancy";
     
     // ======== Motion measurement =========
     
-    // If we haven't already, create an inverted circle mask with all bits on in the circle (but not inset)
+    // If we haven't already, create an inverted circle mask with all bits off in the circle (but not inset)
     if (!_invertedCircleMask || !sizeEqualsSize(cvGetSize(_invertedCircleMask), cvGetSize(wellImage))) {
         if (_invertedCircleMask) {
             cvReleaseImage(&_invertedCircleMask);

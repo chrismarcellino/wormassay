@@ -9,15 +9,17 @@
 #import <Foundation/Foundation.h>
 #import "AssayAnalyzer.h"
 
-#define FRAME_MAX_SAMPLE_SIZE 4
-
 @interface ConsensusLuminanceMotionAnalyzer : NSObject <AssayAnalyzer> {
-    NSMutableArray *_lastFrames;
-    IplImage* _insetInvertedCircleMask;
-    IplImage* _invertedCircleMask;
-    IplImage* _deltaThresholded[FRAME_MAX_SAMPLE_SIZE];
+    NSUInteger _numberOfVotingFrames;
+    NSUInteger _quorum;
     
-    BOOL _hadEnoughFramesAtLeastOnce;
+    NSMutableArray *_lastFrames;
+    NSMutableArray *_deltaThresholded;
+    IplImage* _insetInvertedCircleMask;
+    IplImage* _circleMask;
 }
+
+@property NSUInteger numberOfVotingFrames;
+@property NSUInteger quorum;
 
 @end
