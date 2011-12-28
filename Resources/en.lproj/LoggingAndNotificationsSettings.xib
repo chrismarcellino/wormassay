@@ -25,7 +25,7 @@
 		<dictionary class="NSMutableDictionary" key="IBDocument.Metadata"/>
 		<array class="NSMutableArray" key="IBDocument.RootObjects" id="1000">
 			<object class="NSCustomObject" id="1001">
-				<string key="NSClassName">VideoProcessorController</string>
+				<string key="NSClassName">LoggingAndNotificationsSettingsWindowController</string>
 			</object>
 			<object class="NSCustomObject" id="1003">
 				<string key="NSClassName">FirstResponder</string>
@@ -37,7 +37,7 @@
 				<int key="NSWindowStyleMask">11</int>
 				<int key="NSWindowBacking">2</int>
 				<string key="NSWindowRect">{{196, 240}, {514, 202}}</string>
-				<int key="NSWTFlags">1618478080</int>
+				<int key="NSWTFlags">544736256</int>
 				<string key="NSWindowTitle">Logging &amp; Notifications</string>
 				<string key="NSWindowClass">NSPanel</string>
 				<nil key="NSViewClass"/>
@@ -274,60 +274,64 @@
 		<object class="IBObjectContainer" key="IBDocument.Objects">
 			<array class="NSMutableArray" key="connectionRecords">
 				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">window</string>
+						<reference key="source" ref="1001"/>
+						<reference key="destination" ref="1005"/>
+					</object>
+					<int key="connectionID">50</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">browseForRunOutputFolderPath:</string>
+						<reference key="source" ref="1001"/>
+						<reference key="destination" ref="699002176"/>
+					</object>
+					<int key="connectionID">51</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">openMail:</string>
+						<reference key="source" ref="1001"/>
+						<reference key="destination" ref="825994132"/>
+					</object>
+					<int key="connectionID">52</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">testEmailNotifications:</string>
+						<reference key="source" ref="1001"/>
+						<reference key="destination" ref="164930950"/>
+					</object>
+					<int key="connectionID">53</int>
+				</object>
+				<object class="IBConnectionRecord">
 					<object class="IBBindingConnection" key="connection">
-						<string key="label">value: runOutputFolderPath</string>
+						<string key="label">value: videoProcessorController.runOutputFolderPath</string>
 						<reference key="source" ref="114402599"/>
 						<reference key="destination" ref="1001"/>
 						<object class="NSNibBindingConnector" key="connector">
 							<reference key="NSSource" ref="114402599"/>
 							<reference key="NSDestination" ref="1001"/>
-							<string key="NSLabel">value: runOutputFolderPath</string>
+							<string key="NSLabel">value: videoProcessorController.runOutputFolderPath</string>
 							<string key="NSBinding">value</string>
-							<string key="NSKeyPath">runOutputFolderPath</string>
-							<object class="NSDictionary" key="NSOptions">
-								<string key="NS.key.0">NSConditionallySetsEditable</string>
-								<boolean value="NO" key="NS.object.0"/>
-							</object>
+							<string key="NSKeyPath">videoProcessorController.runOutputFolderPath</string>
 							<int key="NSNibBindingConnectorVersion">2</int>
 						</object>
 					</object>
-					<int key="connectionID">41</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBActionConnection" key="connection">
-						<string key="label">browseForRunOutputFolderPath:</string>
-						<reference key="source" ref="1003"/>
-						<reference key="destination" ref="699002176"/>
-					</object>
-					<int key="connectionID">44</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBActionConnection" key="connection">
-						<string key="label">openMail:</string>
-						<reference key="source" ref="1003"/>
-						<reference key="destination" ref="825994132"/>
-					</object>
-					<int key="connectionID">45</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBActionConnection" key="connection">
-						<string key="label">testEmailNotifications:</string>
-						<reference key="source" ref="1003"/>
-						<reference key="destination" ref="164930950"/>
-					</object>
-					<int key="connectionID">47</int>
+					<int key="connectionID">55</int>
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBBindingConnection" key="connection">
-						<string key="label">value: notificationEmailRecipients</string>
+						<string key="label">value: videoProcessorController.notificationEmailRecipients</string>
 						<reference key="source" ref="296997447"/>
 						<reference key="destination" ref="1001"/>
 						<object class="NSNibBindingConnector" key="connector">
 							<reference key="NSSource" ref="296997447"/>
 							<reference key="NSDestination" ref="1001"/>
-							<string key="NSLabel">value: notificationEmailRecipients</string>
+							<string key="NSLabel">value: videoProcessorController.notificationEmailRecipients</string>
 							<string key="NSBinding">value</string>
-							<string key="NSKeyPath">notificationEmailRecipients</string>
+							<string key="NSKeyPath">videoProcessorController.notificationEmailRecipients</string>
 							<object class="NSDictionary" key="NSOptions">
 								<string key="NS.key.0">NSContinuouslyUpdatesValue</string>
 								<boolean value="YES" key="NS.object.0"/>
@@ -335,7 +339,7 @@
 							<int key="NSNibBindingConnectorVersion">2</int>
 						</object>
 					</object>
-					<int key="connectionID">48</int>
+					<int key="connectionID">56</int>
 				</object>
 			</array>
 			<object class="IBMutableOrderedSet" key="objectRecords">
@@ -542,34 +546,16 @@
 			<nil key="activeLocalization"/>
 			<dictionary class="NSMutableDictionary" key="localizations"/>
 			<nil key="sourceID"/>
-			<int key="maxID">48</int>
+			<int key="maxID">56</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<array class="NSMutableArray" key="referencedPartialClassDescriptions">
 				<object class="IBPartialClassDescription">
-					<string key="className">ArrayTableView</string>
-					<string key="superclassName">NSTableView</string>
-					<object class="IBClassDescriptionSource" key="sourceIdentifier">
-						<string key="majorKey">IBProjectSource</string>
-						<string key="minorKey">./Classes/ArrayTableView.h</string>
-					</object>
-				</object>
-				<object class="IBPartialClassDescription">
-					<string key="className">VideoProcessorController</string>
-					<string key="superclassName">NSObject</string>
-					<object class="IBClassDescriptionSource" key="sourceIdentifier">
-						<string key="majorKey">IBProjectSource</string>
-						<string key="minorKey">./Classes/VideoProcessorController.h</string>
-					</object>
-				</object>
-				<object class="IBPartialClassDescription">
-					<string key="className">WormAssayAppDelegate</string>
-					<string key="superclassName">NSObject</string>
+					<string key="className">LoggingAndNotificationsSettingsWindowController</string>
+					<string key="superclassName">NSWindowController</string>
 					<dictionary class="NSMutableDictionary" key="actions">
 						<string key="browseForRunOutputFolderPath:">id</string>
 						<string key="openMail:">id</string>
-						<string key="openRunOutputFolder:">id</string>
-						<string key="showLoggingAndNotificationSettings:">id</string>
 						<string key="testEmailNotifications:">id</string>
 					</dictionary>
 					<dictionary class="NSMutableDictionary" key="actionInfosByName">
@@ -581,46 +567,14 @@
 							<string key="name">openMail:</string>
 							<string key="candidateClassName">id</string>
 						</object>
-						<object class="IBActionInfo" key="openRunOutputFolder:">
-							<string key="name">openRunOutputFolder:</string>
-							<string key="candidateClassName">id</string>
-						</object>
-						<object class="IBActionInfo" key="showLoggingAndNotificationSettings:">
-							<string key="name">showLoggingAndNotificationSettings:</string>
-							<string key="candidateClassName">id</string>
-						</object>
 						<object class="IBActionInfo" key="testEmailNotifications:">
 							<string key="name">testEmailNotifications:</string>
 							<string key="candidateClassName">id</string>
 						</object>
 					</dictionary>
-					<dictionary class="NSMutableDictionary" key="outlets">
-						<string key="assayAnalyzerMenu">NSMenu</string>
-						<string key="encodingTableView">ArrayTableView</string>
-						<string key="runLogScrollView">NSScrollView</string>
-						<string key="runLogTextView">NSTextView</string>
-					</dictionary>
-					<dictionary class="NSMutableDictionary" key="toOneOutletInfosByName">
-						<object class="IBToOneOutletInfo" key="assayAnalyzerMenu">
-							<string key="name">assayAnalyzerMenu</string>
-							<string key="candidateClassName">NSMenu</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="encodingTableView">
-							<string key="name">encodingTableView</string>
-							<string key="candidateClassName">ArrayTableView</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="runLogScrollView">
-							<string key="name">runLogScrollView</string>
-							<string key="candidateClassName">NSScrollView</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="runLogTextView">
-							<string key="name">runLogTextView</string>
-							<string key="candidateClassName">NSTextView</string>
-						</object>
-					</dictionary>
 					<object class="IBClassDescriptionSource" key="sourceIdentifier">
 						<string key="majorKey">IBProjectSource</string>
-						<string key="minorKey">./Classes/WormAssayAppDelegate.h</string>
+						<string key="minorKey">./Classes/LoggingAndNotificationsSettingsWindowController.h</string>
 					</object>
 				</object>
 			</array>

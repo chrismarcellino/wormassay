@@ -145,7 +145,7 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
 
 - (NSString *)runOutputFolderPath
 {
-    NSString *path = [[NSUserDefaults standardUserDefaults] stringForKey:RunOutputFolderPathKey];
+    NSString *path = [[[NSUserDefaults standardUserDefaults] stringForKey:RunOutputFolderPathKey] stringByExpandingTildeInPath];
     if (!path) {
         path = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
         path = [path stringByAppendingPathComponent:@"Worm Assay Data"];
@@ -155,6 +155,10 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
 
 - (void)setRunOutputFolderPath:(NSString *)path
 {
+    if (path) {
+        path = [path stringByAbbreviatingWithTildeInPath];
+    }
+    
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     [defaults setObject:path forKey:RunOutputFolderPathKey];
     [defaults synchronize];

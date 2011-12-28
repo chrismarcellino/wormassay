@@ -176,6 +176,7 @@
 		219099D11357A05300EEE2BB /* libiconv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 219099D01357A05300EEE2BB /* libiconv.dylib */; };
 		219099D21357A05C00EEE2BB /* libiconv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 219099D01357A05300EEE2BB /* libiconv.dylib */; };
 		2190AF18135B6E4A00C3853B /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2190AF17135B6E4A00C3853B /* IOKit.framework */; };
+		21965211137A7161004F2D57 /* LoggingAndNotificationsSettingsWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 21965210137A7161004F2D57 /* LoggingAndNotificationsSettingsWindowController.m */; };
 		21B5165F137A061B0055CFE7 /* ArrayTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = 21B5165E137A061B0055CFE7 /* ArrayTableView.m */; };
 		21B611D813612082002A47FB /* ConsensusLuminanceMotionAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 21B611D713612082002A47FB /* ConsensusLuminanceMotionAnalyzer.mm */; };
 		21CC72061347EDD4001146DA /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CC72051347EDD4001146DA /* CoreVideo.framework */; };
@@ -567,6 +568,8 @@
 		219099D01357A05300EEE2BB /* libiconv.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.dylib; path = usr/lib/libiconv.dylib; sourceTree = SDKROOT; };
 		2190AF17135B6E4A00C3853B /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		21910734135E2B5600A12F1F /* AssayAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AssayAnalyzer.h; sourceTree = SOURCE_ROOT; };
+		2196520F137A7161004F2D57 /* LoggingAndNotificationsSettingsWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LoggingAndNotificationsSettingsWindowController.h; sourceTree = SOURCE_ROOT; };
+		21965210137A7161004F2D57 /* LoggingAndNotificationsSettingsWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LoggingAndNotificationsSettingsWindowController.m; sourceTree = SOURCE_ROOT; };
 		21B5165D137A061B0055CFE7 /* ArrayTableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ArrayTableView.h; sourceTree = SOURCE_ROOT; };
 		21B5165E137A061B0055CFE7 /* ArrayTableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ArrayTableView.m; sourceTree = SOURCE_ROOT; };
 		21B611D613612082002A47FB /* ConsensusLuminanceMotionAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ConsensusLuminanceMotionAnalyzer.h; sourceTree = SOURCE_ROOT; };
@@ -1080,6 +1083,8 @@
 				2176AC391373672D00E51F2B /* Emailer.m */,
 				21B5165D137A061B0055CFE7 /* ArrayTableView.h */,
 				21B5165E137A061B0055CFE7 /* ArrayTableView.m */,
+				2196520F137A7161004F2D57 /* LoggingAndNotificationsSettingsWindowController.h */,
+				21965210137A7161004F2D57 /* LoggingAndNotificationsSettingsWindowController.m */,
 			);
 			name = Controllers;
 			path = WormAssay;
@@ -1398,6 +1403,7 @@
 				21B611D813612082002A47FB /* ConsensusLuminanceMotionAnalyzer.mm in Sources */,
 				2176AC3A1373672D00E51F2B /* Emailer.m in Sources */,
 				21B5165F137A061B0055CFE7 /* ArrayTableView.m in Sources */,
+				21965211137A7161004F2D57 /* LoggingAndNotificationsSettingsWindowController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

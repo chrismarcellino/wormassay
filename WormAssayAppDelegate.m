@@ -12,7 +12,7 @@
 #import "VideoProcessorController.h"
 #import "VideoProcessor.h"
 #import "AssayAnalyzer.h"
-#import "Emailer.h"
+#import "LoggingAndNotificationsSettingsWindowController.h"
 #import <QTKit/QTKit.h>
 #import <IOKit/pwr_mgt/IOPMLib.h>
 
@@ -42,8 +42,7 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
     [[[DocumentController alloc] init] autorelease];
     
     // Set up the logging panel
-    _loggingPanelWindowController = [[NSWindowController alloc] initWithWindowNibName:@"LoggingPanel" owner:self];
-    [_loggingPanelWindowController showWindow:self];
+    [NSBundle loadNibNamed:@"LoggingPanel" owner:self];
     VideoProcessorController *videoProcessorController = [VideoProcessorController sharedInstance];
     [videoProcessorController setRunLogTextView:runLogTextView];
     [videoProcessorController setRunLogScrollView:runLogScrollView];
@@ -237,45 +236,10 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
 
 - (IBAction)showLoggingAndNotificationSettings:(id)sender
 {
-    [_loggingAndNotificationWindowController release];
-    _loggingAndNotificationWindowController = [[NSWindowController alloc] initWithWindowNibName:@"LoggingAndNotificationsSettings"
-                                                                                          owner:[VideoProcessorController sharedInstance]];
-    [_loggingAndNotificationWindowController showWindow:sender];
-}
-
-- (IBAction)browseForRunOutputFolderPath:(id)sender
-{
-    VideoProcessorController *videoProcessorController = [VideoProcessorController sharedInstance];
-    
-    NSOpenPanel *panel = [NSOpenPanel openPanel];
-    [panel setCanChooseDirectories:YES];
-    [panel setCanChooseFiles:NO];
-    [panel setCanCreateDirectories:YES];
-    [panel setAllowsMultipleSelection:NO];
-    [panel setResolvesAliases:YES];
-    
-    NSString *path = [videoProcessorController runOutputFolderPath];
-    [panel setDirectoryURL:path ? [NSURL fileURLWithPath:path] : nil];
-    
-    [panel setPrompt:NSLocalizedString(@"Choose", nil)];
-    [panel setTitle:NSLocalizedString(@"Output Folder", nil)];
-    
-    if ([panel runModal] == NSFileHandlingPanelOKButton) {
-        [videoProcessorController setRunOutputFolderPath:[[panel URL] path]];
+    if (!_loggingAndNotificationsWindowController) {
+        _loggingAndNotificationsWindowController = [[LoggingAndNotificationsSettingsWindowController alloc] init];
     }
-}
-
-- (IBAction)openMail:(id)sender
-{
-    [[NSWorkspace sharedWorkspace] launchApplication:@"Mail"];
-}
-
-- (IBAction)testEmailNotifications:(id)sender
-{
-    NSString *recipients = [[VideoProcessorController sharedInstance] notificationEmailRecipients];
-    NSString *body = [NSString stringWithFormat:@"This is a test email message sent by %@.",
-                      [[NSBundle mainBundle] objectForInfoDictionaryKey:(id)kCFBundleNameKey]];
-    [Emailer sendMailMessageToRecipients:recipients subject:@"Test message" body:body attachmentPaths:nil];
+    [_loggingAndNotificationsWindowController showWindow:sender];
 }
 
 @end

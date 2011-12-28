@@ -12,8 +12,7 @@
 @class ArrayTableView;
 
 @interface WormAssayAppDelegate : NSObject <NSApplicationDelegate, NSMenuDelegate> {
-    NSWindowController *_loggingPanelWindowController;
-    NSWindowController *_loggingAndNotificationWindowController;
+    NSWindowController *_loggingAndNotificationsWindowController;
 }
 
 @property(nonatomic, retain) IBOutlet NSMenu *assayAnalyzerMenu;
@@ -23,9 +22,6 @@
 
 - (IBAction)openRunOutputFolder:(id)sender;
 - (IBAction)showLoggingAndNotificationSettings:(id)sender;
-- (IBAction)browseForRunOutputFolderPath:(id)sender;
-- (IBAction)openMail:(id)sender;
-- (IBAction)testEmailNotifications:(id)sender;
 
 @end
 
