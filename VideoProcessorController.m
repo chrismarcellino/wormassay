@@ -798,33 +798,35 @@ static inline BOOL isValidPath(NSString *path, NSFileManager *fileManager)
 
 - (void)appendString:(NSString *)string toPath:(NSString *)path
 {
-    bool success = false;
-    
-    for (int i = 0; i < 2 && !success; i++) {
-        int fd = open([path fileSystemRepresentation], O_WRONLY | O_CREAT | O_SHLOCK, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-        if (fd != -1) {
-            NSFileHandle *handle = [[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES];
-            @try {
-                [handle seekToEndOfFile];
-                [handle writeData:[string dataUsingEncoding:NSUTF8StringEncoding]];
-                [handle closeFile];
-                success = true;
-            } @catch (NSException *e) {
-                [self appendToRunLog:@"Unable to write to file '%@': %@", path, e];
-            }
-            [handle release];
-        } else if (i > 0) {
-            [self appendToRunLog:@"Unable to open file '%@': %s", path, strerror(errno)];
-        }
+    @synchronized(self) {
+        bool success = false;
         
-        // Try creating the directory hiearchy if there was an issue and try again
-        if (!success) {
-            NSFileManager *fileManager = [[NSFileManager alloc] init];
-            NSString *directory = [path stringByDeletingLastPathComponent];
-            if (![fileManager fileExistsAtPath:directory]) {
-                [fileManager createDirectoryAtPath:directory withIntermediateDirectories:YES attributes:nil error:NULL];
+        for (int i = 0; i < 2 && !success; i++) {
+            int fd = open([path fileSystemRepresentation], O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+            if (fd != -1) {
+                NSFileHandle *handle = [[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES];
+                @try {
+                    [handle seekToEndOfFile];
+                    [handle writeData:[string dataUsingEncoding:NSUTF8StringEncoding]];
+                    [handle closeFile];
+                    success = true;
+                } @catch (NSException *e) {
+                    [self appendToRunLog:@"Unable to write to file '%@': %@", path, e];
+                }
+                [handle release];
+            } else if (i > 0) {
+                [self appendToRunLog:@"Unable to open file '%@': %s", path, strerror(errno)];
             }
-            [fileManager release];
+            
+            // Try creating the directory hiearchy if there was an issue and try again
+            if (!success) {
+                NSFileManager *fileManager = [[NSFileManager alloc] init];
+                NSString *directory = [path stringByDeletingLastPathComponent];
+                if (![fileManager fileExistsAtPath:directory]) {
+                    [fileManager createDirectoryAtPath:directory withIntermediateDirectories:YES attributes:nil error:NULL];
+                }
+                [fileManager release];
+            }
         }
     }
 }
