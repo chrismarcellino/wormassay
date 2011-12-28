@@ -27,6 +27,7 @@ typedef enum {
     
     ProcessingState _processingState;
     NSString *_wellCameraSourceIdentifier;
+    NSMutableArray *_connectedSourceIdentifiers;
     NSMutableArray *_wellFindingInProcessSourceIdentifiers;
     NSMutableArray *_barcodeFindingInProcessSourceIdentifiers;
     int _wellCountHint;
@@ -42,6 +43,7 @@ typedef enum {
 
 + (ProcessingController *)sharedInstance;
 
+- (void)noteSourceIdentifierHasConnected:(NSString *)sourceIdentifier;
 - (void)noteSourceIdentifierHasDisconnected:(NSString *)sourceIdentifier;
 
 // Caller is responsible for calling cvReleaseImage() on debugFrame. Block will be called on an arbitrary thread. 

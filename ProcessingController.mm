@@ -46,6 +46,7 @@
         _queue = dispatch_queue_create("ProcessingController queue", NULL);
         _debugFrameCallbackQueue = dispatch_queue_create("Debug frame callback queue", NULL);
         _processingState = ProcessingStateNoPlate;
+        _connectedSourceIdentifiers = [[NSMutableArray alloc] init];
         _wellFindingInProcessSourceIdentifiers = [[NSMutableArray alloc] init];
         _barcodeFindingInProcessSourceIdentifiers = [[NSMutableArray alloc] init];
         
@@ -65,11 +66,21 @@
     [super dealloc];
 }
 
+- (void)noteSourceIdentifierHasConnected:(NSString *)sourceIdentifier
+{
+    NSAssert(![_connectedSourceIdentifiers containsObject:sourceIdentifier], @"Source identifier is already connected");
+    [_connectedSourceIdentifiers addObject:sourceIdentifier];
+}
+
 - (void)noteSourceIdentifierHasDisconnected:(NSString *)sourceIdentifier
 {
-    dispatch_sync(_queue, ^{
+    dispatch_async(_queue, ^{
+        NSAssert([_connectedSourceIdentifiers containsObject:sourceIdentifier], @"Source identifier is not connected");
+        [_connectedSourceIdentifiers removeObject:sourceIdentifier];
+        
         _lastCirclesMap.erase(std::string([sourceIdentifier UTF8String]));
         [_wellFindingInProcessSourceIdentifiers removeObject:sourceIdentifier];
+        [_barcodeFindingInProcessSourceIdentifiers removeObject:sourceIdentifier];
         
         if ([_wellCameraSourceIdentifier isEqual:sourceIdentifier]) {
             [self resetCaptureStateAndReportDataIfPossible];
@@ -157,10 +168,9 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callbac
         
         // Process and store the results when holding _queue
         dispatch_async(_queue, ^{
+            [_wellFindingInProcessSourceIdentifiers removeObject:sourceIdentifier];
             // If the device was removed, etc., ignore any detected plates
-            if ([_wellFindingInProcessSourceIdentifiers containsObject:sourceIdentifier]) {
-                [_wellFindingInProcessSourceIdentifiers removeObject:sourceIdentifier];
-                
+            if ([_connectedSourceIdentifiers containsObject:sourceIdentifier]) {
                 // Store the circles for debugging later
                 _lastCirclesMap[std::string([sourceIdentifier UTF8String])] = wellCircles;
                 
@@ -220,26 +230,6 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callbac
 }
 
 // requires _queue to be held
-- (void)resetCaptureStateAndReportDataIfPossible
-{
-    // XXX IF RECORDING
-        //[self endRecordingVideoWithName];
-    
-    // XXX if (RECORCORDING && > 5 seconds total), save the stats and stuff
-    
-    _processingState = ProcessingStateNoPlate;
-    [_wellCameraSourceIdentifier release];
-    _wellCameraSourceIdentifier = nil;
-    
-    _startOfTrackingMotionTime = 0.0;
-    _baselineWellCircles.clear();
-    _firstWellFrameTime = 0.0;
-    
-    [_barcode release];
-    _barcode = nil;
-}
-
-// requires _queue to be held
 - (void)performBarcodeReadingAsyncWithFrameTakingOwnership:(IplImage *)videoFrame
                                       fromSourceIdentifier:(NSString *)sourceIdentifier
                                           presentationTime:(NSTimeInterval)presentationTime
@@ -254,12 +244,34 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callbac
         // Process and store the results when holding _queue
         dispatch_async(_queue, ^{
             [_barcodeFindingInProcessSourceIdentifiers removeObject:sourceIdentifier];
+            if ([_connectedSourceIdentifiers containsObject:sourceIdentifier]) {
             
-            if (presentationTime >= _startOfTrackingMotionTime) {
-                // XXX STORE BARCODE RESULT TO BARCODE
+                if (presentationTime >= _startOfTrackingMotionTime) {
+                    // XXX STORE BARCODE RESULT TO BARCODE
+                }
             }
         });
     });
+}
+
+// requires _queue to be held
+- (void)resetCaptureStateAndReportDataIfPossible
+{
+    // XXX IF RECORDING
+    //[self endRecordingVideoWithName];
+    
+    // XXX if (RECORCORDING && > 5 seconds total), save the stats and stuff
+    
+    _processingState = ProcessingStateNoPlate;
+    [_wellCameraSourceIdentifier release];
+    _wellCameraSourceIdentifier = nil;
+    
+    _startOfTrackingMotionTime = 0.0;
+    _baselineWellCircles.clear();
+    _firstWellFrameTime = 0.0;
+    
+    [_barcode release];
+    _barcode = nil;
 }
 
 - (void)beginRecordingVideo

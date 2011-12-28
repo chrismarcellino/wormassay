@@ -255,6 +255,8 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 {
     BOOL success = NO;
     
+    [[ProcessingController sharedInstance] noteSourceIdentifierHasConnected:_sourceIdentifier];
+    
     if (_captureDevice) {
         // Start capture
         _captureSession = [[QTCaptureSession alloc] init];
