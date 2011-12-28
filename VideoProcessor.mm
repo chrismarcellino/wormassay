@@ -263,7 +263,11 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
                 double mean, stddev;
                 if ([_plateData movementUnitsMean:&mean stdDev:&stddev forWell:i inLastSeconds:30]) {
                     char text[20];
-                    snprintf(text, sizeof(text), "%.0f (SD: %.0f)", mean, stddev);
+                    if (_trackingWellCircles.size() <= 24) {        // Draw the SD if the wells are large enough
+                        snprintf(text, sizeof(text), "%.0f (SD: %.0f)", mean, stddev);
+                    } else {
+                        snprintf(text, sizeof(text), "%.0f", mean);
+                    }
                     
                     float radius = _trackingWellCircles[i].radius;
                     CvPoint textPoint = cvPoint(_trackingWellCircles[i].center[0] - radius * 0.5, _trackingWellCircles[i].center[1]);

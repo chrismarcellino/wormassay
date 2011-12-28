@@ -4,6 +4,7 @@ Bump version number to 1.0 to reflect manuscript publication and application rel
 Make project and build settings Xcode 4.2 compatible.
 Reverse Optical Flow vector calculation direction (from prev. frame to current frame, to current frame to prev. frame, to make blue edge outline correspond to worm better. This will have no effect on data or noise.)
 Fix free space display in console.
+Don't write SD on real-time preview of 48 or 96 well plates to avoid overlapping labels. 
 
 Version 0.31
 ------------
