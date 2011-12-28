@@ -19,12 +19,15 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
 
 @interface WormAssayAppDelegate ()
 
+- (void)wellAnalyzerMenuItemSelected:(NSMenuItem *)sender;
 - (void)loadCaptureDevices;
 - (void)captureDevicesChanged;
 
 @end
 
 @implementation WormAssayAppDelegate
+
+@synthesize wellAnalyzerMenu;
 
 - (void)applicationWillFinishLaunching:(NSNotification *)notification
 {
@@ -67,16 +70,32 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     [scrollView setDocumentView:textView];
     [_loggingPanel setContentView:scrollView];
     [_loggingPanel orderFront:self];
-    
-    [[VideoProcessorController sharedInstance] setRunLogTextView:textView];
-    [[VideoProcessorController sharedInstance] setRunLogScrollView:scrollView];
+        
+    VideoProcessorController *videoProcessorController = [VideoProcessorController sharedInstance];
+    [videoProcessorController setRunLogTextView:textView];
+    [videoProcessorController setRunLogScrollView:scrollView];
     
     [textView release];
     [scrollView release];
     
+    // Set up analyzer menu
+    NSMenu *wellAnalyzerSubmenu = [self wellAnalyzerSubmenu];
+    NSUInteger tag = 0;
+    for (Class class in [videoProcessorController wellAnalyzerClasses]) {
+        [wellAnalyzerSubmenu addItemWithTitle:[class analyzerName] action:@selector(wellAnalyzerMenuItemSelected:) keyEquivalent:nil];
+    }
+    
     // Log welcome message
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
     RunLog(@"%@ version %@ launched.", [infoDictionary objectForKey:(id)kCFBundleNameKey], [infoDictionary objectForKey:(id)kCFBundleVersionKey]);
+}
+
+- (void)wellAnalyzerMenuItemSelected:(NSMenuItem *)sender
+{
+    VideoProcessorController *videoProcessorController = [VideoProcessorController sharedInstance];
+    NSUInteger index = [[self wellAnalyzerSubmenu] indexOfMenuItem:sender];
+    Class class = [[videoProcessorController wellAnalyzerClasses] objectAtIndex:index];
+    [videoProcessorController setWellAnalzyerClass:class];
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
@@ -100,6 +119,11 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
                                 kIOPMAssertionLevelOn,
                                 (CFStringRef)[[NSBundle mainBundle] bundleIdentifier],
                                 &assertionID);
+    
+    // Log if there are no devices attached
+    if ([[[NSDocumentController sharedDocumentController] documents] count] == 0) {
+        RunLog(@"Attach a camera or use \"File… Open for Testing\" to simulate one.");
+    }
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context

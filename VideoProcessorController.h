@@ -22,6 +22,9 @@
 
 + (VideoProcessorController *)sharedInstance;
 
+- (NSArray *)wellAnalyzerClasses;
+@property(assign) Class wellAnalyzerClass;
+
 - (void)addVideoProcessor:(VideoProcessor *)videoProcessor;
 - (void)removeVideoProcessor:(VideoProcessor *)videoProcessor;
 

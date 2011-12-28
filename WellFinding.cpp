@@ -7,7 +7,6 @@
 //
 
 #import "WellFinding.hpp"
-#import "MotionAnalysis.hpp"
 #import "opencv2/opencv.hpp"
 #import "CvUtilities.hpp"
 #import <math.h>

@@ -8,19 +8,22 @@
 
 #import "PlateData.h"
 
-static const size_t InitialVectorSize = 1024;
+// Required data column identifiers
+static const char* MovementUnitID = "MovementUnits";
+static const char* PresentationTimeID = "Timestamp";
 
-static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &stddev, size_t firstIndex = 0);
+static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &stddev, size_t firstIndex = 0);
 
 @interface PlateData () {
     NSUInteger _wellCount;
     NSTimeInterval _startPresentationTime;
+    NSTimeInterval _lastPresentationTime;
+    std::vector<std::map<std::string, std::vector<double> > > _valuesByWellAndDataColumn;
+    std::map<std::string, ReportingStyle> _reportingStyleByDataColumn;
     NSUInteger _receivedFrameCount;
     NSUInteger _frameDropCount;
-    std::vector<double> _presentationTimes;
-    std::vector<std::vector<double> > _movementUnitsByWell;
-    std::vector<std::vector<double> > _occupancyFractionsByWell;
     std::vector<double> _processingTimes;
+    NSMutableString *_additionalResultsText;
 }
 
 @end
@@ -30,6 +33,7 @@ static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &
 
 @synthesize wellCount = _wellCount;
 @synthesize startPresentationTime = _startPresentationTime;
+@synthesize lastPresentationTime = _lastPresentationTime;
 @synthesize receivedFrameCount = _receivedFrameCount;
 @synthesize frameDropCount = _frameDropCount;
 
@@ -37,53 +41,68 @@ static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &
 {
     if ((self = [super init])) {
         _wellCount = wellCount;
-        _startPresentationTime = presentationTime;
+        _startPresentationTime = _lastPresentationTime = presentationTime;
+        _valuesByWellAndDataColumn.resize(wellCount);
         
-        _occupancyFractionsByWell.resize(wellCount);
-        _movementUnitsByWell.resize(wellCount);
-        _presentationTimes.reserve(InitialVectorSize);
-        _processingTimes.reserve(InitialVectorSize);
-        for (size_t i = 0; i < wellCount; i++) {
-            _occupancyFractionsByWell[i].reserve(InitialVectorSize);
-            _movementUnitsByWell[i].reserve(InitialVectorSize);
-        }
+        [self setReportingStyle:ReportingStyleMeanAndStdDev forDataColumnID:MovementUnitID];
     }
     return self;
 }
 
-- (NSTimeInterval)lastPresentationTime
+- (void)dealloc
+{
+    [_additionalResultsText release];
+    [super dealloc];
+}
+
+- (void)appendMovementUnit:(double)movementUnit atPresentationTime:(NSTimeInterval)presentationTime forWell:(int)well
 {
     @synchronized(self) {
-        return _presentationTimes.size() > 0 ? _presentationTimes.back() : _startPresentationTime;
+        NSAssert(presentationTime >= _lastPresentationTime, @"out of order presentation times");
+        _lastPresentationTime = presentationTime;
+        [self appendResult:movementUnit toDataColumn:MovementUnitID forWell:well];
+        [self appendResult:presentationTime toDataColumn:PresentationTimeID forWell:well];
     }
 }
 
-- (void)addFrameOccupancyFractions:(double *)occupancyFraction
-                     movementUnits:(double *)movementUnits
-                atPresentationTime:(NSTimeInterval)presentationTime
+- (void)setReportingStyle:(ReportingStyle)style forDataColumnID:(const char *)columnID
 {
     @synchronized(self) {
-        NSAssert(presentationTime >= [self lastPresentationTime], @"out of order presentation times");
-        
-        _presentationTimes.push_back(presentationTime);
-        for (NSUInteger well = 0; well < _wellCount; well++) {
-            _occupancyFractionsByWell[well].push_back(occupancyFraction[well]);
-            _movementUnitsByWell[well].push_back(movementUnits[well]);
+        _reportingStyleByDataColumn[std::string(columnID)] = style;
+    }
+}
+
+- (void)appendResult:(double)result toDataColumn:(const char *)columnID forWell:(int)well
+{
+    @synchronized(self) {
+        _valuesByWellAndDataColumn[well][std::string(columnID)].push_back(result);
+    }
+}
+
+- (void)appendToAdditionalResultsText:(NSString *)text
+{
+    @synchronized(self) {
+        if (!_additionalResultsText) {
+            _additionalResultsText = [[NSMutableString alloc] init];
         }
+        [_additionalResultsText appendString:text];
     }
 }
 
-- (void)addProcessingTime:(NSTimeInterval)processingTime
+- (BOOL)movementUnitsMean:(double *)mean stdDev:(double *)stddev forWell:(int)well
 {
     @synchronized(self) {
-        _processingTimes.push_back(processingTime);
+        return meanAndStdDev(_valuesByWellAndDataColumn[well][std::string(PresentationTimeID)], *mean, *stddev);
     }
 }
 
-- (NSUInteger)sampleCount
+- (BOOL)movementUnitsMean:(double *)mean stdDev:(double *)stddev forWell:(int)well inLastSeconds:(NSTimeInterval)seconds
 {
     @synchronized(self) {
-        return _presentationTimes.size();
+        NSTimeInterval time = [self lastPresentationTime] - seconds;
+        std::vector<double>* presentationTimes = &_valuesByWellAndDataColumn[well][std::string(PresentationTimeID)];
+        size_t index = std::lower_bound(presentationTimes->begin(), presentationTimes->end(), time) - presentationTimes->begin();
+        return meanAndStdDev(_valuesByWellAndDataColumn[well][std::string(MovementUnitID)], *mean, *stddev, index);
     }
 }
 
@@ -101,31 +120,10 @@ static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &
     }
 }
 
-// Must call @synchronized
-- (size_t)sampleIndexStartingAtSecondsFromEnd:(NSTimeInterval)seconds
-{
-    NSTimeInterval time = [self lastPresentationTime] - seconds;
-    return std::lower_bound(_presentationTimes.begin(), _presentationTimes.end(), time) - _presentationTimes.begin();
-}
-
-- (void)movementUnitsMean:(double *)mean stdDev:(double *)stddev forWell:(NSUInteger)well
+- (void)addProcessingTime:(NSTimeInterval)processingTime
 {
     @synchronized(self) {
-        meanAndStdDev(_movementUnitsByWell[well], *mean, *stddev);
-    }
-}
-
-- (void)movementUnitsMean:(double *)mean stdDev:(double *)stddev forWell:(NSUInteger)well inLastSeconds:(NSTimeInterval)seconds
-{
-    @synchronized(self) {
-        meanAndStdDev(_movementUnitsByWell[well], *mean, *stddev, [self sampleIndexStartingAtSecondsFromEnd:seconds]);
-    }
-}
-
-- (void)occupancyFractionMean:(double *)mean stdDev:(double *)stddev forWell:(NSUInteger)well
-{
-    @synchronized(self) {
-        meanAndStdDev(_occupancyFractionsByWell[well], *mean, *stddev);
+        _processingTimes.push_back(processingTime);
     }
 }
 
@@ -140,21 +138,23 @@ static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &
     }
 }
 
-static void meanAndStdDev(const std::vector<double>& vec, double &mean, double &stddev, NSUInteger firstIndex)
+static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &stddev, NSUInteger firstIndex)
 {
+    int numSamples = vec.size() - firstIndex;
     double sum = 0.0;
     for (size_t i = firstIndex; i < vec.size(); i++) {
         sum += vec[i];
     }
-    mean = sum / (vec.size() - firstIndex);
+    mean = sum / numSamples;
     
     double variance = 0.0;
     for (size_t i = firstIndex; i < vec.size(); i++) {
         double difference = vec[i] - mean;
         variance += difference * difference;
     }
-    variance /= (vec.size() - firstIndex);
+    variance /= numSamples;
     stddev = sqrt(variance);
+    return numSamples > 0;
 }
 
 

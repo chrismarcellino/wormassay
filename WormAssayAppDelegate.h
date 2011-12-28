@@ -14,4 +14,6 @@
     NSPanel *_loggingPanel;
 }
 
+@property(nonatomic, retain) IBOutlet NSMenu *wellAnalyzerSubmenu;
+
 @end

@@ -7,7 +7,11 @@
 //
 
 #import "VideoProcessorController.h"
+#import <objc/runtime.h>
+#import "WellAnalyzer.h"
 #import "PlateData.h"
+
+static NSString *const WellAnalyzerClassKey = @"WellAnalyzerClass";
 
 @implementation VideoProcessorController
 
@@ -27,7 +31,7 @@
 - (id)init
 {
     if ((self = [super init])) {
-        _queue = dispatch_queue_create("edu.ucsf.chrismarcellino.wormassay.videoprocessorcontroller", NULL);
+        _queue = dispatch_queue_create("videoprocessorcontroller", NULL);
         _videoProcessors = [[NSMutableArray alloc] init];
     }
     
@@ -41,11 +45,66 @@
     [super dealloc];
 }
 
+- (NSArray *)wellAnalyzerClasses
+{
+    NSMutableArray *wellAnalyzerClasses = [NSMutableArray array];
+    
+    int	numberOfClasses = objc_getClassList(NULL, 0);
+	Class *classList = malloc(numberOfClasses * sizeof(Class));
+    objc_getClassList(classList, numberOfClasses);
+    for (int i = 0; i < numberOfClasses; i++) {
+        Class aClass = classList[i];
+        if (class_getClassMethod(aClass, @selector(conformsToProtocol:)) && [aClass conformsToProtocol:@protocol(WellAnalyzer)]) {
+            [wellAnalyzerClasses addObject:aClass];
+        } 
+    }
+    free(classList);
+    
+    // Sort by display name
+    [wellAnalyzerClasses sortUsingSelector:@selector(analyzerName)];
+    
+    return wellAnalyzerClasses;
+}
+
+- (Class)wellAnalyzerClass
+{
+    NSString *string = [[NSUserDefaults standardUserDefaults] stringForKey:WellAnalyzerClassKey];
+    Class class = Nil;
+    if (string) {
+        class = NSClassFromString(string);
+    }
+    
+    if (!class) {
+        class = NSClassFromString(@"LuminanceMotionAnalyzer");
+    }
+    if (!class) {
+        class = [[self wellAnalyzerClasses] objectAtIndex:0];
+    }
+    
+    return class;
+}
+
+- (void)setWellAnalyzerClass:(Class)wellAnalyzerClass
+{
+    if (wellAnalyzerClass != [self wellAnalyzerClass]) {
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        [defaults setObject:NSStringFromClass(wellAnalyzerClass) forKey:WellAnalyzerClassKey];
+        [defaults synchronize];
+        
+        dispatch_async(_queue, ^{
+            for (VideoProcessor *videoProcessor in _videoProcessors) {
+                [videoProcessor setWellAnalyzerClass:wellAnalyzerClass];
+            }
+        });
+    }
+}
+
 - (void)addVideoProcessor:(VideoProcessor *)videoProcessor
 {
     dispatch_async(_queue, ^{
         [_videoProcessors addObject:videoProcessor];
         [videoProcessor setDelegate:self];
+        [videoProcessor setWellAnalyzerClass:[self wellAnalyzerClass]];
         [videoProcessor setShouldScanForWells:YES];
     });
 }

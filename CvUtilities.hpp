@@ -7,6 +7,7 @@
 //
 
 #import "opencv2/opencv.hpp"
+
 static inline int rectArea(const CvRect& rect)
 {
     return rect.width * rect.height;
@@ -20,6 +21,11 @@ static inline int rectPerimeter(const CvRect& rect)
 static inline bool rectContainsPoint(const CvRect& rect, int x, int y)
 {
     return rect.x <= x && x < rect.x + rect.width && rect.y <= y && y < rect.y + rect.height;
+}
+
+static inline bool sizeEqualsSize(const CvSize& a, const CvSize &b)
+{
+    return a.width == b.width && a.height == b.height;
 }
 
 static inline bool rectContainsRect(const CvRect& parent, const CvRect &child)        // contains or equals, but not associative

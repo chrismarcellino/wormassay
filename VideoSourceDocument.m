@@ -112,7 +112,7 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
                                     [NSNumber numberWithBool:NO], QTMovieOpenAsyncOKAttribute,
                                     nil];
         _movie = [[QTMovie alloc] initWithAttributes:attributes error:outError];
-        _movieQueue = dispatch_queue_create("edu.ucsf.chrismarcellino.wormassay.fileframeextract", NULL);
+        _movieQueue = dispatch_queue_create("fileframeextract", NULL);
         [attributes release];
         
         _sourceIdentifier = [[absoluteURL path] retain];
