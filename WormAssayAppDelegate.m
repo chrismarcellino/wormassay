@@ -12,6 +12,7 @@
 #import "VideoProcessorController.h"
 #import "VideoProcessor.h"
 #import <QTKit/QTKit.h>
+#import <IOKit/pwr_mgt/IOPMLib.h>
 
 static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCameras";
 static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
@@ -92,6 +93,13 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
                                                                  context:NULL];
     
     [self loadCaptureDevices];
+    
+    // Prevent display and system idle sleep for the life of the application
+    IOPMAssertionID assertionID;
+    IOPMAssertionCreateWithName(kIOPMAssertionTypeNoDisplaySleep,
+                                kIOPMAssertionLevelOn,
+                                (CFStringRef)[[NSBundle mainBundle] bundleIdentifier],
+                                &assertionID);
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context

@@ -170,6 +170,7 @@
 		219099CC13575AEE00EEE2BB /* ResultPointCallback.h in Headers */ = {isa = PBXBuildFile; fileRef = 2190993F13575AED00EEE2BB /* ResultPointCallback.h */; };
 		219099D11357A05300EEE2BB /* libiconv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 219099D01357A05300EEE2BB /* libiconv.dylib */; };
 		219099D21357A05C00EEE2BB /* libiconv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 219099D01357A05300EEE2BB /* libiconv.dylib */; };
+		2190AF18135B6E4A00C3853B /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2190AF17135B6E4A00C3853B /* IOKit.framework */; };
 		21CC72061347EDD4001146DA /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CC72051347EDD4001146DA /* CoreVideo.framework */; };
 		21CC724913484A79001146DA /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CC724813484A79001146DA /* QuartzCore.framework */; };
 		21CC725C1348CA5F001146DA /* BitmapOpenGLView.m in Sources */ = {isa = PBXBuildFile; fileRef = 21CC725B1348CA5F001146DA /* BitmapOpenGLView.m */; };
@@ -536,6 +537,7 @@
 		2190993E13575AED00EEE2BB /* ResultPointCallback.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ResultPointCallback.cpp; sourceTree = "<group>"; };
 		2190993F13575AED00EEE2BB /* ResultPointCallback.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ResultPointCallback.h; sourceTree = "<group>"; };
 		219099D01357A05300EEE2BB /* libiconv.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.dylib; path = usr/lib/libiconv.dylib; sourceTree = SDKROOT; };
+		2190AF17135B6E4A00C3853B /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		21CC72051347EDD4001146DA /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		21CC724813484A79001146DA /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		21CC725A1348CA5F001146DA /* BitmapOpenGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BitmapOpenGLView.h; sourceTree = SOURCE_ROOT; };
@@ -566,6 +568,7 @@
 				218DD54D13453FCE000B6475 /* libOpenCV.a in Frameworks */,
 				219098A413575A7400EEE2BB /* libzxing.a in Frameworks */,
 				219099D21357A05C00EEE2BB /* libiconv.dylib in Frameworks */,
+				2190AF18135B6E4A00C3853B /* IOKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1092,6 +1095,7 @@
 				215AB59712CECC190047B13F /* Accelerate.framework */,
 				218DD53513453FC5000B6475 /* AppKit.framework */,
 				218DD53613453FC5000B6475 /* CoreData.framework */,
+				2190AF17135B6E4A00C3853B /* IOKit.framework */,
 				218DD53713453FC5000B6475 /* Foundation.framework */,
 				219099D01357A05300EEE2BB /* libiconv.dylib */,
 				218DD5271345253D000B6475 /* libz.dylib */,
