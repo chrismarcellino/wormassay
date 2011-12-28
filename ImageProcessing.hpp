@@ -36,7 +36,7 @@ extern bool plateSequentialCirclesAppearSameAndStationary(const std::vector<cv::
 
 // Creates the image containing connected-component filled edges for anaylsis by the next function. FilledArea is in
 // units of pixels (area units). The image returned is a binary image, where 1's correspond to filled area.
-extern IplImage *createEdgeImageForWellImageFromImage(IplImage *plateImage, cv::Vec3f wellCircle, float &filledArea, CvRect &boundingSquare);
+    extern IplImage *createEdgeImageForWellImageFromImage(IplImage *plateImage, cv::Vec3f wellCircle, float &filledArea, IplImage *debugImage);
 
 // Calcuates change in filled pixels (area units) between two connected-components filled edge images.
 extern float getMotionDeltaBetweenEdgeFrames(IplImage *previousFrame, IplImage *currentFrame);

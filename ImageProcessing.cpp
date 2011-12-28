@@ -282,11 +282,11 @@ bool plateSequentialCirclesAppearSameAndStationary(const std::vector<cv::Vec3f> 
     return distance < (radiusPrevious + radiusCurrent) / 2.0 / 10.0;
 }
 
-IplImage *createEdgeImageForWellImageFromImage(IplImage *plateImage, cv::Vec3f wellCircle, float &filledArea, CvRect &boundingSquare)
+IplImage *createEdgeImageForWellImageFromImage(IplImage *plateImage, cv::Vec3f wellCircle, float &filledArea, IplImage *debugImage)
 {
     // Copy the grayscale subimage corresponding to the circle's bounding square
     float radius = wellCircle[2];
-    boundingSquare = cvRect(wellCircle[0] - radius, wellCircle[1] - radius, 2 * radius, 2 * radius);
+    CvRect boundingSquare = cvRect(wellCircle[0] - radius, wellCircle[1] - radius, 2 * radius, 2 * radius);
     
     cvSetImageROI(plateImage, boundingSquare);
     IplImage* graySubimage = cvCreateImage(cvGetSize(plateImage), IPL_DEPTH_8U, 1);
@@ -295,9 +295,8 @@ IplImage *createEdgeImageForWellImageFromImage(IplImage *plateImage, cv::Vec3f w
     
     // Create a circle mask with 255's in the circle
     IplImage *circleMask = cvCreateImage(cvGetSize(graySubimage), IPL_DEPTH_8U, 1);
-    fastSetImageZero(circleMask);
-    cvCircle(circleMask, cvPoint(radius, radius), radius, cvRealScalar(255), CV_FILLED);
-    cvReleaseImage(&circleMask);
+    fastFillImage(circleMask, 255);
+    cvCircle(circleMask, cvPoint(radius, radius), radius, cvRealScalar(0), CV_FILLED);
     
     // Mask the plate image, turning pixels outside the circle black
     cvSet(graySubimage, cvRealScalar(0), circleMask);
@@ -308,7 +307,14 @@ IplImage *createEdgeImageForWellImageFromImage(IplImage *plateImage, cv::Vec3f w
     
     /// XXXX FIND CONNECTED IMAGES
     
+    // Draw onto the debugging image
+    cvSetImageROI(debugImage, boundingSquare);
+    cvCvtColor(edges, debugImage, CV_GRAY2BGRA);
+    cvResetImageROI(debugImage);
+    
+    
 //    cvReleaseImage(&edges);
+    cvReleaseImage(&circleMask);
     cvReleaseImage(&graySubimage);
     
     return edges;

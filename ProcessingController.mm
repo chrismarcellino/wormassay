@@ -144,13 +144,7 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callbac
             for (size_t i = 0; i < _trackingWellCircles.size(); i++) {
                 float filledArea;
                 CvRect boundingSquare;
-                IplImage *wellImage = createEdgeImageForWellImageFromImage(videoFrame, _trackingWellCircles[i], filledArea, boundingSquare);
-                
-                // Draw the well image edges back in
-                cvSetImageROI(debugImage, boundingSquare);
-                cvCvtColor(wellImage, debugImage, CV_GRAY2BGRA);
-                cvResetImageROI(debugImage);
-                
+                IplImage *wellImage = createEdgeImageForWellImageFromImage(videoFrame, _trackingWellCircles[i], filledArea, debugImage);
                 cvReleaseImage(&wellImage);
             }
             

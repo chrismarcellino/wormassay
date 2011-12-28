@@ -62,3 +62,7 @@ static inline void fastSetImageZero(IplImage *image)
     memset(image->imageData, 0, image->imageSize);
 }
 
+static inline void fastFillImage(IplImage *image, uint8_t val)
+{
+    memset(image->imageData, val, image->imageSize);
+}
