@@ -21,6 +21,12 @@
     return self;
 }
 
+- (void)dealloc
+{
+    [_contents release];
+    [super dealloc];
+}
+
 - (id)initWithCoder:(NSCoder *)aDecoder
 {
     if ((self = [super initWithCoder:aDecoder])) {

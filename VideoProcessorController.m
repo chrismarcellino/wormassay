@@ -30,7 +30,7 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
 
 - (void)emailRecentResults;
 
-- (void)enqueueConversionJobForPath:(NSString *)sourceVideoPath;
+- (void)enqueueConversionJobForPath:(NSString *)sourceVideoPath plateOrientation:(PlateOrientation)plateOrientation;
 - (void)dequeueNextConversionJobIfNecessary;
 - (void)setConversionJobsPaused:(BOOL)paused;;
 - (void)taskDidTerminate:(NSNotification *)note;
@@ -42,11 +42,37 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
 @end
 
 
+@interface ConversionJob : NSObject
+
+@property(copy) NSString *inputVideoPath;
+@property(copy, readonly) NSString *outputVideoPath;
+@property PlateOrientation plateOrientation;
+
+@end
+
+@implementation ConversionJob
+@synthesize inputVideoPath = _inputVideoPath;
+@synthesize plateOrientation;
+
+- (NSString *)outputVideoPath
+{
+    return [[[self inputVideoPath] stringByDeletingPathExtension] stringByAppendingPathExtension:@"mp4"];
+}
+
+- (void)dealloc
+{
+    [_inputVideoPath release];
+    [super dealloc];
+}
+
+@end
+
+
 @implementation VideoProcessorController
 
-@synthesize runLogTextView;
-@synthesize runLogScrollView;
-@synthesize encodingTableView;
+@synthesize runLogTextView = _runLogTextView;
+@synthesize runLogScrollView = _runLogScrollView;
+@synthesize encodingTableView = _encodingTableView;
 
 + (VideoProcessorController *)sharedInstance
 {
@@ -66,7 +92,7 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
         _barcodesSinceTrackingBegan = [[NSCountedSet alloc] init];
         _videoTempURLsToDestinationURLs = [[NSMutableDictionary alloc] init];
         _filesToEmail = [[NSMutableSet alloc] init];
-        _pendingConversionPaths = [[NSMutableArray alloc] init];
+        _pendingConversionJobs = [[NSMutableArray alloc] init];
         
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(taskDidTerminate:) name:NSTaskDidTerminateNotification object:nil];
     }
@@ -86,7 +112,10 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
     [_runStartDate release];
     [_currentOutputFilenamePrefix release];
     [_runLogTextAttributes release];
-    [_pendingConversionPaths release];
+    [_pendingConversionJobs release];
+    [_runLogTextView release];
+    [_runLogScrollView release];
+    [_encodingTableView release];
     [super dealloc];
 }
 
@@ -490,7 +519,7 @@ stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
             if ([fileManager moveItemAtURL:outputFileURL toURL:destinationURL error:&fileManagerError]) {
                 RunLog(@"Wrote video at \"%@\" to disk.", [destinationURL path]);
                 
-                [self enqueueConversionJobForPath:[destinationURL path]];
+                [self enqueueConversionJobForPath:[destinationURL path] plateOrientation:[self plateOrientation]];
             } else {
                 RunLog(@"Unable to move recording at \"%@\" to \"%@\": %@", [outputFileURL path], [destinationURL path], fileManagerError);
             }
@@ -540,14 +569,19 @@ static inline BOOL isValidPath(NSString *path, NSFileManager *fileManager)
     return [self conversionToolPath] != nil;
 }
 
-- (void)enqueueConversionJobForPath:(NSString *)sourceVideoPath
+- (void)enqueueConversionJobForPath:(NSString *)sourceVideoPath plateOrientation:(PlateOrientation)plateOrientation
 {
     NSFileManager *fileManager = [[NSFileManager alloc] init];
     
     if ([self supportsConversion] && [fileManager fileExistsAtPath:sourceVideoPath]) {
         // By convention, the first job in the queue is always running
         dispatch_async(_queue, ^{
-            [_pendingConversionPaths addObject:sourceVideoPath];
+            ConversionJob *job = [[ConversionJob alloc] init];
+            [job setInputVideoPath:sourceVideoPath];
+            [job setPlateOrientation:plateOrientation];
+            [_pendingConversionJobs addObject:job];
+            [job release];
+            
             [self dequeueNextConversionJobIfNecessary];
             [self updateEncodingTableView];
         });
@@ -556,30 +590,44 @@ static inline BOOL isValidPath(NSString *path, NSFileManager *fileManager)
     [fileManager release];
 }
 
-static NSString *outputPathForInputJobPath(NSString *inputPath)
-{
-    return [[inputPath stringByDeletingPathExtension] stringByAppendingPathExtension:@"mp4"];
-}
-
 - (void)dequeueNextConversionJobIfNecessary
 {
     dispatch_async(_queue, ^{
-        if (!_isAppTerminating && !_pauseJobs && !_conversionTask && [_pendingConversionPaths count] > 0) {
-            NSString *inputPath = [_pendingConversionPaths objectAtIndex:0];
-            NSString *outputPath = outputPathForInputJobPath(inputPath);
+        if (!_isAppTerminating && !_pauseJobs && !_conversionTask && [_pendingConversionJobs count] > 0) {
+            ConversionJob *job = [_pendingConversionJobs objectAtIndex:0];
+            NSString *inputPath = [job inputVideoPath];
+            NSString *outputPath = [job outputVideoPath];
             
             if ([inputPath isEqual:outputPath]) {
                 // Nothing to do, move on
-                [_pendingConversionPaths removeObjectAtIndex:0];
+                [_pendingConversionJobs removeObjectAtIndex:0];
                 [self dequeueNextConversionJobIfNecessary];
             } else {
                 _conversionTask = [[NSTask alloc] init];
                 [_conversionTask setLaunchPath:[self conversionToolPath]];
+                // Create a conversion job to convert H.264 using x264 into an MP4 container.
+                // Use a ratefactor of 22 and multithread automatically and rotate/mirror as needed.
+                NSMutableArray *arguments = [NSMutableArray arrayWithObjects:@"-i", inputPath,
+                                             @"-vcodec", @"libx264", @"-f", @"mp4", @"-crf", @"22", @"-threads", @"0", @"-y", nil];
+                switch ([job plateOrientation]) {
+                    default:
+                    case PlateOrientationTopRead:
+                        break;
+                    case PlateOrientationTopRead180DegreeRotated:
+                        [arguments addObject:@"-vf"];
+                        [arguments addObject:@"hflip, vflip"];
+                        break;
+                    case PlateOrientationBottomRead:
+                        [arguments addObject:@"-vf"];
+                        [arguments addObject:@"hflip"];
+                        break;
+                    case PlateOrientationBottomRead180DegreeRotated:
+                        [arguments addObject:@"-vf"];
+                        [arguments addObject:@"vflip"];
+                        break;
+                }
+                [arguments addObject:outputPath];
                 
-                // Start a conversion job to convert H.264 using x264 into an MP4 container.
-                // Use a ratefactor of 22 and multithread automatically.
-                NSArray *arguments = [NSArray arrayWithObjects:@"-i", inputPath,
-                                      @"-vcodec", @"libx264", @"-f", @"mp4", @"-crf", @"22", @"-threads", @"0", @"-y", outputPath, nil];
                 [_conversionTask setArguments:arguments];
                 // Must launch task on main thread to ensure that a thread is around to service the death notification
                 dispatch_async(dispatch_get_main_queue(), ^{
@@ -613,12 +661,13 @@ static NSString *outputPathForInputJobPath(NSString *inputPath)
 - (void)handleConversionTaskTermination
 {
     NSAssert(_conversionTask && ![_conversionTask isRunning], @"no terminated task");
-    NSString *inputPath = [_pendingConversionPaths objectAtIndex:0];
-    NSString *outputPath = outputPathForInputJobPath(inputPath);
+    ConversionJob *job = [_pendingConversionJobs objectAtIndex:0];
+    NSString *inputPath = [job inputVideoPath];
+    NSString *outputPath = [job outputVideoPath];
     NSAssert([[_conversionTask arguments] containsObject:inputPath] && [[_conversionTask arguments] containsObject:outputPath],
              @"task doesn't match head of queue");
     
-    [_pendingConversionPaths removeObjectAtIndex:0];
+    [_pendingConversionJobs removeObjectAtIndex:0];
     
     // Delete the input file if the output file exists and the process exited without an error code or crashing
     NSFileManager *fileManager = [[NSFileManager alloc] init];
@@ -665,7 +714,7 @@ static NSString *outputPathForInputJobPath(NSString *inputPath)
 {
     __block BOOL result;
     dispatch_sync(_queue, ^{
-        result = [_pendingConversionPaths count] > 0;
+        result = [_pendingConversionJobs count] > 0;
     });
     return result;
 }
@@ -690,8 +739,8 @@ static NSString *outputPathForInputJobPath(NSString *inputPath)
 {
     NSMutableArray *array = [[NSMutableArray alloc] init];
     BOOL first = YES;
-    for (NSString *path in _pendingConversionPaths) {
-        NSString *value = [path lastPathComponent];
+    for (ConversionJob *job in _pendingConversionJobs) {
+        NSString *value = [[job inputVideoPath] lastPathComponent];
         if (first) {
             NSString *status = _pauseJobs ? NSLocalizedString(@" (paused)", nil) : NSLocalizedString(@" (processing…)", nil);
             value = [value stringByAppendingString:status];

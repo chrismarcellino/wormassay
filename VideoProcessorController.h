@@ -26,7 +26,7 @@
     NSString *_runID;
     NSTimeInterval _currentOutputLastWriteTime;      // in CPU time
     
-    NSMutableArray *_pendingConversionPaths;
+    NSMutableArray *_pendingConversionJobs;
     NSTask *_conversionTask;
     BOOL _pauseJobs;
     BOOL _isAppTerminating;
