@@ -1,0 +1,22 @@
+Version 1.0
+------------
+Make project and build settings Xcode 4.2 compatible.
+Reverse Optical Flow vector calculation direction (from prev. frame to current frame, to current frame to prev. frame, to make blue edge outline correspond to worm better. This will have no effect on data or noise.)
+Fix free space display in console.
+Bump version number to 1.0 to reflect manuscript publication and application release (the algorithms are numerically equivalent to the versions in 0.20). 
+
+Version 0.31
+------------
+Limit barcode reading to common formats to improve accuracy.
+Add more error handling to barcode reading code.
+Improve plate rotation handling.
+
+Version 0.23
+------------
+Don't rotate the barcode camera (using the menu setting.)
+Add elapsed time indicator on preview view.
+Limit UVC (i.e. barcode camera) resolution for best performance/computability; has no effect on Firewire/other cameras. 
+
+Version 0.20
+------------
+Both luminance difference and optical flow algorithms implemented and focused validation against human assay completed.

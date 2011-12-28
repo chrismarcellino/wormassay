@@ -200,7 +200,7 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
     NSString *path = [[[NSUserDefaults standardUserDefaults] stringForKey:RunOutputFolderPathKey] stringByExpandingTildeInPath];
     if (!path) {
         path = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-        path = [path stringByAppendingPathComponent:@"Worm Assay Data"];
+        path = [path stringByAppendingPathComponent:@"WormAssay Data"];
     }
     return path;
 }

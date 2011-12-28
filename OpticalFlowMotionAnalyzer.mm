@@ -19,6 +19,7 @@ static const double DeltaMeanMovementLimit = 20.0;
 static const double DeltaStdDevMovementLimit = 10.0;
 static const NSTimeInterval IgnoreFramesPostMovementThresholdTimeInterval = 5.0;
 static const NSTimeInterval MinimumIntervalFrameInterval = 0.100;
+static const BOOL findInReverse = YES;
 
 @implementation OpticalFlowMotionAnalyzer
 
@@ -119,6 +120,13 @@ static const NSTimeInterval MinimumIntervalFrameInterval = 0.100;
     
     // ======= Contour finding ========
     
+    // Find in reverse to make the edge outline match the preview image if set
+    if (findInReverse) {
+        IplImage *temp = grayscalePrevImage;
+        grayscalePrevImage = grayscaleCurImage;
+        grayscaleCurImage = temp;
+    }
+    
     // Create a circle mask with all bits on in the circle using only a portion of the circle to avoid taking the well walls
     int radius = cvGetSize(wellImage).width / 2;
     IplImage *insetCircleMask = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
@@ -202,6 +210,11 @@ static const NSTimeInterval MinimumIntervalFrameInterval = 0.100;
                 const int arrowLength = 5;
                 CvPoint2D32f p = featuresPrev[i];
                 CvPoint2D32f c = featuresCur[i];
+                if (findInReverse) {
+                    CvPoint2D32f temp = p;
+                    p = c;
+                    c = temp;
+                }
                 p.x += p.x - c.x;       // double the vector length for visibility
                 p.y += p.y - c.y;
                 cvLine(debugImage, cvPointFrom32f(p), cvPointFrom32f(c), lineColor, lineWidth);

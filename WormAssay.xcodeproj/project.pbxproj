@@ -598,7 +598,7 @@
 		21CC725D1348D40B001146DA /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		21CDD2591378A83B0000DBEE /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/LoggingPanel.xib; sourceTree = "<group>"; };
 		21DC6F3E137CE50000D38B13 /* OpticalFlowMotionAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OpticalFlowMotionAnalyzer.h; sourceTree = SOURCE_ROOT; };
-		21DC6F3F137CE50000D38B13 /* OpticalFlowMotionAnalyzer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = OpticalFlowMotionAnalyzer.mm; sourceTree = SOURCE_ROOT; };
+		21DC6F3F137CE50000D38B13 /* OpticalFlowMotionAnalyzer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; lineEnding = 0; path = OpticalFlowMotionAnalyzer.mm; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		21DC6F47137CFB3500D38B13 /* background_segm.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = background_segm.hpp; sourceTree = "<group>"; };
 		21DC6F48137CFB3500D38B13 /* tracking.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = tracking.hpp; sourceTree = "<group>"; };
 		21DC6F4A137CFB3500D38B13 /* bgfg_acmmm2003.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = bgfg_acmmm2003.cpp; sourceTree = "<group>"; };

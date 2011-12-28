@@ -52,7 +52,15 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
     // Log welcome message
     NSBundle *mainBundle = [NSBundle mainBundle];
     NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSDictionary *fileAttributes = [fileManager attributesOfFileSystemForPath:[videoProcessorController runOutputFolderPath] error:nil];
+    NSString *folder = [videoProcessorController runOutputFolderPath];
+    NSDictionary *fileAttributes = nil;
+    while (!fileAttributes && folder) {
+        fileAttributes = [fileManager attributesOfFileSystemForPath:folder error:nil];
+        if (!fileAttributes) {
+            NSString *parentFolder = [folder stringByDeletingLastPathComponent];
+            folder = [parentFolder isEqual:folder] ? nil : parentFolder;
+        }
+    }
     unsigned long long fileSystemSize = [[fileAttributes objectForKey:NSFileSystemSize] unsignedLongLongValue];
     unsigned long long freeSpace = [[fileAttributes objectForKey:NSFileSystemFreeSize] unsignedLongLongValue];
     double percentFree = (double)freeSpace / (double)fileSystemSize * 100.0;
