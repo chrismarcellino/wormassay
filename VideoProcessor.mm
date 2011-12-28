@@ -25,7 +25,6 @@ static const NSTimeInterval BarcodeRepeatSuccessCount = 3;
 static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 
 @interface VideoProcessor() {
-    NSString *_sourceIdentifier;
     id<VideoProcessorDelegate> _delegate;        // not retained
     Class _assayAnalyzerClass;
     dispatch_queue_t _queue;        // protects all state and serializes
@@ -54,17 +53,15 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 - (void)performBarcodeReadingAsyncWithFrame:(VideoFrame *)videoFrame;
 
 - (void)resetCaptureStateAndReportResults;
-- (void)beginRecordingVideo;
 
 @end
 
 
 @implementation VideoProcessor
 
-- (id)initWithSourceIdentifier:(NSString *)sourceIdentifier
+- (id)init
 {
     if ((self = [super init])) {
-        _sourceIdentifier = [sourceIdentifier copy];
         _queue = dispatch_queue_create("video-processor", NULL);
         _debugFrameCallbackQueue = dispatch_queue_create("video-processor-callback", NULL);
     }
@@ -73,7 +70,6 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 
 - (void)dealloc
 {
-    [_sourceIdentifier release];
     dispatch_release(_queue);
     dispatch_release(_debugFrameCallbackQueue);
     [_plateData release];
@@ -287,9 +283,6 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                                 _assayAnalyzer = [[_assayAnalyzerClass alloc] init];
                                 NSAssert1(_assayAnalyzer, @"failed to allocate AssayAnalyzer %@", _assayAnalyzerClass);
                                 [_assayAnalyzer willBeginPlateTrackingWithPlateData:_plateData];
-                                
-                                // Begin recording video
-                                [self beginRecordingVideo];
                             } else {
                                 // There is still a plate, but it doesn't match or more likely is still moving moved, or not enough
                                 // time has lapsed, so we stay in this state, but update the circles
@@ -382,20 +375,15 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     // Send the stats unconditionally and let the controller sort it out
     if (_plateData) {
         NSTimeInterval trackingDuration = [_plateData lastPresentationTime] - [_plateData startPresentationTime];
-        if (trackingDuration >= [_assayAnalyzer minimumTimeIntervalProcessedToReportData] &&
-            [_plateData sampleCount] > [_assayAnalyzer minimumSamplesProcessedToReportData]) {
+        BOOL longEnough = trackingDuration >= [_assayAnalyzer minimumTimeIntervalProcessedToReportData] &&
+                            [_plateData sampleCount] > [_assayAnalyzer minimumSamplesProcessedToReportData];
+        if (longEnough) {
             RunLog(@"Ended tracking after %.3f seconds (%.1f fps, %.0f%% dropped)",
-                   trackingDuration, [_plateData averageFramesPerSecond], [_plateData droppedFrameProportion] * 100);
-            [_delegate videoProcessor:self didFinishAcquiringPlateData:_plateData successfully:YES];
-            
+                   trackingDuration, [_plateData averageFramesPerSecond], [_plateData droppedFrameProportion] * 100);            
         } else {
             RunLog(@"Ignoring truncated run of %.3f seconds", trackingDuration);
-            [_delegate videoProcessor:self didFinishAcquiringPlateData:_plateData successfully:NO];
         }
-        
-        // SAVE AND NAME VIDEO XXX DONT DEADLOCK WHEN GETTING RESULT NAME  (INSTEAD PASS TEMP FILE NAME TO VIDEO PROCESSOR
-        //[self endRecordingVideoWithName];
-        // ELSE IF TOO SHORT DELETE THE VIDEO
+        [_delegate videoProcessor:self didFinishAcquiringPlateData:_plateData successfully:longEnough];
     }
     
     [_assayAnalyzer release];
@@ -409,11 +397,6 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
     _lastBarcodeScanTime = PresentationTimeDistantPast;
     _trackingWellCircles.clear();
     _trackedImageSize = cvSize(0, 0);
-}
-
-- (void)beginRecordingVideo
-{
-    
 }
 
 - (void)reportFinalResultsBeforeRemoval

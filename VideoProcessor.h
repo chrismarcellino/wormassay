@@ -25,7 +25,6 @@ typedef enum {
 // Instance variables are declared in the implementation file as they contain C++ objects
 // which would prevent importation by C/Obj-C compilation units
 
-- (id)initWithSourceIdentifier:(NSString *)sourceIdentifier;
 - (void)setDelegate:(id<VideoProcessorDelegate>)delegate;
 - (void)setAssayAnalyzerClass:(Class)assayAnalyzerClass;
 

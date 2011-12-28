@@ -243,7 +243,7 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
     BOOL success = NO;
     
     NSAssert(!_processor, @"processor already exists");
-    _processor = [[VideoProcessor alloc] initWithSourceIdentifier:_sourceIdentifier];
+    _processor = [[VideoProcessor alloc] init];
     [[VideoProcessorController sharedInstance] addVideoProcessor:_processor];
     
     if (_captureDevice) {
