@@ -139,15 +139,15 @@ bool findWellCirclesForPlateCount(IplImage *inputImage, int wellCount, std::vect
     // well maximum radius = <smallerImageDimension> / (2 * <rows>) * (1 + <error tolerance>),
     // where the error tolerance is at least 9%. 
     //
-    // The minimum well radius can be similarly calculated, by assuming that at least half of the plates diameter correspond to
-    // wells (which is a very conservative assumption for all standard plates):
+    // The minimum well radius can be similarly calculated, by assuming that at least 75% of the plates diameter correspond to
+    // wells (which is a very conservative assumption for all standard plates), and that a plate fills half the frame:
     // well minimum radius = 0.5 * <largerImageDimension> / (2 * <columns>) / (1 + <error tolerance>)
     // where the error tolerance is at least 14%.
     //
     // The minimum distance between well centers is just double the minimum radius calculated above, since wells cannot overlap.
     
     int maxRadius = smallerImageDimension / (2.0 * rows) * (1.0 + errorTolerance);
-    int minRadius = 0.5 * largerImageDimension / (2.0 * columns) / (1.0 + errorTolerance);
+    int minRadius = 0.75 * 0.5 * largerImageDimension / (2.0 * columns) / (1.0 + errorTolerance);
     
     // Find all circles using the Hough transform. The seq returns contains Vec3fs, whose elements are (x-center, y-center, radius) triples.
     CvMemStorage* storage = cvCreateMemStorage();
