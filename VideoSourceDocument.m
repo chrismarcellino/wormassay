@@ -39,6 +39,12 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
     return uniqueID;
 }
 
+BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
+{
+    NSString *modelUniqueID = [device modelUniqueID];
+    return modelUniqueID && [modelUniqueID rangeOfString:@"VendorID_1452"].location != NSNotFound;
+}
+
 @interface VideoSourceDocument ()
 
 - (void)adjustWindowSizing;
@@ -95,7 +101,10 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
             }
         }
         
-        _sourceIdentifier = [[NSString alloc] initWithFormat:@"\"%@\" (%@)", [_captureDevice localizedDisplayName], captureDeviceUniqueID];
+        _sourceIdentifier = [[NSString alloc] initWithFormat:@"%@ (%@)",
+                             [_captureDevice localizedDisplayName],
+                             [captureDeviceUniqueID stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]],
+                             nil];
         
         RunLog(@"Opened device \"%@\" with model ID \"%@\".", _sourceIdentifier, [_captureDevice modelUniqueID] ? [_captureDevice modelUniqueID] : @"(none)");
     } else if ([absoluteURL isFileURL]) {
@@ -257,12 +266,12 @@ static NSPoint upperLeftForFrame(NSRect frame)
             success = [_captureSession addInput:_captureDeviceInput error:outError];
             if (success) {
                 _captureDecompressedVideoOutput = [[QTCaptureDecompressedVideoOutput alloc] init];
-                
+                [_captureDecompressedVideoOutput setAutomaticallyDropsLateVideoFrames:YES];
                 NSDictionary *bufferAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:
-                                                  [NSNumber numberWithInt:kCVPixelFormatType_32BGRA], kCVPixelBufferPixelFormatTypeKey, nil];
+                                                  [NSNumber numberWithInt:kCVPixelFormatType_32BGRA], kCVPixelBufferPixelFormatTypeKey,
+                                                  nil];
                 [_captureDecompressedVideoOutput setPixelBufferAttributes:bufferAttributes];
                 [bufferAttributes release];
-                
                 [_captureDecompressedVideoOutput setDelegate:self];
                 success = [_captureSession addOutput:_captureDecompressedVideoOutput error:outError];
                 if (success) {
@@ -356,27 +365,60 @@ static NSPoint upperLeftForFrame(NSRect frame)
   didOutputVideoFrame:(CVImageBufferRef)videoFrame
      withSampleBuffer:(QTSampleBuffer *)sampleBuffer
        fromConnection:(QTCaptureConnection *)connection
-{       NSTimeInterval t = [NSDate timeIntervalSinceReferenceDate];     //XXXXXXXXXXXXXXXXXXXXXX
-    // QTCaptureDecompressedVideoOutput is guaranteed to be a CVPixelBufferRef
-    IplImageObject *image = [[IplImageObject alloc] initByCopyingCVPixelBuffer:(CVPixelBufferRef)videoFrame
-                                                            resultChannelCount:4
-                                                              vmCopyIfPossible:YES];
-    // Ensure we have the proper frame size for this device
-    NSSize frameSize = NSMakeSize([image image]->width, [image image]->height);
-    if (!NSEqualSizes(frameSize, [self lastFrameSize])) {
-        [self setLastFrameSize:frameSize];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            RunLog(@"Receiving %g x %g video from device \"%@\".", (double)frameSize.width, (double)frameSize.height);
-            [self adjustWindowSizing];
-        });
+{
+    // Ensure we have the proper frame size for this device, correcting for non-square pixels.
+    // QTCaptureDecompressedVideoOutput is guaranteed to be a CVPixelBufferRef.
+    NSSize bufferSize = NSMakeSize(CVPixelBufferGetWidth((CVPixelBufferRef)videoFrame), CVPixelBufferGetHeight((CVPixelBufferRef)videoFrame));
+    NSSize squarePixelBufferSize = bufferSize;
+    
+    CFDictionaryRef aspectRatioDict = CVBufferGetAttachment(videoFrame, kCVImageBufferPixelAspectRatioKey, NULL);
+    if (aspectRatioDict) {
+        CFNumberRef horizontalPixelNumber = CFDictionaryGetValue(aspectRatioDict, kCVImageBufferPixelAspectRatioHorizontalSpacingKey);
+        CFNumberRef verticalPixelNumber = CFDictionaryGetValue(aspectRatioDict, kCVImageBufferPixelAspectRatioVerticalSpacingKey);
+        if (horizontalPixelNumber && verticalPixelNumber) {
+            double horizontalPixel, verticalPixel;
+            CFNumberGetValue(horizontalPixelNumber, kCFNumberDoubleType, &horizontalPixel);
+            CFNumberGetValue(verticalPixelNumber, kCFNumberDoubleType, &verticalPixel);
+            if (horizontalPixel != verticalPixel) {
+                if (horizontalPixel > verticalPixel) {
+                    squarePixelBufferSize.width *= horizontalPixel / verticalPixel;
+                } else {
+                    squarePixelBufferSize.height *= verticalPixel / horizontalPixel;                    
+                }
+            }
+        }
     }
     
-    NSTimeInterval presentationTimeInterval;
-    if (!QTGetTimeInterval([sampleBuffer presentationTime], &presentationTimeInterval)) {
-        presentationTimeInterval = CACurrentMediaTime();
+    // If our pixel buffer doesn't match this size, or we don't have a square pixel buffer, set attributes and change the requested size.
+    if (!NSEqualSizes(bufferSize, squarePixelBufferSize) || !NSEqualSizes(squarePixelBufferSize, [self lastFrameSize])) {
+        [self setLastFrameSize:squarePixelBufferSize];
+        
+        RunLog(@"Receiving %g x %g video from device \"%@\".", (double)squarePixelBufferSize.width, (double)squarePixelBufferSize.height, _sourceIdentifier);
+        // Only set a buffer size if we have a non-square pixel size
+        if (!NSEqualSizes(bufferSize, squarePixelBufferSize)) {
+            NSMutableDictionary *bufferAttributes = [[_captureDecompressedVideoOutput pixelBufferAttributes] mutableCopy];
+            [bufferAttributes setObject:[NSNumber numberWithDouble:squarePixelBufferSize.width] forKey:(id)kCVPixelBufferWidthKey];
+            [bufferAttributes setObject:[NSNumber numberWithDouble:squarePixelBufferSize.height] forKey:(id)kCVPixelBufferHeightKey];
+            [_captureDecompressedVideoOutput setPixelBufferAttributes:bufferAttributes];
+            [bufferAttributes release];
+        }
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self adjustWindowSizing];
+        });
+    } else {
+        NSTimeInterval t = [NSDate timeIntervalSinceReferenceDate];     //XXXXXXXXXXXXXXXXXXXXXX
+        IplImageObject *image = [[IplImageObject alloc] initByCopyingCVPixelBuffer:(CVPixelBufferRef)videoFrame
+                                                                resultChannelCount:4
+                                                                  vmCopyIfPossible:YES];
+        
+        NSTimeInterval presentationTimeInterval;
+        if (!QTGetTimeInterval([sampleBuffer presentationTime], &presentationTimeInterval)) {
+            presentationTimeInterval = CACurrentMediaTime();
+        }
+        [self processVideoFrame:image presentationTime:presentationTimeInterval];
+        [image release];            RunLog(@"Elapsed frame time:  %.0f ms  (%.1f fps)", ([NSDate timeIntervalSinceReferenceDate] - t) * 1000, 1/ ([NSDate timeIntervalSinceReferenceDate] - t));
     }
-    [self processVideoFrame:image presentationTime:presentationTimeInterval];
-    [image release];        RunLog(@"Elapsed frame time:  %.0f ms  (%.1f fps)", ([NSDate timeIntervalSinceReferenceDate] - t) * 1000, 1/ ([NSDate timeIntervalSinceReferenceDate] - t));
 }
 
 - (void)captureOutput:(QTCaptureOutput *)captureOutput

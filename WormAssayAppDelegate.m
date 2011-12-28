@@ -108,10 +108,9 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     
     // Iterate through current capture devices, creating new documents for new ones
     for (QTCaptureDevice *device in [QTCaptureDevice inputDevices]) {
-        NSString *modelUniqueID = [device modelUniqueID];
         NSString *uniqueID = [device uniqueID];
         
-        BOOL isBuiltInCamera = modelUniqueID && [modelUniqueID rangeOfString:@"VendorID_1452"].location != NSNotFound;  // Apple USB devices
+        BOOL isBuiltInCamera = DeviceIsAppleUSBDevice(device);
         
         // Only consider devices capable of video output and that meet our built-in device criteria
         if (([device hasMediaType:QTMediaTypeVideo] || [device hasMediaType:QTMediaTypeMuxed]) && 

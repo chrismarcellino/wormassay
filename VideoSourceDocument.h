@@ -19,6 +19,8 @@ extern NSString *const CaptureDeviceFileType;
 extern NSURL *URLForCaptureDeviceUniqueID(NSString *uniqueID);
 extern NSString *UniqueIDForCaptureDeviceURL(NSURL *url);
 
+extern BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device);
+
 
 @interface VideoSourceDocument : NSDocument {
     // A document will strictly have one of captureDevice or movie and their associated objects
