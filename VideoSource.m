@@ -10,10 +10,10 @@
 #import "BitmapOpenGLView.h"
 #import "IplImageConversionUtilities.hpp"
 #import "opencv2/core/core_c.h"
-#import <QuartzCore/QuartzCore.h>   //XXXXXXXXX
 
 NSString *const CaptureDeviceScheme = @"capturedevice";
 NSString *const CaptureDeviceFileType = @"capturedevice";
+
 static NSPoint LastCascadePoint = { 0.0, 0.0 };
 
 static void releaseIplImage(void *baseAddress, void *context);
@@ -147,7 +147,6 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
     // Create the window to hold the content view and contrain it to preserve the aspect ratio
     NSUInteger styleMask = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask;
     NSWindow *window = [[NSWindow alloc] initWithContentRect:contentRect styleMask:styleMask backing:NSBackingStoreBuffered defer:YES];
-    
     // Enable multi-threaded drawing
     [window setPreferredBackingLocation:NSWindowBackingLocationVideoMemory];
 	[window useOptimizedDrawing:YES];       // since there are no overlapping subviews
@@ -169,6 +168,11 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
     NSRect frame = [window frame];
     if (frame.origin.x == 0.0 && frame.origin.y == 0.0) {
         LastCascadePoint = [window cascadeTopLeftFromPoint:LastCascadePoint];
+    }
+    
+    // Remove the icon if this is a capture device
+    if (_captureDevice) {
+        [window setRepresentedURL:nil];
     }
     
     [self adjustWindowSizing];
