@@ -672,6 +672,7 @@ static NSString *outputPathForInputJobPath(NSString *inputPath)
     dispatch_sync(_queue, ^{
         if (_conversionTask) {
             [[_conversionTask retain] autorelease];
+            [_conversionTask resume];
             [_conversionTask terminate];
             [_conversionTask waitUntilExit];
             [self handleConversionTaskTermination];

@@ -199,7 +199,7 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
 - (NSString *)csvOutputForPlateID:(NSString *)plateID scanID:(NSString *)scanID withAdditionalRawDataOutput:(NSMutableDictionary *)rawColumnIDsToCSVStrings
 {
     @synchronized(self) {
-        NSMutableString *output = [[NSMutableString alloc] init];
+        NSMutableString *output = [NSMutableString string];
         
         // Write header row
         appendCSVElement(output, @"Plate and Well");
