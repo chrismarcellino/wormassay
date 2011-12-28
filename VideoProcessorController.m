@@ -11,6 +11,7 @@
 #import "AssayAnalyzer.h"
 #import "PlateData.h"
 #import "Emailer.h"
+#import "ArrayTableViewDataSource.h"
 
 static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
 static NSString *const EmailRecipieintsKey = @"EmailRecipieints";
@@ -63,7 +64,6 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
         _videoProcessors = [[NSMutableArray alloc] init];
         _barcodesSinceTrackingBegan = [[NSCountedSet alloc] init];
         _videoTempURLsToDestinationURLs = [[NSMutableDictionary alloc] init];
-        _captureDevicesToSessions = [[NSMapTable mapTableWithStrongToStrongObjects] retain]; 
         _filesToEmail = [[NSMutableSet alloc] init];
         _pendingConversionPaths = [[NSMutableArray alloc] init];
         
@@ -81,7 +81,6 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
     [_currentlyTrackingProcessor release];
     [_barcodesSinceTrackingBegan release];
     [_videoTempURLsToDestinationURLs release];
-    [_captureDevicesToSessions release];
     [_filesToEmail release];
     [_runStartDate release];
     [_currentOutputFilenamePrefix release];
@@ -219,15 +218,17 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
     });
 }
 
-- (void)videoProcessor:(VideoProcessor *)vp shouldBeginRecordingWithCaptureOutput:(QTCaptureFileOutput *)captureFileOutput
-{
+- (void)videoProcessor:(VideoProcessor *)vp shouldBeginRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
+{    
     dispatch_async(_queue, ^{
-        [captureFileOutput setDelegate:self];
-        // Use a generic container extension at this point (which may not be viewable in QTPlayer if QT can't play it), since we don't know if this is an MPEG stream yet
-        NSString *filename = [NSString stringWithFormat:@"%@ (%x).mov", UnlabeledPlateLabel, arc4random()];
+        if ([captureFileOutput delegate] != self) {
+            [captureFileOutput setDelegate:self];
+        }
+        
+        // Use a generic container extension at this point since we don't know if this is an MPEG stream yet
+        NSString *filename = [NSString stringWithFormat:@"%@ %llu (%x).mov", UnlabeledPlateLabel, _plateInRunNumber, arc4random()];
         NSString *path = [[self videoFolderPathCreatingIfNecessary:YES] stringByAppendingPathComponent:filename];
         [captureFileOutput recordToOutputFileURL:[NSURL fileURLWithPath:path]];
-        
         RunLog(@"Began recording video to disk.");
     });
 }
@@ -235,8 +236,7 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
 - (void)videoProcessor:(VideoProcessor *)vp
 didFinishAcquiringPlateData:(PlateData *)plateData
           successfully:(BOOL)successfully
-stopRecordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
-        captureSession:(QTCaptureSession *)captureSession
+stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
 {
     dispatch_async(_queue, ^{
         if (_currentlyTrackingProcessor == vp) {        // may have already been removed from _videoProcessors if device was unplugged/file closed
@@ -258,7 +258,7 @@ stopRecordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
                 _currentOutputFilenamePrefix = [[dateFormatter stringFromDate:_runStartDate] retain];
                 _currentOutputLastWriteTime = CACurrentMediaTime();
                 
-                // Create the run ID for this run
+                // Create the run ID for thisInfo run
                 [dateFormatter setDateFormat:RunIDDateFormat];
                 [_runID release];
                 _runID = [[dateFormatter stringFromDate:_runStartDate] retain];
@@ -268,26 +268,26 @@ stopRecordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
                 _plateInRunNumber = 1;
             }
             
-            // Find the likely barcode corresponding to this plate or use a placeholder if there isn't one
-            NSString *plateID = nil;
-            NSUInteger count = 0;
-            for (NSString *barcode in _barcodesSinceTrackingBegan) {
-                NSUInteger barcodeCount = [_barcodesSinceTrackingBegan countForObject:barcode];
-                if (barcodeCount > count) {
-                    count = barcodeCount;
-                    plateID = barcode;
-                }
-            }
-            if (!plateID) {
-                NSString *fileSourceFilename = [vp fileSourceFilename];
-                plateID = fileSourceFilename ? fileSourceFilename : UnlabeledPlateLabel;
-            }
-            
-            // Generate the scan ID
-            NSString *scanID = [NSString stringWithFormat:@"%@-%llu", _runID, _plateInRunNumber++];
-            
             // Write the results to disk and the run log if successful
             if (successfully) {
+                // Find the likely barcode corresponding to this plate or use a placeholder if there isn't one
+                NSString *plateID = nil;
+                NSUInteger count = 0;
+                for (NSString *barcode in _barcodesSinceTrackingBegan) {
+                    NSUInteger barcodeCount = [_barcodesSinceTrackingBegan countForObject:barcode];
+                    if (barcodeCount > count) {
+                        count = barcodeCount;
+                        plateID = barcode;
+                    }
+                }
+                if (!plateID) {
+                    NSString *fileSourceFilename = [vp fileSourceFilename];
+                    plateID = fileSourceFilename ? fileSourceFilename : UnlabeledPlateLabel;
+                }
+                
+                // Generate the scan ID
+                NSString *scanID = [NSString stringWithFormat:@"%@-%llu", _runID, _plateInRunNumber++];
+                
                 RunLog(@"Writing results for plate \"%@\" to disk.", plateID);
                 
                 // Get the run CSV data and log it out to disk
@@ -310,10 +310,9 @@ stopRecordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
                 [rawOutputDictionary release];
                 
                 // Mark the recording URL for moving once it is finalized
-                NSURL *tempRecordingURL = [recordingCaptureOutput outputFileURL];
-                if (recordingCaptureOutput && tempRecordingURL) {
+                if (captureFileOutput && [captureFileOutput outputFileURL]) {
                     BOOL isTransportStream = NO;
-                    for (QTCaptureConnection *connection in [recordingCaptureOutput connections]) {
+                    for (QTCaptureConnection *connection in [captureFileOutput connections]) {
                         if ([[connection formatDescription] formatType] == 'mp2v') {
                             isTransportStream = YES;
                         }
@@ -324,7 +323,7 @@ stopRecordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
                     NSString *destinationPath = [[self videoFolderPathCreatingIfNecessary:YES] stringByAppendingPathComponent:filename];
                     NSURL *destinationURL = [NSURL fileURLWithPath:destinationPath];
                     // Store the temporary URL and destination URL so we can move it into place once the file is finalized
-                    [_videoTempURLsToDestinationURLs setObject:destinationURL forKey:tempRecordingURL];
+                    [_videoTempURLsToDestinationURLs setObject:destinationURL forKey:[captureFileOutput outputFileURL]];
                 }
             }
             
@@ -333,10 +332,9 @@ stopRecordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
         }
         
         // Stop recording unconditionally
-        if (recordingCaptureOutput) {
-            [recordingCaptureOutput recordToOutputFileURL:nil];
-            [_captureDevicesToSessions setObject:captureSession forKey:recordingCaptureOutput];
-            NSAssert([recordingCaptureOutput delegate] == self, @"recordingCaptureOutput not VideoProcessorController");
+        if (captureFileOutput) {
+            [captureFileOutput recordToOutputFileURL:nil];
+            NSAssert([captureFileOutput delegate] == self, @"recordingCaptureOutput not VideoProcessorController");
         }
         
         // Reset log emailing timer
@@ -443,14 +441,6 @@ stopRecordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
             }
         }
         [_videoTempURLsToDestinationURLs removeObjectForKey:outputFileURL];
-        
-        // Remove the capture output from the session
-        QTCaptureSession *captureSession = [_captureDevicesToSessions objectForKey:captureOutput];
-        if (captureSession) {
-            [captureSession removeOutput:captureOutput];
-            [_captureDevicesToSessions removeObjectForKey:captureSession];
-        }
-        
         [fileManager release];
     });
 }
@@ -526,8 +516,8 @@ static NSString *outputPathForInputJobPath(NSString *inputPath)
                 _conversionTask = [[NSTask alloc] init];
                 [_conversionTask setLaunchPath:[self conversionToolPath]];
                 
-                NSArray *arguments = [NSArray arrayWithObjects:@"-i", inputPath, @"-vcodec", @"libx264", @"-crf", @"22",
-                                      @"-threads", @"0", @"-y", @"-xerror", outputPath, nil];
+                NSArray *arguments = [NSArray arrayWithObjects:@"-i", inputPath,
+                                      @"-vcodec", @"libx264", @"-f", @"mp4", @"-crf", @"22", @"-threads", @"0", @"-y", outputPath, nil];
                 [_conversionTask setArguments:arguments];
                 // Must launch task on main thread to ensure that a thread is around to service the death notification
                 dispatch_async(dispatch_get_main_queue(), ^{
@@ -632,35 +622,31 @@ static NSString *outputPathForInputJobPath(NSString *inputPath)
     });
 }
 
+// requires _queue to be held
 - (void)updateEncodingTableView
 {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        NSTableView *tableView = [self encodingTableView];
-        [tableView setDataSource:self];
-        [tableView reloadData];
-    });
-}
-
-- (NSInteger)numberOfRowsInTableView:(NSTableView *)tableView
-{
-    __block NSInteger result;
-    dispatch_sync(_queue, ^{
-        result = [_pendingConversionPaths count];
-    });
-    return result;
-}
-
-- (id)tableView:(NSTableView *)tableView objectValueForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row
-{
-    __block id value = nil;
-    dispatch_sync(_queue, ^{
-        value = [[_pendingConversionPaths objectAtIndex:row] lastPathComponent];
-        if (row == 0) {
+    NSMutableArray *array = [[NSMutableArray alloc] init];
+    BOOL first = YES;
+    for (NSString *path in _pendingConversionPaths) {
+        NSString *value = [path lastPathComponent];
+        if (first) {
             NSString *status = _pauseJobs ? NSLocalizedString(@" (paused)", nil) : NSLocalizedString(@" (processing…)", nil);
             value = [value stringByAppendingString:status];
+            first = NO;
         }
+        [array addObject:value];
+    }
+    
+    ArrayTableViewDataSource *dataSource = [[ArrayTableViewDataSource alloc] initByCopyingArray:array];
+    [array release];
+    
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSTableView *tableView = [self encodingTableView];
+        [[tableView dataSource] autorelease];
+        [tableView setDataSource:[dataSource retain]];
+        [tableView reloadData];
     });
-    return value;
+    [dataSource release];
 }
 
 // Logging

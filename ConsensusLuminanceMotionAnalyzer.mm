@@ -204,6 +204,7 @@ static const char* WellOccupancyID = "Well Occupancy";
     // Keep the pixels that have a quorum
     IplImage *quorumPixels = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
     cvThreshold(&wellPixelwiseVotes, quorumPixels, _quorum - 0.5, 255, CV_THRESH_BINARY);
+    cvResetImageROI(&wellPixelwiseVotes);
     double movedFraction = (double)cvCountNonZero(quorumPixels) / (M_PI * radius * radius) * 1000.0;  // use milli-fractions for readability
     
     // Count pixels and draw onto the debugging image

@@ -289,8 +289,21 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
     }
     
     NSAssert(!_processor, @"processor already exists");
-    NSString *fileSourceFilename = _movie ? [[[_movie attributeForKey:QTMovieURLAttribute] path] lastPathComponent] : nil;
-    _processor = [[VideoProcessor alloc] initWithCaptureSession:_captureSession fileSourceFilename:fileSourceFilename];
+    QTCaptureMovieFileOutput *captureFileOutput = nil;
+    NSString *fileSourceFilename = nil;
+    if (_captureDevice) {
+        captureFileOutput = [[QTCaptureMovieFileOutput alloc] init];
+        NSError *error = nil;
+        if (![_captureSession addOutput:captureFileOutput error:&error]) {
+            RunLog(@"Unable to add QTCaptureFileOutput to capture session: %@", error);
+            [captureFileOutput release];
+            captureFileOutput = nil;
+        }
+    } else {
+        fileSourceFilename = [[[_movie attributeForKey:QTMovieURLAttribute] path] lastPathComponent];
+    }
+    _processor = [[VideoProcessor alloc] initWithCaptureFileOutput:captureFileOutput fileSourceFilename:fileSourceFilename];
+    [captureFileOutput release];
     [[VideoProcessorController sharedInstance] addVideoProcessor:_processor];
     
     return success;
@@ -322,6 +335,8 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
      withSampleBuffer:(QTSampleBuffer *)sampleBuffer
        fromConnection:(QTCaptureConnection *)connection
 {
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    
     // Ensure we have the proper frame size for this device, correcting for non-square pixels.
     // QTCaptureDecompressedVideoOutput is guaranteed to be a CVPixelBufferRef.
     NSSize bufferSize = NSMakeSize(CVPixelBufferGetWidth((CVPixelBufferRef)videoFrame), CVPixelBufferGetHeight((CVPixelBufferRef)videoFrame));
@@ -370,6 +385,8 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
         [self processVideoFrame:image];
         [image release];
     }
+    
+    [pool release];
 }
 
 - (void)captureOutput:(QTCaptureOutput *)captureOutput
@@ -382,6 +399,11 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
 // Called on a background thread when using a pre-recorded movie file
 - (CIImage *)view:(QTMovieView *)view willDisplayImage:(CIImage *)image
 {
+    if (_closeCalled) {
+        return nil;
+    }
+ 
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     // Reuse the context for performance reasons
     if (!_ciContext) {
         _ciContext = [[CIContext contextWithCGLContext:NULL pixelFormat:NULL colorSpace:NULL options:nil] retain];
@@ -393,6 +415,9 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
                                               resultChannelCount:4
                                                 presentationTime:CACurrentMediaTime()];
     [self processVideoFrame:frame];
+    [frame release];
+    
+    [pool release];
     return nil;
 }
 

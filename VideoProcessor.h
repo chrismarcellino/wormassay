@@ -26,8 +26,7 @@ typedef enum {
 // Instance variables are declared in the implementation file as they contain C++ objects
 // which would prevent importation by C/Obj-C compilation units
 
-// CaptureSession is used for recording
-- (id)initWithCaptureSession:(QTCaptureSession *)captureSession fileSourceFilename:(NSString *)fileSourceFilename;
+- (id)initWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput fileSourceFilename:(NSString *)fileSourceFilename;
 @property(readonly) NSString *fileSourceFilename;       // nil if a device source
 
 - (void)setDelegate:(id<VideoProcessorDelegate>)delegate;
@@ -46,12 +45,11 @@ typedef enum {
 @protocol VideoProcessorDelegate
 
 - (void)videoProcessor:(VideoProcessor *)vp didBeginTrackingPlateAtPresentationTime:(NSTimeInterval)presentationTime;
-- (void)videoProcessor:(VideoProcessor *)vp shouldBeginRecordingWithCaptureOutput:(QTCaptureFileOutput *)captureFileOutput;
+- (void)videoProcessor:(VideoProcessor *)vp shouldBeginRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput;
 - (void)videoProcessor:(VideoProcessor *)vp
 didFinishAcquiringPlateData:(PlateData *)plateData
           successfully:(BOOL)successfully
-stopRecordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
-        captureSession:(QTCaptureSession *)captureSession;
+stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput;
 - (void)videoProcessor:(VideoProcessor *)vp didCaptureBarcodeText:(NSString *)text atTime:(NSTimeInterval)presentationTime;
 
 @end

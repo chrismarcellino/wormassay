@@ -29,8 +29,7 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
 
 @interface VideoProcessor() {
     id<VideoProcessorDelegate> _delegate;        // not retained
-    QTCaptureSession *_captureSession;
-    QTCaptureFileOutput *_recordingCaptureOutput;
+    QTCaptureFileOutput *_captureFileOutput;
     NSString *_fileSourceFilename;
     Class _assayAnalyzerClass;
     dispatch_queue_t _queue;        // protects all state and serializes
@@ -69,12 +68,11 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
 
 @synthesize fileSourceFilename = _fileSourceFilename;
 
-- (id)initWithCaptureSession:(QTCaptureSession *)captureSession fileSourceFilename:(NSString *)fileSourceFilename
+- (id)initWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput fileSourceFilename:(NSString *)fileSourceFilename
 {
     if ((self = [super init])) {
-        _captureSession = [captureSession retain];
+        _captureFileOutput = [captureFileOutput retain];
         _fileSourceFilename = [fileSourceFilename copy];
-        [_recordingCaptureOutput setDelegate:self];
         _queue = dispatch_queue_create("video-processor", NULL);
         _debugFrameCallbackQueue = dispatch_queue_create("video-processor-callback", NULL);
         _lastWellAnalysisBeginTime = PresentationTimeDistantPast;
@@ -84,8 +82,7 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
 
 - (void)dealloc
 {
-    [_captureSession release];
-    [_recordingCaptureOutput release];
+    [_captureFileOutput release];
     [_fileSourceFilename release];
     dispatch_release(_queue);
     dispatch_release(_debugFrameCallbackQueue);
@@ -206,6 +203,8 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
                                                             debugImage:&debugImage
                                                       presentationTime:[videoFrame presentationTime]
                                                              plateData:_plateData];
+                    cvResetImageROI(&wellImage);
+                    cvResetImageROI(&debugImage);
                 };
                 
                 // Only parallelize well analysis if we have at least 4 (virtual) cores to be conservative, since doing so on
@@ -252,7 +251,9 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
                 
         // Dispatch the debug image asynchronously to increase parallelism 
         dispatch_async(_debugFrameCallbackQueue, ^{
+            NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
             callback(debugFrame);
+            [pool release];
         });
         [debugFrame release];
         
@@ -327,18 +328,8 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
                                 [_assayAnalyzer willBeginPlateTrackingWithPlateData:_plateData];
                                 
                                 // Start recording if we have a session to record from (e.g. this is a device source)
-                                if (_captureSession) {
-                                    _recordingCaptureOutput = [[QTCaptureMovieFileOutput alloc] init];
-                                    NSError *error = nil;
-                                    if (![_captureSession addOutput:_recordingCaptureOutput error:&error]) {
-                                        RunLog(@"Unable to add QTCaptureFileOutput to capture session: %@", error);
-                                        [_recordingCaptureOutput release];
-                                        _recordingCaptureOutput = nil;
-                                    }
-                                    if (_recordingCaptureOutput) {
-                                        // Construct a temporary recording path name
-                                        [_delegate videoProcessor:self shouldBeginRecordingWithCaptureOutput:_recordingCaptureOutput];
-                                    }
+                                if (_captureFileOutput) {
+                                    [_delegate videoProcessor:self shouldBeginRecordingWithCaptureFileOutput:_captureFileOutput];
                                 }
                             } else {
                                 // There is still a plate, but it doesn't match or more likely is still moving moved, or not enough
@@ -443,12 +434,7 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
         [_delegate videoProcessor:self
       didFinishAcquiringPlateData:_plateData
                      successfully:longEnough
-       stopRecordingCaptureOutput:_recordingCaptureOutput
-                   captureSession:_captureSession];
-        
-        // Release our retain on the recording capture output (the VideoProcessorController is responsible for stopping recording)
-        [_recordingCaptureOutput release];
-        _recordingCaptureOutput = nil;
+stopRecordingWithCaptureFileOutput:_captureFileOutput];
         
         // Release the analyzer
         [_assayAnalyzer release];
@@ -458,7 +444,7 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
         [_plateData release];
         _plateData = nil;
     }
-    NSAssert(!_recordingCaptureOutput && !_assayAnalyzer && !_plateData, @"inconsistent state");
+    NSAssert(!_assayAnalyzer && !_plateData, @"inconsistent state");
     
     // Reset state
     _processingState = ProcessingStateNoPlate;
