@@ -145,13 +145,15 @@ debugVideoFrameCompletion:(void (^)(IplImageObject *image))callback;
         // It is important to base all statistics on the elapsed time so that the results are independent of hardware
         // performance.
         if (_processingState == ProcessingStateTrackingMotion && [_wellCameraSourceIdentifier isEqual:sourceIdentifier]) {
-            for (size_t i = 0; i < _trackingWellCircles.size(); i++) {
-//                IplImage *wellImage = createEdgeImageForWellImageFromImage(videoFrame, _trackingWellCircles[i], filledArea, debugImage);
-                IplImage *wellImage = createDeltaImageForWellFromImages([_lastTrackingPlateFrame image],
-                                                                        [videoFrame image],
-                                                                        _trackingWellCircles[i],
-                                                                        [debugImage image]);
-                cvReleaseImage(&wellImage);
+            if (_lastTrackingPlateFrame) {
+                for (size_t i = 0; i < _trackingWellCircles.size(); i++) {
+                    //                IplImage *wellImage = createEdgeImageForWellImageFromImage(videoFrame, _trackingWellCircles[i], filledArea, [debugImage image]);
+                    IplImage *wellImage = createDeltaImageForWellFromImages([_lastTrackingPlateFrame image],
+                                                                            [videoFrame image],
+                                                                            _trackingWellCircles[i],
+                                                                            [debugImage image]);
+                    cvReleaseImage(&wellImage);
+                }
             }
             
             // XXX calculate stats
@@ -172,12 +174,12 @@ debugVideoFrameCompletion:(void (^)(IplImageObject *image))callback;
                 CvScalar color = (_processingState == ProcessingStateNoPlate) ? 
                         CV_RGB(255, 0, 0) :
                         ((_processingState == ProcessingStatePlateFirstFrameIdentified) ? CV_RGB(255, 255, 0) : CV_RGB(0, 255, 0));
-                cvCircle(debugImage, center, radius, color, 3, 8, 0);
+                cvCircle([debugImage image], center, radius, color, 3, 8, 0);
                 
                 // Draw text in the circle
                 if (_processingState == ProcessingStateTrackingMotion) {
                     CvPoint textPoint = cvPoint(center.x - radius / 2, center.y - radius / 2);
-                    cvPutText(debugImage,
+                    cvPutText([debugImage image],
                               wellIdentifierStringForIndex(i, circlesToDraw.size()).c_str(),
                               textPoint,
                               &debugImageFont,

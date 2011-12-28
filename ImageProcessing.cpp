@@ -357,8 +357,8 @@ IplImage *createDeltaImageForWellFromImages(IplImage *plateImagePrev, IplImage *
     cvReleaseImage(&circleMask);
     
     // Subtract the images
-    IplImage* delta = cvCreateImage(cvGetSize(plateImageCur), IPL_DEPTH_8U, 1);
-    cvAbsDiff(plateImageCur, plateImagePrev, delta);
+    IplImage* delta = cvCreateImage(cvGetSize(plateImageCur), IPL_DEPTH_8U, 3);
+    cvAbsDiff(subimageCur, subimagePrev, delta);
     
     cvReleaseImage(&subimagePrev);
     cvReleaseImage(&subimageCur);
