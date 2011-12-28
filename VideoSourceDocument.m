@@ -201,6 +201,11 @@ BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
             break;
         }
     }
+    
+    // Capture devices will adjust their window constraints when the first frame arrives
+    if (!_captureDevice) {
+        [self adjustWindowSizing];
+    }
 }
 
 static NSPoint upperLeftForFrame(NSRect frame)
