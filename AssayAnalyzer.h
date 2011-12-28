@@ -30,6 +30,9 @@
 // These three methods are called each time a frame arrives. The first is called once per frame, synchronously, to allow the
 // analyzer to perform any preprocessing or setup. 
 // PlateData should not be modified, but may be retained indefinitely (as resources permit). DebugImage does not have a ROI set.
+// The callee can return NO if processing of this frame should be aborted (e.g. poor image quality or movement) or if all computation is
+// already complete (e.g. entire frame was processed here), in which case the processVideoFrame:... method will not be called for this 
+// frame, but the didEndFrame:... method will still be called.
 - (BOOL)willBeginFrameProcessing:(VideoFrame *)videoFrame debugImage:(IplImage*)debugImage plateData:(PlateData *)plateData;
 
 // This method is called once for each well on the plate (potentially in parallel if -canCallProcessMethodInParallel returns YES.)
@@ -37,8 +40,6 @@
 // Hence, the center point of the circle is the box midpoint. Well is 0 indexed and in row-major order.
 // The underlying videoFrame IplImage is unique to the callee and may be modified, but the underlying data may not.
 // Both the plateData underlying IplImage and data may be modified, but only read/write atomicity is guaranteed for the ROI.
-// The callee can return NO if processing of this frame should be aborted (e.g. poor image quality or movement) or if all computation is
-// already complete (e.g. entire frame was processed here), in which case no further frame handling methods will be called for this frame.
 - (void)processVideoFrameWellSynchronously:(IplImage*)wellImage
                                    forWell:(int)well
                                 debugImage:(IplImage*)debugImage

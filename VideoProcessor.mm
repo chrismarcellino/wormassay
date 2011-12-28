@@ -162,11 +162,9 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                 dispatch_apply(_trackingWellCircles.size(), processingQueue, ^(size_t i){
                     // Make stack copies of the headers so that they can have their own ROI's, etc.
                     CvRect boundingSquare = boundingSquareForCircle(_trackingWellCircles[i]);
-                    IplImage wellImage;
-                    memcpy(&wellImage, [videoFrame image], sizeof(IplImage));
+                    IplImage wellImage = temporaryImageHeaderCopy([videoFrame image]);
                     cvSetImageROI(&wellImage, boundingSquare);
-                    IplImage debugImage;
-                    memcpy(&debugImage, [debugFrame image], sizeof(IplImage));
+                    IplImage debugImage = temporaryImageHeaderCopy([debugFrame image]);
                     cvSetImageROI(&debugImage, boundingSquare);
                     [_assayAnalyzer processVideoFrameWellSynchronously:&wellImage
                                                                forWell:i
@@ -177,9 +175,8 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                 if (!parallel) {
                     dispatch_release(processingQueue);
                 }
-                
-                [_assayAnalyzer didEndFrameProcessing:videoFrame plateData:_plateData];
             }
+            [_assayAnalyzer didEndFrameProcessing:videoFrame plateData:_plateData];
             
             // Print the stats in the wells averaged over the last 30 seconds (to limit computational complexity)
             CvFont wellFont = fontForNormalizedScale(0.75, [debugFrame image]);

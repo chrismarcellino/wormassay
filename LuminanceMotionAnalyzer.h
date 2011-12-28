@@ -13,6 +13,7 @@
     VideoFrame *_lastFrame;
     IplImage* _insetInvertedCircleMask;
     IplImage* _invertedCircleMask;
+    IplImage* _deltaThresholded;
 }
 
 @end

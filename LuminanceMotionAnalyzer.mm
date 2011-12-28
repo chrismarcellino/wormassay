@@ -11,7 +11,7 @@
 #import "opencv2/opencv.hpp"
 #import "CvUtilities.hpp"
 
-static const double PixelDeltaMovingThreshold = 10.0;
+static const double PlateMovingProportionAboveThresholdLimit = 0.02;
 static const double WellEdgeFindingInsetProportion = 0.7;
 
 static const char* WellOccupancyID = "WellOccupancy";
@@ -27,17 +27,20 @@ static const char* WellOccupancyID = "WellOccupancy";
     if (_invertedCircleMask) {
         cvReleaseImage(&_invertedCircleMask);
     }
+    if (_deltaThresholded) {
+        cvReleaseImage(&_deltaThresholded);
+    }
     [super dealloc];
 }
 
 + (NSString *)analyzerName
 {
-    return NSLocalizedString(@"Luminance", nil);
+    return NSLocalizedString(@"Luminance Difference", nil);
 }
 
 - (BOOL)canProcessInParallel
 {
-    return YES;
+    return NO;
 }
 
 - (void)willBeginPlateTrackingWithPlateData:(PlateData *)plateData
@@ -59,16 +62,23 @@ static const char* WellOccupancyID = "WellOccupancy";
     IplImage* plateDelta = cvCreateImage(cvGetSize([videoFrame image]), IPL_DEPTH_8U, 4);
     cvAbsDiff([videoFrame image], [_lastFrame image], plateDelta);
     
-    // Determine the mean delta
-    CvScalar channelMean, channelStdDev;
-    cvAvgSdv(plateDelta, &channelMean, &channelStdDev);   //  xxxxxxxxxxxxxxxxxxxxXXXXXXXXXXX CHANGE TO AVG.                  IF THIS SCHEME SUCKS, USE OLD ONE HERE ONLY
-    double meanDelta = (channelMean.val[0] + channelMean.val[1] + channelMean.val[2]) / 3;
-    NSLog(@"###########  WHOLE PLATE MEAN %f SD: %f", meanDelta, (channelStdDev.val[0] + channelStdDev.val[1] + channelStdDev.val[2]) / 3);
+    // Gaussian blur the delta in place
+    cvSmooth(plateDelta, plateDelta, CV_GAUSSIAN, 7, 7, 3, 3);
     
+    // Convert the delta to luminance
+    IplImage* deltaLuminance = cvCreateImage(cvGetSize(plateDelta), IPL_DEPTH_8U, 1);
+    cvCvtColor(plateDelta, deltaLuminance, CV_BGR2GRAY);
     cvReleaseImage(&plateDelta);
     
-    // If the delta is more than about XXX%, the entire plate is likely moving, so don't perform any well calculations between these two plates
-    if (meanDelta > PixelDeltaMovingThreshold) {
+    // Threshold the image to isolate difference pixels corresponding to movement as opposed to noise
+    NSAssert(!_deltaThresholded, @"_deltaThresholded image already exists");
+    _deltaThresholded = cvCreateImage(cvGetSize(deltaLuminance), IPL_DEPTH_8U, 1);
+    cvThreshold(deltaLuminance, _deltaThresholded, 15, 255, CV_THRESH_BINARY);
+    cvReleaseImage(&deltaLuminance);
+    
+    // Calculate the average luminance delta across the entire plate image. If this is more than about 2%, the entire plate is likely moving.
+    double proportionPlateMoved = (double)cvCountNonZero(_deltaThresholded) / (_deltaThresholded->width * _deltaThresholded->height);
+    if (proportionPlateMoved > PlateMovingProportionAboveThresholdLimit) {
         // Draw the movement text
         CvFont wellFont = fontForNormalizedScale(3.5, debugImage);
         cvPutText(debugImage,
@@ -76,7 +86,6 @@ static const char* WellOccupancyID = "WellOccupancy";
                   cvPoint(debugImage->width * 0.1, debugImage->height * 0.55),
                   &wellFont,
                   CV_RGBA(232, 0, 217, 255));
-        
         return NO;
     }
         
@@ -138,41 +147,22 @@ static const char* WellOccupancyID = "WellOccupancy";
         cvCircle(_invertedCircleMask, cvPoint(radius, radius), radius, cvRealScalar(0), CV_FILLED);
     }
     
-    // Subtract the well images channelwise. Make a copy of the header since we want to change the ROI.
-    IplImage previousWellImage;
-    memcpy(&previousWellImage, [_lastFrame image], sizeof(IplImage));
-    cvSetImageROI(&previousWellImage, cvGetImageROI(wellImage));
-    IplImage* wellDelta = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 4);
-    cvAbsDiff(wellImage, &previousWellImage, wellDelta);
-    
-    // Gaussian blur the delta in place
-    cvSmooth(wellDelta, wellDelta, CV_GAUSSIAN, 7, 7, 3, 3);
-    
-    // Convert the delta to luminance
-    IplImage* deltaLuminance = cvCreateImage(cvGetSize(wellDelta), IPL_DEPTH_8U, 1);
-    cvCvtColor(wellDelta, deltaLuminance, CV_BGR2GRAY);
-    cvReleaseImage(&wellDelta);
-    
-    // Threshold the image to isolate difference pixels corresponding to movement as opposed to noise
-    IplImage* deltaThreshold = cvCreateImage(cvGetSize(deltaLuminance), IPL_DEPTH_8U, 1);
-    cvThreshold(deltaLuminance, deltaThreshold, 15, 255, CV_THRESH_BINARY);
-    cvReleaseImage(&deltaLuminance);
-    
-    // Mask the threshold subimage
-    cvSet(deltaThreshold, cvRealScalar(0), _invertedCircleMask);
+    // Mask the threshold subimage (using a local stack copy of the header for threadsafety)
+    IplImage wellDeltaThresholded = temporaryImageHeaderCopy(_deltaThresholded);
+    cvSetImageROI(&wellDeltaThresholded, cvGetImageROI(wellImage));
+    cvSet(&wellDeltaThresholded, cvRealScalar(0), _invertedCircleMask);
     
     // Count pixels and draw onto the debugging image
-    double movedFraction = (double)cvCountNonZero(deltaThreshold) / (M_PI * radius * radius);
+    double movedFraction = (double)cvCountNonZero(&wellDeltaThresholded) / (M_PI * radius * radius);
     [plateData appendMovementUnit:movedFraction atPresentationTime:presentationTime forWell:well];
-    cvSet(debugImage, CV_RGBA(255, 0, 0, 255), deltaThreshold);
-    
-    cvReleaseImage(&deltaThreshold);
+    cvSet(debugImage, CV_RGBA(255, 0, 0, 255), &wellDeltaThresholded);
 }
 
 - (void)didEndFrameProcessing:(VideoFrame *)videoFrame plateData:(PlateData *)plateData
 {
     [_lastFrame release];
     _lastFrame = [videoFrame retain];
+    cvReleaseImage(&_deltaThresholded);
 }
 
 - (void)didEndTrackingPlateWithPlateData:(PlateData *)plateData
