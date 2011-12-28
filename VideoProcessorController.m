@@ -46,6 +46,8 @@ static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
         _queue = dispatch_queue_create("video-processor-controller", NULL);
         _videoProcessors = [[NSMutableArray alloc] init];
         _barcodesSinceTrackingBegan = [[NSCountedSet alloc] init];
+        _videoTempURLsToDestinationURLs = [[NSMutableDictionary alloc] init];
+        _captureDevicesToSessions = [[NSMapTable mapTableWithStrongToStrongObjects] retain]; 
     }
     
     return self;
@@ -54,7 +56,9 @@ static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
 - (void)dealloc
 {
     [_videoProcessors release];
+    [_videoTempURLsToDestinationURLs release];
     [_runLogTextAttributes release];
+    [_captureDevicesToSessions release];
     [super dealloc];
 }
 
@@ -145,6 +149,15 @@ static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
     });    
 }
 
+- (BOOL)isTracking
+{
+    __block BOOL isTracking = NO;
+    dispatch_sync(_queue, ^{
+        isTracking = _currentlyTrackingProcessor != nil;
+    });
+    return isTracking;
+}
+
 - (void)videoProcessor:(VideoProcessor *)vp didBeginTrackingPlateAtPresentationTime:(NSTimeInterval)presentationTime
 {
     dispatch_async(_queue, ^{
@@ -165,13 +178,19 @@ static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
     });
 }
 
+- (void)videoProcessor:(VideoProcessor *)vp willBeginRecordingWithCaptureOutput:(QTCaptureFileOutput *)captureFileOutput
+{
+    [captureFileOutput setDelegate:self];
+    [captureFileOutput setMaximumRecordedFileSize:10*1024*1024];
+}
+
 - (void)videoProcessor:(VideoProcessor *)vp
 didFinishAcquiringPlateData:(PlateData *)plateData
           successfully:(BOOL)successfully
+recordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
+        captureSession:(QTCaptureSession *)captureSession
 {
     dispatch_async(_queue, ^{
-        BOOL movieRecordingMoved = NO;
-        
         if (_currentlyTrackingProcessor == vp) {        // may have already been removed from _videoProcessors if device was unplugged/file closed
             for (VideoProcessor *processor in _videoProcessors) {
                 [processor setShouldScanForWells:YES];
@@ -225,23 +244,21 @@ didFinishAcquiringPlateData:(PlateData *)plateData
                 }
                 [rawOutputDictionary release];
                 
-                // Move the video to its destination if necessary. It is safe to move() the file while it may still be open.
-                if (recordingTempFilePath) {
+                // Mark the recording URL for moving once it is finalized
+                NSURL *tempRecordingURL = [recordingCaptureOutput outputFileURL];
+                if (recordingCaptureOutput && tempRecordingURL) {
                     NSFileManager *fileManager = [[NSFileManager alloc] init];
                     NSString *videoFolder = [folder stringByAppendingPathComponent:@"Videos"];
                     if (![fileManager fileExistsAtPath:videoFolder]) {
                         [fileManager createDirectoryAtPath:videoFolder withIntermediateDirectories:YES attributes:nil error:NULL];
                     }
+                    [fileManager release];
                     
                     NSString *destinationPath = [videoFolder stringByAppendingPathComponent:
                                                  [_currentOutputFilenamePrefix stringByAppendingString:@" Video.ts"]];
-                    
-                    NSError *error = nil;
-                    movieRecordingMoved = [fileManager moveItemAtPath:recordingTempFilePath toPath:destinationPath error:&error];
-                    if (!movieRecordingMoved) {
-                        RunLog(@"Unable to move recording at \"%@\" to \"%@\": %@", recordingTempFilePath, destinationPath, error);
-                    }
-                    [fileManager release];
+                    NSURL *destinationURL = [NSURL fileURLWithPath:destinationPath];
+                    // Store the temporary URL and destination URL so we can move it into place once the file is finalized
+                    [_videoTempURLsToDestinationURLs setObject:destinationURL forKey:tempRecordingURL];
                 }
             }
             
@@ -249,14 +266,11 @@ didFinishAcquiringPlateData:(PlateData *)plateData
             _currentlyTrackingProcessor = nil;
         }
         
-        if (!movieRecordingMoved && recordingTempFilePath) {
-            NSFileManager *fileManager = [[NSFileManager alloc] init];
-            NSError *error = nil;
-            [fileManager removeItemAtPath:recordingTempFilePath error:&error];
-            if (error) {
-                RunLog(@"Unable to delete recording at \"%@\": %@", recordingTempFilePath, error);
-            }
-            [fileManager release];
+        // Stop recording unconditionally
+        if (recordingCaptureOutput) {
+            [recordingCaptureOutput recordToOutputFileURL:nil];
+            [_captureDevicesToSessions setObject:captureSession forKey:recordingCaptureOutput];
+            NSAssert([recordingCaptureOutput delegate] == self, @"recordingCaptureOutput not VideoProcessorController");
         }
     });
 }
@@ -340,11 +354,6 @@ didFinishAcquiringPlateData:(PlateData *)plateData
 
 // QTCaptureFileOutput delegate methods
 
-- (void)captureOutput:(QTCaptureFileOutput *)captureOutput didStartRecordingToOutputFileAtURL:(NSURL *)fileURL forConnections:(NSArray *)connections
-{
-    
-}
-
 // "This method is called when the file recorder reaches a soft limit, i.e. the set maximum file size or duration.
 // If the delegate returns NO, the file writer will continue writing the same file. If the delegate returns YES and
 // doesn't set a new output file, captureOutput:mustChangeOutputFileAtURL:forConnections:dueToError: will be called.
@@ -352,10 +361,13 @@ didFinishAcquiringPlateData:(PlateData *)plateData
 - (BOOL)captureOutput:(QTCaptureFileOutput *)captureOutput shouldChangeOutputFileAtURL:(NSURL *)outputFileURL forConnections:(NSArray *)connections dueToError:(NSError *)error
 {
     dispatch_async(dispatch_get_main_queue(), ^{
-        // XXXXXXXXXX SHOW ALERTS
-        
-        // XXXXXXXXXXX SET LIMITS (***NOT HERE****) BASED ON FREE SPACE (e.g. 1GB or 1%, whichever is less). 
-        // PREVENT RECORDING IN FIRST PLACE IF THAT IS THE CASE.
+        if (error) {
+            NSAlert *alert = [NSAlert alertWithError:error];
+            [alert beginSheetModalForWindow:nil
+                              modalDelegate:nil
+                             didEndSelector:nil
+                                contextInfo:NULL];
+        }
     });
     return YES;
 }
@@ -366,15 +378,15 @@ didFinishAcquiringPlateData:(PlateData *)plateData
 // recording will continue on the new file."
 - (void)captureOutput:(QTCaptureFileOutput *)captureOutput mustChangeOutputFileAtURL:(NSURL *)outputFileURL forConnections:(NSArray *)connections dueToError:(NSError *)error
 {
-    
-}
-
-// "This method is called whenever a file will be finished, either because recordToFile:/recordToFile:bufferDestination:
-// was called. or an error forced the file to be finished. If the file was forced to be finished due to an error, the error
-// is described in the error parameter. Otherwise, the error parameter equals nil."
-- (void)captureOutput:(QTCaptureFileOutput *)captureOutput willFinishRecordingToOutputFileAtURL:(NSURL *)outputFileURL forConnections:(NSArray *)connections dueToError:(NSError *)error
-{
-    
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (error) {
+            NSAlert *alert = [NSAlert alertWithError:error];
+            [alert beginSheetModalForWindow:nil
+                              modalDelegate:nil
+                             didEndSelector:nil
+                                contextInfo:NULL];
+        }
+    });
 }
 
 // "This method is called whenever a file is finished successfully. If the file was forced to be finished due to an error
@@ -382,7 +394,38 @@ didFinishAcquiringPlateData:(PlateData *)plateData
 // parameter. Otherwise, the error parameter equals nil."
 - (void)captureOutput:(QTCaptureFileOutput *)captureOutput didFinishRecordingToOutputFileAtURL:(NSURL *)outputFileURL forConnections:(NSArray *)connections dueToError:(NSError *)error
 {
-    
+    dispatch_async(_queue, ^{
+        if (error) {
+            RunLog(@"Error finishing recording to file \"%@\": %@", [outputFileURL path], error);
+        }
+        
+        NSURL *destinationURL = [_videoTempURLsToDestinationURLs objectForKey:outputFileURL];
+        NSFileManager *fileManager = [[NSFileManager alloc] init];
+        NSError *error = nil;
+        if (destinationURL) {
+            // Move the file into place
+            if (![fileManager moveItemAtURL:outputFileURL toURL:destinationURL error:&error]) {
+                RunLog(@"Unable to move recording at \"%@\" to \"%@\": %@", [outputFileURL path], [destinationURL path], error);
+            }
+        } else {
+            // Delete the file
+            if ([fileManager removeItemAtURL:outputFileURL error:&error]) {
+                RunLog(@"Unable to delete recording at \"%@\": %@", [outputFileURL path], error);
+            }
+        }
+        [_videoTempURLsToDestinationURLs removeObjectForKey:outputFileURL];
+        
+        // Remove the capture output from the session
+        QTCaptureSession *captureSession = [_captureDevicesToSessions objectForKey:captureOutput];
+        if (captureSession) {
+            [captureSession removeOutput:captureOutput];
+            [_captureDevicesToSessions removeObjectForKey:captureSession];
+        }
+        
+        [fileManager release];
+        
+        
+    });
 }
 
 @end

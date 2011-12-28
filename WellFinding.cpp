@@ -96,7 +96,7 @@ bool findWellCirclesForWellCount(IplImage* inputImage, int wellCount, std::vecto
 static bool findWellCirclesForWellCounts(IplImage* inputImage, std::vector<int> wellCounts, std::vector<Circle> &circles)
 {
     // Only report failed circle sets if they are not too noisy
-    double score = 0.5;
+    double score = 0.75;
     
     // Convert the input image to grayscale
     IplImage* grayscaleImage = cvCreateImage(cvGetSize(inputImage), IPL_DEPTH_8U, 1);

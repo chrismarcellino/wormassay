@@ -20,6 +20,8 @@
     VideoProcessor *_currentlyTrackingProcessor;
     NSTimeInterval _trackingBeginTime;
     NSCountedSet *_barcodesSinceTrackingBegan;
+    NSMutableDictionary *_videoTempURLsToDestinationURLs;
+    NSMapTable *_captureDevicesToSessions;
     
     NSString *_currentOutputFilenamePrefix;
     NSTimeInterval _currentOutputLastWriteTime;      // in CPU time
@@ -35,6 +37,8 @@
 
 - (void)addVideoProcessor:(VideoProcessor *)videoProcessor;
 - (void)removeVideoProcessor:(VideoProcessor *)videoProcessor;
+
+- (BOOL)isTracking;
 
 @property(retain) NSTextView *runLogTextView;
 @property(retain) NSScrollView *runLogScrollView;

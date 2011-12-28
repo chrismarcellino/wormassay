@@ -28,7 +28,7 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 @interface VideoProcessor() {
     id<VideoProcessorDelegate> _delegate;        // not retained
     QTCaptureSession *_captureSession;
-    QTCaptureMovieFileOutput *_recordingCaptureOutput;
+    QTCaptureFileOutput *_recordingCaptureOutput;
     Class _assayAnalyzerClass;
     dispatch_queue_t _queue;        // protects all state and serializes
     dispatch_queue_t _debugFrameCallbackQueue;
@@ -293,16 +293,22 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
                                 
                                 // Start recording if we have a session to record from (e.g. this is a device source)
                                 if (_captureSession) {
-                                    NSString *filename = [NSString stringWithFormat:@"WormAssayTempVideoRecording-%x%x", arc4random(), arc4random()];
-                                    NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:filename];
-                                    
                                     _recordingCaptureOutput = [[QTCaptureMovieFileOutput alloc] init];
-                                    NSError *captureSessionAddError = nil;
-                                    if (![_captureSession addOutput:recordingCaptureOutput error:&captureSessionAddError]) {
-                                        RunLog(@"Unable to add QTCaptureFileOutput to capture session: %@", captureSessionAddError);
-                                        recordingCaptureOutput = nil;
+                                    NSError *error = nil;
+                                    if (![_captureSession addOutput:_recordingCaptureOutput error:&error]) {
+                                        RunLog(@"Unable to add QTCaptureFileOutput to capture session: %@", error);
+                                        [_recordingCaptureOutput release];
+                                        _recordingCaptureOutput = nil;
                                     }
-                                    [_recordingCaptureOutput recordToOutputFileURL:[NSURL fileURLWithPath:_temporaryRecordingPath]];
+                                    if (_recordingCaptureOutput) {
+                                        // Construct a temporary recording path name
+                                        NSProcessInfo *processInfo = [NSProcessInfo processInfo];
+                                        NSString *filename = [NSString stringWithFormat:@"%@-%i-%x%x.ts", [processInfo processName], [processInfo processIdentifier], arc4random()];
+                                        NSString *tempPath = [NSTemporaryDirectory() stringByAppendingPathComponent:filename];
+                                        [_recordingCaptureOutput recordToOutputFileURL:[NSURL fileURLWithPath:tempPath]];
+                                        // Notify the delegate that recording has started
+                                        [_delegate videoProcessor:self willBeginRecordingWithCaptureOutput:_recordingCaptureOutput];
+                                    }
                                 }
                             } else {
                                 // There is still a plate, but it doesn't match or more likely is still moving moved, or not enough
@@ -398,14 +404,9 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         NSTimeInterval trackingDuration = [_plateData lastPresentationTime] - [_plateData startPresentationTime];
         BOOL longEnough = trackingDuration >= [_assayAnalyzer minimumTimeIntervalProcessedToReportData] &&
                             [_plateData sampleCount] > [_assayAnalyzer minimumSamplesProcessedToReportData];
-        
-        
-        NSString *extension = nil;
         if (longEnough) {
             RunLog(@"Ended tracking after %.3f seconds (%.1f fps, %.0f%% dropped)",
                    trackingDuration, [_plateData averageFramesPerSecond], [_plateData droppedFrameProportion] * 100);
-            
-            extension = @"m2ts";      // VLC has a default viewer association for this transport file extension, so use it when the video is DV or HDV
         } else {
             RunLog(@"Ignoring truncated run of %.3f seconds", trackingDuration);
         }
@@ -413,25 +414,25 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
         [_delegate videoProcessor:self
       didFinishAcquiringPlateData:_plateData
                      successfully:longEnough
-           videoTemporaryFilePath:_temporaryRecordingPath
-             recommendedExtension:extension];
+           recordingCaptureOutput:_recordingCaptureOutput
+                   captureSession:_captureSession];
+        
+        // Release our retain on the recording capture output (the VideoProcessorController is responsible for stopping recording)
+        [_recordingCaptureOutput release];
+        _recordingCaptureOutput = nil;
+        
+        // Release the analyzer
+        [_assayAnalyzer release];
+        _assayAnalyzer = nil;
+        
+        // Release the plate data
+        [_plateData release];
+        _plateData = nil;
     }
+    NSAssert(!_recordingCaptureOutput && !_assayAnalyzer && !_plateData, @"inconsistent state");
     
-    // Stop recording
-    if (_recordingCaptureOutput) {
-        [_recordingCaptureOutput recordToOutputFileURL:nil];
-    }
-    [_temporaryRecordingPath release];
-    _temporaryRecordingPath = nil;
-    
-    // Release the analyzer
-    [_assayAnalyzer release];
-    _assayAnalyzer = nil;
-    
-    // Reset our state and data
+    // Reset state
     _processingState = ProcessingStateNoPlate;
-    [_plateData release];
-    _plateData = nil;
     _firstWellFrameTime = PresentationTimeDistantPast;
     _lastBarcodeScanTime = PresentationTimeDistantPast;
     _trackingWellCircles.clear();

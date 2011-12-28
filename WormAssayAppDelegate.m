@@ -94,9 +94,9 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     unsigned long long freeSpace = [[fileAttributes objectForKey:NSFileSystemFreeSize] unsignedLongLongValue];
     double percentFree = (double)freeSpace / (double)fileSystemSize * 100.0;
     
-    RunLog(@"%@ version %@ launched. Data storage has %@ (%.3g%%) free space.",
+    RunLog(@"%@ version %@ launched. Storage has %@ (%.3g%%) free space.",
            [infoDictionary objectForKey:(id)kCFBundleNameKey], [infoDictionary objectForKey:(id)kCFBundleVersionKey], formattedDataSize(freeSpace), percentFree);
-    RunLog(@"VLC can be used to view the video files recorded when assaying using a HDV or DV camera. Download it free at http://www.videolan.org/vlc/.");
+    RunLog(@"VLC can be used to view the video files recorded when assaying using a HDV or DV camera. Download it at http://www.videolan.org/vlc/.");
 }
 
 - (void)assayAnalyzerMenuItemSelected:(NSMenuItem *)sender
@@ -204,6 +204,25 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)flag
 {
     return NO;
+}
+
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender
+{
+    NSApplicationTerminateReply reply = NSTerminateNow;
+    
+    if ([[VideoProcessorController sharedInstance] isTracking]) {
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        [alert setMessageText:NSLocalizedString(@"There is a plate read in progress.", nil)]; 
+        [alert setInformativeText:NSLocalizedString(@"The current read results and video will be lost if you exit before the plate is removed.", nil)];
+        [alert addButtonWithTitle:NSLocalizedString(@"Cancel", nil)];
+        [alert addButtonWithTitle:NSLocalizedString(@"Quit", nil)];
+        NSInteger result = [alert runModal];
+        if (result == NSAlertFirstButtonReturn) {
+            reply = NSTerminateCancel;
+        }
+    }
+    
+    return reply;
 }
 
 @end
