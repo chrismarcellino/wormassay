@@ -35,6 +35,9 @@ extern NSString *UniqueIDForCaptureDeviceURL(NSURL *url);
     NSUInteger frameDropCount;
 }
 
+@property(nonatomic, readonly) QTCaptureDevice *captureDevice;
+@property(nonatomic, readonly) QTMovie *movie;
+
 - (NSSize)lastKnownResolution;
 
 @end

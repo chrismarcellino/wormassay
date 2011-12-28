@@ -48,6 +48,9 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 
 @implementation VideoSourceController
 
+@synthesize captureDevice = _captureDevice;
+@synthesize movie = _movie;
+
 + (NSArray *)readableTypes
 {
     return [[QTMovie movieFileTypes:QTIncludeCommonTypes] arrayByAddingObject:CaptureDeviceFileType];
@@ -170,9 +173,10 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
         LastCascadePoint = [window cascadeTopLeftFromPoint:LastCascadePoint];
     }
     
-    // Remove the icon if this is a capture device
+    // Remove the icon and disable the close butotn if this is a capture device
     if (_captureDevice) {
         [window setRepresentedURL:nil];
+        [[window standardWindowButton:NSWindowCloseButton] setEnabled:NO];
     }
     
     [self adjustWindowSizing];
@@ -344,14 +348,5 @@ static void releaseIplImage(void *baseAddress, void *context)
     }
     return displayName;
 }
-
-
-- (BOOL)validateUserInterfaceItem:(id <NSValidatedUserInterfaceItem>)anItem
-{
-    if ([anItem action] == @selector(close) && _captureDevice) {
-        return NO;
-    }
-    return [super validateUserInterfaceItem:anItem];
-}
-        
+  
 @end
