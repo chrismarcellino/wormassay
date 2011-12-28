@@ -45,17 +45,33 @@ debugVideoFrameCompletionTakingOwnership:(void (^)(IplImage *debugFrame))callbac
 {
     // XXX TESTING
     
-    std::vector<cv::Vec3f> circles = findWellCircles(videoFrame, 24);
+    std::vector<cv::Vec3f> wellCircles;
+    int wellCount;
+    bool success = findWellCircles(videoFrame, wellCount, wellCircles);        // gets wells in row major order
+    
+    // FONT
+    CvFont font;
+    double hScale=1.0;
+    double vScale=1.0;
+    int    lineWidth=1;
+    cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX, hScale,vScale,0,lineWidth);        // XXX CLEANUP
+    
     
     // Once we're done with the frame, draw debugging stuff on a copy and send it back
     IplImage *debugImage = cvCloneImage(videoFrame);
-    for (size_t i = 0; i < circles.size(); i++) {
-        CvPoint center = cvPoint(cvRound(circles[i][0]), cvRound(circles[i][1]));
-        int radius = cvRound(circles[i][2]);
-        // draw the circle center
-        cvCircle(debugImage, center, 3, CV_RGB(0, 255, 0), -1, 8, 0);
-        // draw the circle outline
-        cvCircle(debugImage, center, radius, CV_RGB(0, 0, 255), 3, 8, 0);
+    for (size_t i = 0; i < wellCircles.size(); i++) {
+        CvPoint center = cvPoint(cvRound(wellCircles[i][0]), cvRound(wellCircles[i][1]));
+        int radius = cvRound(wellCircles[i][2]);
+        // Draw the circle center
+  //      cvCircle(debugImage, center, 3, CV_RGB(0, 255, i * 10), -1, 8, 0);
+        // Draw the circle outline
+        cvCircle(debugImage, center, radius, success ? CV_RGB(0, 0, 255) : CV_RGB(255, 255, 0), 3, 8, 0);
+
+        // Draw text in the circle
+        if (success) {
+        cvPutText (debugImage, [[NSString stringWithFormat:@"%i", i] UTF8String], center, &font, cvScalar(255,255,0));
+        }
+
     }
     
     dispatch_async(_debugFrameCallbackQueue, ^{

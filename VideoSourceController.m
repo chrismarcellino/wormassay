@@ -106,7 +106,7 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
         _movie = [[QTMovie alloc] initWithAttributes:attributes error:outError];
         [attributes release];
         
-        _sourceIdentifier = [[absoluteURL relativeString] copy];
+        _sourceIdentifier = [[absoluteURL path] retain];
         ProcessLog(@"Opened file \"%@\"", _sourceIdentifier);
     }
     
