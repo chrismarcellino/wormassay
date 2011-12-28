@@ -7,8 +7,32 @@
 //
 
 #import "VideoSource.h"
+#import "ImageDrawingOpenGLView.h"
 
 NSString *const CaptureDeviceScheme = @"capturedevice";
+
+NSURL *URLForCaptureDeviceUniqueID(NSString *uniqueID)
+{
+    return [[[NSURL alloc] initWithScheme:CaptureDeviceScheme
+                                     host:@""
+                                     path:[@"/" stringByAppendingString:uniqueID]] autorelease];
+}
+
+NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
+{
+    NSString *uniqueID = nil;
+    if ([[url scheme] caseInsensitiveCompare:CaptureDeviceScheme] == NSOrderedSame) {
+        NSCharacterSet *slashSet = [NSCharacterSet characterSetWithCharactersInString:@"/"];
+        uniqueID = [[url path] stringByTrimmingCharactersInSet:slashSet];
+    }
+    return uniqueID;
+}
+
+@interface VideoSource ()
+
+- (void)processVideoFrame:(CVImageBufferRef)videoFrame presentationTime:(QTTime)presentationTime;
+
+@end
 
 
 @implementation VideoSource
@@ -31,16 +55,19 @@ NSString *const CaptureDeviceScheme = @"capturedevice";
 
 - (id)initWithContentsOfURL:(NSURL *)absoluteURL ofType:(NSString *)typeName error:(NSError **)outError
 {
-    if ([[absoluteURL scheme] caseInsensitiveCompare:CaptureDeviceScheme] == NSOrderedSame) {
-        NSCharacterSet *slashSet = [NSCharacterSet characterSetWithCharactersInString:@"/"];
-        NSString *uniqueId = [[absoluteURL path] stringByTrimmingCharactersInSet:slashSet];
-        if (uniqueId) {
-            captureDevice = [[QTCaptureDevice deviceWithUniqueID:uniqueId] retain];
+    NSString *captureDeviceUniqueID = UniqueIDForCaptureDeviceURL(absoluteURL);
+    if (captureDeviceUniqueID) {
+        // Remove the leading slash from the absolute URL path
+        if (captureDeviceUniqueID) {
+            captureDevice = [[QTCaptureDevice deviceWithUniqueID:captureDeviceUniqueID] retain];
         } else {
             NSDictionary *userInfo = [NSDictionary dictionaryWithObject:@"Unknown capture device ID" forKey:NSLocalizedDescriptionKey];
-            *outError = [NSError errorWithDomain:NSCocoaErrorDomain code:0 userInfo:userInfo];
+            if (outError) {
+                *outError = [NSError errorWithDomain:NSCocoaErrorDomain code:0 userInfo:userInfo];
+            }
         }
     } else if ([absoluteURL isFileURL]) {
+        movieFrameExtractQueue = dispatch_queue_create("movie frame extract queue", NULL);
         movie = [[QTMovie alloc] initWithURL:absoluteURL error:outError];
     }
     
@@ -62,7 +89,17 @@ NSString *const CaptureDeviceScheme = @"capturedevice";
 - (void)dealloc
 {
     [captureDevice release];
+    [captureSession release];
+    [captureDeviceInput release];
+    [captureDecompressedVideoOutput release];
+    
     [movie release];
+    if (movieFrameExtractQueue) {
+        dispatch_release(movieFrameExtractQueue);
+    }
+    if (movieFrameExtractTimer) {
+        dispatch_release(movieFrameExtractTimer);
+    }
     [super dealloc];
 }
 
@@ -74,6 +111,8 @@ NSString *const CaptureDeviceScheme = @"capturedevice";
                                                    styleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask
                                                      backing:NSBackingStoreBuffered
                                                        defer:YES];
+    
+    
     NSWindowController *windowController = [[NSWindowController alloc] initWithWindow:window];
     [self addWindowController:windowController];
     [window release];
@@ -82,7 +121,6 @@ NSString *const CaptureDeviceScheme = @"capturedevice";
 
 - (NSSize)maximumNativeResolution
 {
-    // XXX CONSIDER LIMITING RESOLUTION FOR PERFORMANCE
     NSSize size;
     
     if (captureDevice) {
@@ -102,11 +140,76 @@ NSString *const CaptureDeviceScheme = @"capturedevice";
 
 - (BOOL)readFromURL:(NSURL *)absoluteURL ofType:(NSString *)typeName error:(NSError **)outError
 {
+    BOOL success;
+    // XXX Set up analysis machinery here
+    
     if (captureDevice) {
-        
+        // Start capture
+        captureSession = [[QTCaptureSession alloc] init];
+        success = [captureDevice open:outError];
+        if (success) {
+            captureDeviceInput = [[QTCaptureDeviceInput alloc] initWithDevice:captureDevice];
+            success = [captureSession addInput:captureDeviceInput error:outError];
+            if (success) {
+                captureDecompressedVideoOutput = [[QTCaptureDecompressedVideoOutput alloc] init];
+                [captureDecompressedVideoOutput setDelegate:self];
+                success = [captureSession addOutput:captureDecompressedVideoOutput error:outError];
+                if (success) {
+                    [captureSession startRunning];
+                }
+            }
+        }
     } else {
+        // Start frame grab of video at frame rate
+        QTTime duration = [[movie attributeForKey:QTMovieDurationAttribute] QTTimeValue];
+        QTTime start = { 0, duration.timeScale, 0 };
+
+        // Ensure that we are able to read at least one frame
+        NSDictionary *attributes = [[NSDictionary alloc] initWithObjectsAndKeys:QTMovieFrameImageTypeCVPixelBufferRef, QTMovieFrameImageType, nil];
+        success = [movie frameImageAtTime:nextExtractTime withAttributes:attributes error:outError] != nil;
         
+        movieFrameExtractTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, movieFrameExtractQueue);
+        dispatch_source_set_event_handler(movieFrameExtractTimer, ^{
+            CVImageBufferRef videoFrame = [movie frameImageAtTime:nextExtractTime withAttributes:attributes error:nil];
+            [self processVideoFrame:videoFrame presentationTime:nextExtractTime];
+            QTTime increment = { 1, duration.timeScale, 0 };
+            QTTimeIncrement(nextExtractTime, increment);
+            
+            // Loop back to the begining if past the end
+            QTTimeRange range = { start, duration };
+            if (!QTTimeInTimeRange(increment, range)) {
+                nextExtractTime = start;
+            }
+        });
+        dispatch_source_set_timer(movieFrameExtractTimer, 0, NSEC_PER_SEC * 1000 / duration.timeScale, 0);
+        [attributes release];
     }
+    
+    return success;
+}
+
+- (void)close
+{
+    if (movieFrameExtractTimer) {
+        dispatch_source_cancel(movieFrameExtractTimer);
+    }
+    [super close];
+}
+
+- (void)captureOutput:(QTCaptureOutput *)captureOutput
+  didOutputVideoFrame:(CVImageBufferRef)videoFrame
+     withSampleBuffer:(QTSampleBuffer *)sampleBuffer
+       fromConnection:(QTCaptureConnection *)connection
+{
+    [self processVideoFrame:videoFrame presentationTime:[sampleBuffer presentationTime]];
+}
+
+// This method will be called on a background thread. It will not be called again until the current call returns.
+// Interviening frames may be dropped if the video is a live capture device source. 
+- (void)processVideoFrame:(CVImageBufferRef)videoFrame presentationTime:(QTTime)presentationTime
+{
+    // XXX Analyze video and pass data back to a master controller
+    NSLog(@"%i, %i", (int)presentationTime.timeValue, (int)presentationTime.timeScale);
 }
 
 @end

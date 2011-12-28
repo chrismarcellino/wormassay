@@ -57,7 +57,7 @@
             [presentUniqueIds addObject:uniqueID];
             
             // Construct the URL for the capture device
-            NSURL *url = [[NSURL alloc] initWithScheme:CaptureDeviceScheme host:@"" path:[@"/" stringByAppendingString:uniqueID]];
+            NSURL *url = URLForCaptureDeviceUniqueID(uniqueID);
             
             // If there is no open VideoSource document for this URL, create one
             if (![documentController documentForURL:url]) {
@@ -81,10 +81,14 @@
     
     // Iterate through current documents and remove ones that no longer correspond to current capture devices
     for (NSDocument *document in [documentController documents]) {
-        NSURL *url = [document fileURL];
-        NSLog(@"url: %@", url);
-        
-        //XXX
+        NSURL *url = [document fileURL];        // not necessarily a file URL
+        NSString *captureDeviceUniqueID = UniqueIDForCaptureDeviceURL(url);
+        if (captureDeviceUniqueID) {
+            if (![presentUniqueIds containsObject:captureDeviceUniqueID]) {
+                NSLog(@"Closing removed device with unique ID %@", captureDeviceUniqueID);
+                [document close];
+            }
+        }
     }
     
     [presentUniqueIds release];

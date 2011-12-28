@@ -22,7 +22,7 @@
 		218DD55B13454411000B6475 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 218DD55A13454411000B6475 /* main.m */; };
 		218DD55F1345445B000B6475 /* NematodeAssayAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 218DD55E1345445B000B6475 /* NematodeAssayAppDelegate.m */; };
 		218DD57613455374000B6475 /* Worm.icns in Resources */ = {isa = PBXBuildFile; fileRef = 218DD57513455374000B6475 /* Worm.icns */; };
-		21E1AEF613479214005F5502 /* ThreadsafeOpenGLView.m in Sources */ = {isa = PBXBuildFile; fileRef = 21E1AEF513479214005F5502 /* ThreadsafeOpenGLView.m */; };
+		21E1AEF613479214005F5502 /* ImageDrawingOpenGLView.m in Sources */ = {isa = PBXBuildFile; fileRef = 21E1AEF513479214005F5502 /* ImageDrawingOpenGLView.m */; };
 		21E778AE12D322A9006C1554 /* opencv.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 215AB44812CEC7130047B13F /* opencv.hpp */; };
 		21E778AF12D322A9006C1554 /* core.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 215AB44F12CEC72B0047B13F /* core.hpp */; };
 		21E778B012D322A9006C1554 /* core_c.h in Headers */ = {isa = PBXBuildFile; fileRef = 215AB45012CEC72B0047B13F /* core_c.h */; };
@@ -216,8 +216,8 @@
 		218DD55D1345445B000B6475 /* NematodeAssayAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NematodeAssayAppDelegate.h; sourceTree = SOURCE_ROOT; };
 		218DD55E1345445B000B6475 /* NematodeAssayAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NematodeAssayAppDelegate.m; sourceTree = SOURCE_ROOT; };
 		218DD57513455374000B6475 /* Worm.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Worm.icns; sourceTree = "<group>"; };
-		21E1AEF413479214005F5502 /* ThreadsafeOpenGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreadsafeOpenGLView.h; sourceTree = SOURCE_ROOT; };
-		21E1AEF513479214005F5502 /* ThreadsafeOpenGLView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ThreadsafeOpenGLView.m; sourceTree = SOURCE_ROOT; };
+		21E1AEF413479214005F5502 /* ImageDrawingOpenGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageDrawingOpenGLView.h; sourceTree = SOURCE_ROOT; };
+		21E1AEF513479214005F5502 /* ImageDrawingOpenGLView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ImageDrawingOpenGLView.m; sourceTree = SOURCE_ROOT; };
 		21E7790912D322A9006C1554 /* libOpenCV.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libOpenCV.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		21E779A012D323D6006C1554 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -461,8 +461,8 @@
 				2180AC671346BB99008AF87B /* DocumentController.m */,
 				21426FAD134683DA00AF78E5 /* VideoSource.h */,
 				21426FAE134683DA00AF78E5 /* VideoSource.m */,
-				21E1AEF413479214005F5502 /* ThreadsafeOpenGLView.h */,
-				21E1AEF513479214005F5502 /* ThreadsafeOpenGLView.m */,
+				21E1AEF413479214005F5502 /* ImageDrawingOpenGLView.h */,
+				21E1AEF513479214005F5502 /* ImageDrawingOpenGLView.m */,
 			);
 			path = NematodeAssay;
 			sourceTree = "<group>";
@@ -639,7 +639,7 @@
 				218DD55F1345445B000B6475 /* NematodeAssayAppDelegate.m in Sources */,
 				21426FAF134683DB00AF78E5 /* VideoSource.m in Sources */,
 				2180AC681346BB99008AF87B /* DocumentController.m in Sources */,
-				21E1AEF613479214005F5502 /* ThreadsafeOpenGLView.m in Sources */,
+				21E1AEF613479214005F5502 /* ImageDrawingOpenGLView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
