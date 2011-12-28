@@ -12,6 +12,16 @@
 #import "PlateData.h"
 
 static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
+static NSString *const RunOutputFolderPathKey = @"RunOutputFolderPath";
+
+static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
+
+@interface VideoProcessorController ()
+
+- (void)appendString:(NSString *)string toPath:(NSString *)path;
+
+@end
+
 
 @implementation VideoProcessorController
 
@@ -100,6 +110,21 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
     }
 }
 
+- (NSString *)runOutputFolderPath
+{
+    NSString *path = [[NSUserDefaults standardUserDefaults] stringForKey:RunOutputFolderPathKey];
+    if (!path) {
+        path = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+        path = [path stringByAppendingPathComponent:@"Worm Assay Data"];
+    }
+    return path;
+}
+
+- (void)setRunOutputFolderPath:(NSString *)path
+{
+    [[NSUserDefaults standardUserDefaults] setObject:path forKey:RunOutputFolderPathKey];
+}
+
 - (void)addVideoProcessor:(VideoProcessor *)videoProcessor
 {
     dispatch_async(_queue, ^{
@@ -156,8 +181,52 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
             [_currentlyTrackingProcessor release];
             _currentlyTrackingProcessor = nil;
             
-            // Write the results to disk and the run log if successful
+            // Find the likely barcode corresponding to this plate or make one up
+            NSString *plateID = nil;
+            NSUInteger count = 0;
+            for (NSString *barcode in _barcodesSinceTrackingBegan) {
+                NSUInteger barcodeCount = [_barcodesSinceTrackingBegan countForObject:barcode];
+                if (barcodeCount > count) {
+                    count = barcodeCount;
+                    plateID = barcode;
+                }
+            }
+            if (!plateID) {
+                NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+                [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss Z"];
+                plateID = [NSString stringWithFormat:@"Unlabeled Plate %@", [dateFormatter stringFromDate:[NSDate date]]];
+                [dateFormatter release];
+            }
             
+            // Write the results to disk and the run log if successful
+            if (successfully) {
+                // Determine the filename prefix to log to. Rotate the log files if we've been idle for a time
+                if (!_currentOutputFilenamePrefix || _currentOutputLastWriteTime + logTurnoverIdleInterval < CACurrentMediaTime()) {
+                    [_currentOutputFilenamePrefix release];
+                    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+                    [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm Z"];
+                    _currentOutputFilenamePrefix = [[dateFormatter stringFromDate:[NSDate date]] retain];
+                    _currentOutputLastWriteTime = CACurrentMediaTime();
+                    [dateFormatter release];
+                }
+                
+                // Get the run CSV data and log it out to disk
+                NSMutableDictionary *rawOutputDictionary = [[NSMutableDictionary alloc] init];
+                NSString *runOutput = [plateData csvOutputForPlateID:plateID withAdditionalRawDataOutput:rawOutputDictionary];
+                
+                NSString *folder = [self runOutputFolderPath];
+                NSString *runOutputPath = [folder stringByAppendingPathComponent:
+                                           [_currentOutputFilenamePrefix stringByAppendingString:@" Run Output.csv"]];
+                [self appendString:runOutput toPath:runOutputPath];
+                
+                for (NSString *columnID in rawOutputDictionary) {
+                    NSString *rawDataCSVOutput = [rawOutputDictionary objectForKey:columnID];
+                    NSString *rawOutputPath = [folder stringByAppendingPathComponent:
+                                               [NSString stringWithFormat:@"%@ Raw @% Values.csv", _currentOutputFilenamePrefix, columnID]];
+                    [self appendString:rawDataCSVOutput toPath:rawOutputPath];
+                }
+                [rawOutputDictionary release];
+            }
         }
     });
 }
@@ -206,21 +275,6 @@ static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
                 [textView scrollRangeToVisible:NSMakeRange([textStorage length], 0)];
             }
         });
-    });
-    [string release];
-}
-
-- (void)appendToResultsCSVFile:(NSString *)format, ...
-{
-    va_list args;
-    va_start(args, format);
-    NSString *string = [[NSString alloc] initWithFormat:format arguments:args];
-    va_end(args);
-    
-    // XXX MIRROR TO RUN LOG
-    dispatch_async(_queue, ^{
-        /// XXX TODO
-        NSLog(@"%@", string);
     });
     [string release];
 }

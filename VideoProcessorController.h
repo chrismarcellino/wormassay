@@ -21,6 +21,9 @@
     NSTimeInterval _trackingBeginTime;
     NSCountedSet *_barcodesSinceTrackingBegan;
     
+    NSString *_currentOutputFilenamePrefix;
+    NSTimeInterval _currentOutputLastWriteTime;      // in CPU time
+    
     NSDictionary *_runLogTextAttributes;    // main thread only
 }
 
@@ -28,6 +31,7 @@
 
 - (NSArray *)assayAnalyzerClasses;
 @property(assign) Class currentAssayAnalyzerClass;
+@property(copy) NSString *runOutputFolderPath;
 
 - (void)addVideoProcessor:(VideoProcessor *)videoProcessor;
 - (void)removeVideoProcessor:(VideoProcessor *)videoProcessor;
@@ -35,6 +39,5 @@
 @property(retain) NSTextView *runLogTextView;
 @property(retain) NSScrollView *runLogScrollView;
 - (void)appendToRunLog:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2);
-- (void)appendToResultsCSVFile:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2);
 
 @end
