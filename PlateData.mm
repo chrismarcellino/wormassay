@@ -196,13 +196,15 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
     }
 }
 
-- (NSString *)csvOutputForPlateID:(NSString *)plateID withAdditionalRawDataOutput:(NSMutableDictionary *)rawColumnIDsToCSVStrings
+- (NSString *)csvOutputForPlateID:(NSString *)plateID scanID:(NSString *)scanID withAdditionalRawDataOutput:(NSMutableDictionary *)rawColumnIDsToCSVStrings
 {
     @synchronized(self) {
         NSMutableString *output = [[NSMutableString alloc] init];
         
         // Write header row
         appendCSVElement(output, @"Plate and Well");
+        appendCSVElement(output, @"Scan ID");
+        appendCSVElement(output, @"Well");
         appendCSVElement(output, @"Assay Date/Time");
         
         NSArray *dataColumnIDs = [self sortedColumnIDsWithData];
@@ -229,10 +231,17 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
         
         // Write stats for each well
         for (size_t well = 0; well < _valuesByWellAndDataColumn.size(); well++) {
+            NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+            
             // Output the plate-well ID
             std::string wellID = wellIdentifierStringForIndex(well, _valuesByWellAndDataColumn.size());
-            NSString *plateAndWellID = [NSString stringWithFormat:@"%@ Well %s", plateID, wellID.c_str()];
+            NSString *wellIDString = [NSString stringWithUTF8String:wellID.c_str()];
+            NSString *plateAndWellID = [NSString stringWithFormat:@"%@ Well %@", plateID, wellIDString];
             appendCSVElement(output, plateAndWellID);
+            
+            // Output the scan ID and well by themselves
+            appendCSVElement(output, scanID);
+            appendCSVElement(output, wellIDString);
             
             // Output the assay date/time
             appendCSVElement(output, assayDateTime);
@@ -264,6 +273,8 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
                     }
                     
                     appendCSVElement(rawLine, plateAndWellID);
+                    appendCSVElement(rawLine, scanID);
+                    appendCSVElement(rawLine, wellIDString);
                     const std::vector<double>* rawValues = &_valuesByWellAndDataColumn[well][columnIDStdStr];
                     for (size_t i = 0; i < rawValues->size(); i++) {
                         NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -276,7 +287,9 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
                 [pool release];
             }
             [output appendString:@"\n"];
+            [pool release];
         }
+        [output appendString:@"\n"];
         return output;
     }
 }

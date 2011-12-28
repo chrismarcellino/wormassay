@@ -55,6 +55,6 @@ typedef int ReportingStyle;
 
 // Results Output
 - (NSArray *)sortedColumnIDsWithData;
-- (NSString *)csvOutputForPlateID:(NSString *)plateID withAdditionalRawDataOutput:(NSMutableDictionary *)rawColumnIDsToCSVStrings;
+- (NSString *)csvOutputForPlateID:(NSString *)plateID scanID:(NSString *)scanID withAdditionalRawDataOutput:(NSMutableDictionary *)rawColumnIDsToCSVStrings;
 
 @end

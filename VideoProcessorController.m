@@ -10,17 +10,23 @@
 #import <objc/runtime.h>
 #import "AssayAnalyzer.h"
 #import "PlateData.h"
+#import "Emailer.h"
 
 static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
+static NSString *const EmailRecipieintsKey = @"EmailRecipieints";
+
 static NSString *const RunOutputFolderPathKey = @"RunOutputFolderPath";
 static NSString *const SortableLoggingDateFormat = @"yyyy-MM-dd HH:mm zzz";
 static NSString *const SortableLoggingFilenameSafeDateFormat = @"yyyy-MM-dd HHmm zzz";
+static NSString *const RunIDDateFormat = @"yyyyMMddHHmm";
 static NSString *const UnlabeledPlateLabel = @"Unlabeled Plate";
 
-static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
+// Logs are turned and results emailed after an idle period of this duration
+static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
 
 @interface VideoProcessorController ()
 
+- (void)emailRecentResults;
 - (void)appendString:(NSString *)string toPath:(NSString *)path;
 
 @end
@@ -49,6 +55,7 @@ static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
         _barcodesSinceTrackingBegan = [[NSCountedSet alloc] init];
         _videoTempURLsToDestinationURLs = [[NSMutableDictionary alloc] init];
         _captureDevicesToSessions = [[NSMapTable mapTableWithStrongToStrongObjects] retain]; 
+        _filesToEmail = [[NSMutableSet alloc] init];
     }
     
     return self;
@@ -57,9 +64,14 @@ static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
 - (void)dealloc
 {
     [_videoProcessors release];
+    [_currentlyTrackingProcessor release];
+    [_barcodesSinceTrackingBegan release];
     [_videoTempURLsToDestinationURLs release];
-    [_runLogTextAttributes release];
     [_captureDevicesToSessions release];
+    [_filesToEmail release];
+    [_runStartDate release];
+    [_currentOutputFilenamePrefix release];
+    [_runLogTextAttributes release];
     [super dealloc];
 }
 
@@ -194,7 +206,8 @@ static const NSTimeInterval logTurnoverIdleInterval = 10 * 60.0;
 {
     dispatch_async(_queue, ^{
         [captureFileOutput setDelegate:self];
-        NSString *filename = [NSString stringWithFormat:@"%@ (%xx).ts", UnlabeledPlateLabel, [[NSProcessInfo processInfo] processIdentifier], arc4random()];
+        // Use a generic container extension at this point (which may not be viewable in QTPlayer if QT can't play it), since we don't know if this is an MPEG stream yet
+        NSString *filename = [NSString stringWithFormat:@"%@ (%x).mov", UnlabeledPlateLabel, arc4random()];
         NSString *path = [[self videoFolderPathCreatingIfNecessary:YES] stringByAppendingPathComponent:filename];
         [captureFileOutput recordToOutputFileURL:[NSURL fileURLWithPath:path]];
     });
@@ -212,6 +225,29 @@ stopRecordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
                 [processor setShouldScanForWells:YES];
             }
             
+            // Determine the filename prefix to log to. Rotate the log files if we've been idle for a time and update the run date if necessary
+            if (!_currentOutputFilenamePrefix || _currentOutputLastWriteTime + LogTurnoverIdleInterval < CACurrentMediaTime()) {
+                // Store the run start date
+                [_runStartDate release];
+                _runStartDate = [[NSDate alloc] init];
+                
+                // Create the output filename prefix for this run
+                NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+                [dateFormatter setDateFormat:SortableLoggingFilenameSafeDateFormat];
+                [_currentOutputFilenamePrefix release];
+                _currentOutputFilenamePrefix = [[dateFormatter stringFromDate:_runStartDate] retain];
+                _currentOutputLastWriteTime = CACurrentMediaTime();
+                
+                // Create the run ID for this run
+                [dateFormatter setDateFormat:RunIDDateFormat];
+                [_runID release];
+                _runID = [[dateFormatter stringFromDate:_runStartDate] retain];
+                [dateFormatter release];
+                
+                // Reset the plate counter
+                _plateInRunNumber = 1;
+            }
+            
             // Find the likely barcode corresponding to this plate or use a placeholder if there isn't one
             NSString *plateID = nil;
             NSUInteger count = 0;
@@ -227,50 +263,45 @@ stopRecordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
                 plateID = fileSourceFilename ? fileSourceFilename : UnlabeledPlateLabel;
             }
             
-            // Append the date
-            NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-            [dateFormatter setDateFormat:SortableLoggingDateFormat];
-            NSString *plateIDAndDate = [NSString stringWithFormat:@"%@ %@", plateID, [dateFormatter stringFromDate:[NSDate date]]];
-            [dateFormatter release];
+            // Generate the scan ID
+            NSString *scanID = [NSString stringWithFormat:@"%@-%llu", _runID, _plateInRunNumber++];
             
             // Write the results to disk and the run log if successful
             if (successfully) {
                 RunLog(@"Writing results for plate \"%@\" to disk.", plateID);
                 
-                // Determine the filename prefix to log to. Rotate the log files if we've been idle for a time
-                if (!_currentOutputFilenamePrefix || _currentOutputLastWriteTime + logTurnoverIdleInterval < CACurrentMediaTime()) {
-                    [_currentOutputFilenamePrefix release];
-                    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-                    [dateFormatter setDateFormat:SortableLoggingFilenameSafeDateFormat];
-                    _currentOutputFilenamePrefix = [[dateFormatter stringFromDate:[NSDate date]] retain];
-                    _currentOutputLastWriteTime = CACurrentMediaTime();
-                    [dateFormatter release];
-                }
-                
                 // Get the run CSV data and log it out to disk
                 NSMutableDictionary *rawOutputDictionary = [[NSMutableDictionary alloc] init];
-                NSString *runOutput = [plateData csvOutputForPlateID:plateIDAndDate withAdditionalRawDataOutput:rawOutputDictionary];
+                NSString *runOutput = [plateData csvOutputForPlateID:plateID scanID:scanID withAdditionalRawDataOutput:rawOutputDictionary];
                 
                 NSString *folder = [self runOutputFolderPath];
                 NSString *runOutputPath = [folder stringByAppendingPathComponent:
                                            [_currentOutputFilenamePrefix stringByAppendingString:@" Run Output.csv"]];
                 [self appendString:runOutput toPath:runOutputPath];
+                [_filesToEmail addObject:runOutputPath];
                 
                 for (NSString *columnID in rawOutputDictionary) {
                     NSString *rawDataCSVOutput = [rawOutputDictionary objectForKey:columnID];
                     NSString *rawOutputPath = [folder stringByAppendingPathComponent:
                                                [NSString stringWithFormat:@"%@ Raw %@ Values.csv", _currentOutputFilenamePrefix, columnID]];
                     [self appendString:rawDataCSVOutput toPath:rawOutputPath];
+                    [_filesToEmail addObject:rawOutputPath];
                 }
                 [rawOutputDictionary release];
                 
                 // Mark the recording URL for moving once it is finalized
                 NSURL *tempRecordingURL = [recordingCaptureOutput outputFileURL];
                 if (recordingCaptureOutput && tempRecordingURL) {
-                    NSString *extension = [[tempRecordingURL path] pathExtension];
-                    NSString *destinationPath = [[[self videoFolderPathCreatingIfNecessary:YES] stringByAppendingPathComponent:
-                                                 [_currentOutputFilenamePrefix stringByAppendingString:@" Video"]]
-                                                 stringByAppendingPathExtension:extension];
+                    BOOL isTransportStream = NO;
+                    for (QTCaptureConnection *connection in [recordingCaptureOutput connections]) {
+                        if ([[connection formatDescription] formatType] == 'mp2v') {
+                            isTransportStream = YES;
+                        }
+                    }
+                    
+                    NSString *extension = isTransportStream ? @"ts" : @"mov";
+                    NSString *filename = [NSString stringWithFormat:@"%@ %@ Video.%@", plateID, scanID, extension];                    
+                    NSString *destinationPath = [[self videoFolderPathCreatingIfNecessary:YES] stringByAppendingPathComponent:filename];
                     NSURL *destinationURL = [NSURL fileURLWithPath:destinationPath];
                     // Store the temporary URL and destination URL so we can move it into place once the file is finalized
                     [_videoTempURLsToDestinationURLs setObject:destinationURL forKey:tempRecordingURL];
@@ -287,6 +318,12 @@ stopRecordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
             [_captureDevicesToSessions setObject:captureSession forKey:recordingCaptureOutput];
             NSAssert([recordingCaptureOutput delegate] == self, @"recordingCaptureOutput not VideoProcessorController");
         }
+        
+        // Reset log emailing timer
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(emailRecentResults) object:nil];
+            [self performSelector:@selector(emailRecentResults) withObject:nil afterDelay:LogTurnoverIdleInterval];
+        });
     });
 }
 
@@ -297,6 +334,27 @@ stopRecordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
             [_barcodesSinceTrackingBegan addObject:text];
         }
     });
+}
+
+- (void)emailRecentResults
+{
+    dispatch_async(_queue, ^{
+        NSString *recipients = [[[NSUserDefaults standardUserDefaults] stringForKey:EmailRecipieintsKey]
+                                stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        
+        if ([_filesToEmail count] > 0 && recipients && [recipients length] > 0) {
+            NSBundle *mainBundle = [NSBundle mainBundle];
+            NSString *subject = [NSString stringWithFormat:@"%@ email results", [mainBundle objectForInfoDictionaryKey:(id)kCFBundleNameKey]];
+            NSString *body = [NSString stringWithFormat:@"Results from the run %@ starting %@ are attached.\n\nSent by %@ %@",
+                              _runID,
+                              _currentOutputFilenamePrefix,
+                              [mainBundle objectForInfoDictionaryKey:(id)kCFBundleNameKey],
+                              [mainBundle objectForInfoDictionaryKey:(id)kCFBundleVersionKey]];
+            [Emailer sendMailMessageToRecipients:recipients subject:subject body:body attachmentPaths:[_filesToEmail allObjects]];
+        }
+             
+             [_filesToEmail removeAllObjects];
+        });
 }
 
 - (void)appendToRunLog:(NSString *)format, ...
@@ -416,16 +474,18 @@ stopRecordingCaptureOutput:(QTCaptureFileOutput *)recordingCaptureOutput
         
         NSURL *destinationURL = [_videoTempURLsToDestinationURLs objectForKey:outputFileURL];
         NSFileManager *fileManager = [[NSFileManager alloc] init];
-        NSError *error = nil;
+        NSError *fileManagerError = nil;
         if (destinationURL) {
             // Move the file into place
-            if (![fileManager moveItemAtURL:outputFileURL toURL:destinationURL error:&error]) {
-                RunLog(@"Unable to move recording at \"%@\" to \"%@\": %@", [outputFileURL path], [destinationURL path], error);
+            if (![fileManager moveItemAtURL:outputFileURL toURL:destinationURL error:&fileManagerError]) {
+                RunLog(@"Unable to move recording at \"%@\" to \"%@\": %@", [outputFileURL path], [destinationURL path], fileManagerError);
+            } else {
+                RunLog(@"Wrote video at \"%@\" to disk.", [outputFileURL path]);
             }
         } else {
             // Delete the file
-            if ([fileManager removeItemAtURL:outputFileURL error:&error]) {
-                RunLog(@"Unable to delete recording at \"%@\": %@", [outputFileURL path], error);
+            if (![fileManager removeItemAtURL:outputFileURL error:&fileManagerError]) {
+                RunLog(@"Unable to delete recording at \"%@\": %@", [outputFileURL path], fileManagerError);
             }
         }
         [_videoTempURLsToDestinationURLs removeObjectForKey:outputFileURL];

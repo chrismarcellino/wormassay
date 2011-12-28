@@ -83,7 +83,7 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     [[self assayAnalyzerMenu] setDelegate:self];
     
     // Log welcome message
-    NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
+    NSBundle *mainBundle = [NSBundle mainBundle];
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSDictionary *fileAttributes = [fileManager attributesOfFileSystemForPath:[videoProcessorController runOutputFolderPath] error:nil];
     unsigned long long fileSystemSize = [[fileAttributes objectForKey:NSFileSystemSize] unsignedLongLongValue];
@@ -91,7 +91,10 @@ static NSString *const LoggingWindowAutosaveName = @"LoggingWindow";
     double percentFree = (double)freeSpace / (double)fileSystemSize * 100.0;
     
     RunLog(@"%@ version %@ launched. Storage has %@ (%.3g%%) free space.",
-           [infoDictionary objectForKey:(id)kCFBundleNameKey], [infoDictionary objectForKey:(id)kCFBundleVersionKey], formattedDataSize(freeSpace), percentFree);
+           [mainBundle objectForInfoDictionaryKey:(id)kCFBundleNameKey],
+           [mainBundle objectForInfoDictionaryKey:(id)kCFBundleVersionKey],
+           formattedDataSize(freeSpace),
+           percentFree);
     RunLog(@"VLC can be used to view the video files recorded when assaying using a HDV or DV camera. Download it at http://www.videolan.org/vlc/.");
 }
 
