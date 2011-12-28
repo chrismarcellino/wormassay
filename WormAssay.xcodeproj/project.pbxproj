@@ -1432,7 +1432,7 @@
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0410;
+				LastUpgradeCheck = 0420;
 				ORGANIZATIONNAME = "Chris Marcellino";
 			};
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "WormAssay" */;
@@ -1767,7 +1767,6 @@
 			buildSettings = {
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
 				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
 				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
 				PRODUCT_NAME = zxing;
 			};
@@ -1778,7 +1777,6 @@
 			buildSettings = {
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
 				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
-				GCC_VERSION = com.apple.compilers.llvmgcc42;
 				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
 				PRODUCT_NAME = zxing;
 			};
@@ -1822,7 +1820,7 @@
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
-				RUN_CLANG_STATIC_ANALYZER = YES;
+				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = macosx;
 				USER_HEADER_SEARCH_PATHS = "ThirdParty ThirdParty/OpenCV/include ThirdParty/OpenCV/modules/core/include ThirdParty/OpenCV/modules/flann/include ThirdParty/OpenCV/modules/imgproc/include ThirdParty/OpenCV/modules/video/include ThirdParty/OpenCV/modules/features2d/include ThirdParty/OpenCV/modules/objdetect/include ThirdParty/OpenCV/modules/calib3d/include ThirdParty/OpenCV/modules/highgui/include ThirdParty/OpenCV/modules/ml/include ThirdParty/OpenCV/modules/contrib/include";
 			};
@@ -1843,7 +1841,7 @@
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
-				RUN_CLANG_STATIC_ANALYZER = YES;
+				RUN_CLANG_STATIC_ANALYZER = NO;
 				SDKROOT = macosx;
 				SEPARATE_STRIP = YES;
 				USER_HEADER_SEARCH_PATHS = "ThirdParty ThirdParty/OpenCV/include ThirdParty/OpenCV/modules/core/include ThirdParty/OpenCV/modules/flann/include ThirdParty/OpenCV/modules/imgproc/include ThirdParty/OpenCV/modules/video/include ThirdParty/OpenCV/modules/features2d/include ThirdParty/OpenCV/modules/objdetect/include ThirdParty/OpenCV/modules/calib3d/include ThirdParty/OpenCV/modules/highgui/include ThirdParty/OpenCV/modules/ml/include ThirdParty/OpenCV/modules/contrib/include";
