@@ -1,3 +1,7 @@
+Version 1.01
+------------
+Stop preventing rotation of barcode camera, to improve barcoding results. 
+
 Version 1.0
 ------------
 Bump version number to 1.0 to reflect manuscript publication and application release (the algorithms are numerically equivalent to the versions in 0.15). 
