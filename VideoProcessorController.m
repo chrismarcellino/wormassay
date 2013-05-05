@@ -59,12 +59,6 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
     return [[[self inputVideoPath] stringByDeletingPathExtension] stringByAppendingPathExtension:@"mp4"];
 }
 
-- (void)dealloc
-{
-    [_inputVideoPath release];
-    [super dealloc];
-}
-
 @end
 
 
@@ -103,20 +97,6 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
 - (void)dealloc
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self name:NSTaskDidTerminateNotification object:nil];
-    
-    [_videoProcessors release];
-    [_currentlyTrackingProcessor release];
-    [_barcodesSinceTrackingBegan release];
-    [_videoTempURLsToDestinationURLs release];
-    [_filesToEmail release];
-    [_runStartDate release];
-    [_currentOutputFilenamePrefix release];
-    [_runLogTextAttributes release];
-    [_pendingConversionJobs release];
-    [_runLogTextView release];
-    [_runLogScrollView release];
-    [_encodingTableView release];
-    [super dealloc];
 }
 
 - (NSArray *)assayAnalyzerClasses
@@ -124,7 +104,7 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
     NSMutableArray *assayAnalyzerClasses = [NSMutableArray array];
     
     int	numberOfClasses = objc_getClassList(NULL, 0);
-	Class *classes = calloc(numberOfClasses * 2, sizeof(Class));
+	Class *classes = (Class *)calloc(numberOfClasses * 2, sizeof(Class));
     numberOfClasses = objc_getClassList(classes, numberOfClasses);
     for (int i = 0; i < numberOfClasses; i++) {
         // use this runtime method instead of messaging the class to avoid +loading all classes in memory
@@ -222,7 +202,6 @@ static void createFolderIfNecessary(NSString *path)
     if (![fileManager fileExistsAtPath:path]) {
         [fileManager createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL];
     }
-    [fileManager release];
 }
 
 - (NSString *)runOutputFolderPathCreatingIfNecessary:(BOOL)create
@@ -289,7 +268,7 @@ static void createFolderIfNecessary(NSString *path)
 {
     dispatch_async(_queue, ^{
         if ([_videoProcessors containsObject:vp] && !_currentlyTrackingProcessor) {
-            _currentlyTrackingProcessor = [vp retain];
+            _currentlyTrackingProcessor = vp;
             _trackingBeginTime = presentationTime;
             
             // Ensure that the plate tracking processor has the intended orientation
@@ -340,20 +319,16 @@ stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
             // Determine the filename prefix to log to. Rotate the log files if we've been idle for a time and update the run date if necessary
             if (!_currentOutputFilenamePrefix || _currentOutputLastWriteTime + LogTurnoverIdleInterval < CACurrentMediaTime()) {
                 // Store the run start date
-                [_runStartDate release];
                 _runStartDate = [[NSDate alloc] init];
                 
                 // Create the output filename prefix for this run
                 NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
                 [dateFormatter setDateFormat:SortableLoggingFilenameSafeDateFormat];
-                [_currentOutputFilenamePrefix release];
-                _currentOutputFilenamePrefix = [[dateFormatter stringFromDate:_runStartDate] retain];
+                _currentOutputFilenamePrefix = [dateFormatter stringFromDate:_runStartDate];
                 
                 // Create the run ID for thisInfo run
                 [dateFormatter setDateFormat:RunIDDateFormat];
-                [_runID release];
-                _runID = [[dateFormatter stringFromDate:_runStartDate] retain];
-                [dateFormatter release];
+                _runID = [dateFormatter stringFromDate:_runStartDate];
                 
                 // Reset the plate counter
                 _plateInRunNumber = 1;
@@ -403,7 +378,6 @@ stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
                     [self appendString:rawDataCSVOutput toPath:rawOutputPath];
                     [_filesToEmail addObject:rawOutputPath];
                 }
-                [rawOutputDictionary release];
                 
                 // Mark the recording URL for moving once it is finalized
                 if (captureFileOutput && [captureFileOutput outputFileURL]) {
@@ -423,7 +397,6 @@ stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
                 }
             }
             
-            [_currentlyTrackingProcessor release];
             _currentlyTrackingProcessor = nil;
         }
         
@@ -542,7 +515,6 @@ stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
             }
         }
         [_videoTempURLsToDestinationURLs removeObjectForKey:outputFileURL];
-        [fileManager release];
     });
 }
 
@@ -572,7 +544,6 @@ static inline BOOL isValidPath(NSString *path, NSFileManager *fileManager)
     if (!isValidPath(path, fileManager)) {
         path = @"/usr/local/bin/ffmpeg";
     }
-    [fileManager release];
     
     return path;
 }
@@ -593,14 +564,11 @@ static inline BOOL isValidPath(NSString *path, NSFileManager *fileManager)
             [job setInputVideoPath:sourceVideoPath];
             [job setPlateOrientation:plateOrientation];
             [_pendingConversionJobs addObject:job];
-            [job release];
             
             [self dequeueNextConversionJobIfNecessary];
             [self updateEncodingTableView];
         });
     }
-    
-    [fileManager release];
 }
 
 - (void)dequeueNextConversionJobIfNecessary
@@ -694,9 +662,7 @@ static inline BOOL isValidPath(NSString *path, NSFileManager *fileManager)
         RunLog(@"H.264 encoding failed for \"%@\". See the Console application for more information. Leaving unencoded original file in place.", inputPath);
         [fileManager removeItemAtPath:outputPath error:NULL];
     }
-    [fileManager release];
     
-    [_conversionTask release];
     _conversionTask = nil;
     
     // Start the next job
@@ -736,7 +702,6 @@ static inline BOOL isValidPath(NSString *path, NSFileManager *fileManager)
 {
     dispatch_sync(_queue, ^{
         if (_conversionTask) {
-            [[_conversionTask retain] autorelease];
             [_conversionTask resume];
             [_conversionTask terminate];
             [_conversionTask waitUntilExit];
@@ -765,7 +730,6 @@ static inline BOOL isValidPath(NSString *path, NSFileManager *fileManager)
     dispatch_async(dispatch_get_main_queue(), ^{
         [[self encodingTableView] setContents:array];
     });
-    [array release];
 }
 
 // Logging
@@ -796,13 +760,11 @@ static inline BOOL isValidPath(NSString *path, NSFileManager *fileManager)
         [textStorage beginEditing];
         [textStorage appendAttributedString:attributedString];
         [textStorage endEditing];
-        [attributedString release];
         
         if (wasAtBottom) {
             [textView scrollRangeToVisible:NSMakeRange([textStorage length], 0)];
         }
     });
-    [string release];
 }
 
 - (void)appendString:(NSString *)string toPath:(NSString *)path
@@ -822,7 +784,6 @@ static inline BOOL isValidPath(NSString *path, NSFileManager *fileManager)
                 } @catch (NSException *e) {
                     [self appendToRunLog:@"Unable to write to file '%@': %@", path, e];
                 }
-                [handle release];
             } else if (i > 0) {
                 [self appendToRunLog:@"Unable to open file '%@': %s", path, strerror(errno)];
             }
@@ -834,7 +795,6 @@ static inline BOOL isValidPath(NSString *path, NSFileManager *fileManager)
                 if (![fileManager fileExistsAtPath:directory]) {
                     [fileManager createDirectoryAtPath:directory withIntermediateDirectories:YES attributes:nil error:NULL];
                 }
-                [fileManager release];
             }
         }
     }

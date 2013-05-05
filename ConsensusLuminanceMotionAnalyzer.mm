@@ -38,11 +38,9 @@ static const char* WellOccupancyID = "Well Occupancy";
 
 - (void)dealloc
 {
-    [_lastFrames release];
     if (_pixelwiseVotes) {
         cvReleaseImage(&_pixelwiseVotes);
     }
-    [super dealloc];
 }
 
 + (NSString *)analyzerName
@@ -91,7 +89,6 @@ static const char* WellOccupancyID = "Well Occupancy";
         [randomlyChosenFrames addObject:frame];
         [frameChoices removeObjectAtIndex:randomIndex];
     }
-    [frameChoices release];
     
     // ===== Plate movement and illumination change detection =====
     
@@ -134,7 +131,6 @@ static const char* WellOccupancyID = "Well Occupancy";
     dispatch_release(criticalSection);
     
     meanProportionPlateMoved /= [randomlyChosenFrames count];
-    [randomlyChosenFrames release];
     
     // If the average luminance delta across the set of entire plate images is more than about 2%, the entire plate is likely moving.
     if (meanProportionPlateMoved > PlateMovingProportionAboveThresholdLimit) {

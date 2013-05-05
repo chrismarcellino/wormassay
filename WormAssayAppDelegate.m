@@ -37,10 +37,9 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
     NSDictionary *defaults = [[NSDictionary alloc] initWithObjectsAndKeys:
                               [NSNumber numberWithBool:YES], IgnoreBuiltInCamerasUserDefaultsKey, nil];
     [[NSUserDefaults standardUserDefaults] registerDefaults:defaults];
-    [defaults release];
     
     // Create our NSDocumentController subclass first
-    [[[DocumentController alloc] init] autorelease];
+    [[DocumentController alloc] init];
     
     // Set up the logging panel
     [NSBundle loadNibNamed:@"LoggingPanel" owner:self];
@@ -98,7 +97,7 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
     IOPMAssertionID assertionID;
     IOPMAssertionCreateWithName(kIOPMAssertionTypeNoDisplaySleep,
                                 kIOPMAssertionLevelOn,
-                                (CFStringRef)[[NSBundle mainBundle] bundleIdentifier],
+                                (__bridge CFStringRef)[[NSBundle mainBundle] bundleIdentifier],
                                 &assertionID);
     
     // Log if there are no devices attached
@@ -188,8 +187,6 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
             }
         }
     }
-    
-    [presentUniqueIds release];
 }
 
 - (void)captureDevicesChanged
@@ -212,7 +209,7 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
     NSApplicationTerminateReply reply = NSTerminateNow;
     
     if ([[VideoProcessorController sharedInstance] isTracking]) {
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        NSAlert *alert = [[NSAlert alloc] init];
         [alert setMessageText:NSLocalizedString(@"There is a plate read in progress.", nil)]; 
         [alert setInformativeText:NSLocalizedString(@"The current read results and video will be lost if you exit before the plate is removed.", nil)];
         [alert addButtonWithTitle:NSLocalizedString(@"Cancel", nil)];
@@ -222,7 +219,7 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
             reply = NSTerminateCancel;
         }
     } else if ([[VideoProcessorController sharedInstance] hasConversionJobsQueuedOrRunning]) {
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        NSAlert *alert = [[NSAlert alloc] init];
         [alert setMessageText:NSLocalizedString(@"Videos are currently being encoded", nil)]; 
         [alert setInformativeText:NSLocalizedString(@"Videos will remain in their original captured format if you exit before the conversion jobs are complete.", nil)];
         [alert addButtonWithTitle:NSLocalizedString(@"Cancel", nil)];
@@ -263,7 +260,6 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
 - (void)loggingAndNotificationSettingsDidClose:(NSNotification *)note
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self name:[note name] object:[note object]];
-    [_loggingAndNotificationsWindowController release];
     _loggingAndNotificationsWindowController = nil;
 }
 

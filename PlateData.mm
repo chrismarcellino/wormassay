@@ -54,12 +54,6 @@ static inline void appendCSVElement(NSMutableString *output, NSString *element);
     return self;
 }
 
-- (void)dealloc
-{
-    [_additionalResultsText release];
-    [super dealloc];
-}
-
 - (void)appendMovementUnit:(double)movementUnit atPresentationTime:(NSTimeInterval)presentationTime forWell:(int)well
 {
     @synchronized(self) {
@@ -189,7 +183,6 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
         for (map<std::string, std::vector<double> >::iterator it = _valuesByWellAndDataColumn[0].begin(); it != _valuesByWellAndDataColumn[0].end(); it++) {
             NSString *columnID = [[NSString alloc] initWithUTF8String:(it->first).c_str()];
             [columnIDs addObject:columnID];
-            [columnID release];
         }
         [columnIDs sortUsingSelector:@selector(caseInsensitiveCompare:)];
         return columnIDs;
@@ -236,7 +229,6 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
         [dateFormatter setDateStyle:NSDateFormatterFullStyle];
         [dateFormatter setTimeStyle:NSDateFormatterFullStyle];
         NSString *assayDateTime = [dateFormatter stringFromDate:[NSDate dateWithTimeIntervalSinceNow:-elapsedTime]];
-        [dateFormatter release];
         
         // Write stats for each well
         for (size_t i = 0; i < _valuesByWellAndDataColumn.size(); i++) {
@@ -249,63 +241,61 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
                 well = i;
             }
             
-            NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-            
-            // Output the plate-well ID
-            std::string wellID = wellIdentifierStringForIndex(well, _valuesByWellAndDataColumn.size());
-            NSString *wellIDString = [NSString stringWithUTF8String:wellID.c_str()];
-            NSString *plateAndWellID = [NSString stringWithFormat:@"%@ Well %@", plateID, wellIDString];
-            appendCSVElement(output, plateAndWellID);
-            
-            // Output the scan ID and well by themselves
-            appendCSVElement(output, scanID);
-            appendCSVElement(output, wellIDString);
-            
-            // Output the assay date/time
-            appendCSVElement(output, assayDateTime);
-            
-            for (NSString *columnID in dataColumnIDs) {
-                NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+            @autoreleasepool {
+                // Output the plate-well ID
+                std::string wellID = wellIdentifierStringForIndex(well, _valuesByWellAndDataColumn.size());
+                NSString *wellIDString = [NSString stringWithUTF8String:wellID.c_str()];
+                NSString *plateAndWellID = [NSString stringWithFormat:@"%@ Well %@", plateID, wellIDString];
+                appendCSVElement(output, plateAndWellID);
                 
-                std::string columnIDStdStr = std::string([columnID UTF8String]);
+                // Output the scan ID and well by themselves
+                appendCSVElement(output, scanID);
+                appendCSVElement(output, wellIDString);
                 
-                ReportingStyle style = _reportingStyleByDataColumn[columnIDStdStr];
-                if ((style & ReportingStyleMean) || (style & ReportingStyleStdDev)) {
-                    double mean, stddev;
-                    meanAndStdDev(_valuesByWellAndDataColumn[well][columnIDStdStr], mean, stddev);
-                    if (style & ReportingStyleMean) {
-                        appendCSVElement(output, valueAsString(mean, style & ReportingStylePercent));
-                    }
-                    if (style & ReportingStyleStdDev) {
-                        appendCSVElement(output, valueAsString(stddev, style & ReportingStylePercent));
+                // Output the assay date/time
+                appendCSVElement(output, assayDateTime);
+                
+                for (NSString *columnID in dataColumnIDs) {
+                    @autoreleasepool {
+                        std::string columnIDStdStr = std::string([columnID UTF8String]);
+                        
+                        ReportingStyle style = _reportingStyleByDataColumn[columnIDStdStr];
+                        if ((style & ReportingStyleMean) || (style & ReportingStyleStdDev)) {
+                            double mean, stddev;
+                            meanAndStdDev(_valuesByWellAndDataColumn[well][columnIDStdStr], mean, stddev);
+                            if (style & ReportingStyleMean) {
+                                appendCSVElement(output, valueAsString(mean, style & ReportingStylePercent));
+                            }
+                            if (style & ReportingStyleStdDev) {
+                                appendCSVElement(output, valueAsString(stddev, style & ReportingStylePercent));
+                            }
+                        }
+                        
+                        // Append all raw values on a line, preceeded by the plate-well id
+                        if (style & ReportingStyleRaw) {
+                            // Get the string for this column ID if we've already started one
+                            NSMutableString *rawLine = [rawColumnIDsToCSVStrings objectForKey:columnID];
+                            if (!rawLine) {
+                                rawLine = [NSMutableString string];
+                                [rawColumnIDsToCSVStrings setObject:rawLine forKey:columnID];
+                            }
+                            
+                            appendCSVElement(rawLine, plateAndWellID);
+                            appendCSVElement(rawLine, scanID);
+                            appendCSVElement(rawLine, wellIDString);
+                            const std::vector<double>* rawValues = &_valuesByWellAndDataColumn[well][columnIDStdStr];
+                            for (size_t i = 0; i < rawValues->size(); i++) {
+                                @autoreleasepool {
+                                    appendCSVElement(rawLine, valueAsString(rawValues->at(i), style & ReportingStylePercent));
+                                }
+                            }
+                            [rawLine appendString:@"\n"];
+                        }
+                        
                     }
                 }
-                
-                // Append all raw values on a line, preceeded by the plate-well id
-                if (style & ReportingStyleRaw) {
-                    // Get the string for this column ID if we've already started one
-                    NSMutableString *rawLine = [rawColumnIDsToCSVStrings objectForKey:columnID];
-                    if (!rawLine) {
-                        rawLine = [NSMutableString string];
-                        [rawColumnIDsToCSVStrings setObject:rawLine forKey:columnID];
-                    }
-                    
-                    appendCSVElement(rawLine, plateAndWellID);
-                    appendCSVElement(rawLine, scanID);
-                    appendCSVElement(rawLine, wellIDString);
-                    const std::vector<double>* rawValues = &_valuesByWellAndDataColumn[well][columnIDStdStr];
-                    for (size_t i = 0; i < rawValues->size(); i++) {
-                        NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-                        appendCSVElement(rawLine, valueAsString(rawValues->at(i), style & ReportingStylePercent));
-                        [pool release];
-                    }
-                    [rawLine appendString:@"\n"];
-                }
-                
-                [pool release];
+                [output appendString:@"\n"];
             }
-            [output appendString:@"\n"];
-            [pool release];
         }
         [output appendString:@"\n"];
         return output;

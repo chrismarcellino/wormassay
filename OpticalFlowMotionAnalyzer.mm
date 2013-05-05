@@ -31,12 +31,6 @@ static const BOOL findInReverse = YES;
     return self;
 }
 
-- (void)dealloc
-{
-    [_lastFrames release];
-    [super dealloc];
-}
-
 + (NSString *)analyzerName
 {
     return NSLocalizedString(@"Lucas—Kanade Optical Flow (Velocity, 1 organism per well)", nil);
@@ -55,13 +49,11 @@ static const BOOL findInReverse = YES;
 - (BOOL)willBeginFrameProcessing:(VideoFrame *)videoFrame debugImage:(IplImage*)debugImage plateData:(PlateData *)plateData
 {
     // Find the most recent video frame that is at least 100 ms earlier than the current and discard older frames
-    [_prevFrame release];
     _prevFrame = nil;
     while ([_lastFrames count] > 0) {
         VideoFrame *aFrame = [_lastFrames objectAtIndex:0];
         if ([videoFrame presentationTime] - [aFrame presentationTime] >= MinimumIntervalFrameInterval) {
-            [_prevFrame release];
-            _prevFrame = [aFrame retain];
+            _prevFrame = aFrame;
             [_lastFrames removeObjectAtIndex:0];
         } else {
             break;

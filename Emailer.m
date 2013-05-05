@@ -52,7 +52,6 @@
                                  informativeTextWithFormat:@"Error running AppleScript to send email: %@", errorDict];
             [alert runModal];
         }
-        [script release];
     });
 }
 

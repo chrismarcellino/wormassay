@@ -19,9 +19,9 @@ NSString *const CaptureDeviceFileType = @"dyn.capturedevice";
 
 NSURL *URLForCaptureDeviceUniqueID(NSString *uniqueID)
 {
-    return [[[NSURL alloc] initWithScheme:CaptureDeviceScheme
-                                     host:@""
-                                     path:[@"/" stringByAppendingString:uniqueID]] autorelease];
+    return [[NSURL alloc] initWithScheme:CaptureDeviceScheme
+                                    host:@""
+                                    path:[@"/" stringByAppendingString:uniqueID]];
 }
 
 NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
@@ -92,17 +92,21 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
 - (id)initWithType:(NSString *)typeName error:(NSError **)outError
 {
     // Movies cannot be created anew
-    [self autorelease];
     return nil;
 }
 
 - (id)initWithContentsOfURL:(NSURL *)absoluteURL ofType:(NSString *)typeName error:(NSError **)outError
 {
+    self = [super initWithContentsOfURL:absoluteURL ofType:typeName error:outError];
+    if (!self) {
+        return nil;
+    }
+    
     // Create either a QTCaptureDevice or QTMovie and store a unique but human readable identifier for it
     NSString *captureDeviceUniqueID = UniqueIDForCaptureDeviceURL(absoluteURL);
     if (captureDeviceUniqueID) {
         if (captureDeviceUniqueID) {
-            _captureDevice = [[QTCaptureDevice deviceWithUniqueID:captureDeviceUniqueID] retain];
+            _captureDevice = [QTCaptureDevice deviceWithUniqueID:captureDeviceUniqueID];
         } else {
             NSDictionary *userInfo = [NSDictionary dictionaryWithObject:@"Unknown capture device ID" forKey:NSLocalizedDescriptionKey];
             if (outError) {
@@ -123,7 +127,6 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
                                     [NSNumber numberWithBool:NO], QTMovieOpenAsyncOKAttribute,
                                     nil];
         _movie = [[QTMovie alloc] initWithAttributes:attributes error:outError];
-        [attributes release];
         if (_movie) {
             [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(movieDidEnd) name:QTMovieDidEndNotification object:_movie];
             
@@ -133,25 +136,23 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
             [_movieView setMovie:_movie];
             [_movieView setControllerVisible:NO];
             [_movieView setPreservesAspectRatio:YES];
-            [_movieView setDelegate:[self retain]];         // released in -close
+            [_movieView setDelegate:self];
             
-            _sourceIdentifier = [[absoluteURL path] retain];
+            _sourceIdentifier = [absoluteURL path];
             RunLog(@"Opened file \"%@\".", _sourceIdentifier);
         }
     }
     
     if (!_captureDevice && !_movie) {
-        [self autorelease];
         return nil;
     }
     
-    return [super initWithContentsOfURL:absoluteURL ofType:typeName error:outError];
+    return self;
 }
 
 - (id)initForURL:(NSURL *)absoluteDocumentURL withContentsOfURL:(NSURL *)absoluteDocumentContentsURL ofType:(NSString *)typeName error:(NSError **)outError
 {
     // Movies are not writeable
-    [self autorelease];
     return nil;
 }
 
@@ -161,21 +162,7 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
         [[NSNotificationCenter defaultCenter] removeObserver:self name:QTMovieDidEndNotification object:_movie];
     }
     
-    [_captureDevice release];
-    [_captureSession release];
-    [_captureDeviceInput release];
-    [_captureDecompressedVideoOutput release];
     dispatch_release(_frameArrivalQueue);
-    
-    [_movie release];
-    [_movieInvisibleWindow release];
-    [_movieView release];
-    [_ciContext release];
-    
-    [_processor release];
-    [_bitmapOpenGLView release];
-    [_sourceIdentifier release];
-    [super dealloc];
 }
 
 - (void)makeWindowControllers
@@ -206,8 +193,6 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
     NSWindowController *windowController = [[NSWindowController alloc] initWithWindow:window];
     [windowController setWindowFrameAutosaveName:[[self fileURL] relativeString]];
     [self addWindowController:windowController];
-    [window release];
-    [windowController release];
     
     // Remove the icon if this is a capture device
     if (_captureDevice) {
@@ -285,7 +270,6 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
                                                   [NSNumber numberWithInt:kCVPixelFormatType_32BGRA], kCVPixelBufferPixelFormatTypeKey,
                                                   nil];
                 [_captureDecompressedVideoOutput setPixelBufferAttributes:bufferAttributes];
-                [bufferAttributes release];
                 [_captureDecompressedVideoOutput setDelegate:self];
                 success = [_captureSession addOutput:_captureDecompressedVideoOutput error:outError];
                 if (success) {
@@ -309,14 +293,12 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
         NSError *error = nil;
         if (![_captureSession addOutput:captureFileOutput error:&error]) {
             RunLog(@"Unable to add QTCaptureFileOutput to capture session: %@", error);
-            [captureFileOutput release];
             captureFileOutput = nil;
         }
     } else {
         fileSourceFilename = [[[_movie attributeForKey:QTMovieURLAttribute] path] lastPathComponent];
     }
     _processor = [[VideoProcessor alloc] initWithCaptureFileOutput:captureFileOutput fileSourceFilename:fileSourceFilename];
-    [captureFileOutput release];
     [[VideoProcessorController sharedInstance] addVideoProcessor:_processor];
     
     return success;
@@ -337,7 +319,6 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
             [NSThread sleepForTimeInterval:0.1];     // work around to reproduce CIImage/QTMovieView thread safety issues (brutal hack)
             [_movieView pause:self];
             if ([_movieView delegate] == self) {
-                [self autorelease];
                 [_movieView setDelegate:nil];
             }
         }
@@ -351,7 +332,7 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
      withSampleBuffer:(QTSampleBuffer *)sampleBuffer
        fromConnection:(QTCaptureConnection *)connection
 {
-    [self pixelBufferOrImageHasArrived:(id)videoFrame isCIImage:NO];
+    [self pixelBufferOrImageHasArrived:(__bridge id)videoFrame isCIImage:NO];
 }
 
 // Called on a background thread when using a pre-recorded movie file
@@ -371,13 +352,13 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
             
             // Do processing work on another queue so the arrival queue isn't blocked and new frames can be dropped in the interim
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-                if (isCIImage) {
-                    [self processCIImageSynchronously:(CIImage *)pixelBufferOrCIImage];
-                } else {
-                    [self processCVPixelBufferSynchronously:(CVPixelBufferRef)pixelBufferOrCIImage];
+                @autoreleasepool {
+                    if (isCIImage) {
+                        [self processCIImageSynchronously:(CIImage *)pixelBufferOrCIImage];
+                    } else {
+                        [self processCVPixelBufferSynchronously:(CVPixelBufferRef)pixelBufferOrCIImage];
+                    }
                 }
-                [pool release];
                 
                 // Mark that we're done
                 dispatch_sync(_frameArrivalQueue, ^{
@@ -429,7 +410,6 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
             [bufferAttributes setObject:[NSNumber numberWithDouble:squarePixelBufferSize.width] forKey:(id)kCVPixelBufferWidthKey];
             [bufferAttributes setObject:[NSNumber numberWithDouble:squarePixelBufferSize.height] forKey:(id)kCVPixelBufferHeightKey];
             [_captureDecompressedVideoOutput setPixelBufferAttributes:bufferAttributes];
-            [bufferAttributes release];
         }
         
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -441,7 +421,6 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
                                                         resultChannelCount:4
                                                           presentationTime:CACurrentMediaTime()];
         [self processVideoFrame:frame];
-        [frame release];
     }
 }
 
@@ -449,7 +428,7 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
 {
     // Reuse the context for performance reasons
     if (!_ciContext) {
-        _ciContext = [[CIContext contextWithCGContext:NULL options:nil] retain];
+        _ciContext = [CIContext contextWithCGContext:NULL options:nil];
     }
     
     VideoFrame *frame = [[VideoFrame alloc] initByCopyingCIImage:image
@@ -458,7 +437,6 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
                                               resultChannelCount:4
                                                 presentationTime:CACurrentMediaTime()];
     [self processVideoFrame:frame];
-    [frame release];
 }
 
 - (void)processVideoFrame:(VideoFrame *)image

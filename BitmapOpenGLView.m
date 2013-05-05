@@ -28,7 +28,7 @@
         NSOpenGLPFAWindow,
         (NSOpenGLPixelFormatAttribute)NULL
     };
-    return [[[NSOpenGLPixelFormat alloc] initWithAttributes:attributes] autorelease];
+    return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
 }
 
 - (id)initWithFrame:(NSRect)frameRect pixelFormat:(NSOpenGLPixelFormat *)format
@@ -38,12 +38,6 @@
     }
     
     return self;
-}
-
-- (void)dealloc
-{
-    [_lastImage release];
-    [super dealloc];
 }
 
 - (void)prepareOpenGL
@@ -127,8 +121,7 @@
     // We get rid of the previous data after uploading the new texture so that we don't incur a copy of the pixels that we
     // may have DMA'd. 
     if (image) {
-        [_lastImage release];
-        _lastImage = [image retain];
+        _lastImage = image;
     }
     
     GLenum error = glGetError();

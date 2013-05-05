@@ -29,7 +29,6 @@ static inline void premultiplyImage(IplImage *img, bool reverse);
 - (void)dealloc
 {
     cvReleaseImage(&_image);
-    [super dealloc];
 }
 
 - (id)copyWithZone:(NSZone *)zone

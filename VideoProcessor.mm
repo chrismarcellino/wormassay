@@ -29,7 +29,7 @@ static const double WellDetectingAverageDeltaEndIdleThreshold = 5.0;
 static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
 
 @interface VideoProcessor() {
-    id<VideoProcessorDelegate> _delegate;        // not retained
+    __unsafe_unretained id<VideoProcessorDelegate> _delegate;        // not retained
     QTCaptureFileOutput *_captureFileOutput;
     NSString *_fileSourceFilename;
     Class _assayAnalyzerClass;
@@ -73,7 +73,7 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
 - (id)initWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput fileSourceFilename:(NSString *)fileSourceFilename
 {
     if ((self = [super init])) {
-        _captureFileOutput = [captureFileOutput retain];
+        _captureFileOutput = captureFileOutput;
         _fileSourceFilename = [fileSourceFilename copy];
         _queue = dispatch_queue_create("video-processor", NULL);
         _debugFrameCallbackQueue = dispatch_queue_create("video-processor-callback", NULL);
@@ -84,14 +84,8 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
 
 - (void)dealloc
 {
-    [_captureFileOutput release];
-    [_fileSourceFilename release];
     dispatch_release(_queue);
     dispatch_release(_debugFrameCallbackQueue);
-    [_plateData release];
-    [_assayAnalyzer release];
-    [_lastBarcodeThisProcessor release];
-    [super dealloc];
 }
 
 - (void)setDelegate:(id<VideoProcessorDelegate>)delegate
@@ -185,7 +179,6 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
                 
                 VideoFrame *copy = [videoFrame copy];
                 [self performWellDeterminationCalculationAsyncWithFrame:copy];
-                [copy release];
             }
         }
         
@@ -193,7 +186,6 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
         if (!_scanningForBarcodes && _lastBarcodeScanTime < [videoFrame presentationTime] - BarcodeScanningPeriod) {
             VideoFrame *copy = [videoFrame copy];
             [self performBarcodeReadingAsyncWithFrame:copy];
-            [copy release];
         }
         
         // Create a copy of the frame to draw debugging info on, which we will send back
@@ -293,11 +285,10 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
                 
         // Dispatch the debug image asynchronously to increase parallelism 
         dispatch_async(_debugFrameCallbackQueue, ^{
-            NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-            callback(debugFrame);
-            [pool release];
+            @autoreleasepool {
+                callback(debugFrame);
+            }
         });
-        [debugFrame release];
         
         // Add the processing time last
         if (_plateData) {
@@ -440,8 +431,7 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
         dispatch_async(_queue, ^{
             _scanningForBarcodes = NO;
             _lastBarcodeScanTime = [videoFrame presentationTime];
-            [_lastBarcodeThisProcessor release];
-            _lastBarcodeThisProcessor = [text retain];
+            _lastBarcodeThisProcessor = text;
             
             if (text && _lastBarcodeThisProcessor && [text isEqual:_lastBarcodeThisProcessor]) {
                 _lastBarcodeThisProcessorRepeatCount++;
@@ -482,11 +472,9 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
 stopRecordingWithCaptureFileOutput:_captureFileOutput];
         
         // Release the analyzer
-        [_assayAnalyzer release];
         _assayAnalyzer = nil;
         
         // Release the plate data
-        [_plateData release];
         _plateData = nil;
     }
     NSAssert(!_assayAnalyzer && !_plateData, @"inconsistent state");

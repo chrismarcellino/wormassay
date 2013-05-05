@@ -21,12 +21,6 @@
     return self;
 }
 
-- (void)dealloc
-{
-    [_contents release];
-    [super dealloc];
-}
-
 - (id)initWithCoder:(NSCoder *)aDecoder
 {
     if ((self = [super initWithCoder:aDecoder])) {
@@ -40,7 +34,6 @@
     NSAssert([self dataSource] == self, @"dataSource cannot be changed");
     
     if (_contents != contents) {
-        [_contents release];
         _contents = [contents copy];
         [self reloadData];
     }
