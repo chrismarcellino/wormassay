@@ -444,6 +444,10 @@ stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
 - (void)videoProcessor:(VideoProcessor *)vp didCaptureBarcodeText:(NSString *)text atTime:(NSTimeInterval)presentationTime
 {
     dispatch_async(_queue, ^{
+        // If we have a barcode on a camera that isn't the tracking camera, don't rotate the image		
+        if (vp != _currentlyTrackingProcessor && [_videoProcessors count] > 1) {		
+            [vp setPlateOrientation:PlateOrientationTopRead];		
+        }
         if ([_videoProcessors containsObject:vp] && presentationTime >= _trackingBeginTime) {
             [_barcodesSinceTrackingBegan addObject:text];
         }

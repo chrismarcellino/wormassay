@@ -168,7 +168,8 @@ static bool findWellCirclesForWellCountUsingImage(IplImage* image,
 {
     // Determine well metrics for this plate type
     int rows, columns;
-    getPlateConfigurationForWellCount(wellCount, rows, columns);
+    bool valid = getPlateConfigurationForWellCount(wellCount, rows, columns);
+    assert(valid);
     int smallerImageDimension = MIN(image->width, image->height);
     int largerImageDimension = MAX(image->width, image->height);
     
@@ -436,7 +437,8 @@ void drawWellCirclesAndLabelsOnDebugImage(std::vector<Circle> circles, CvScalar 
 std::string wellIdentifierStringForIndex(int index, int wellCount)
 {
     int rows, columns;
-    getPlateConfigurationForWellCount(wellCount, rows, columns);
+    bool valid = getPlateConfigurationForWellCount(wellCount, rows, columns);
+    assert(valid);
     
     std::stringstream ss;
     ss << (char)('A' + index / columns);

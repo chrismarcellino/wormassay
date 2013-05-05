@@ -8,10 +8,6 @@
 
 #import "opencv2/core/core_c.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // C compatible Circle structure
 typedef struct {
     float center[2];
@@ -49,7 +45,3 @@ static inline CvRect boundingSquareForCircle(Circle circle)
     float radius = circle.radius;
     return cvRect(circle.center[0] - radius, circle.center[1] - radius, 2 * radius, 2 * radius);
 }
-
-#ifdef __cplusplus
-}
-#endif

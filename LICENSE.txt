@@ -1,5 +1,5 @@
 WormAssay, Chris Marcellino, Sandler Center, UCSF
-Copyright (C) 2011 Chris Marcellino
+Copyright (C) 2011, 2012, 2013 Chris Marcellino
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

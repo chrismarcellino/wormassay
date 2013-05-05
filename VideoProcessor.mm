@@ -362,7 +362,7 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
                                 [_delegate videoProcessor:self didBeginTrackingPlateAtPresentationTime:[videoFrame presentationTime]];
                                 
                                 // Create plate data and analyzer
-                                RunLog(@"Began tracking %i well plate using %@ analyzer.", _trackingWellCircles.size(), [_assayAnalyzerClass analyzerName]);
+                                RunLog(@"Began tracking %li well plate using %@ analyzer.", _trackingWellCircles.size(), [_assayAnalyzerClass analyzerName]);
                                 NSAssert(!_plateData && !_assayAnalyzer, @"plate data or motion analyzer already exists");
                                 _plateData = [[PlateData alloc] initWithWellCount:wellCircles.size() startPresentationTime:[videoFrame presentationTime]];
                                 _assayAnalyzer = [[_assayAnalyzerClass alloc] init];
