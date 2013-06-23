@@ -1,6 +1,13 @@
+Version 1.1
+-----------
+Add option to 1) disable well finding, or 2) find only a single well.
+Fix bug preventing use of non-HD DV cameras. 
+Switch build tools to LLVM, and enable ARC. Convert code base to use ARC. 
+
 Version 1.01
 ------------
 Stop preventing rotation of barcode camera, to improve barcoding results. 
+Improve barcoding reliability. 
 
 Version 1.0
 ------------

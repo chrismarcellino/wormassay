@@ -591,7 +591,6 @@ static inline BOOL isValidPath(NSString *path, NSFileManager *fileManager)
                 NSMutableArray *arguments = [NSMutableArray arrayWithObjects:@"-i", inputPath,
                                              @"-vcodec", @"libx264", @"-f", @"mp4", @"-crf", @"22", @"-threads", @"0", @"-y", nil];
                 switch ([job plateOrientation]) {
-                    default:
                     case PlateOrientationTopRead:
                         break;
                     case PlateOrientationTopRead180DegreeRotated:

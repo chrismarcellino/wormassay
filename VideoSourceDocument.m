@@ -97,11 +97,6 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
 
 - (id)initWithContentsOfURL:(NSURL *)absoluteURL ofType:(NSString *)typeName error:(NSError **)outError
 {
-    self = [super initWithContentsOfURL:absoluteURL ofType:typeName error:outError];
-    if (!self) {
-        return nil;
-    }
-    
     // Create either a QTCaptureDevice or QTMovie and store a unique but human readable identifier for it
     NSString *captureDeviceUniqueID = UniqueIDForCaptureDeviceURL(absoluteURL);
     if (captureDeviceUniqueID) {
@@ -147,7 +142,7 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
         return nil;
     }
     
-    return self;
+    return [super initWithContentsOfURL:absoluteURL ofType:typeName error:outError];
 }
 
 - (id)initForURL:(NSURL *)absoluteDocumentURL withContentsOfURL:(NSURL *)absoluteDocumentContentsURL ofType:(NSString *)typeName error:(NSError **)outError
@@ -386,9 +381,9 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
             CFNumberGetValue(verticalPixelNumber, kCFNumberDoubleType, &verticalPixel);
             if (horizontalPixel != verticalPixel) {
                 if (horizontalPixel > verticalPixel) {
-                    squarePixelBufferSize.width *= horizontalPixel / verticalPixel;
+                    squarePixelBufferSize.width *= round(horizontalPixel / verticalPixel);
                 } else {
-                    squarePixelBufferSize.height *= verticalPixel / horizontalPixel;                    
+                    squarePixelBufferSize.height *= round(verticalPixel / horizontalPixel);
                 }
             }
         }

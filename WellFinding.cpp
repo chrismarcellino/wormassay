@@ -37,7 +37,7 @@ static IplImage* createUnsharpMaskImage(IplImage* image, float radius, float amo
 // Sorted by prevalence
 std::vector<int> knownPlateWellCounts()
 {
-    int counts[] = { 96, 48, 24, 12, 6 };
+    int counts[] = { 96, 48, 24, 12, 6, 1 };
     return std::vector<int>(counts, counts + sizeof(counts)/sizeof(*counts));
 }
 
@@ -45,6 +45,9 @@ bool getPlateConfigurationForWellCount(int wellCount, int &rows, int &columns)
 {
     bool valid = true;
     switch (wellCount) {
+        case 1:
+            rows = 1;
+            break;
         case 6:
             rows = 2;
             break;
@@ -227,47 +230,49 @@ static bool findWellCirclesForWellCountUsingImage(IplImage* image,
     }
     
     // Do two passes so that we only start filtering entire rows once we've filtered out spurious circles
-    for (int pass = 0; pass < 2; pass++) {
-        // First sort the centers by X value so that lines vertically colinear are adjacent in the seq. Next do the opposite. 
-        for (int axis = 0; axis <= 1; axis++) {
-            cvSeqSort(circles, sortCircleCentersByAxis, &axis);
-            
-            // Iterate through list and move circles colinear along Y lines to a new seq, and hence have similar X values (and then vice versa)
-            CvSeq* colinearCircles = cvCreateSeq(CV_32FC3, sizeof(CvSeq), 3 * sizeof(float), storage);
-            
-            // Iterate through the current list
-            for (int i = 0; i < circles->total; i++) {
-                float* current = (float*)cvGetSeqElem(circles, i);
+    if (wellCount > 1) {
+        for (int pass = 0; pass < 2; pass++) {
+            // First sort the centers by X value so that lines vertically colinear are adjacent in the seq. Next do the opposite.
+            for (int axis = 0; axis <= 1; axis++) {
+                cvSeqSort(circles, sortCircleCentersByAxis, &axis);
                 
-                // Iterate along a colinear line
-                int numberOfColinearCircles = 0;
-                for (int j = i + 1; j < circles->total; j++) {
-                    float *partner = (float*)cvGetSeqElem(circles, j);
-                    if (fabsf(current[axis] - partner[axis]) <= colinearityThreshold) {
-                        if (numberOfColinearCircles == 0) {
-                            // Push the 'current' element
-                            cvSeqPush(colinearCircles, current);
+                // Iterate through list and move circles colinear along Y lines to a new seq, and hence have similar X values (and then vice versa)
+                CvSeq* colinearCircles = cvCreateSeq(CV_32FC3, sizeof(CvSeq), 3 * sizeof(float), storage);
+                
+                // Iterate through the current list
+                for (int i = 0; i < circles->total; i++) {
+                    float* current = (float*)cvGetSeqElem(circles, i);
+                    
+                    // Iterate along a colinear line
+                    int numberOfColinearCircles = 0;
+                    for (int j = i + 1; j < circles->total; j++) {
+                        float *partner = (float*)cvGetSeqElem(circles, j);
+                        if (fabsf(current[axis] - partner[axis]) <= colinearityThreshold) {
+                            if (numberOfColinearCircles == 0) {
+                                // Push the 'current' element
+                                cvSeqPush(colinearCircles, current);
+                                numberOfColinearCircles++;
+                            }
+                            
+                            // Push each partner and advance i so these matching partners aren't unnecessarily reconsidered
+                            cvSeqPush(colinearCircles, partner);
                             numberOfColinearCircles++;
+                            i++;
+                            // Advanced current so we tolerate plates that are not perfectly axis alligned
+                            current = partner;
+                        } else {
+                            break;
                         }
-                        
-                        // Push each partner and advance i so these matching partners aren't unnecessarily reconsidered
-                        cvSeqPush(colinearCircles, partner);
-                        numberOfColinearCircles++;
-                        i++;
-                        // Advanced current so we tolerate plates that are not perfectly axis alligned
-                        current = partner;
-                    } else {
-                        break;
+                    }
+                    
+                    // On the second pass, determine if we saw as many colinear circles as we expected and if not, pop what we just pushed
+                    if (pass >= 1 && numberOfColinearCircles != (axis == 1 ? columns : rows)) {
+                        cvSeqPopMulti(colinearCircles, NULL, numberOfColinearCircles);
                     }
                 }
                 
-                // On the second pass, determine if we saw as many colinear circles as we expected and if not, pop what we just pushed
-                if (pass >= 1 && numberOfColinearCircles != (axis == 1 ? columns : rows)) {
-                    cvSeqPopMulti(colinearCircles, NULL, numberOfColinearCircles);
-                }
+                circles = colinearCircles;
             }
-            
-            circles = colinearCircles;
         }
     }
     

@@ -140,7 +140,6 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
         BOOL flip = NO;
         int flipMode;
         switch (_plateOrientation) {
-            default:
             case PlateOrientationTopRead:
                 break;
             case PlateOrientationTopRead180DegreeRotated:

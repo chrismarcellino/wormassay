@@ -18,7 +18,7 @@ static inline NSString *valueAsString(double value, bool asPercent);
 static inline void appendCSVElement(NSMutableString *output, NSString *element);
 
 @interface PlateData () {
-    NSUInteger _wellCount;
+    BOOL _fullFrame;
     NSTimeInterval _startPresentationTime;
     NSTimeInterval _lastPresentationTime;
     std::vector<std::map<std::string, std::vector<double> > > _valuesByWellAndDataColumn;
@@ -35,7 +35,6 @@ static inline void appendCSVElement(NSMutableString *output, NSString *element);
 
 @implementation PlateData
 
-@synthesize wellCount = _wellCount;
 @synthesize startPresentationTime = _startPresentationTime;
 @synthesize lastPresentationTime = _lastPresentationTime;
 @synthesize receivedFrameCount = _receivedFrameCount;
@@ -45,7 +44,6 @@ static inline void appendCSVElement(NSMutableString *output, NSString *element);
 - (id)initWithWellCount:(NSUInteger)wellCount startPresentationTime:(NSTimeInterval)presentationTime
 {
     if ((self = [super init])) {
-        _wellCount = wellCount;
         _startPresentationTime = _lastPresentationTime = presentationTime;
         _valuesByWellAndDataColumn.resize(wellCount);
         
