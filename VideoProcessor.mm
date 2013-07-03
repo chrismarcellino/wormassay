@@ -70,7 +70,8 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
 
 @synthesize fileSourceFilename = _fileSourceFilename;
 
-- (id)initWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput fileSourceFilename:(NSString *)fileSourceFilename
+- (id)initWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
+             fileSourceFilename:(NSString *)fileSourceFilename
 {
     if ((self = [super init])) {
         _captureFileOutput = captureFileOutput;
@@ -141,6 +142,7 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
         int flipMode;
         switch (_plateOrientation) {
             case PlateOrientationTopRead:
+            case PlateOrientationNoWells:
                 break;
             case PlateOrientationTopRead180DegreeRotated:
                 flip = YES;
@@ -299,6 +301,9 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
 // requires _queue to be held
 - (void)performWellDeterminationCalculationAsyncWithFrame:(VideoFrame *)videoFrame
 {
+    // If well finding is disabled, report success and bail
+    bool wellFindingDisabled = _plateOrientation == PlateOrientationNoWells;
+    
     _scanningForWells = YES;
     
     // Get instance variables while holding _queue for thread-safety
@@ -310,7 +315,13 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
         // Get wells in row major order
         std::vector<Circle> wellCircles;
         bool plateFound;
-        if (searchAllPlateSizes) {
+        if (wellFindingDisabled) {
+            plateFound = YES;
+            CvSize imageSize = cvGetSize([videoFrame image]);
+            // Carve out a circle in the middle of the field of view
+            Circle circle = { { imageSize.width / 2.0, imageSize.height / 2.0 }, MIN(imageSize.width, imageSize.height) };
+            wellCircles.push_back(circle);
+        } else if (searchAllPlateSizes) {
             plateFound = findWellCircles([videoFrame image], wellCircles, wellCountHint);
         } else {
             plateFound = findWellCirclesForWellCount([videoFrame image], wellCountHint, wellCircles);
@@ -492,6 +503,13 @@ stopRecordingWithCaptureFileOutput:_captureFileOutput];
     dispatch_async(_queue, ^{
         [self resetCaptureStateAndReportResults];
         [self setShouldScanForWells:NO];
+    });
+}
+
+- (void)manuallyReportResultsAndReset
+{
+    dispatch_async(_queue, ^{
+        [self resetCaptureStateAndReportResults];
     });
 }
 

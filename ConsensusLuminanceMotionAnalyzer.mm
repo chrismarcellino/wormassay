@@ -133,7 +133,12 @@ static const char* WellOccupancyID = "Well Occupancy";
     meanProportionPlateMoved /= [randomlyChosenFrames count];
     
     // If the average luminance delta across the set of entire plate images is more than about 2%, the entire plate is likely moving.
-    if (meanProportionPlateMoved > PlateMovingProportionAboveThresholdLimit) {
+    BOOL overThreshold = meanProportionPlateMoved > PlateMovingProportionAboveThresholdLimit;
+    if (overThreshold || _lastMovementThresholdPresentationTime == 0) {     // start in moved mode
+        _lastMovementThresholdPresentationTime = [videoFrame presentationTime];
+    }
+    
+    if (overThreshold || _lastMovementThresholdPresentationTime + IgnoreFramesPostMovementTimeInterval() > [videoFrame presentationTime]) {
         // Draw the movement text
         CvFont wellFont = fontForNormalizedScale(3.5, debugImage);
         cvPutText(debugImage,
@@ -143,7 +148,7 @@ static const char* WellOccupancyID = "Well Occupancy";
                   CV_RGBA(232, 0, 217, 255));
         return NO;
     }
-        
+    
     return YES;
 }
 

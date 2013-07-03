@@ -157,7 +157,9 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
         [[NSNotificationCenter defaultCenter] removeObserver:self name:QTMovieDidEndNotification object:_movie];
     }
     
-    dispatch_release(_frameArrivalQueue);
+    if (_frameArrivalQueue) {
+        dispatch_release(_frameArrivalQueue);
+    }
 }
 
 - (void)makeWindowControllers

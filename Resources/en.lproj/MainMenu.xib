@@ -2,9 +2,9 @@
 <archive type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="8.00">
 	<data>
 		<int key="IBDocument.SystemTarget">1080</int>
-		<string key="IBDocument.SystemVersion">12D78</string>
+		<string key="IBDocument.SystemVersion">12E55</string>
 		<string key="IBDocument.InterfaceBuilderVersion">3084</string>
-		<string key="IBDocument.AppKitVersion">1187.37</string>
+		<string key="IBDocument.AppKitVersion">1187.39</string>
 		<string key="IBDocument.HIToolboxVersion">626.00</string>
 		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
 			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -258,8 +258,7 @@
 								<object class="NSMenuItem" id="372452087">
 									<reference key="NSMenu" ref="720053764"/>
 									<string key="NSTitle">Open Run Output Folder</string>
-									<string key="NSKeyEquiv">r</string>
-									<int key="NSKeyEquivModMask">1048576</int>
+									<string key="NSKeyEquiv"/>
 									<int key="NSMnemonicLoc">2147483647</int>
 									<reference key="NSOnImage" ref="1033313550"/>
 									<reference key="NSMixedImage" ref="310636482"/>
@@ -701,14 +700,6 @@
 						<object class="NSMenu" key="NSSubmenu" id="433591544">
 							<string key="NSTitle">Options</string>
 							<array class="NSMutableArray" key="NSMenuItems">
-								<object class="NSMenuItem" id="136013487">
-									<reference key="NSMenu" ref="433591544"/>
-									<string key="NSTitle">Ignore Built-in Cameras</string>
-									<string key="NSKeyEquiv"/>
-									<int key="NSMnemonicLoc">2147483647</int>
-									<reference key="NSOnImage" ref="1033313550"/>
-									<reference key="NSMixedImage" ref="310636482"/>
-								</object>
 								<object class="NSMenuItem" id="517408328">
 									<reference key="NSMenu" ref="433591544"/>
 									<string key="NSTitle">Logging &amp; Notifications…</string>
@@ -788,6 +779,33 @@
 									<reference key="NSMenu" ref="433591544"/>
 									<string key="NSTitle">Output in Column-Major Order</string>
 									<string key="NSKeyEquiv"/>
+									<int key="NSMnemonicLoc">2147483647</int>
+									<reference key="NSOnImage" ref="1033313550"/>
+									<reference key="NSMixedImage" ref="310636482"/>
+								</object>
+								<object class="NSMenuItem" id="136013487">
+									<reference key="NSMenu" ref="433591544"/>
+									<string key="NSTitle">Ignore Built-in Cameras</string>
+									<string key="NSKeyEquiv"/>
+									<int key="NSMnemonicLoc">2147483647</int>
+									<reference key="NSOnImage" ref="1033313550"/>
+									<reference key="NSMixedImage" ref="310636482"/>
+								</object>
+								<object class="NSMenuItem" id="953153706">
+									<reference key="NSMenu" ref="433591544"/>
+									<bool key="NSIsDisabled">YES</bool>
+									<bool key="NSIsSeparator">YES</bool>
+									<string key="NSTitle"/>
+									<string key="NSKeyEquiv"/>
+									<int key="NSMnemonicLoc">2147483647</int>
+									<reference key="NSOnImage" ref="1033313550"/>
+									<reference key="NSMixedImage" ref="310636482"/>
+								</object>
+								<object class="NSMenuItem" id="137933383">
+									<reference key="NSMenu" ref="433591544"/>
+									<string key="NSTitle">Report results now and restart</string>
+									<string key="NSKeyEquiv">r</string>
+									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
 									<reference key="NSOnImage" ref="1033313550"/>
 									<reference key="NSMixedImage" ref="310636482"/>
@@ -1263,6 +1281,14 @@
 						<reference key="destination" ref="372452087"/>
 					</object>
 					<int key="connectionID">556</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">manuallyReportResultsAndResetProcessor:</string>
+						<reference key="source" ref="1014"/>
+						<reference key="destination" ref="137933383"/>
+					</object>
+					<int key="connectionID">586</int>
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBBindingConnection" key="connection">
@@ -1948,11 +1974,13 @@
 						<int key="objectID">531</int>
 						<reference key="object" ref="433591544"/>
 						<array class="NSMutableArray" key="children">
-							<reference ref="136013487"/>
 							<reference ref="517408328"/>
 							<reference ref="250333088"/>
 							<reference ref="66700025"/>
 							<reference ref="356449551"/>
+							<reference ref="137933383"/>
+							<reference ref="136013487"/>
+							<reference ref="953153706"/>
 						</array>
 						<reference key="parent" ref="503703545"/>
 					</object>
@@ -2048,6 +2076,16 @@
 						<int key="objectID">576</int>
 						<reference key="object" ref="973155904"/>
 						<reference key="parent" ref="690626892"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">583</int>
+						<reference key="object" ref="137933383"/>
+						<reference key="parent" ref="433591544"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">584</int>
+						<reference key="object" ref="953153706"/>
+						<reference key="parent" ref="433591544"/>
 					</object>
 				</array>
 			</object>
@@ -2145,6 +2183,8 @@
 				<string key="572.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="576.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="58.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
+				<string key="583.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
+				<string key="584.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="72.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="73.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="74.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -2160,7 +2200,7 @@
 			<nil key="activeLocalization"/>
 			<dictionary class="NSMutableDictionary" key="localizations"/>
 			<nil key="sourceID"/>
-			<int key="maxID">577</int>
+			<int key="maxID">586</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<array class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -2176,11 +2216,16 @@
 					<string key="className">WormAssayAppDelegate</string>
 					<string key="superclassName">NSObject</string>
 					<dictionary class="NSMutableDictionary" key="actions">
+						<string key="manuallyReportResultsAndResetProcessor:">id</string>
 						<string key="openRunOutputFolder:">id</string>
 						<string key="plateOrientationWasSelected:">id</string>
 						<string key="showLoggingAndNotificationSettings:">id</string>
 					</dictionary>
 					<dictionary class="NSMutableDictionary" key="actionInfosByName">
+						<object class="IBActionInfo" key="manuallyReportResultsAndResetProcessor:">
+							<string key="name">manuallyReportResultsAndResetProcessor:</string>
+							<string key="candidateClassName">id</string>
+						</object>
 						<object class="IBActionInfo" key="openRunOutputFolder:">
 							<string key="name">openRunOutputFolder:</string>
 							<string key="candidateClassName">id</string>

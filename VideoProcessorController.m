@@ -234,15 +234,20 @@ static void createFolderIfNecessary(NSString *path)
     [defaults synchronize];
 }
 
+- (void)manuallyReportResultsForCurrentProcessor
+{
+    if (_currentlyTrackingProcessor) {
+        [_currentlyTrackingProcessor manuallyReportResultsAndReset];
+    }
+}
+
 - (void)addVideoProcessor:(VideoProcessor *)videoProcessor
 {
     dispatch_async(_queue, ^{
         [_videoProcessors addObject:videoProcessor];
         [videoProcessor setDelegate:self];
         [videoProcessor setAssayAnalyzerClass:[self currentAssayAnalyzerClass]];
-        if (![videoProcessor fileSourceFilename]) {
-            [videoProcessor setPlateOrientation:[self plateOrientation]];
-        }
+        [videoProcessor setPlateOrientation:[self plateOrientation]];
         [videoProcessor setShouldScanForWells:YES];
     });
 }
@@ -592,6 +597,7 @@ static inline BOOL isValidPath(NSString *path, NSFileManager *fileManager)
                                              @"-vcodec", @"libx264", @"-f", @"mp4", @"-crf", @"22", @"-threads", @"0", @"-y", nil];
                 switch ([job plateOrientation]) {
                     case PlateOrientationTopRead:
+                    case PlateOrientationNoWells:
                         break;
                     case PlateOrientationTopRead180DegreeRotated:
                         [arguments addObject:@"-vf"];

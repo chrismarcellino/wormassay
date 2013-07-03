@@ -14,10 +14,9 @@
 
 static const char* WellOccupancyID = "Well Occupancy";
 static const double WellEdgeFindingInsetProportion = 0.8;
-static const size_t MaximumNumberOfFeaturePoints = 200;
+static const double MaximumNumberOfFeaturePointsToAreaRatio = 1.0 / 200.0;
 static const double DeltaMeanMovementLimit = 20.0;
 static const double DeltaStdDevMovementLimit = 10.0;
-static const NSTimeInterval IgnoreFramesPostMovementThresholdTimeInterval = 5.0;
 static const NSTimeInterval MinimumIntervalFrameInterval = 0.100;
 static const BOOL findInReverse = YES;
 
@@ -75,11 +74,11 @@ static const BOOL findInReverse = YES;
     cvReleaseImage(&plateDelta);
 
     BOOL overThreshold = deltaMean > DeltaMeanMovementLimit || deltaStdDevAvg > DeltaStdDevMovementLimit;
-    if (overThreshold) {
+    if (overThreshold || _lastMovementThresholdPresentationTime == 0) {     // start in moved mode
         _lastMovementThresholdPresentationTime = [videoFrame presentationTime];
     }
     
-    if (overThreshold || _lastMovementThresholdPresentationTime + IgnoreFramesPostMovementThresholdTimeInterval > [videoFrame presentationTime]) {
+    if (overThreshold || _lastMovementThresholdPresentationTime + IgnoreFramesPostMovementTimeInterval() > [videoFrame presentationTime]) {
         // Draw the movement text
         CvFont wellFont = fontForNormalizedScale(3.5, debugImage);
         cvPutText(debugImage,
@@ -147,12 +146,13 @@ static const BOOL findInReverse = YES;
         row += cannyEdges->widthStep;
     }
     // If we have too many points, randomly shuffle MaximumNumberOfFeaturePoints to the begining and keep that set
-    if (featuresPrev.size() > MaximumNumberOfFeaturePoints) {
-        for (size_t i = 0; i < MaximumNumberOfFeaturePoints; i++) {
+    size_t maxNumberOfFeatures = M_PI * radius * radius * MaximumNumberOfFeaturePointsToAreaRatio;
+    if (featuresPrev.size() > maxNumberOfFeatures) {
+        for (size_t i = 0; i < maxNumberOfFeatures; i++) {
             size_t other = random() % featuresPrev.size();
             std::swap(featuresPrev[i], featuresPrev[other]);
         }
-        featuresPrev.resize(MaximumNumberOfFeaturePoints);
+        featuresPrev.resize(maxNumberOfFeatures);
     }
     
     // Store the pixel counts and draw debugging images

@@ -35,7 +35,9 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
 {
     // Register default user defaults
     NSDictionary *defaults = [[NSDictionary alloc] initWithObjectsAndKeys:
-                              [NSNumber numberWithBool:YES], IgnoreBuiltInCamerasUserDefaultsKey, nil];
+                              [NSNumber numberWithBool:YES], IgnoreBuiltInCamerasUserDefaultsKey,
+                              [NSNumber numberWithBool:YES], @"ApplePersistenceIgnoreState",    // ignore resume
+                              nil];
     [[NSUserDefaults standardUserDefaults] registerDefaults:defaults];
     
     // Create our NSDocumentController subclass first
@@ -267,6 +269,11 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
 {
     PlateOrientation plateOrientation = (PlateOrientation)[[self plateOrientationMenu] indexOfItem:sender];
     [[VideoProcessorController sharedInstance] setPlateOrientation:plateOrientation];
+}
+
+- (IBAction)manuallyReportResultsAndResetProcessor:(id)sender
+{
+    [[VideoProcessorController sharedInstance] manuallyReportResultsForCurrentProcessor];
 }
 
 @end

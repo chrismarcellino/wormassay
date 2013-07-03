@@ -9,6 +9,9 @@
 #import <Foundation/Foundation.h>
 #import "opencv2/core/core_c.h"
 
+// Shared defines
+NSTimeInterval IgnoreFramesPostMovementTimeInterval();
+
 @class VideoFrame;
 @class PlateData;
 

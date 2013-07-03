@@ -24,7 +24,8 @@ typedef enum {
     PlateOrientationTopRead,
     PlateOrientationTopRead180DegreeRotated,
     PlateOrientationBottomRead,
-    PlateOrientationBottomRead180DegreeRotated
+    PlateOrientationBottomRead180DegreeRotated,
+    PlateOrientationNoWells
 } PlateOrientation;
 
 
@@ -42,6 +43,7 @@ typedef enum {
 
 - (void)setShouldScanForWells:(BOOL)shouldScanForWells;
 - (void)reportFinalResultsBeforeRemoval;
+- (void)manuallyReportResultsAndReset;
 
 // Synchronously processes a video frame (e.g. at frame rate)
 - (void)processVideoFrame:(VideoFrame *)videoFrame debugFrameCallback:(void (^)(VideoFrame *image))callback;    // callback will be called on a background queue

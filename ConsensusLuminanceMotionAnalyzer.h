@@ -12,6 +12,7 @@
 @interface ConsensusLuminanceMotionAnalyzer : NSObject <AssayAnalyzer> {
     NSMutableArray *_lastFrames;
     IplImage* _pixelwiseVotes;
+    NSTimeInterval _lastMovementThresholdPresentationTime;
 }
 
 @property NSUInteger numberOfVotingFrames;

@@ -1,6 +1,10 @@
-Version 1.1
+Version 1.2
 -----------
 Add option to 1) disable well finding, or 2) find only a single well.
+Add IgnoreFramesPostThresholdTimeInterval for Bob Storey. 
+
+Version 1.1
+-----------
 Fix bug preventing use of non-HD DV cameras. 
 Switch build tools to LLVM, and enable ARC. Convert code base to use ARC. 
 

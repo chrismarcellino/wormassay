@@ -147,6 +147,7 @@
 		21E7790312D322A9006C1554 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215AB4C612CEC7800047B13F /* utils.cpp */; };
 		21E7790512D322A9006C1554 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 215AB59712CECC190047B13F /* Accelerate.framework */; };
 		21FF202E137776C1008B819B /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 21FF202C137776C1008B819B /* Credits.rtf */; };
+		BE3C6B1C1783A246006C47D6 /* AssayAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = BE3C6B1B1783A246006C47D6 /* AssayAnalyzer.mm */; };
 		BE50A7EE17370FD200BDC2E8 /* AztecDetectorResult.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BE50A72D17370FD100BDC2E8 /* AztecDetectorResult.cpp */; };
 		BE50A7EF17370FD200BDC2E8 /* AztecDetectorResult.h in Headers */ = {isa = PBXBuildFile; fileRef = BE50A72E17370FD100BDC2E8 /* AztecDetectorResult.h */; };
 		BE50A7F017370FD200BDC2E8 /* AztecReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BE50A72F17370FD100BDC2E8 /* AztecReader.cpp */; };
@@ -512,6 +513,7 @@
 		21EBDA37134AE0F000736245 /* WormAssay-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "WormAssay-Prefix.pch"; sourceTree = "<group>"; };
 		21FCF94D134CBB8900ABD85C /* CvUtilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CvUtilities.hpp; sourceTree = SOURCE_ROOT; };
 		21FF202D137776C1008B819B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
+		BE3C6B1B1783A246006C47D6 /* AssayAnalyzer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AssayAnalyzer.mm; sourceTree = SOURCE_ROOT; };
 		BE50A72B17370FD100BDC2E8 /* AUTHORS */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = AUTHORS; sourceTree = "<group>"; };
 		BE50A72D17370FD100BDC2E8 /* AztecDetectorResult.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AztecDetectorResult.cpp; sourceTree = "<group>"; };
 		BE50A72E17370FD100BDC2E8 /* AztecDetectorResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AztecDetectorResult.h; sourceTree = "<group>"; };
@@ -939,6 +941,7 @@
 			isa = PBXGroup;
 			children = (
 				21910734135E2B5600A12F1F /* AssayAnalyzer.h */,
+				BE3C6B1B1783A246006C47D6 /* AssayAnalyzer.mm */,
 				21B611D613612082002A47FB /* ConsensusLuminanceMotionAnalyzer.h */,
 				21B611D713612082002A47FB /* ConsensusLuminanceMotionAnalyzer.mm */,
 				21DC6F3E137CE50000D38B13 /* OpticalFlowMotionAnalyzer.h */,
@@ -1691,6 +1694,7 @@
 				21965211137A7161004F2D57 /* LoggingAndNotificationsSettingsWindowController.m in Sources */,
 				21DC6F40137CE50000D38B13 /* OpticalFlowMotionAnalyzer.mm in Sources */,
 				2124FF7F13848D700027EB2C /* NullMotionAnalyzer.mm in Sources */,
+				BE3C6B1C1783A246006C47D6 /* AssayAnalyzer.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

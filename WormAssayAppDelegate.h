@@ -24,6 +24,7 @@
 - (IBAction)openRunOutputFolder:(id)sender;
 - (IBAction)showLoggingAndNotificationSettings:(id)sender;
 - (IBAction)plateOrientationWasSelected:(id)sender;
+- (IBAction)manuallyReportResultsAndResetProcessor:(id)sender;
 
 @end
 

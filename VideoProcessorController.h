@@ -44,6 +44,8 @@
 - (NSString *)videoFolderPathCreatingIfNecessary:(BOOL)create;
 @property(copy) NSString *notificationEmailRecipients;
 
+- (void)manuallyReportResultsForCurrentProcessor;
+
 - (void)addVideoProcessor:(VideoProcessor *)videoProcessor;
 - (void)removeVideoProcessor:(VideoProcessor *)videoProcessor;
 
