@@ -313,7 +313,7 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
             [_captureSession stopRunning];
             [_captureDecompressedVideoOutput setDelegate:nil];
         } else {
-            [NSThread sleepForTimeInterval:0.1];     // work around to reproduce CIImage/QTMovieView thread safety issues (brutal hack)
+            [NSThread sleepForTimeInterval:0.1];     // workaround to avoid CIImage/QTMovieView thread safety issues (brutal hack)
             [_movieView pause:self];
             if ([_movieView delegate] == self) {
                 [_movieView setDelegate:nil];
@@ -383,9 +383,12 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
             CFNumberGetValue(verticalPixelNumber, kCFNumberDoubleType, &verticalPixel);
             if (horizontalPixel != verticalPixel) {
                 if (horizontalPixel > verticalPixel) {
-                    squarePixelBufferSize.width *= round(horizontalPixel / verticalPixel);
+                    // Round after multiplying since we want to round the result not the ratio
+                    squarePixelBufferSize.width *= horizontalPixel / verticalPixel;
+                    squarePixelBufferSize.width = round(squarePixelBufferSize.width);
                 } else {
-                    squarePixelBufferSize.height *= round(verticalPixel / horizontalPixel);
+                    squarePixelBufferSize.height *= verticalPixel / horizontalPixel;
+                    squarePixelBufferSize.height = round(squarePixelBufferSize.height);
                 }
             }
         }
