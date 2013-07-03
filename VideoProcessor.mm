@@ -137,6 +137,13 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
             [_plateData incrementReceivedFrameCount];
         }
         
+        // Always look for barcodes since another camera might have a plate.
+        // Do this before flipping so we aren't flipping any barcodes. 
+        if (!_scanningForBarcodes && _lastBarcodeScanTime < [videoFrame presentationTime] - BarcodeScanningPeriod) {
+            VideoFrame *copy = [videoFrame copy];
+            [self performBarcodeReadingAsyncWithFrame:copy];
+        }
+        
         // Rotate image if necessary
         BOOL flip = NO;
         int flipMode;
@@ -181,12 +188,6 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
                 VideoFrame *copy = [videoFrame copy];
                 [self performWellDeterminationCalculationAsyncWithFrame:copy];
             }
-        }
-        
-        // Always look for barcodes since another camera might have a plate
-        if (!_scanningForBarcodes && _lastBarcodeScanTime < [videoFrame presentationTime] - BarcodeScanningPeriod) {
-            VideoFrame *copy = [videoFrame copy];
-            [self performBarcodeReadingAsyncWithFrame:copy];
         }
         
         // Create a copy of the frame to draw debugging info on, which we will send back

@@ -167,9 +167,7 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
         
         dispatch_async(_queue, ^{
             for (VideoProcessor *videoProcessor in _videoProcessors) {
-                if (![videoProcessor fileSourceFilename]) {
-                    [videoProcessor setPlateOrientation:plateOrietation];
-                }
+                [videoProcessor setPlateOrientation:plateOrietation];
             }
         });
     }
