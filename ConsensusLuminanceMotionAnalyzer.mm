@@ -14,6 +14,7 @@
 
 static const double WellEdgeFindingInsetProportion = 0.7;
 static const double PlateMovingProportionAboveThresholdLimit = 0.06;
+static const double PlateMovingProportionAboveThresholdLimitFullPlate = 0.20;
 static const char* WellOccupancyID = "Well Occupancy";
 
 @implementation ConsensusLuminanceMotionAnalyzer
@@ -132,8 +133,9 @@ static const char* WellOccupancyID = "Well Occupancy";
     
     meanProportionPlateMoved /= [randomlyChosenFrames count];
     
-    // If the average luminance delta across the set of entire plate images is more than about 2%, the entire plate is likely moving.
-    BOOL overThreshold = meanProportionPlateMoved > PlateMovingProportionAboveThresholdLimit;
+    // If the average luminance delta across the set of entire plate images is more than about 6% (20% in full plate/single well), the entire plate is likely moving.
+    BOOL fullPlate = [plateData wellCount] <= 1;
+    BOOL overThreshold = meanProportionPlateMoved > (fullPlate ? PlateMovingProportionAboveThresholdLimitFullPlate : PlateMovingProportionAboveThresholdLimit);
     if (overThreshold || _lastMovementThresholdPresentationTime == 0) {     // start in moved mode
         _lastMovementThresholdPresentationTime = [videoFrame presentationTime];
     }

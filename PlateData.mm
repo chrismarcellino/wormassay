@@ -18,7 +18,6 @@ static inline NSString *valueAsString(double value, bool asPercent);
 static inline void appendCSVElement(NSMutableString *output, NSString *element);
 
 @interface PlateData () {
-    BOOL _fullFrame;
     NSTimeInterval _startPresentationTime;
     NSTimeInterval _lastPresentationTime;
     std::vector<std::map<std::string, std::vector<double> > > _valuesByWellAndDataColumn;
