@@ -37,7 +37,7 @@ static IplImage* createUnsharpMaskImage(IplImage* image, float radius, float amo
 // Sorted by prevalence
 std::vector<int> knownPlateWellCounts()
 {
-    int counts[] = { 96, 48, 24, 12, 6, 1 };
+    int counts[] = { 96, 48, 24, 12, 6 };
     return std::vector<int>(counts, counts + sizeof(counts)/sizeof(*counts));
 }
 
