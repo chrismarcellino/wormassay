@@ -7,12 +7,12 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <QTKit/QTKit.h>
 #import "opencv2/core/core_c.h"
 
 @class VideoFrame;
 @class PlateData;
 @protocol VideoProcessorDelegate;
+@protocol VideoProcessorRecordingDelegate;
 
 typedef enum {
     ProcessingStateNoPlate,
@@ -34,10 +34,12 @@ typedef enum {
 // Instance variables are declared in the implementation file as they contain C++ objects
 // which would prevent importation by C/Obj-C compilation units
 
-- (id)initWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput fileSourceFilename:(NSString *)fileSourceFilename;
-@property(readonly) NSString *fileSourceFilename;       // nil if a device source
+- (id)initWithFileOutputDelegate:(id<VideoProcessorRecordingDelegate>)fileOutputDelegate
+           fileSourceDisplayName:(NSString *)fileSourceDisplayName;     // for data labeling of file sources, pass nil if this is live
+@property(readonly) NSString *fileSourceDisplayName;       // nil if a device source
 
 - (void)setDelegate:(id<VideoProcessorDelegate>)delegate;
+
 - (void)setAssayAnalyzerClass:(Class)assayAnalyzerClass;
 - (void)setPlateOrientation:(PlateOrientation)plateOrietation;
 
@@ -55,11 +57,24 @@ typedef enum {
 @protocol VideoProcessorDelegate
 
 - (void)videoProcessor:(VideoProcessor *)vp didBeginTrackingPlateAtPresentationTime:(NSTimeInterval)presentationTime;
-- (void)videoProcessor:(VideoProcessor *)vp shouldBeginRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput;
+- (NSURL *)outputFileURLForVideoProcessor:(VideoProcessor *)vp;    // provide the URL for the processor to use or nil to not record
+
 - (void)videoProcessor:(VideoProcessor *)vp
 didFinishAcquiringPlateData:(PlateData *)plateData
           successfully:(BOOL)successfully
-stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput;
+willStopRecordingToOutputFileURL:(NSURL *)outputFileURL;     // nil if not recording; stopping is async
+
+- (void)videoProcessorDidFinishRecordingToFileURL:(NSURL *)outputFileURL error:(NSError *)error;    // error is nil upon success
+
 - (void)videoProcessor:(VideoProcessor *)vp didCaptureBarcodeText:(NSString *)text atTime:(NSTimeInterval)presentationTime;
 
 @end
+
+// Controls video file recording
+@protocol VideoProcessorRecordingDelegate <NSObject>
+
+- (void)videoProcessor:(VideoProcessor *)vp shouldBeginRecordingToURL:(NSURL *)outputFileURL;
+- (void)videoProcessorShouldStopRecording:(VideoProcessor *)vp completion:(void (^)(NSError *error))completion; // error will be nil upon success
+
+@end
+

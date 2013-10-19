@@ -13,13 +13,30 @@
 #import "VideoProcessorController.h"
 #import "VideoProcessor.h"
 #import "VideoFrame.h"
+#import "DeckLinkCaptureDevice.h"
 
-NSString *const CaptureDeviceScheme = @"capturedevice";
-NSString *const CaptureDeviceFileType = @"dyn.capturedevice";
+NSString *const CaptureDeviceWasConnectedOrDisconnectedNotification = @"CaptureDeviceWasConnectedOrDisconnectedNotification";
 
-NSURL *URLForCaptureDeviceUniqueID(NSString *uniqueID)
+NSString *const AVFCaptureDeviceScheme = @"avfcapturedevice";
+NSString *const AVFCaptureDeviceFileType = @"dyn.avfcapturedevice";
+
+NSString *const BlackMagicDeckLinkCaptureDeviceScheme = @"blackmagicdecklink";
+NSString *const BlackMagicDeckLinkCaptureDeviceFileType = @"dyn.blackmagicdecklink";
+
+
+
+NSURL *URLForAVCaptureDevice(AVCaptureDevice *device)
 {
-    return [[NSURL alloc] initWithScheme:CaptureDeviceScheme
+    NSString *uniqueID = [device uniqueID];
+    return [[NSURL alloc] initWithScheme:AVFCaptureDeviceScheme
+                                    host:@""
+                                    path:[@"/" stringByAppendingString:uniqueID]];
+}
+
+NSURL *URLForBlackMagicDeckLinkDevice(DeckLinkCaptureDevice *device)
+{
+    NSString *uniqueID = [device uniqueID];
+    return [[NSURL alloc] initWithScheme:BlackMagicDeckLinkCaptureDeviceScheme
                                     host:@""
                                     path:[@"/" stringByAppendingString:uniqueID]];
 }
@@ -27,7 +44,8 @@ NSURL *URLForCaptureDeviceUniqueID(NSString *uniqueID)
 NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
 {
     NSString *uniqueID = nil;
-    if ([[url scheme] caseInsensitiveCompare:CaptureDeviceScheme] == NSOrderedSame) {
+    if ([[url scheme] caseInsensitiveCompare:AVFCaptureDeviceScheme] == NSOrderedSame ||
+        [[url scheme] caseInsensitiveCompare:BlackMagicDeckLinkCaptureDeviceScheme] == NSOrderedSame) {
         // Remove the leading slash from the absolute URL path
         uniqueID = [url path];
         if ([uniqueID hasPrefix:@"/"]) {
@@ -37,40 +55,65 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
     return uniqueID;
 }
 
-BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device)
+BOOL DeviceIsAppleUSBDevice(AVCaptureDevice *device)
 {
-    NSString *modelUniqueID = [device modelUniqueID];
-    return modelUniqueID && [modelUniqueID rangeOfString:@"VendorID_1452"].location != NSNotFound;
+    NSString *modelID = [device modelID];
+    return modelID && [modelID rangeOfString:@"VendorID_1452"].location != NSNotFound;
 }
 
-BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
+BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 {
-    NSString *modelUniqueID = [device modelUniqueID];
-    return modelUniqueID && [modelUniqueID rangeOfString:@"UVC"].location != NSNotFound;
+    NSString *modelID = [device modelID];
+    return modelID && [modelID rangeOfString:@"UVC"].location != NSNotFound;
 }
 
 @interface VideoSourceDocument ()
 
-- (void)adjustWindowSizing;
-- (void)pixelBufferOrImageHasArrived:(id)pixelBufferOrCIImage isCIImage:(BOOL)isCIImage;
-- (void)processCVPixelBufferSynchronously:(CVPixelBufferRef)pixelBuffer;
-- (void)processCIImageSynchronously:(CIImage *)image;
-- (void)processVideoFrame:(VideoFrame *)image;
-- (void)movieDidEnd;
+@property NSSize lastFrameSize;
 
 @end
 
 
 @implementation VideoSourceDocument
 
-@synthesize captureDevice = _captureDevice;
-@synthesize movie = _movie;
-@synthesize sourceIdentifier = _sourceIdentifier;
-@synthesize lastFrameSize;
+@synthesize lastFrameSize = _lastFrameSize;
+
++ (void)registerForDeviceChangedNotifications
+{
+    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+    [center addObserver:self selector:@selector(postDevicesChanged) name:AVCaptureDeviceWasConnectedNotification object:nil];
+    [center addObserver:self selector:@selector(postDevicesChanged) name:AVCaptureDeviceWasDisconnectedNotification object:nil];
+    
+    //XXX TODO add some hackery to poll for changes for deck link iff deck link drivers are installed
+}
+
++ (void)postDevicesChanged
+{
+    [[NSNotificationCenter defaultCenter] postNotificationName:CaptureDeviceWasConnectedOrDisconnectedNotification object:nil];
+}
+
++ (NSArray *)cameraDeviceURLsIgnoringBuiltInCamera:(BOOL)ignoreBuiltInCameras
+{
+    NSMutableArray *urls = [NSMutableArray array];
+    
+    // Iterate through current capture devices
+    for (AVCaptureDevice *device in [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo]) {
+        // See if we need to ignore this devices
+        if (!ignoreBuiltInCameras || !DeviceIsAppleUSBDevice(device)) {
+            // Construct the URL for the capture device
+            NSURL *url = URLForAVCaptureDevice(device);
+            [urls addObject:url];
+        }
+    }
+    
+    // XXX: TODO ADD BLACK MAGIC DEVICES HERE
+    
+    return urls;
+}
 
 + (NSArray *)readableTypes
 {
-    return [NSArray arrayWithObjects:CaptureDeviceFileType, @"public.movie", @"public.image", nil];
+    return [NSArray arrayWithObjects:AVFCaptureDeviceFileType, @"public.movie", nil];
 }
 
 + (NSArray *)writableTypes
@@ -91,58 +134,8 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
 
 - (id)initWithType:(NSString *)typeName error:(NSError **)outError
 {
-    // Movies cannot be created anew
+    // Videos cannot be created anew
     return nil;
-}
-
-- (id)initWithContentsOfURL:(NSURL *)absoluteURL ofType:(NSString *)typeName error:(NSError **)outError
-{
-    // Create either a QTCaptureDevice or QTMovie and store a unique but human readable identifier for it
-    NSString *captureDeviceUniqueID = UniqueIDForCaptureDeviceURL(absoluteURL);
-    if (captureDeviceUniqueID) {
-        if (captureDeviceUniqueID) {
-            _captureDevice = [QTCaptureDevice deviceWithUniqueID:captureDeviceUniqueID];
-        } else {
-            NSDictionary *userInfo = [NSDictionary dictionaryWithObject:@"Unknown capture device ID" forKey:NSLocalizedDescriptionKey];
-            if (outError) {
-                *outError = [NSError errorWithDomain:NSCocoaErrorDomain code:0 userInfo:userInfo];
-            }
-        }
-        
-        _sourceIdentifier = [[NSString alloc] initWithFormat:@"%@ (%@)",
-                             [_captureDevice localizedDisplayName],
-                             [captureDeviceUniqueID stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]],
-                             nil];
-        
-        RunLog(@"Opened device \"%@\" with model ID \"%@\".", _sourceIdentifier, [_captureDevice modelUniqueID] ? [_captureDevice modelUniqueID] : @"(none)");
-    } else if ([absoluteURL isFileURL]) {
-        NSDictionary *attributes = [[NSDictionary alloc] initWithObjectsAndKeys:
-                                    absoluteURL, QTMovieURLAttribute,
-                                    [NSNumber numberWithBool:YES], QTMovieOpenForPlaybackAttribute,
-                                    [NSNumber numberWithBool:NO], QTMovieOpenAsyncOKAttribute,
-                                    nil];
-        _movie = [[QTMovie alloc] initWithAttributes:attributes error:outError];
-        if (_movie) {
-            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(movieDidEnd) name:QTMovieDidEndNotification object:_movie];
-            
-            NSRect frame = NSZeroRect;
-            frame.size = [[_movie attributeForKey:QTMovieNaturalSizeAttribute] sizeValue];
-            _movieView = [[QTMovieView alloc] initWithFrame:frame];
-            [_movieView setMovie:_movie];
-            [_movieView setControllerVisible:NO];
-            [_movieView setPreservesAspectRatio:YES];
-            [_movieView setDelegate:self];
-            
-            _sourceIdentifier = [absoluteURL path];
-            RunLog(@"Opened file \"%@\".", _sourceIdentifier);
-        }
-    }
-    
-    if (!_captureDevice && !_movie) {
-        return nil;
-    }
-    
-    return [super initWithContentsOfURL:absoluteURL ofType:typeName error:outError];
 }
 
 - (id)initForURL:(NSURL *)absoluteDocumentURL withContentsOfURL:(NSURL *)absoluteDocumentContentsURL ofType:(NSString *)typeName error:(NSError **)outError
@@ -153,13 +146,23 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
 
 - (void)dealloc
 {
-    if (_movie) {
-        [[NSNotificationCenter defaultCenter] removeObserver:self name:QTMovieDidEndNotification object:_movie];
-    }
-    
     if (_frameArrivalQueue) {
         dispatch_release(_frameArrivalQueue);
     }
+}
+
+- (NSString *)sourceIdentifier
+{
+    NSString *sourceIdentifier;
+    if (_captureDevice) {
+        sourceIdentifier = [[NSString alloc] initWithFormat:@"%@ (%@)",
+                            [_captureDevice localizedName],
+                            [UniqueIDForCaptureDeviceURL([self fileURL]) stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]],
+                            nil];
+    } else {
+        sourceIdentifier = [[self fileURL] path];
+    }
+    return sourceIdentifier;
 }
 
 - (void)makeWindowControllers
@@ -172,7 +175,7 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
     
     // Create the window to hold the content view and contrain it to preserve the aspect ratio
     NSUInteger styleMask = NSTitledWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask;
-    if (_movie) {
+    if (_urlAsset) {
         styleMask |= NSClosableWindowMask;
     }
     NSWindow *window = [[NSWindow alloc] initWithContentRect:contentRect styleMask:styleMask backing:NSBackingStoreBuffered defer:YES];
@@ -236,7 +239,9 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
         if (_captureDevice) {
             size = NSMakeSize(720.0, 480.0);
         } else {
-            size = [[_movie attributeForKey:QTMovieNaturalSizeAttribute] sizeValue];
+            NSArray *videoTracks = [_urlAsset tracksWithMediaType:AVMediaTypeVideo];
+            AVAssetTrack *videoTrack = [videoTracks objectAtIndex:0];
+            size = [videoTrack naturalSize];
         }
     }
     
@@ -246,56 +251,90 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
 - (BOOL)readFromURL:(NSURL *)absoluteURL ofType:(NSString *)typeName error:(NSError **)outError
 {
     BOOL success = NO;
+    NSString *fileSourceDisplayName = nil;
     
-    if (_captureDevice) {
-        // Start capture
-        _captureSession = [[QTCaptureSession alloc] init];
-        success = [_captureDevice open:outError];
-        if (success) {
-            _captureDeviceInput = [[QTCaptureDeviceInput alloc] initWithDevice:_captureDevice];
-            // Disable muxed audio devices
-            for (QTCaptureConnection *connection in [_captureDeviceInput connections]) {
-                if ([[connection mediaType] isEqual:QTMediaTypeSound]) {
-                    [connection setEnabled:NO];
-                }
+    NSDictionary *bufferAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:
+                                      [NSNumber numberWithInt:kCVPixelFormatType_32BGRA], kCVPixelBufferPixelFormatTypeKey,
+                                      nil];
+    // Create the proper capture device/asset
+    NSString *captureDeviceUniqueID = UniqueIDForCaptureDeviceURL(absoluteURL);
+    if (captureDeviceUniqueID) {        // AVFoundation Capture devices
+        if (captureDeviceUniqueID) {
+            _captureDevice = [AVCaptureDevice deviceWithUniqueID:captureDeviceUniqueID];
+            RunLog(@"Opened device \"%@\" with model ID \"%@\".", [self sourceIdentifier], [_captureDevice modelID] ? [_captureDevice modelID] : @"(none)");
+        } else {
+            NSDictionary *userInfo = [NSDictionary dictionaryWithObject:@"Unknown capture device ID" forKey:NSLocalizedDescriptionKey];
+            if (outError) {
+                *outError = [NSError errorWithDomain:NSCocoaErrorDomain code:0 userInfo:userInfo];
             }
+        }
+        
+        // Start capture
+        if ([_captureDevice isInUseByAnotherApplication]) {
+            RunLog(@"Warning: device %@ is un use by another application", [_captureDevice localizedName]);
+        }
+        _captureSession = [[AVCaptureSession alloc] init];
+        _captureDeviceInput = [[AVCaptureDeviceInput alloc] initWithDevice:_captureDevice error:outError];
+        if (_captureDeviceInput) {
+            _captureVideoDataOutput = [[AVCaptureVideoDataOutput alloc] init];
+            [_captureVideoDataOutput setVideoSettings:bufferAttributes];
+            [_captureVideoDataOutput setAlwaysDiscardsLateVideoFrames:NO];      // to ensure the saved video doesn't miss frames
+            [_captureVideoDataOutput setSampleBufferDelegate:self queue:_frameArrivalQueue];
             
-            success = [_captureSession addInput:_captureDeviceInput error:outError];
-            if (success) {
-                _captureDecompressedVideoOutput = [[QTCaptureDecompressedVideoOutput alloc] init];
-                NSDictionary *bufferAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:
-                                                  [NSNumber numberWithInt:kCVPixelFormatType_32BGRA], kCVPixelBufferPixelFormatTypeKey,
-                                                  nil];
-                [_captureDecompressedVideoOutput setPixelBufferAttributes:bufferAttributes];
-                [_captureDecompressedVideoOutput setDelegate:self];
-                success = [_captureSession addOutput:_captureDecompressedVideoOutput error:outError];
-                if (success) {
-                    [_captureSession startRunning];
+            if ([_captureSession canAddInput:_captureDeviceInput] && [_captureSession canAddOutput:_captureVideoDataOutput]) {
+                [_captureSession addInput:_captureDeviceInput];
+                [_captureSession addOutput:_captureVideoDataOutput];
+                
+                // Limit the frame rate to no higher than 30 fps
+                for (AVCaptureConnection *connection in [_captureVideoDataOutput connections]) {
+                    if ([connection isVideoMinFrameDurationSupported]) {
+                        [connection setVideoMinFrameDuration:CMTimeMake(1, 30)];
+                    }
+                }
+                
+                [_captureSession startRunning];
+                success = YES;
+            } else {
+                NSDictionary *userInfo = [NSDictionary dictionaryWithObject:@"Unable to add inputs to capture session" forKey:NSLocalizedDescriptionKey];
+                if (outError) {
+                    *outError = [NSError errorWithDomain:NSCocoaErrorDomain code:0 userInfo:userInfo];
                 }
             }
         }
-    } else {
-        // To play the movie, it must be in the view hiearchy
-        _movieInvisibleWindow = [[NSWindow alloc] initWithContentRect:[_movieView frame] styleMask:0 backing:NSBackingStoreBuffered defer:NO];
-        [_movieInvisibleWindow setContentView:_movieView];
-        [_movieView play:self];
-        success = YES;
+    } else if ([absoluteURL isFileURL]) {           // Video files
+        _urlAsset = [AVAsset assetWithURL:absoluteURL];
+        if (_urlAsset && [[_urlAsset tracksWithMediaType:AVMediaTypeVideo] count] > 0) {
+            _assetReader = [[AVAssetReader alloc] initWithAsset:_urlAsset error:outError];
+            RunLog(@"Opened file \"%@\".", [self sourceIdentifier]);
+        }
+        
+        // Get frames from movie file
+        NSArray *videoTracks = [_urlAsset tracksWithMediaType:AVMediaTypeVideo];
+        AVAssetTrack *videoTrack = [videoTracks objectAtIndex:0];
+        _assetReaderOutput = [[AVAssetReaderTrackOutput alloc] initWithTrack:videoTrack outputSettings:bufferAttributes];
+        // This optimization is only available on 10.8+
+        if ([_assetReaderOutput respondsToSelector:@selector(setAlwaysCopiesSampleData:)]) {
+            [_assetReaderOutput setAlwaysCopiesSampleData:NO];
+        }
+        if ([_assetReader canAddOutput:_assetReaderOutput]) {
+            [_assetReader addOutput:_assetReaderOutput];
+            success = [_assetReader startReading];
+            if (outError) {
+                *outError = [_assetReader error];
+            }
+        }
+        
+        fileSourceDisplayName = [[[self fileURL] path] lastPathComponent];
+        
+        // Get the first frame (async)
+        NSTimeInterval frameInterval = 1.0 / [videoTrack nominalFrameRate];
+        dispatch_async(_frameArrivalQueue, ^{
+            [self getNextVideoFileFrameWithStartTime:CACurrentMediaTime() firstFrameTime:NAN frameInterval:frameInterval];
+        });
     }
     
     NSAssert(!_processor, @"processor already exists");
-    QTCaptureMovieFileOutput *captureFileOutput = nil;
-    NSString *fileSourceFilename = nil;
-    if (_captureDevice) {
-        captureFileOutput = [[QTCaptureMovieFileOutput alloc] init];
-        NSError *error = nil;
-        if (![_captureSession addOutput:captureFileOutput error:&error]) {
-            RunLog(@"Unable to add QTCaptureFileOutput to capture session: %@", error);
-            captureFileOutput = nil;
-        }
-    } else {
-        fileSourceFilename = [[[_movie attributeForKey:QTMovieURLAttribute] path] lastPathComponent];
-    }
-    _processor = [[VideoProcessor alloc] initWithCaptureFileOutput:captureFileOutput fileSourceFilename:fileSourceFilename];
+    _processor = [[VideoProcessor alloc] initWithFileOutputDelegate:self fileSourceDisplayName:fileSourceDisplayName];
     [[VideoProcessorController sharedInstance] addVideoProcessor:_processor];
     
     return success;
@@ -306,70 +345,121 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
 {
     if (!_closeCalled) {
         _closeCalled = YES;
-        RunLog(@"Closing %@: %@", _captureDevice ? @"removed device" : @"file", _sourceIdentifier);
+        _sendFramesToAssetWriter = NO;
+        RunLog(@"Closing %@: %@", _captureDevice ? @"removed device" : @"file", [self sourceIdentifier]);
         [[VideoProcessorController sharedInstance] removeVideoProcessor:_processor];
         
         if (_captureDevice) {
             [_captureSession stopRunning];
-            [_captureDecompressedVideoOutput setDelegate:nil];
+            [_captureVideoDataOutput setSampleBufferDelegate:nil queue:NULL];
         } else {
-            [NSThread sleepForTimeInterval:0.1];     // workaround to avoid CIImage/QTMovieView thread safety issues (brutal hack)
-            [_movieView pause:self];
-            if ([_movieView delegate] == self) {
-                [_movieView setDelegate:nil];
-            }
+            [_assetReader cancelReading];
+            [_urlAsset cancelLoading];
         }
     }
     [super close];
 }
 
-// Called on a background thread by the capture output
-- (void)captureOutput:(QTCaptureOutput *)captureOutput
-  didOutputVideoFrame:(CVImageBufferRef)videoFrame
-     withSampleBuffer:(QTSampleBuffer *)sampleBuffer
-       fromConnection:(QTCaptureConnection *)connection
+// for video file sources. called on a background thread in _frameArrivalQueue.
+- (void)getNextVideoFileFrameWithStartTime:(NSTimeInterval)startTime
+                            firstFrameTime:(NSTimeInterval)firstFrameTime
+                             frameInterval:(NSTimeInterval)frameInterval
 {
-    [self pixelBufferOrImageHasArrived:(__bridge id)videoFrame isCIImage:NO];
-}
-
-// Called on a background thread when using a pre-recorded movie file
-- (CIImage *)view:(QTMovieView *)view willDisplayImage:(CIImage *)image
-{
-    [self pixelBufferOrImageHasArrived:image isCIImage:YES];
-    return nil;
-}
-
-- (void)pixelBufferOrImageHasArrived:(id)pixelBufferOrCIImage isCIImage:(BOOL)isCIImage
-{
-    dispatch_sync(_frameArrivalQueue, ^{
-        if (_currentlyProcessingFrame) {
-            [_processor noteVideoFrameWasDropped];
-        } else {
-            _currentlyProcessingFrame = YES;
-            
-            // Do processing work on another queue so the arrival queue isn't blocked and new frames can be dropped in the interim
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                @autoreleasepool {
-                    if (isCIImage) {
-                        [self processCIImageSynchronously:(CIImage *)pixelBufferOrCIImage];
-                    } else {
-                        [self processCVPixelBufferSynchronously:(CVPixelBufferRef)pixelBufferOrCIImage];
-                    }
-                }
-                
-                // Mark that we're done
-                dispatch_sync(_frameArrivalQueue, ^{
-                    _currentlyProcessingFrame = NO;
-                });
-            });
+    if (_closeCalled) {
+        return;
+    }
+    
+    CMSampleBufferRef sampleBuffer = [_assetReaderOutput copyNextSampleBuffer];
+    
+    if (sampleBuffer) {
+        [self cmSampleBufferHasArrived:sampleBuffer];
+        
+        // Figure out when we should ask for the next frame (i.e. at frame rate)
+        NSTimeInterval frameTime = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer));
+        NSAssert(isfinite(frameTime), @"invalid frame time");
+        if (!isfinite(firstFrameTime)) {
+            firstFrameTime = frameTime;
         }
-    });
+        
+        NSTimeInterval currentTime = CACurrentMediaTime();
+        NSTimeInterval delayInSeconds = (frameTime - firstFrameTime) - (currentTime - startTime) + frameInterval;
+        dispatch_time_t dispatchTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
+        dispatch_after(dispatchTime, _frameArrivalQueue, ^{
+            [self getNextVideoFileFrameWithStartTime:startTime firstFrameTime:firstFrameTime frameInterval:frameInterval];
+        });
+    } else {
+         [self videoPlaybackDidEnd];
+    }
 }
 
-- (void)processCVPixelBufferSynchronously:(CVPixelBufferRef)pixelBuffer
+// Called on _frameArrivalQueue
+- (void)captureOutput:(AVCaptureOutput *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection
+{
+    [self cmSampleBufferHasArrived:sampleBuffer];
+}
+
+- (void)captureOutput:(AVCaptureOutput *)captureOutput didDropSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection
+{
+    [self logFrameDroppedDuringEncoding];
+    [_processor noteVideoFrameWasDropped];
+}
+
+- (void)logFrameDroppedDuringEncoding
+{
+    // This normally shouldn't happen as we ask for all frames to be queued
+    if (_sendFramesToAssetWriter && !_encodingFrameDropLogOnce) {
+        _encodingFrameDropLogOnce = YES;
+        RunLog(@"Frame dropped from saved video. Saved video quality may be poor. Close other programs not in use and ensure camera settings are correct.");
+    }
+}
+
+// this must be called on _frameArrivalQueu
+- (void)cmSampleBufferHasArrived:(CMSampleBufferRef)sampleBuffer
+{
+    if (_currentlyProcessingFrame) {
+        [_processor noteVideoFrameWasDropped];
+    } else {
+        _currentlyProcessingFrame = YES;
+        
+        // Get a CMSampleBuffer's Core Video image buffer for the media data
+        CVPixelBufferRef pixelBuffer = CVPixelBufferRetain(CMSampleBufferGetImageBuffer(sampleBuffer));
+        
+        // Do processing work on another queue so the arrival queue isn't blocked and new frames can be dropped in the interim
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            @autoreleasepool {
+                [self processPixelBufferSynchronously:pixelBuffer];
+                CVPixelBufferRelease(pixelBuffer);
+            }
+            
+            // Mark that we're done
+            dispatch_sync(_frameArrivalQueue, ^{
+                _currentlyProcessingFrame = NO;
+            });
+        });
+    }
+    
+    // Send all frames to the asset writer if enabled
+    if (_sendFramesToAssetWriter) {
+        if (_firstFrameToAssetWriter) {
+            // Give the start timestamp to the asset writer
+            CMTime frameCMTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer);
+            [_assetWriter startSessionAtSourceTime:frameCMTime];
+            _firstFrameToAssetWriter = NO;
+        }
+        
+        if ([_assetWriterInput isReadyForMoreMediaData]) {
+            [_assetWriterInput appendSampleBuffer:sampleBuffer];
+        } else {
+            [self logFrameDroppedDuringEncoding];
+        }
+    }
+}
+
+// do NOT call on _frameArrivalQueue as this blocks. called on a background thread.
+- (void)processPixelBufferSynchronously:(CVImageBufferRef)pixelBuffer
 {
     // Ensure we have the proper frame size for this device, correcting for non-square pixels.
-    // QTCaptureDecompressedVideoOutput is guaranteed to be a CVPixelBufferRef.
+    // AVCaptureDecompressedVideoOutput is guaranteed to be a CVPixelBufferRef.
     NSSize bufferSize = NSMakeSize(CVPixelBufferGetWidth(pixelBuffer), CVPixelBufferGetHeight(pixelBuffer));
     NSSize squarePixelBufferSize = bufferSize;
     
@@ -397,19 +487,19 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
     // If our pixel buffer doesn't match this size, or we don't have a square pixel buffer, set attributes and change the requested size.
     if (!NSEqualSizes(bufferSize, squarePixelBufferSize) || !NSEqualSizes(squarePixelBufferSize, [self lastFrameSize])) {
         // Arbitrarily limit UVC devices to 640x480 for maximum compatability. These cameras (webcams) should only be used for barcoding.
-        if (DeviceIsUVCDevice(_captureDevice)) {
+        if (_captureDevice && DeviceIsUVCDevice(_captureDevice)) {
             squarePixelBufferSize = NSMakeSize(640.0, 480.0);
         }
         
         [self setLastFrameSize:squarePixelBufferSize];
         
-        RunLog(@"Receiving %g x %g video from device \"%@\".", (double)squarePixelBufferSize.width, (double)squarePixelBufferSize.height, _sourceIdentifier);
-        // Only set a buffer size if we have a non-square pixel size
-        if (!NSEqualSizes(bufferSize, squarePixelBufferSize)) {
-            NSMutableDictionary *bufferAttributes = [[_captureDecompressedVideoOutput pixelBufferAttributes] mutableCopy];
+        RunLog(@"Receiving %g x %g video from device \"%@\".", (double)squarePixelBufferSize.width, (double)squarePixelBufferSize.height, [self sourceIdentifier]);
+        // Only set a buffer size if we have a non-square pixel size and this is a camera
+        if (_captureVideoDataOutput && !NSEqualSizes(bufferSize, squarePixelBufferSize)) {
+            NSMutableDictionary *bufferAttributes = [[_captureVideoDataOutput videoSettings] mutableCopy];
             [bufferAttributes setObject:[NSNumber numberWithDouble:squarePixelBufferSize.width] forKey:(id)kCVPixelBufferWidthKey];
             [bufferAttributes setObject:[NSNumber numberWithDouble:squarePixelBufferSize.height] forKey:(id)kCVPixelBufferHeightKey];
-            [_captureDecompressedVideoOutput setPixelBufferAttributes:bufferAttributes];
+            [_captureVideoDataOutput setVideoSettings:bufferAttributes];
         }
         
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -424,21 +514,6 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
     }
 }
 
-- (void)processCIImageSynchronously:(CIImage *)image
-{
-    // Reuse the context for performance reasons
-    if (!_ciContext) {
-        _ciContext = [CIContext contextWithCGContext:NULL options:nil];
-    }
-    
-    VideoFrame *frame = [[VideoFrame alloc] initByCopyingCIImage:image
-                                                  usingCIContext:_ciContext
-                                                      bitmapSize:[[_movie attributeForKey:QTMovieNaturalSizeAttribute] sizeValue]
-                                              resultChannelCount:4
-                                                presentationTime:CACurrentMediaTime()];
-    [self processVideoFrame:frame];
-}
-
 - (void)processVideoFrame:(VideoFrame *)image
 {
     [_processor processVideoFrame:image debugFrameCallback:^(VideoFrame *image) {
@@ -446,9 +521,9 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
     }];
 }
 
-- (void)movieDidEnd
+- (void)videoPlaybackDidEnd
 {
-    RunLog(@"Movie ended.");
+    RunLog(@"Video ended.");
     dispatch_async(dispatch_get_main_queue(), ^{
         [self close];
     });
@@ -458,11 +533,67 @@ BOOL DeviceIsUVCDevice(QTCaptureDevice *device)
 {
     NSString *displayName;
     if (_captureDevice) {
-        displayName = [_captureDevice localizedDisplayName];
+        displayName = [_captureDevice localizedName];
     } else {
         displayName = [super displayName];
     }
     return displayName;
 }
-  
+
+- (void)videoProcessor:(VideoProcessor *)vp shouldBeginRecordingToURL:(NSURL *)outputFileURL
+{
+    dispatch_async(_frameArrivalQueue, ^{
+        if (_urlAsset) {
+#if WORMASSAY_DEBUG
+            RunLog(@"Reencoding video for debug build.");
+#else
+            return;
+#endif
+        }
+        
+        // Create asset writers for output
+        NSError *error = nil;
+        _assetWriter = [[AVAssetWriter alloc] initWithURL:outputFileURL fileType:AVFileTypeMPEG4 error:&error];
+        if (_assetWriter) {
+            NSSize size = [self expectedFrameSize];
+            NSDictionary *outputSettings = [[NSDictionary alloc] initWithObjectsAndKeys:
+                                            AVVideoCodecH264, AVVideoCodecKey,
+                                            [NSNumber numberWithInteger:size.width], AVVideoWidthKey,
+                                            [NSNumber numberWithInteger:size.height], AVVideoHeightKey,
+                                            nil];
+            _assetWriterInput = [[AVAssetWriterInput alloc] initWithMediaType:AVMediaTypeVideo outputSettings:outputSettings sourceFormatHint:NULL];
+            [_assetWriterInput setExpectsMediaDataInRealTime:YES];
+            [_assetWriter setShouldOptimizeForNetworkUse:NO];
+            [_assetWriter addInput:_assetWriterInput];
+            [_assetWriter startWriting];
+            
+            _sendFramesToAssetWriter = YES;
+            _firstFrameToAssetWriter = YES;
+            _encodingFrameDropLogOnce = NO;
+            RunLog(@"Began recording video to disk.");
+        }
+        if (error) {
+            RunLog(@"Error recording video to disk: %@ %@", [error localizedDescription], [error localizedFailureReason]);
+        }
+    });
+}
+
+- (void)videoProcessorShouldStopRecording:(VideoProcessor *)vp completion:(void (^)(NSError *error))completion    // error will be nil upon success
+{
+    // Ensure we've stopped enqqueing frames safely
+    dispatch_async(_frameArrivalQueue, ^{
+        _sendFramesToAssetWriter = NO;
+        
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            // This call blocks so we perform it async
+            BOOL success = _assetWriter ? [_assetWriter finishWriting] : YES;
+            NSError *error = [_assetWriter error];
+            if (!success) {
+                RunLog(@"Error finishing recording to file \"%@\": %@", [[_assetWriter outputURL] path], error);
+            }
+            completion(error);
+        });
+    });
+}
+
 @end

@@ -21,11 +21,6 @@
 - (id)initWithIplImageTakingOwnership:(IplImage *)image presentationTime:(NSTimeInterval)presentationTime;
 
 - (id)initByCopyingCVPixelBuffer:(CVPixelBufferRef)cvPixelBuffer resultChannelCount:(int)outChannels presentationTime:(NSTimeInterval)presentationTime;
-- (id)initByCopyingCIImage:(CIImage *)ciImage
-            usingCIContext:(CIContext *)context
-                bitmapSize:(NSSize)bitmapSize
-        resultChannelCount:(int)outChannels
-          presentationTime:(NSTimeInterval)presentationTime;
 - (id)initByCopyingCGImage:(CGImageRef)cgImage resultChannelCount:(int)outChannels presentationTime:(NSTimeInterval)presentationTime;
 
 @property(readonly) IplImage *image;

@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2102C86A13792D21000E3D53 /* ffmpeg in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2102C86813792D15000E3D53 /* ffmpeg */; };
 		210D6E9E134BAC5300BCD6F1 /* VideoProcessor.mm in Sources */ = {isa = PBXBuildFile; fileRef = 210D6E9D134BAC5300BCD6F1 /* VideoProcessor.mm */; };
 		2119D2CC135A101E00C5B32F /* PlateData.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2119D2CB135A101E00C5B32F /* PlateData.mm */; };
 		2124FF7F13848D700027EB2C /* NullMotionAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2124FF7E13848D700027EB2C /* NullMotionAnalyzer.mm */; };
@@ -26,7 +25,6 @@
 		218DD55113453FDD000B6475 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21E779A012D323D6006C1554 /* ApplicationServices.framework */; };
 		218DD55213453FDE000B6475 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 215AB59712CECC190047B13F /* Accelerate.framework */; };
 		218DD55313453FE0000B6475 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD5271345253D000B6475 /* libz.dylib */; };
-		218DD55513454180000B6475 /* QTKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD55413454180000B6475 /* QTKit.framework */; };
 		218DD559134543FF000B6475 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 218DD557134543FF000B6475 /* MainMenu.xib */; };
 		218DD55B13454411000B6475 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 218DD55A13454411000B6475 /* main.m */; };
 		218DD55F1345445B000B6475 /* WormAssayAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 218DD55E1345445B000B6475 /* WormAssayAppDelegate.m */; };
@@ -148,6 +146,10 @@
 		21E7790512D322A9006C1554 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 215AB59712CECC190047B13F /* Accelerate.framework */; };
 		21FF202E137776C1008B819B /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 21FF202C137776C1008B819B /* Credits.rtf */; };
 		BE3C6B1C1783A246006C47D6 /* AssayAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = BE3C6B1B1783A246006C47D6 /* AssayAnalyzer.mm */; };
+		BE3FA2F7180E2FE4006BC68C /* DeckLinkAPIDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BE3FA2F0180E2FE4006BC68C /* DeckLinkAPIDispatch.cpp */; };
+		BE3FA2FC180E98F0006BC68C /* DeckLinkCaptureDevice.mm in Sources */ = {isa = PBXBuildFile; fileRef = BE3FA2FB180E98F0006BC68C /* DeckLinkCaptureDevice.mm */; };
+		BE3FA2FE180F40C2006BC68C /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE3FA2FD180F40C2006BC68C /* AVFoundation.framework */; };
+		BE3FA3001811DEEE006BC68C /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE3FA2FF1811DEEE006BC68C /* CoreMedia.framework */; };
 		BE50A7EE17370FD200BDC2E8 /* AztecDetectorResult.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BE50A72D17370FD100BDC2E8 /* AztecDetectorResult.cpp */; };
 		BE50A7EF17370FD200BDC2E8 /* AztecDetectorResult.h in Headers */ = {isa = PBXBuildFile; fileRef = BE50A72E17370FD100BDC2E8 /* AztecDetectorResult.h */; };
 		BE50A7F017370FD200BDC2E8 /* AztecReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BE50A72F17370FD100BDC2E8 /* AztecReader.cpp */; };
@@ -348,7 +350,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 6;
 			files = (
-				2102C86A13792D21000E3D53 /* ffmpeg in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -356,7 +357,6 @@
 
 /* Begin PBXFileReference section */
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		2102C86813792D15000E3D53 /* ffmpeg */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = ffmpeg; path = "ThirdParty/ffmpeg-x264/ffmpeg"; sourceTree = "<group>"; };
 		210D6E9C134BAC5300BCD6F1 /* VideoProcessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoProcessor.h; sourceTree = SOURCE_ROOT; };
 		210D6E9D134BAC5300BCD6F1 /* VideoProcessor.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = VideoProcessor.mm; sourceTree = SOURCE_ROOT; };
 		2119D2CA135A101E00C5B32F /* PlateData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlateData.h; sourceTree = SOURCE_ROOT; };
@@ -466,8 +466,6 @@
 		218DD53013453FC5000B6475 /* WormAssay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WormAssay.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		218DD53213453FC5000B6475 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		218DD53513453FC5000B6475 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
-		218DD53713453FC5000B6475 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		218DD55413454180000B6475 /* QTKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QTKit.framework; path = System/Library/Frameworks/QTKit.framework; sourceTree = SDKROOT; };
 		218DD558134543FF000B6475 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		218DD55A13454411000B6475 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		218DD55C1345441A000B6475 /* WormAssay-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "WormAssay-Info.plist"; sourceTree = SOURCE_ROOT; };
@@ -514,6 +512,28 @@
 		21FCF94D134CBB8900ABD85C /* CvUtilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CvUtilities.hpp; sourceTree = SOURCE_ROOT; };
 		21FF202D137776C1008B819B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
 		BE3C6B1B1783A246006C47D6 /* AssayAnalyzer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AssayAnalyzer.mm; sourceTree = SOURCE_ROOT; };
+		BE3FA2E5180E2FE4006BC68C /* DeckLinkAPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPI.h; sourceTree = "<group>"; };
+		BE3FA2E6180E2FE4006BC68C /* DeckLinkAPI_v7_1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPI_v7_1.h; sourceTree = "<group>"; };
+		BE3FA2E7180E2FE4006BC68C /* DeckLinkAPI_v7_3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPI_v7_3.h; sourceTree = "<group>"; };
+		BE3FA2E8180E2FE4006BC68C /* DeckLinkAPI_v7_6.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPI_v7_6.h; sourceTree = "<group>"; };
+		BE3FA2E9180E2FE4006BC68C /* DeckLinkAPI_v7_9.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPI_v7_9.h; sourceTree = "<group>"; };
+		BE3FA2EA180E2FE4006BC68C /* DeckLinkAPI_v8_0.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPI_v8_0.h; sourceTree = "<group>"; };
+		BE3FA2EB180E2FE4006BC68C /* DeckLinkAPI_v8_1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPI_v8_1.h; sourceTree = "<group>"; };
+		BE3FA2EC180E2FE4006BC68C /* DeckLinkAPI_v9_2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPI_v9_2.h; sourceTree = "<group>"; };
+		BE3FA2ED180E2FE4006BC68C /* DeckLinkAPIConfiguration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPIConfiguration.h; sourceTree = "<group>"; };
+		BE3FA2EE180E2FE4006BC68C /* DeckLinkAPIDeckControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPIDeckControl.h; sourceTree = "<group>"; };
+		BE3FA2EF180E2FE4006BC68C /* DeckLinkAPIDiscovery.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPIDiscovery.h; sourceTree = "<group>"; };
+		BE3FA2F0180E2FE4006BC68C /* DeckLinkAPIDispatch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DeckLinkAPIDispatch.cpp; sourceTree = "<group>"; };
+		BE3FA2F1180E2FE4006BC68C /* DeckLinkAPIDispatch_v7_6.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DeckLinkAPIDispatch_v7_6.cpp; sourceTree = "<group>"; };
+		BE3FA2F2180E2FE4006BC68C /* DeckLinkAPIDispatch_v8_0.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DeckLinkAPIDispatch_v8_0.cpp; sourceTree = "<group>"; };
+		BE3FA2F3180E2FE4006BC68C /* DeckLinkAPIModes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPIModes.h; sourceTree = "<group>"; };
+		BE3FA2F4180E2FE4006BC68C /* DeckLinkAPIStreaming.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPIStreaming.h; sourceTree = "<group>"; };
+		BE3FA2F5180E2FE4006BC68C /* DeckLinkAPITypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPITypes.h; sourceTree = "<group>"; };
+		BE3FA2F6180E2FE4006BC68C /* DeckLinkAPIVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPIVersion.h; sourceTree = "<group>"; };
+		BE3FA2FA180E98F0006BC68C /* DeckLinkCaptureDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkCaptureDevice.h; sourceTree = SOURCE_ROOT; };
+		BE3FA2FB180E98F0006BC68C /* DeckLinkCaptureDevice.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DeckLinkCaptureDevice.mm; sourceTree = SOURCE_ROOT; };
+		BE3FA2FD180F40C2006BC68C /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		BE3FA2FF1811DEEE006BC68C /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		BE50A72B17370FD100BDC2E8 /* AUTHORS */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = AUTHORS; sourceTree = "<group>"; };
 		BE50A72D17370FD100BDC2E8 /* AztecDetectorResult.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AztecDetectorResult.cpp; sourceTree = "<group>"; };
 		BE50A72E17370FD100BDC2E8 /* AztecDetectorResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AztecDetectorResult.h; sourceTree = "<group>"; };
@@ -705,16 +725,17 @@
 			files = (
 				218DD54E13453FD3000B6475 /* Foundation.framework in Frameworks */,
 				218DD53313453FC5000B6475 /* Cocoa.framework in Frameworks */,
-				218DD55513454180000B6475 /* QTKit.framework in Frameworks */,
 				218DD55113453FDD000B6475 /* ApplicationServices.framework in Frameworks */,
 				218DD55213453FDE000B6475 /* Accelerate.framework in Frameworks */,
 				21CC72061347EDD4001146DA /* CoreVideo.framework in Frameworks */,
 				21CC724913484A79001146DA /* QuartzCore.framework in Frameworks */,
+				BE3FA3001811DEEE006BC68C /* CoreMedia.framework in Frameworks */,
 				21CC725E1348D40B001146DA /* OpenGL.framework in Frameworks */,
 				218DD55313453FE0000B6475 /* libz.dylib in Frameworks */,
 				218DD54D13453FCE000B6475 /* libOpenCV.a in Frameworks */,
 				219098A413575A7400EEE2BB /* libzxing.a in Frameworks */,
 				219099D21357A05C00EEE2BB /* libiconv.dylib in Frameworks */,
+				BE3FA2FE180F40C2006BC68C /* AVFoundation.framework in Frameworks */,
 				2190AF18135B6E4A00C3853B /* IOKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -973,6 +994,8 @@
 				21426FAE134683DA00AF78E5 /* VideoSourceDocument.m */,
 				21264FEA1353FAE600F2DCD8 /* VideoProcessorController.h */,
 				21264FEB1353FAE600F2DCD8 /* VideoProcessorController.m */,
+				BE3FA2FA180E98F0006BC68C /* DeckLinkCaptureDevice.h */,
+				BE3FA2FB180E98F0006BC68C /* DeckLinkCaptureDevice.mm */,
 				2176AC381373672D00E51F2B /* Emailer.h */,
 				2176AC391373672D00E51F2B /* Emailer.m */,
 				21B5165D137A061B0055CFE7 /* ArrayTableView.h */,
@@ -1060,9 +1083,9 @@
 		21FA749512CD579300D11B6D /* Third Party */ = {
 			isa = PBXGroup;
 			children = (
+				BE3FA2E4180E2FE4006BC68C /* DeckLink */,
 				215AB44612CEC6C60047B13F /* OpenCV */,
 				BE50A72A17370FD100BDC2E8 /* zxing */,
-				2102C86813792D15000E3D53 /* ffmpeg */,
 			);
 			name = "Third Party";
 			sourceTree = "<group>";
@@ -1102,17 +1125,43 @@
 				1D30AB110D05D00D00671497 /* Foundation.framework */,
 				21CC724813484A79001146DA /* QuartzCore.framework */,
 				21CC725D1348D40B001146DA /* OpenGL.framework */,
-				218DD55413454180000B6475 /* QTKit.framework */,
+				BE3FA2FD180F40C2006BC68C /* AVFoundation.framework */,
+				BE3FA2FF1811DEEE006BC68C /* CoreMedia.framework */,
 				21CC72051347EDD4001146DA /* CoreVideo.framework */,
 				21E779A012D323D6006C1554 /* ApplicationServices.framework */,
 				215AB59712CECC190047B13F /* Accelerate.framework */,
 				218DD53513453FC5000B6475 /* AppKit.framework */,
 				2190AF17135B6E4A00C3853B /* IOKit.framework */,
-				218DD53713453FC5000B6475 /* Foundation.framework */,
 				219099D01357A05300EEE2BB /* libiconv.dylib */,
 				218DD5271345253D000B6475 /* libz.dylib */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		BE3FA2E4180E2FE4006BC68C /* DeckLink */ = {
+			isa = PBXGroup;
+			children = (
+				BE3FA2E5180E2FE4006BC68C /* DeckLinkAPI.h */,
+				BE3FA2E6180E2FE4006BC68C /* DeckLinkAPI_v7_1.h */,
+				BE3FA2E7180E2FE4006BC68C /* DeckLinkAPI_v7_3.h */,
+				BE3FA2E8180E2FE4006BC68C /* DeckLinkAPI_v7_6.h */,
+				BE3FA2E9180E2FE4006BC68C /* DeckLinkAPI_v7_9.h */,
+				BE3FA2EA180E2FE4006BC68C /* DeckLinkAPI_v8_0.h */,
+				BE3FA2EB180E2FE4006BC68C /* DeckLinkAPI_v8_1.h */,
+				BE3FA2EC180E2FE4006BC68C /* DeckLinkAPI_v9_2.h */,
+				BE3FA2ED180E2FE4006BC68C /* DeckLinkAPIConfiguration.h */,
+				BE3FA2EE180E2FE4006BC68C /* DeckLinkAPIDeckControl.h */,
+				BE3FA2EF180E2FE4006BC68C /* DeckLinkAPIDiscovery.h */,
+				BE3FA2F0180E2FE4006BC68C /* DeckLinkAPIDispatch.cpp */,
+				BE3FA2F1180E2FE4006BC68C /* DeckLinkAPIDispatch_v7_6.cpp */,
+				BE3FA2F2180E2FE4006BC68C /* DeckLinkAPIDispatch_v8_0.cpp */,
+				BE3FA2F3180E2FE4006BC68C /* DeckLinkAPIModes.h */,
+				BE3FA2F4180E2FE4006BC68C /* DeckLinkAPIStreaming.h */,
+				BE3FA2F5180E2FE4006BC68C /* DeckLinkAPITypes.h */,
+				BE3FA2F6180E2FE4006BC68C /* DeckLinkAPIVersion.h */,
+			);
+			name = DeckLink;
+			path = ThirdParty/DeckLink;
 			sourceTree = "<group>";
 		};
 		BE50A72A17370FD100BDC2E8 /* zxing */ = {
@@ -1683,6 +1732,7 @@
 				21426FAF134683DB00AF78E5 /* VideoSourceDocument.m in Sources */,
 				2180AC681346BB99008AF87B /* DocumentController.m in Sources */,
 				21CC725C1348CA5F001146DA /* BitmapOpenGLView.m in Sources */,
+				BE3FA2FC180E98F0006BC68C /* DeckLinkCaptureDevice.mm in Sources */,
 				210D6E9E134BAC5300BCD6F1 /* VideoProcessor.mm in Sources */,
 				2162B18613521ABD0081EFDD /* VideoFrame.mm in Sources */,
 				21264FEC1353FAE600F2DCD8 /* VideoProcessorController.m in Sources */,
@@ -1691,6 +1741,7 @@
 				21B611D813612082002A47FB /* ConsensusLuminanceMotionAnalyzer.mm in Sources */,
 				2176AC3A1373672D00E51F2B /* Emailer.m in Sources */,
 				21B5165F137A061B0055CFE7 /* ArrayTableView.m in Sources */,
+				BE3FA2F7180E2FE4006BC68C /* DeckLinkAPIDispatch.cpp in Sources */,
 				21965211137A7161004F2D57 /* LoggingAndNotificationsSettingsWindowController.m in Sources */,
 				21DC6F40137CE50000D38B13 /* OpticalFlowMotionAnalyzer.mm in Sources */,
 				2124FF7F13848D700027EB2C /* NullMotionAnalyzer.mm in Sources */,
@@ -2021,13 +2072,12 @@
 			buildSettings = {
 				CLANG_ENABLE_OBJC_ARC = YES;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = "WORMASSAY_DEBUG=1";
 				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
-				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
 				USER_HEADER_SEARCH_PATHS = "ThirdParty ThirdParty/OpenCV/include ThirdParty/OpenCV/modules/core/include ThirdParty/OpenCV/modules/flann/include ThirdParty/OpenCV/modules/imgproc/include ThirdParty/OpenCV/modules/video/include ThirdParty/OpenCV/modules/features2d/include ThirdParty/OpenCV/modules/objdetect/include ThirdParty/OpenCV/modules/calib3d/include ThirdParty/OpenCV/modules/highgui/include ThirdParty/OpenCV/modules/ml/include ThirdParty/OpenCV/modules/contrib/include";
@@ -2039,14 +2089,12 @@
 			buildSettings = {
 				CLANG_ENABLE_OBJC_ARC = YES;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEPLOYMENT_POSTPROCESSING = YES;
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
 				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
-				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				SDKROOT = macosx;
 				SEPARATE_STRIP = YES;
 				USER_HEADER_SEARCH_PATHS = "ThirdParty ThirdParty/OpenCV/include ThirdParty/OpenCV/modules/core/include ThirdParty/OpenCV/modules/flann/include ThirdParty/OpenCV/modules/imgproc/include ThirdParty/OpenCV/modules/video/include ThirdParty/OpenCV/modules/features2d/include ThirdParty/OpenCV/modules/objdetect/include ThirdParty/OpenCV/modules/calib3d/include ThirdParty/OpenCV/modules/highgui/include ThirdParty/OpenCV/modules/ml/include ThirdParty/OpenCV/modules/contrib/include";

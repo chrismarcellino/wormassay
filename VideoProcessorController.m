@@ -26,47 +26,11 @@ static NSString *const UnlabeledPlateLabel = @"Unlabeled Plate";
 // Logs are turned and results emailed after an idle period of this duration
 static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
 
-@interface VideoProcessorController ()
-
-- (void)emailRecentResults;
-
-- (void)enqueueConversionJobForPath:(NSString *)sourceVideoPath plateOrientation:(PlateOrientation)plateOrientation;
-- (void)dequeueNextConversionJobIfNecessary;
-- (void)setConversionJobsPaused:(BOOL)paused;;
-- (void)taskDidTerminate:(NSNotification *)note;
-- (void)handleConversionTaskTermination;
-- (void)updateEncodingTableView;
-
-- (void)appendString:(NSString *)string toPath:(NSString *)path;
-
-@end
-
-
-@interface ConversionJob : NSObject
-
-@property(copy) NSString *inputVideoPath;
-@property(copy, readonly) NSString *outputVideoPath;
-@property PlateOrientation plateOrientation;
-
-@end
-
-@implementation ConversionJob
-@synthesize inputVideoPath = _inputVideoPath;
-@synthesize plateOrientation;
-
-- (NSString *)outputVideoPath
-{
-    return [[[self inputVideoPath] stringByDeletingPathExtension] stringByAppendingPathExtension:@"mp4"];
-}
-
-@end
-
 
 @implementation VideoProcessorController
 
 @synthesize runLogTextView = _runLogTextView;
 @synthesize runLogScrollView = _runLogScrollView;
-@synthesize encodingTableView = _encodingTableView;
 
 + (VideoProcessorController *)sharedInstance
 {
@@ -86,9 +50,6 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
         _barcodesSinceTrackingBegan = [[NSCountedSet alloc] init];
         _videoTempURLsToDestinationURLs = [[NSMutableDictionary alloc] init];
         _filesToEmail = [[NSMutableSet alloc] init];
-        _pendingConversionJobs = [[NSMutableArray alloc] init];
-        
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(taskDidTerminate:) name:NSTaskDidTerminateNotification object:nil];
     }
     
     return self;
@@ -96,7 +57,7 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
 
 - (void)dealloc
 {
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:NSTaskDidTerminateNotification object:nil];
+    dispatch_release(_queue);
 }
 
 - (NSArray *)assayAnalyzerClasses
@@ -267,6 +228,15 @@ static void createFolderIfNecessary(NSString *path)
     return isTracking;
 }
 
+- (BOOL)hasEncodingJobsRunning
+{
+    __block BOOL hasEncodingJobsRunning = NO;
+    dispatch_sync(_queue, ^{
+        hasEncodingJobsRunning = [_videoTempURLsToDestinationURLs count] > 0;
+    });
+    return hasEncodingJobsRunning;
+}
+
 - (void)videoProcessor:(VideoProcessor *)vp didBeginTrackingPlateAtPresentationTime:(NSTimeInterval)presentationTime
 {
     dispatch_async(_queue, ^{
@@ -286,38 +256,31 @@ static void createFolderIfNecessary(NSString *path)
                     [processor setShouldScanForWells:NO];
                 }
             }
-            
-            [self setConversionJobsPaused:YES];
         }
     });
 }
 
-- (void)videoProcessor:(VideoProcessor *)vp shouldBeginRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
-{    
-    dispatch_async(_queue, ^{
-        if ([captureFileOutput delegate] != self) {
-            [captureFileOutput setDelegate:self];
-        }
-        
-        // Use a generic container extension at this point since we don't know if this is an MPEG stream yet
-        NSString *filename = [NSString stringWithFormat:@"%@ %llu (%x).mov", UnlabeledPlateLabel, _plateInRunNumber, arc4random()];
+- (NSURL *)outputFileURLForVideoProcessor:(VideoProcessor *)vp
+{
+    __block NSURL *url = nil;
+    dispatch_sync(_queue, ^{
+        NSString *filename = [NSString stringWithFormat:@"%@ %llu (%x).mp4", UnlabeledPlateLabel, _plateInRunNumber, arc4random()];
         NSString *path = [[self videoFolderPathCreatingIfNecessary:YES] stringByAppendingPathComponent:filename];
-        [captureFileOutput recordToOutputFileURL:[NSURL fileURLWithPath:path]];
-        RunLog(@"Began recording video to disk.");
+        url = [NSURL fileURLWithPath:path];
     });
+    return url;
 }
 
 - (void)videoProcessor:(VideoProcessor *)vp
 didFinishAcquiringPlateData:(PlateData *)plateData
           successfully:(BOOL)successfully
-stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
+willStopRecordingToOutputFileURL:(NSURL *)outputFileURL     // nil if not recording
 {
     dispatch_async(_queue, ^{
         if (_currentlyTrackingProcessor == vp) {        // may have already been removed from _videoProcessors if device was unplugged/file closed
             for (VideoProcessor *processor in _videoProcessors) {
                 [processor setShouldScanForWells:YES];
             }
-            [self setConversionJobsPaused:NO];
             
             // Determine the filename prefix to log to. Rotate the log files if we've been idle for a time and update the run date if necessary
             if (!_currentOutputFilenamePrefix || _currentOutputLastWriteTime + LogTurnoverIdleInterval < CACurrentMediaTime()) {
@@ -351,8 +314,8 @@ stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
                     }
                 }
                 if (!plateID) {
-                    NSString *fileSourceFilename = [vp fileSourceFilename];
-                    plateID = fileSourceFilename ? fileSourceFilename : UnlabeledPlateLabel;
+                    NSString *fileSourceDisplayName = [vp fileSourceDisplayName];
+                    plateID = fileSourceDisplayName ? fileSourceDisplayName : UnlabeledPlateLabel;
                 }
                 
                 // Generate the scan ID
@@ -383,30 +346,16 @@ stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
                 }
                 
                 // Mark the recording URL for moving once it is finalized
-                if (captureFileOutput && [captureFileOutput outputFileURL]) {
-                    BOOL isTransportStream = NO;
-                    for (QTCaptureConnection *connection in [captureFileOutput connections]) {
-                        if ([[connection formatDescription] formatType] == 'mp2v') {
-                            isTransportStream = YES;
-                        }
-                    }
-                    
-                    NSString *extension = isTransportStream ? @"ts" : @"mov";
-                    NSString *filename = [NSString stringWithFormat:@"%@ %@ Video.%@", plateID, scanID, extension];                    
+                if (outputFileURL) {
+                    NSString *filename = [NSString stringWithFormat:@"%@ %@ Video.mp4", plateID, scanID];
                     NSString *destinationPath = [[self videoFolderPathCreatingIfNecessary:YES] stringByAppendingPathComponent:filename];
                     NSURL *destinationURL = [NSURL fileURLWithPath:destinationPath];
                     // Store the temporary URL and destination URL so we can move it into place once the file is finalized
-                    [_videoTempURLsToDestinationURLs setObject:destinationURL forKey:[captureFileOutput outputFileURL]];
+                    [_videoTempURLsToDestinationURLs setObject:destinationURL forKey:outputFileURL];
                 }
             }
             
             _currentlyTrackingProcessor = nil;
-        }
-        
-        // Stop recording unconditionally
-        if (captureFileOutput) {
-            [captureFileOutput recordToOutputFileURL:nil];
-            NSAssert([captureFileOutput delegate] == self, @"recordingCaptureOutput not VideoProcessorController");
         }
         
         // Reset log emailing timer
@@ -452,51 +401,17 @@ stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
     });
 }
 
-// QTCaptureFileOutput delegate methods
-
-// "This method is called when the file recorder reaches a soft limit, i.e. the set maximum file size or duration.
-// If the delegate returns NO, the file writer will continue writing the same file. If the delegate returns YES and
-// doesn't set a new output file, captureOutput:mustChangeOutputFileAtURL:forConnections:dueToError: will be called.
-// If the delegate returns YES and sets a new output file, recording will continue on the new file."
-- (BOOL)captureOutput:(QTCaptureFileOutput *)captureOutput shouldChangeOutputFileAtURL:(NSURL *)outputFileURL forConnections:(NSArray *)connections dueToError:(NSError *)error
-{
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (error) {
-            NSAlert *alert = [NSAlert alertWithError:error];
-            [alert beginSheetModalForWindow:nil
-                              modalDelegate:nil
-                             didEndSelector:nil
-                                contextInfo:NULL];
-        }
-    });
-    return YES;
-}
-
-// "This method is called when the file writer reaches a hard limit, such as space running out on the current disk,
-// or the stream format of the incoming media changing. If the delegate does nothing, the current output file will
-// be set to nil. If the delegate sets a new output file (on a different disk in the case of hitting a disk space limit)
-// recording will continue on the new file."
-- (void)captureOutput:(QTCaptureFileOutput *)captureOutput mustChangeOutputFileAtURL:(NSURL *)outputFileURL forConnections:(NSArray *)connections dueToError:(NSError *)error
-{
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (error) {
-            NSAlert *alert = [NSAlert alertWithError:error];
-            [alert beginSheetModalForWindow:nil
-                              modalDelegate:nil
-                             didEndSelector:nil
-                                contextInfo:NULL];
-        }
-    });
-}
-
-// "This method is called whenever a file is finished successfully. If the file was forced to be finished due to an error
-// (including errors that resulted in either of the above two methods being called), the error is described in the error
-// parameter. Otherwise, the error parameter equals nil."
-- (void)captureOutput:(QTCaptureFileOutput *)captureOutput didFinishRecordingToOutputFileAtURL:(NSURL *)outputFileURL forConnections:(NSArray *)connections dueToError:(NSError *)error
+- (void)videoProcessorDidFinishRecordingToFileURL:(NSURL *)outputFileURL error:(NSError *)error      // error is nil upon success
 {
     dispatch_async(_queue, ^{
         if (error) {
-            RunLog(@"Error finishing recording to file \"%@\": %@", [outputFileURL path], error);
+            dispatch_async(dispatch_get_main_queue(), ^{
+                NSAlert *alert = [NSAlert alertWithError:error];
+                [alert beginSheetModalForWindow:nil
+                                  modalDelegate:nil
+                                 didEndSelector:nil
+                                    contextInfo:NULL];
+            });
         }
         
         NSURL *destinationURL = [_videoTempURLsToDestinationURLs objectForKey:outputFileURL];
@@ -506,8 +421,6 @@ stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
             // Move the file into place
             if ([fileManager moveItemAtURL:outputFileURL toURL:destinationURL error:&fileManagerError]) {
                 RunLog(@"Wrote video at \"%@\" to disk.", [destinationURL path]);
-                
-                [self enqueueConversionJobForPath:[destinationURL path] plateOrientation:[self plateOrientation]];
             } else {
                 RunLog(@"Unable to move recording at \"%@\" to \"%@\": %@", [outputFileURL path], [destinationURL path], fileManagerError);
             }
@@ -518,220 +431,6 @@ stopRecordingWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
             }
         }
         [_videoTempURLsToDestinationURLs removeObjectForKey:outputFileURL];
-    });
-}
-
-static inline BOOL isValidPath(NSString *path, NSFileManager *fileManager)
-{
-    return path && [fileManager fileExistsAtPath:path] && [fileManager isExecutableFileAtPath:path];
-}
-
-- (NSString *)conversionToolPath
-{
-    NSFileManager *fileManager = [[NSFileManager alloc] init];
-    
-    // If there isn't a ffmpeg executable in the bundle, see if the user or system has one
-    NSString *path = [[NSBundle mainBundle] pathForAuxiliaryExecutable:@"ffmpeg"];
-    if (!isValidPath(path, fileManager)) {
-        path = [[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"ffmpeg"];
-    }
-    if (!isValidPath(path, fileManager)) {
-        path = [@"~/Applications/ffmpeg" stringByExpandingTildeInPath];
-    }
-    if (!isValidPath(path, fileManager)) {
-        path = @"/Applications/ffmpeg";
-    }
-    if (!isValidPath(path, fileManager)) {
-        path = @"/usr/bin/ffmpeg";
-    }
-    if (!isValidPath(path, fileManager)) {
-        path = @"/usr/local/bin/ffmpeg";
-    }
-    
-    return path;
-}
-
-- (BOOL)supportsConversion
-{
-    return [self conversionToolPath] != nil;
-}
-
-- (void)enqueueConversionJobForPath:(NSString *)sourceVideoPath plateOrientation:(PlateOrientation)plateOrientation
-{
-    NSFileManager *fileManager = [[NSFileManager alloc] init];
-    
-    if ([self supportsConversion] && [fileManager fileExistsAtPath:sourceVideoPath]) {
-        // By convention, the first job in the queue is always running
-        dispatch_async(_queue, ^{
-            ConversionJob *job = [[ConversionJob alloc] init];
-            [job setInputVideoPath:sourceVideoPath];
-            [job setPlateOrientation:plateOrientation];
-            [_pendingConversionJobs addObject:job];
-            
-            [self dequeueNextConversionJobIfNecessary];
-            [self updateEncodingTableView];
-        });
-    }
-}
-
-- (void)dequeueNextConversionJobIfNecessary
-{
-    dispatch_async(_queue, ^{
-        if (!_isAppTerminating && !_pauseJobs && !_conversionTask && [_pendingConversionJobs count] > 0) {
-            ConversionJob *job = [_pendingConversionJobs objectAtIndex:0];
-            NSString *inputPath = [job inputVideoPath];
-            NSString *outputPath = [job outputVideoPath];
-            
-            if ([inputPath isEqual:outputPath]) {
-                // Nothing to do, move on
-                [_pendingConversionJobs removeObjectAtIndex:0];
-                [self dequeueNextConversionJobIfNecessary];
-            } else {
-                _conversionTask = [[NSTask alloc] init];
-                [_conversionTask setLaunchPath:[self conversionToolPath]];
-                // Create a conversion job to convert H.264 using x264 into an MP4 container.
-                // Use a ratefactor of 22 and multithread automatically and rotate/mirror as needed.
-                NSMutableArray *arguments = [NSMutableArray arrayWithObjects:@"-i", inputPath,
-                                             @"-vcodec", @"libx264", @"-f", @"mp4", @"-crf", @"22", @"-threads", @"0", @"-y", nil];
-                switch ([job plateOrientation]) {
-                    case PlateOrientationTopRead:
-                    case PlateOrientationNoWells:
-                        break;
-                    case PlateOrientationTopRead180DegreeRotated:
-                        [arguments addObject:@"-vf"];
-                        [arguments addObject:@"hflip, vflip"];
-                        break;
-                    case PlateOrientationBottomRead:
-                        [arguments addObject:@"-vf"];
-                        [arguments addObject:@"hflip"];
-                        break;
-                    case PlateOrientationBottomRead180DegreeRotated:
-                        [arguments addObject:@"-vf"];
-                        [arguments addObject:@"vflip"];
-                        break;
-                }
-                [arguments addObject:outputPath];
-                
-                [_conversionTask setArguments:arguments];
-                // Must launch task on main thread to ensure that a thread is around to service the death notification
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    // If possible and we haven't already, create a new session with us as the session leader and a new group with us as the group leader
-                    pid_t group = setsid();
-                    if (group == -1) {
-                        group = getpgrp();
-                    }
-                    [_conversionTask launch];
-                    // Place the launched process in our group if possible so that it is terminated if we crash
-                    setpgid([_conversionTask processIdentifier], group);
-                });
-                RunLog(@"Started H.264 encoding job for \"%@\".", inputPath);
-                
-                [self updateEncodingTableView];
-            }
-        }
-    });
-}
-
-- (void)taskDidTerminate:(NSNotification *)note
-{
-    dispatch_async(_queue, ^{
-        if (_conversionTask == [note object]) {
-            [self handleConversionTaskTermination];
-        }
-    });
-}
-
-// requires _queue to be held
-- (void)handleConversionTaskTermination
-{
-    NSAssert(_conversionTask && ![_conversionTask isRunning], @"no terminated task");
-    ConversionJob *job = [_pendingConversionJobs objectAtIndex:0];
-    NSString *inputPath = [job inputVideoPath];
-    NSString *outputPath = [job outputVideoPath];
-    NSAssert([[_conversionTask arguments] containsObject:inputPath] && [[_conversionTask arguments] containsObject:outputPath],
-             @"task doesn't match head of queue");
-    
-    [_pendingConversionJobs removeObjectAtIndex:0];
-    
-    // Delete the input file if the output file exists and the process exited without an error code or crashing
-    NSFileManager *fileManager = [[NSFileManager alloc] init];
-    if ([_conversionTask terminationReason] == NSTaskTerminationReasonExit &&
-        [_conversionTask terminationStatus] == 0 &&
-        [fileManager fileExistsAtPath:inputPath]) {
-        RunLog(@"H.264 encoding completed successfully for \"%@\"", outputPath);
-        [fileManager removeItemAtPath:inputPath error:NULL];
-    } else {
-        // Otherwise delete the output and leave the input file
-        RunLog(@"H.264 encoding failed for \"%@\". See the Console application for more information. Leaving unencoded original file in place.", inputPath);
-        [fileManager removeItemAtPath:outputPath error:NULL];
-    }
-    
-    _conversionTask = nil;
-    
-    // Start the next job
-    [self dequeueNextConversionJobIfNecessary];
-    [self updateEncodingTableView];
-}
-
-- (void)setConversionJobsPaused:(BOOL)paused
-{
-    dispatch_async(_queue, ^{
-        _pauseJobs = paused;
-        
-        if (_conversionTask) {
-            if (paused) {
-                [_conversionTask suspend];
-            } else {
-                [_conversionTask resume];
-            }
-        } else {
-            [self dequeueNextConversionJobIfNecessary];
-        }
-        
-        [self updateEncodingTableView];
-    });
-}
-
-- (BOOL)hasConversionJobsQueuedOrRunning
-{
-    __block BOOL result;
-    dispatch_sync(_queue, ^{
-        result = [_pendingConversionJobs count] > 0;
-    });
-    return result;
-}
-
-- (void)terminateAllConversionJobsForAppTerminationSynchronously
-{
-    dispatch_sync(_queue, ^{
-        if (_conversionTask) {
-            [_conversionTask resume];
-            [_conversionTask terminate];
-            [_conversionTask waitUntilExit];
-            [self handleConversionTaskTermination];
-        }
-        
-        _isAppTerminating = YES;
-    });
-}
-
-// requires _queue to be held
-- (void)updateEncodingTableView
-{
-    NSMutableArray *array = [[NSMutableArray alloc] init];
-    BOOL first = YES;
-    for (ConversionJob *job in _pendingConversionJobs) {
-        NSString *value = [[job inputVideoPath] lastPathComponent];
-        if (first) {
-            NSString *status = _pauseJobs ? NSLocalizedString(@" (paused)", nil) : NSLocalizedString(@" (processing…)", nil);
-            value = [value stringByAppendingString:status];
-            first = NO;
-        }
-        [array addObject:value];
-    }
-    
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [[self encodingTableView] setContents:array];
     });
 }
 

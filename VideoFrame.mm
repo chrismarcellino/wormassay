@@ -94,34 +94,6 @@ static inline void premultiplyImage(IplImage *img, bool reverse);
     return [self initWithIplImageTakingOwnership:iplImage presentationTime:presentationTime];
 }
 
-- (id)initByCopyingCIImage:(CIImage *)ciImage
-            usingCIContext:(CIContext *)context
-                bitmapSize:(NSSize)bitmapSize
-        resultChannelCount:(int)outChannels
-          presentationTime:(NSTimeInterval)presentationTime
-{
-    NSAssert(outChannels == 4, @"only 4 channels supported");
-    
-    CGRect extent = [ciImage extent];
-    // Get a image with square pixels
-    if (extent.size.width != bitmapSize.width || extent.size.height != bitmapSize.height) {
-        ciImage = [ciImage imageByApplyingTransform:CGAffineTransformMakeScale(MAX(1.0, bitmapSize.width / extent.size.width),
-                                                                               MAX(1.0, bitmapSize.height / extent.size.height))];
-    }
-    
-    IplImage *iplImage = cvCreateImage(cvSize(bitmapSize.width, bitmapSize.height), IPL_DEPTH_8U, outChannels);
-    
-    extern CIFormat kCIFormatBGRA8;         // Once this is available in a header, remove this forward declaration
-    [context render:ciImage
-           toBitmap:iplImage->imageData
-           rowBytes:iplImage->widthStep
-             bounds:CGRectMake(0.0, 0.0, bitmapSize.width, bitmapSize.height)
-             format:kCIFormatBGRA8
-         colorSpace:NULL];
-    
-    return [self initWithIplImageTakingOwnership:iplImage presentationTime:presentationTime];    
-}
-
 - (id)initByCopyingCGImage:(CGImageRef)cgImage resultChannelCount:(int)outChannels presentationTime:(NSTimeInterval)presentationTime
 {
     CvSize size = cvSize(CGImageGetWidth(cgImage), CGImageGetHeight(cgImage));

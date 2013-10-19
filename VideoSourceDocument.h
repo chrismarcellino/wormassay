@@ -7,47 +7,64 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import <QTKit/QTKit.h>
+#import <AVFoundation/AVFoundation.h>
 #import <QuartzCore/QuartzCore.h>
+#import "VideoProcessor.h"
 
 @class VideoProcessor;
 @class BitmapOpenGLView;
+@class DeckLinkSource;
 
-extern NSString *const CaptureDeviceScheme;
-extern NSString *const CaptureDeviceFileType;
+extern NSString *const CaptureDeviceWasConnectedOrDisconnectedNotification;
 
-extern NSURL *URLForCaptureDeviceUniqueID(NSString *uniqueID);
-extern NSString *UniqueIDForCaptureDeviceURL(NSURL *url);
+extern NSString *const AVFCaptureDeviceScheme;
+extern NSString *const AVFCaptureDeviceFileType;
 
-extern BOOL DeviceIsAppleUSBDevice(QTCaptureDevice *device);
+extern NSString *const BlackMagicDeckLinkCaptureDeviceScheme;
+extern NSString *const BlackMagicDeckLinkCaptureDeviceFileType;
 
 
-@interface VideoSourceDocument : NSDocument {
-    // A document will have only one of captureDevice or movie
-    QTCaptureDevice *_captureDevice;
-    QTCaptureSession *_captureSession;
-    QTCaptureDeviceInput *_captureDeviceInput;
-    QTCaptureDecompressedVideoOutput *_captureDecompressedVideoOutput;
+// A VideoSourceDocument corresponds to each document window and hence camera input
+@interface VideoSourceDocument : NSDocument <AVCaptureVideoDataOutputSampleBufferDelegate, VideoProcessorRecordingDelegate> {
     dispatch_queue_t _frameArrivalQueue;
-    BOOL _currentlyProcessingFrame;
-    
-    QTMovie *_movie;
-    NSWindow *_movieInvisibleWindow;
-    QTMovieView *_movieView;
-    CIContext *_ciContext;
     
     VideoProcessor *_processor;
     BitmapOpenGLView *_bitmapOpenGLView;
-    NSUInteger _frameDropCount;
-    NSString *_sourceIdentifier;
+    
     BOOL _closeCalled;
+    NSSize _lastFrameSize;
+    
+    // Shared video encoders
+    AVAssetWriter *_assetWriter;
+    AVAssetWriterInput *_assetWriterInput;
+    BOOL _currentlyProcessingFrame;
+    BOOL _sendFramesToAssetWriter;
+    BOOL _firstFrameToAssetWriter;
+    BOOL _encodingFrameDropLogOnce;
+                                                    
+    // A document will have only one of the following sets of variables set depending on the input:
+    
+    // AVFoundation (QuickTime X) capture devices
+    AVCaptureDevice *_captureDevice;
+    AVCaptureSession *_captureSession;
+    AVCaptureDeviceInput *_captureDeviceInput;
+    AVCaptureVideoDataOutput *_captureVideoDataOutput;
+    
+    // AVFoundation movie file input
+    AVURLAsset *_urlAsset;
+    AVAssetReader *_assetReader;
+    AVAssetReaderTrackOutput *_assetReaderOutput;
+    
+    // BlackMagic DeckLink capture device
+    DeckLinkSource *_deckLinkSource;
 }
 
-@property(nonatomic, readonly) QTCaptureDevice *captureDevice;
-@property(nonatomic, readonly) QTMovie *movie;
-@property(nonatomic, readonly) NSString *sourceIdentifier;      // unique and suitable for logging
+// Enable posting of CaptureDeviceWasConnectedOrDisconnectedNotification. Call only once.
++ (void)registerForDeviceChangedNotifications;
 
-- (NSSize)expectedFrameSize;
-@property NSSize lastFrameSize;
+// unique urls for each camera device (only meaningful to this class)
++ (NSArray *)cameraDeviceURLsIgnoringBuiltInCamera:(BOOL)ignoreBuiltInCameras;
+
+- (NSString *)sourceIdentifier;      // unique and suitable for logging
 
 @end

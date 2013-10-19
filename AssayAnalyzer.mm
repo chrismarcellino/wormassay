@@ -13,16 +13,5 @@
 
 NSTimeInterval IgnoreFramesPostMovementTimeInterval()
 {
-    static dispatch_once_t pred;
-    static NSTimeInterval val;
-    dispatch_once(&pred, ^{
-        val = [[NSUserDefaults standardUserDefaults] doubleForKey:@"IgnoreFramesPostMovementTimeInterval"];
-        if (val) {
-            RunLog(@"*** NOTE ***: IgnoreFramesPostMovementTimeInterval user default set to %g", val);
-        } else {
-            val = 5.0;
-        }
-    });
-    
-    return val;
+    return 2.0;
 }

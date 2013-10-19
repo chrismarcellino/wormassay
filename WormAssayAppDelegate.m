@@ -13,29 +13,22 @@
 #import "VideoProcessor.h"
 #import "AssayAnalyzer.h"
 #import "LoggingAndNotificationsSettingsWindowController.h"
-#import <QTKit/QTKit.h>
 #import <IOKit/pwr_mgt/IOPMLib.h>
 
 static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCameras";
+static NSString *const UseBlackMagicDeckLinkCamerasDefaultsKey = @"UseBlackMagicDeckLinkCameras";
 
-@interface WormAssayAppDelegate ()
-
-- (void)assayAnalyzerMenuItemSelected:(NSMenuItem *)sender;
-- (void)loadCaptureDevices;
-- (void)captureDevicesChanged;
-- (void)loggingAndNotificationSettingsDidClose:(NSNotification *)note;
-
-@end
 
 @implementation WormAssayAppDelegate
 
-@synthesize assayAnalyzerMenu, plateOrientationMenu, runLogTextView, runLogScrollView, encodingTableView;
+@synthesize assayAnalyzerMenu, plateOrientationMenu, runLogTextView, runLogScrollView;
 
 - (void)applicationWillFinishLaunching:(NSNotification *)notification
 {
     // Register default user defaults
     NSDictionary *defaults = [[NSDictionary alloc] initWithObjectsAndKeys:
                               [NSNumber numberWithBool:YES], IgnoreBuiltInCamerasUserDefaultsKey,
+                              [NSNumber numberWithBool:YES], UseBlackMagicDeckLinkCamerasDefaultsKey,
                               [NSNumber numberWithBool:YES], @"ApplePersistenceIgnoreState",    // ignore resume
                               nil];
     [[NSUserDefaults standardUserDefaults] registerDefaults:defaults];
@@ -48,7 +41,6 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
     VideoProcessorController *videoProcessorController = [VideoProcessorController sharedInstance];
     [videoProcessorController setRunLogTextView:runLogTextView];
     [videoProcessorController setRunLogScrollView:runLogScrollView];
-    [videoProcessorController setEncodingTableView:encodingTableView];
     
     // Log welcome message
     NSBundle *mainBundle = [NSBundle mainBundle];
@@ -66,32 +58,34 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
     unsigned long long freeSpace = [[fileAttributes objectForKey:NSFileSystemFreeSize] unsignedLongLongValue];
     double percentFree = (double)freeSpace / (double)fileSystemSize * 100.0;
     
-    RunLog(@"%@ version %@ launched. Storage has %@ (%.3g%%) free space.",
+    RunLog(@"%@ version %@ launched. Storage has %@ (%.3g%%) free space. Mac OS %@",
            [mainBundle objectForInfoDictionaryKey:(id)kCFBundleNameKey],
            [mainBundle objectForInfoDictionaryKey:(id)kCFBundleVersionKey],
            formattedDataSize(freeSpace),
-           percentFree);
+           percentFree,
+           [[NSProcessInfo processInfo] operatingSystemVersionString]);
     
-    // Log that the conversion executable isn't present
-    if (![[VideoProcessorController sharedInstance] supportsConversion]) {
-        RunLog(@"This version of %@ was built without H.264 encoding support. "
-               "Instead, VLC (http://www.videolan.org/vlc/) can be used to view the video files recorded when assaying using a HDV or DV camera. ",
-               [mainBundle objectForInfoDictionaryKey:(id)kCFBundleNameKey]);
-    }
+    RunLog(@"Important: for best results use 1080p 24-30fps camera settings with image stabilization OFF and Instant Autofocus OFF (normal AF is ok.)");
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
     // Register for camera notifications and create windows for each camera
-    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-    [center addObserver:self selector:@selector(captureDevicesChanged) name:QTCaptureDeviceWasConnectedNotification object:nil];
-    [center addObserver:self selector:@selector(captureDevicesChanged) name:QTCaptureDeviceWasDisconnectedNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(captureDevicesChanged)
+                                                 name:CaptureDeviceWasConnectedOrDisconnectedNotification
+                                               object:nil];
     
     // Register for defaults changes
-    [[NSUserDefaultsController sharedUserDefaultsController] addObserver:self
-                                                              forKeyPath:[@"values." stringByAppendingString:IgnoreBuiltInCamerasUserDefaultsKey]
-                                                                 options:0
-                                                                 context:NULL];
+    NSUserDefaultsController *defaultsController = [NSUserDefaultsController sharedUserDefaultsController];
+    [defaultsController addObserver:self
+                         forKeyPath:[@"values." stringByAppendingString:IgnoreBuiltInCamerasUserDefaultsKey]
+                            options:0
+                            context:NULL];
+    [defaultsController addObserver:self
+                         forKeyPath:[@"values." stringByAppendingString:UseBlackMagicDeckLinkCamerasDefaultsKey]
+                            options:0
+                            context:NULL];
     
     [self loadCaptureDevices];
     
@@ -150,43 +144,28 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
 - (void)loadCaptureDevices
 {
     NSDocumentController *documentController = [NSDocumentController sharedDocumentController];
-    NSMutableSet *presentUniqueIds = [[NSMutableSet alloc] init];
     
+    // Get currently attached capture devices
     BOOL ignoreBuiltInCameras = [[NSUserDefaults standardUserDefaults] boolForKey:IgnoreBuiltInCamerasUserDefaultsKey];
+    NSArray *deviceURLs = [VideoSourceDocument cameraDeviceURLsIgnoringBuiltInCamera:ignoreBuiltInCameras];
     
     // Iterate through current capture devices, creating new documents for new ones
-    for (QTCaptureDevice *device in [QTCaptureDevice inputDevices]) {
-        NSString *uniqueID = [device uniqueID];
-        
-        BOOL isBuiltInCamera = DeviceIsAppleUSBDevice(device);
-        
-        // Only consider devices capable of video output and that meet our built-in device criteria
-        if (([device hasMediaType:QTMediaTypeVideo] || [device hasMediaType:QTMediaTypeMuxed]) && 
-            (!isBuiltInCamera || !ignoreBuiltInCameras)) {
-            [presentUniqueIds addObject:uniqueID];
-            
-            // Construct the URL for the capture device
-            NSURL *url = URLForCaptureDeviceUniqueID(uniqueID);
-            
-            // If there is no open VideoSourceDocument document for this URL, create one
-            if (![documentController documentForURL:url]) {                
-                NSError *error = nil;
-                [documentController openDocumentWithContentsOfURL:url display:YES error:&error];
-                if (error) {
-                    [[NSAlert alertWithError:error] runModal];
-                }
+    for (NSURL *deviceURL in deviceURLs) {
+        // If there is no open VideoSourceDocument document for this URL, create one
+        if (![documentController documentForURL:deviceURL]) {
+            NSError *error = nil;
+            [documentController openDocumentWithContentsOfURL:deviceURL display:YES error:&error];
+            if (error) {
+                [[NSAlert alertWithError:error] runModal];
             }
         }
     }
-    
+
     // Iterate through current documents and remove ones that no longer correspond to current capture devices
     for (NSDocument *document in [documentController documents]) {
         NSURL *url = [document fileURL];        // not necessarily a file URL
-        NSString *captureDeviceUniqueID = UniqueIDForCaptureDeviceURL(url);
-        if (captureDeviceUniqueID) {
-            if (![presentUniqueIds containsObject:captureDeviceUniqueID]) {
-                [document close];
-            }
+        if (![deviceURLs containsObject:url]) {
+            [document close];
         }
     }
 }
@@ -220,10 +199,10 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
         if (result == NSAlertFirstButtonReturn) {
             reply = NSTerminateCancel;
         }
-    } else if ([[VideoProcessorController sharedInstance] hasConversionJobsQueuedOrRunning]) {
+    } else if ([[VideoProcessorController sharedInstance] hasEncodingJobsRunning]) {
         NSAlert *alert = [[NSAlert alloc] init];
         [alert setMessageText:NSLocalizedString(@"Videos are currently being encoded", nil)]; 
-        [alert setInformativeText:NSLocalizedString(@"Videos will remain in their original captured format if you exit before the conversion jobs are complete.", nil)];
+        [alert setInformativeText:NSLocalizedString(@"Videos will not be saved if you exit before encoding is complete. The results data will not be affected.", nil)];
         [alert addButtonWithTitle:NSLocalizedString(@"Cancel", nil)];
         [alert addButtonWithTitle:NSLocalizedString(@"Quit", nil)];
         NSInteger result = [alert runModal];
@@ -233,11 +212,6 @@ static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCame
     }
     
     return reply;
-}
-
-- (void)applicationWillTerminate:(NSNotification *)notification
-{
-    [[VideoProcessorController sharedInstance] terminateAllConversionJobsForAppTerminationSynchronously];
 }
 
 - (IBAction)openRunOutputFolder:(id)sender

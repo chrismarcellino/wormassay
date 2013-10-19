@@ -14,9 +14,13 @@
 
 - (NSString *)typeForContentsOfURL:(NSURL *)inAbsoluteURL error:(NSError **)outError
 {
-    if ([[inAbsoluteURL scheme] caseInsensitiveCompare:CaptureDeviceScheme] == NSOrderedSame) {
-        return CaptureDeviceFileType;
+    if ([[inAbsoluteURL scheme] caseInsensitiveCompare:AVFCaptureDeviceScheme] == NSOrderedSame) {
+        return AVFCaptureDeviceFileType;
     }
+    if ([[inAbsoluteURL scheme] caseInsensitiveCompare:BlackMagicDeckLinkCaptureDeviceScheme] == NSOrderedSame) {
+        return BlackMagicDeckLinkCaptureDeviceFileType;
+    }
+    
     return [super typeForContentsOfURL:inAbsoluteURL error:outError];
 }
 

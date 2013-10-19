@@ -26,11 +26,6 @@
     NSString *_runID;
     NSTimeInterval _currentOutputLastWriteTime;      // in CPU time
     
-    NSMutableArray *_pendingConversionJobs;
-    NSTask *_conversionTask;
-    BOOL _pauseJobs;
-    BOOL _isAppTerminating;
-    
     NSDictionary *_runLogTextAttributes;    // main thread only
 }
 
@@ -50,13 +45,10 @@
 - (void)removeVideoProcessor:(VideoProcessor *)videoProcessor;
 
 - (BOOL)isTracking;
-- (BOOL)supportsConversion;
-- (BOOL)hasConversionJobsQueuedOrRunning;
-- (void)terminateAllConversionJobsForAppTerminationSynchronously;
+- (BOOL)hasEncodingJobsRunning;
 
 @property(retain) NSTextView *runLogTextView;
 @property(retain) NSScrollView *runLogScrollView;
-@property(retain) ArrayTableView *encodingTableView;
 - (void)appendToRunLog:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2);
 
 @end

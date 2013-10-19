@@ -13,7 +13,6 @@
 #import "AssayAnalyzer.h"
 #import "WellFinding.hpp"
 #import "VideoProcessorController.h"   // for RunLog()
-#import <QTKit/QTKit.h>
 #import "zxing/common/GreyscaleLuminanceSource.h"
 #import "zxing/MultiFormatReader.h"
 #import "zxing/BarcodeFormat.h"
@@ -28,14 +27,16 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 static const double WellDetectingAverageDeltaEndIdleThreshold = 5.0;
 static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
 
+// Here for C++ build safety
 @interface VideoProcessor() {
-    __unsafe_unretained id<VideoProcessorDelegate> _delegate;        // not retained
-    QTCaptureFileOutput *_captureFileOutput;
-    NSString *_fileSourceFilename;
+    __weak id<VideoProcessorDelegate> _delegate;                        // not retained
+    __weak id<VideoProcessorRecordingDelegate> _fileOutputDelegate;    // not retained
+    NSString *_fileSourceDisplayName;
     Class _assayAnalyzerClass;
     PlateOrientation _plateOrientation;
     dispatch_queue_t _queue;        // protects all state and serializes
     dispatch_queue_t _debugFrameCallbackQueue;
+    NSURL *_fileOutputURL;
     
     BOOL _shouldScanForWells;
     BOOL _scanningForWells;
@@ -58,24 +59,19 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
     NSUInteger _lastBarcodeThisProcessorRepeatCount;
 }
 
-- (void)performWellDeterminationCalculationAsyncWithFrame:(VideoFrame *)videoFrame;
-- (void)performBarcodeReadingAsyncWithFrame:(VideoFrame *)videoFrame;
-
-- (void)resetCaptureStateAndReportResults;
-
 @end
 
 
 @implementation VideoProcessor
 
-@synthesize fileSourceFilename = _fileSourceFilename;
+@synthesize fileSourceDisplayName = _fileSourceDisplayName;
 
-- (id)initWithCaptureFileOutput:(QTCaptureFileOutput *)captureFileOutput
-             fileSourceFilename:(NSString *)fileSourceFilename
+- (id)initWithFileOutputDelegate:(id<VideoProcessorRecordingDelegate>)fileOutputDelegate
+           fileSourceDisplayName:(NSString *)fileSourceDisplayName
 {
     if ((self = [super init])) {
-        _captureFileOutput = captureFileOutput;
-        _fileSourceFilename = [fileSourceFilename copy];
+        _fileOutputDelegate = fileOutputDelegate;
+        _fileSourceDisplayName = [fileSourceDisplayName copy];
         _queue = dispatch_queue_create("video-processor", NULL);
         _debugFrameCallbackQueue = dispatch_queue_create("video-processor-callback", NULL);
         _lastWellAnalysisBeginTime = PresentationTimeDistantPast;
@@ -372,8 +368,10 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
                                 [_assayAnalyzer willBeginPlateTrackingWithPlateData:_plateData];
                                 
                                 // Start recording if we have a session to record from (e.g. this is a device source)
-                                if (_captureFileOutput) {
-                                    [_delegate videoProcessor:self shouldBeginRecordingWithCaptureFileOutput:_captureFileOutput];
+                                _fileOutputURL = nil;
+                                if (_fileOutputDelegate) {
+                                    _fileOutputURL = [_delegate outputFileURLForVideoProcessor:self];
+                                    [_fileOutputDelegate videoProcessor:self shouldBeginRecordingToURL:_fileOutputURL];
                                 }
                             } else {
                                 // There is still a plate, but it doesn't match or more likely is still moving moved, or not enough
@@ -477,14 +475,18 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
             RunLog(@"Ignoring truncated run of %.3f seconds", trackingDuration);
         }
         
-        [_delegate videoProcessor:self
-      didFinishAcquiringPlateData:_plateData
-                     successfully:longEnough
-stopRecordingWithCaptureFileOutput:_captureFileOutput];
-        
+        // Notify the two delegates
+        [_delegate videoProcessor:self didFinishAcquiringPlateData:_plateData successfully:longEnough willStopRecordingToOutputFileURL:_fileOutputURL];
+        [_fileOutputDelegate videoProcessorShouldStopRecording:self completion:^(NSError *error) {
+            dispatch_async(_queue, ^{
+                [_delegate videoProcessorDidFinishRecordingToFileURL:_fileOutputURL error:error];
+                _fileOutputURL = nil;
+            });
+        }];
+    
         // Release the analyzer
         _assayAnalyzer = nil;
-        
+    
         // Release the plate data
         _plateData = nil;
     }
