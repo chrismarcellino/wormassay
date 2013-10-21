@@ -9,7 +9,7 @@
 	<key>CFBundleIconFile</key>
 	<string>Worm.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>edu.ucsf.chrismarcellino.${PRODUCT_NAME:rfc1034identifier}</string>
+	<string>org.chrismarcellino.wormassay</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>

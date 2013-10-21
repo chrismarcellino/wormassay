@@ -28,7 +28,7 @@ public:
     virtual HRESULT VideoInputFrameArrived(IDeckLinkVideoInputFrame* videoFrame, IDeckLinkAudioInputPacket* audioPacket);
     
 private:
-	DeckLinkCaptureDevice *_objcObject;  // weak
+	__weak DeckLinkCaptureDevice *_objcObject;  // not retained
 };
 
 // C++ subclass for notifications
@@ -54,7 +54,7 @@ public:
         return S_OK;
     }
     
-    virtual HRESULT StreamingDeviceModeChanged (IDeckLink* device, BMDStreamingDeviceMode mode) { return S_OK; };
+    virtual HRESULT StreamingDeviceModeChanged(IDeckLink* device, BMDStreamingDeviceMode mode) { return S_OK; };
 };
 
 
@@ -173,20 +173,19 @@ public:
 
 - (void)dealloc
 {
-    [self stopCapture];
-    
-    dispatch_release(_lock);
-    delete _cppObject;
-    
     if (_deckLink) {
         _deckLink->Release();
     }
     if (_deckLinkInput) {
+        _deckLinkInput->StopStreams();
         _deckLinkInput->Release();
     }
     if (_callbackQueue) {
         dispatch_release(_callbackQueue);
     }
+    
+    delete _cppObject;
+    dispatch_release(_lock);
 }
 
 - (NSString *)uniqueID
@@ -393,7 +392,10 @@ public:
                                   detectedSignalFlags:(BMDDetectedVideoInputFormatFlags)detectedSignalFlags
 {
     DeckLinkCaptureMode *captureMode = [[DeckLinkCaptureMode alloc] initWithIDeckLinkDisplayMode:newMode];
-    [self startCaptureWithCaptureMode:captureMode error:nil];
+    // XXX: there is an (unlikely) race here since the caller may have just turned off events. Need a _noLock variant.
+    if (_capturingEnabled) {
+        [self startCaptureWithCaptureMode:captureMode error:nil];
+    }
 }
 
 static void pixelBufferReleaseBytesCallback(void *releaseRefCon, const void *baseAddress)
@@ -423,7 +425,7 @@ static void pixelBufferReleaseBytesCallback(void *releaseRefCon, const void *bas
                                                            &pixelBuffer);
             if (pixelBuffer) {
                 // Get timestamps
-                int32_t timescale = 60000;    // good numerator 24, 29.97, 30 and 60 fps
+                int32_t timescale = 60000;    // good numerator for 24, 29.97, 30 and 60 fps
                 BMDTimeValue frameTime;
                 BMDTimeValue frameDuration;
                 videoFrame->GetStreamTime(&frameTime, &frameDuration, timescale);
