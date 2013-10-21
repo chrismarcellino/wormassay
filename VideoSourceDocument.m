@@ -20,8 +20,8 @@ NSString *const CaptureDeviceWasConnectedOrDisconnectedNotification = @"CaptureD
 NSString *const AVFCaptureDeviceScheme = @"avfcapturedevice";
 NSString *const AVFCaptureDeviceFileType = @"dyn.avfcapturedevice";
 
-NSString *const BlackMagicDeckLinkCaptureDeviceScheme = @"blackmagicdecklink";
-NSString *const BlackMagicDeckLinkCaptureDeviceFileType = @"dyn.blackmagicdecklink";
+NSString *const BlackmagicDeckLinkCaptureDeviceScheme = @"blackmagicdecklink";
+NSString *const BlackmagicDeckLinkCaptureDeviceFileType = @"dyn.blackmagicdecklink";
 
 
 
@@ -33,25 +33,30 @@ NSURL *URLForAVCaptureDevice(AVCaptureDevice *device)
                                     path:[@"/" stringByAppendingString:uniqueID]];
 }
 
-NSURL *URLForBlackMagicDeckLinkDevice(DeckLinkCaptureDevice *device)
+NSURL *URLForBlackmagicDeckLinkDevice(DeckLinkCaptureDevice *device)
 {
     NSString *uniqueID = [device uniqueID];
-    return [[NSURL alloc] initWithScheme:BlackMagicDeckLinkCaptureDeviceScheme
+    return [[NSURL alloc] initWithScheme:BlackmagicDeckLinkCaptureDeviceScheme
                                     host:@""
                                     path:[@"/" stringByAppendingString:uniqueID]];
 }
 
-NSString *UniqueIDForCaptureDeviceURL(NSURL *url)
+NSString *UniqueIDForCaptureDeviceURL(NSURL *url, BOOL *isBlackmagicDeckLinkDevice)
 {
     NSString *uniqueID = nil;
     if ([[url scheme] caseInsensitiveCompare:AVFCaptureDeviceScheme] == NSOrderedSame ||
-        [[url scheme] caseInsensitiveCompare:BlackMagicDeckLinkCaptureDeviceScheme] == NSOrderedSame) {
+        [[url scheme] caseInsensitiveCompare:BlackmagicDeckLinkCaptureDeviceScheme] == NSOrderedSame) {
         // Remove the leading slash from the absolute URL path
         uniqueID = [url path];
         if ([uniqueID hasPrefix:@"/"]) {
             uniqueID = [uniqueID substringFromIndex:1];
         }
     }
+    
+    if (isBlackmagicDeckLinkDevice) {
+        *isBlackmagicDeckLinkDevice = [[url scheme] caseInsensitiveCompare:BlackmagicDeckLinkCaptureDeviceScheme] == NSOrderedSame;
+    }
+    
     return uniqueID;
 }
 
@@ -78,13 +83,14 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 
 @synthesize lastFrameSize = _lastFrameSize;
 
-+ (void)registerForDeviceChangedNotifications
++ (void)initialize
 {
-    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-    [center addObserver:self selector:@selector(postDevicesChanged) name:AVCaptureDeviceWasConnectedNotification object:nil];
-    [center addObserver:self selector:@selector(postDevicesChanged) name:AVCaptureDeviceWasDisconnectedNotification object:nil];
-    
-    //XXX TODO add some hackery to poll for changes for deck link iff deck link drivers are installed
+    if (self == [DeckLinkCaptureDevice class]) {
+        NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+        [center addObserver:self selector:@selector(postDevicesChanged) name:AVCaptureDeviceWasConnectedNotification object:nil];
+        [center addObserver:self selector:@selector(postDevicesChanged) name:AVCaptureDeviceWasDisconnectedNotification object:nil];
+        [center addObserver:self selector:@selector(postDevicesChanged) name:DeckLinkCaptureDeviceWasConnectedOrDisconnectedNotification object:nil];
+    }
 }
 
 + (void)postDevicesChanged
@@ -92,21 +98,35 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     [[NSNotificationCenter defaultCenter] postNotificationName:CaptureDeviceWasConnectedOrDisconnectedNotification object:nil];
 }
 
-+ (NSArray *)cameraDeviceURLsIgnoringBuiltInCamera:(BOOL)ignoreBuiltInCameras
++ (NSArray *)cameraDeviceURLsIgnoringBuiltInCamera:(BOOL)ignoreBuiltInCameras useBlackmagicDeckLinkDriver:(BOOL)useDeckLink
 {
     NSMutableArray *urls = [NSMutableArray array];
     
+    NSMutableArray *deckLinkNames = [NSMutableArray array];
+    if (useDeckLink) {
+        for (DeckLinkCaptureDevice *device in [DeckLinkCaptureDevice captureDevices]) {
+            NSURL *url = URLForBlackmagicDeckLinkDevice(device);
+            [urls addObject:url];
+            
+            // Store the display names to do a best-effort attempt to supress access from AVF
+            [deckLinkNames addObject:[device localizedName]];
+            [deckLinkNames addObject:[device modelName]];
+        }
+    }
+    
     // Iterate through current capture devices
     for (AVCaptureDevice *device in [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo]) {
+        BOOL isADeckLinkDevice = [deckLinkNames count] > 0 &&
+                                    [deckLinkNames containsObject:[device localizedName]] &&
+                                    [deckLinkNames containsObject:[device modelID]];
+        
         // See if we need to ignore this devices
-        if (!ignoreBuiltInCameras || !DeviceIsAppleUSBDevice(device)) {
+        if (!isADeckLinkDevice && (!ignoreBuiltInCameras || !DeviceIsAppleUSBDevice(device))) {
             // Construct the URL for the capture device
             NSURL *url = URLForAVCaptureDevice(device);
             [urls addObject:url];
         }
     }
-    
-    // XXX: TODO ADD BLACK MAGIC DEVICES HERE
     
     return urls;
 }
@@ -154,11 +174,10 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 - (NSString *)sourceIdentifier
 {
     NSString *sourceIdentifier;
-    if (_captureDevice) {
-        sourceIdentifier = [[NSString alloc] initWithFormat:@"%@ (%@)",
-                            [_captureDevice localizedName],
-                            [UniqueIDForCaptureDeviceURL([self fileURL]) stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]],
-                            nil];
+    if (_avCaptureDevice) {
+        sourceIdentifier = [[NSString alloc] initWithFormat:@"%@ (%@)", [_avCaptureDevice localizedName], [_avCaptureDevice uniqueID], nil];
+    } else if (_deckLinkCaptureDevice) {
+        sourceIdentifier = [[NSString alloc] initWithFormat:@"%@ (%@)", [_deckLinkCaptureDevice localizedName], [_deckLinkCaptureDevice uniqueID], nil];
     } else {
         sourceIdentifier = [[self fileURL] path];
     }
@@ -195,12 +214,10 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     [self addWindowController:windowController];
     
     // Remove the icon if this is a capture device
-    if (_captureDevice) {
+    if (_avCaptureDevice || _deckLinkCaptureDevice) {
         [window setRepresentedURL:nil];
-    }
-    
-    // Capture devices will adjust their window constraints when the first frame arrives
-    if (!_captureDevice) {
+    } else {        // video file
+        // Capture devices will adjust their window constraints when the first frame arrives
         [self adjustWindowSizing];
     }
 }
@@ -236,7 +253,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     NSSize size = [self lastFrameSize];
     
     if (size.width == 0 || size.height == 0) {
-        if (_captureDevice) {
+        if (_avCaptureDevice || _deckLinkCaptureDevice) {
             size = NSMakeSize(720.0, 480.0);
         } else {
             NSArray *videoTracks = [_urlAsset tracksWithMediaType:AVMediaTypeVideo];
@@ -253,28 +270,30 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     BOOL success = NO;
     NSString *fileSourceDisplayName = nil;
     
+    // While kCVPixelFormatType_422YpCbCr8 is the strictly most efficient for H.264 output, we use kCVPixelFormatType_32BGRA as
+    // it is the best format for both OpenCV and OpenGL processing.
     NSDictionary *bufferAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:
                                       [NSNumber numberWithInt:kCVPixelFormatType_32BGRA], kCVPixelBufferPixelFormatTypeKey,
                                       nil];
     // Create the proper capture device/asset
-    NSString *captureDeviceUniqueID = UniqueIDForCaptureDeviceURL(absoluteURL);
-    if (captureDeviceUniqueID) {        // AVFoundation Capture devices
+    BOOL isBlackmagicDeckLinkDevice = NO;
+    NSString *captureDeviceUniqueID = UniqueIDForCaptureDeviceURL(absoluteURL, &isBlackmagicDeckLinkDevice);
+    if (captureDeviceUniqueID && !isBlackmagicDeckLinkDevice) {        // AVFoundation Capture devices
         if (captureDeviceUniqueID) {
-            _captureDevice = [AVCaptureDevice deviceWithUniqueID:captureDeviceUniqueID];
-            RunLog(@"Opened device \"%@\" with model ID \"%@\".", [self sourceIdentifier], [_captureDevice modelID] ? [_captureDevice modelID] : @"(none)");
-        } else {
-            NSDictionary *userInfo = [NSDictionary dictionaryWithObject:@"Unknown capture device ID" forKey:NSLocalizedDescriptionKey];
-            if (outError) {
-                *outError = [NSError errorWithDomain:NSCocoaErrorDomain code:0 userInfo:userInfo];
-            }
+            _avCaptureDevice = [AVCaptureDevice deviceWithUniqueID:captureDeviceUniqueID];
+            RunLog(@"Opened device \"%@\" with model ID \"%@\".", [self sourceIdentifier], [_avCaptureDevice modelID]);
+        } else if (outError) {
+            NSDictionary *userInfo = [NSDictionary dictionaryWithObject:NSLocalizedString(@"Unknown capture device ID", nil)
+                                                                 forKey:NSLocalizedDescriptionKey];
+            *outError = [NSError errorWithDomain:NSCocoaErrorDomain code:0 userInfo:userInfo];
         }
         
         // Start capture
-        if ([_captureDevice isInUseByAnotherApplication]) {
-            RunLog(@"Warning: device %@ is un use by another application", [_captureDevice localizedName]);
+        if ([_avCaptureDevice isInUseByAnotherApplication]) {
+            RunLog(@"Warning: device %@ is un use by another application", [_avCaptureDevice localizedName]);
         }
         _captureSession = [[AVCaptureSession alloc] init];
-        _captureDeviceInput = [[AVCaptureDeviceInput alloc] initWithDevice:_captureDevice error:outError];
+        _captureDeviceInput = [[AVCaptureDeviceInput alloc] initWithDevice:_avCaptureDevice error:outError];
         if (_captureDeviceInput) {
             _captureVideoDataOutput = [[AVCaptureVideoDataOutput alloc] init];
             [_captureVideoDataOutput setVideoSettings:bufferAttributes];
@@ -294,13 +313,28 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
                 
                 [_captureSession startRunning];
                 success = YES;
-            } else {
-                NSDictionary *userInfo = [NSDictionary dictionaryWithObject:@"Unable to add inputs to capture session" forKey:NSLocalizedDescriptionKey];
-                if (outError) {
-                    *outError = [NSError errorWithDomain:NSCocoaErrorDomain code:0 userInfo:userInfo];
-                }
+            } else if (outError) {
+                NSDictionary *userInfo = [NSDictionary dictionaryWithObject:NSLocalizedString(@"Unable to add inputs to capture session", nil)
+                                                                     forKey:NSLocalizedDescriptionKey];
+                *outError = [NSError errorWithDomain:NSCocoaErrorDomain code:0 userInfo:userInfo];
             }
         }
+    } else if (captureDeviceUniqueID && isBlackmagicDeckLinkDevice) {     // Blackmagic DeckLink device
+        // Make our device
+        for (DeckLinkCaptureDevice *captureDevice in [DeckLinkCaptureDevice captureDevices]) {
+            if ([[captureDevice uniqueID] isEqual:captureDeviceUniqueID]) {
+                _deckLinkCaptureDevice = captureDevice;
+                break;
+            }
+        }
+        RunLog(@"Opened device \"%@\" with model ID \"%@\".", [self sourceIdentifier], [_deckLinkCaptureDevice modelName]);
+        
+        // Start capturing in our ideal mode
+        DeckLinkCaptureMode *captureMode = [_deckLinkCaptureDevice highestResolutionCaptureModeWithFieldDominance:DeckLinkFieldDominanceProgressive
+                                                                                           targetMinFrameDuration:(1.0 / 30.0)];
+        RunLog(@"Available capture modes: %@; selected mode: %@", [_deckLinkCaptureDevice supportedCaptureModes], captureMode);
+        [_deckLinkCaptureDevice setSampleBufferDelegate:self queue:_frameArrivalQueue];
+        success = [_deckLinkCaptureDevice startCaptureWithCaptureMode:captureMode error:outError];
     } else if ([absoluteURL isFileURL]) {           // Video files
         _urlAsset = [AVAsset assetWithURL:absoluteURL];
         if (_urlAsset && [[_urlAsset tracksWithMediaType:AVMediaTypeVideo] count] > 0) {
@@ -346,12 +380,15 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     if (!_closeCalled) {
         _closeCalled = YES;
         _sendFramesToAssetWriter = NO;
-        RunLog(@"Closing %@: %@", _captureDevice ? @"removed device" : @"file", [self sourceIdentifier]);
+        RunLog(@"Closing %@: %@", (_avCaptureDevice || _deckLinkCaptureDevice) ? @"removed device" : @"file", [self sourceIdentifier]);
         [[VideoProcessorController sharedInstance] removeVideoProcessor:_processor];
         
-        if (_captureDevice) {
+        if (_avCaptureDevice) {
             [_captureSession stopRunning];
             [_captureVideoDataOutput setSampleBufferDelegate:nil queue:NULL];
+        } else if (_deckLinkCaptureDevice) {
+            [_deckLinkCaptureDevice stopCapture];
+            [_deckLinkCaptureDevice setSampleBufferDelegate:nil queue:NULL];
         } else {
             [_assetReader cancelReading];
             [_urlAsset cancelLoading];
@@ -398,18 +435,30 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     [self cmSampleBufferHasArrived:sampleBuffer];
 }
 
+// Called on _frameArrivalQueue
 - (void)captureOutput:(AVCaptureOutput *)captureOutput didDropSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection
 {
     [self logFrameDroppedDuringEncoding];
     [_processor noteVideoFrameWasDropped];
 }
 
+// Called on _frameArrivalQueue
+- (void)captureDevice:(DeckLinkCaptureDevice *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
+{
+    [self cmSampleBufferHasArrived:sampleBuffer];
+}
+
 - (void)logFrameDroppedDuringEncoding
 {
     // This normally shouldn't happen as we ask for all frames to be queued
-    if (_sendFramesToAssetWriter && !_encodingFrameDropLogOnce) {
-        _encodingFrameDropLogOnce = YES;
-        RunLog(@"Frame dropped from saved video. Saved video quality may be poor. Close other programs not in use and ensure camera settings are correct.");
+    if (_sendFramesToAssetWriter) {
+        _recordingFrameDropCount++;
+        if (_recordingFrameDropCount == 1 || _recordingFrameDropCount % 10 == 0) {
+            RunLog(@"Frames dropped from saved video: %lull", (unsigned long)_recordingFrameDropCount);
+            if (_recordingFrameDropCount == 20) {       // i.e. only once per recording
+                RunLog(@"To reduced the number of dropped frames, quit all other running programs or use faster computer.");
+            }
+        }
     }
 }
 
@@ -487,7 +536,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     // If our pixel buffer doesn't match this size, or we don't have a square pixel buffer, set attributes and change the requested size.
     if (!NSEqualSizes(bufferSize, squarePixelBufferSize) || !NSEqualSizes(squarePixelBufferSize, [self lastFrameSize])) {
         // Arbitrarily limit UVC devices to 640x480 for maximum compatability. These cameras (webcams) should only be used for barcoding.
-        if (_captureDevice && DeviceIsUVCDevice(_captureDevice)) {
+        if (_avCaptureDevice && DeviceIsUVCDevice(_avCaptureDevice)) {
             squarePixelBufferSize = NSMakeSize(640.0, 480.0);
         }
         
@@ -507,9 +556,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
         });
     } else {
         // Use CPU (Mach) time to ensure a monotonically increasing time. It can later be subtracted from the current time to determine the sample time/date.
-        VideoFrame *frame = [[VideoFrame alloc] initByCopyingCVPixelBuffer:pixelBuffer
-                                                        resultChannelCount:4
-                                                          presentationTime:CACurrentMediaTime()];
+        VideoFrame *frame = [[VideoFrame alloc] initByCopyingCVPixelBuffer:pixelBuffer presentationTime:CACurrentMediaTime()];
         [self processVideoFrame:frame];
     }
 }
@@ -532,8 +579,10 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 - (NSString *)displayName
 {
     NSString *displayName;
-    if (_captureDevice) {
-        displayName = [_captureDevice localizedName];
+    if (_avCaptureDevice) {
+        displayName = [_avCaptureDevice localizedName];
+    } else if (_deckLinkCaptureDevice) {
+        displayName = [_deckLinkCaptureDevice localizedName];
     } else {
         displayName = [super displayName];
     }
@@ -569,7 +618,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
             
             _sendFramesToAssetWriter = YES;
             _firstFrameToAssetWriter = YES;
-            _encodingFrameDropLogOnce = NO;
+            _recordingFrameDropCount = 0;
             RunLog(@"Began recording video to disk.");
         }
         if (error) {

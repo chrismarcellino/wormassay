@@ -17,8 +17,8 @@
     if ([[inAbsoluteURL scheme] caseInsensitiveCompare:AVFCaptureDeviceScheme] == NSOrderedSame) {
         return AVFCaptureDeviceFileType;
     }
-    if ([[inAbsoluteURL scheme] caseInsensitiveCompare:BlackMagicDeckLinkCaptureDeviceScheme] == NSOrderedSame) {
-        return BlackMagicDeckLinkCaptureDeviceFileType;
+    if ([[inAbsoluteURL scheme] caseInsensitiveCompare:BlackmagicDeckLinkCaptureDeviceScheme] == NSOrderedSame) {
+        return BlackmagicDeckLinkCaptureDeviceFileType;
     }
     
     return [super typeForContentsOfURL:inAbsoluteURL error:outError];

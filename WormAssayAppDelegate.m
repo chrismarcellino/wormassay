@@ -12,11 +12,12 @@
 #import "VideoProcessorController.h"
 #import "VideoProcessor.h"
 #import "AssayAnalyzer.h"
+#import "DeckLinkCaptureDevice.h"
 #import "LoggingAndNotificationsSettingsWindowController.h"
 #import <IOKit/pwr_mgt/IOPMLib.h>
 
 static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCameras";
-static NSString *const UseBlackMagicDeckLinkCamerasDefaultsKey = @"UseBlackMagicDeckLinkCameras";
+static NSString *const UseBlackmagicDeckLinkDriverDefaultsKey = @"UseBlackmagicDeckLinkDriver";
 
 
 @implementation WormAssayAppDelegate
@@ -28,8 +29,8 @@ static NSString *const UseBlackMagicDeckLinkCamerasDefaultsKey = @"UseBlackMagic
     // Register default user defaults
     NSDictionary *defaults = [[NSDictionary alloc] initWithObjectsAndKeys:
                               [NSNumber numberWithBool:YES], IgnoreBuiltInCamerasUserDefaultsKey,
-                              [NSNumber numberWithBool:YES], UseBlackMagicDeckLinkCamerasDefaultsKey,
-                              [NSNumber numberWithBool:YES], @"ApplePersistenceIgnoreState",    // ignore resume
+                              [NSNumber numberWithBool:YES], UseBlackmagicDeckLinkDriverDefaultsKey,
+                              [NSNumber numberWithBool:YES], @"ApplePersistenceIgnoreState",    // prevent 10.7+ style window resuming
                               nil];
     [[NSUserDefaults standardUserDefaults] registerDefaults:defaults];
     
@@ -65,7 +66,12 @@ static NSString *const UseBlackMagicDeckLinkCamerasDefaultsKey = @"UseBlackMagic
            percentFree,
            [[NSProcessInfo processInfo] operatingSystemVersionString]);
     
-    RunLog(@"Important: for best results use 1080p 24-30fps camera settings with image stabilization OFF and Instant Autofocus OFF (normal AF is ok.)");
+    if ([DeckLinkCaptureDevice isDriverInstalled]) {
+        RunLog(@"Blackmagic DeckLink API version %@ installed", [DeckLinkCaptureDevice deckLinkSystemVersion]);
+    }
+    
+    RunLog(@"Important: for best results set camera to 1080p and native 24 fps (or 30 fps), "
+           "with image stabilization OFF and Instant Autofocus OFF (normal AF/TTL is optional.)");
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
@@ -83,7 +89,7 @@ static NSString *const UseBlackMagicDeckLinkCamerasDefaultsKey = @"UseBlackMagic
                             options:0
                             context:NULL];
     [defaultsController addObserver:self
-                         forKeyPath:[@"values." stringByAppendingString:UseBlackMagicDeckLinkCamerasDefaultsKey]
+                         forKeyPath:[@"values." stringByAppendingString:UseBlackmagicDeckLinkDriverDefaultsKey]
                             options:0
                             context:NULL];
     
@@ -141,13 +147,26 @@ static NSString *const UseBlackMagicDeckLinkCamerasDefaultsKey = @"UseBlackMagic
     [self loadCaptureDevices];
 }
 
+// used by menu item bindings
+- (BOOL)isBlackmagicDeckLinkDriverInstalled
+{
+#ifdef WORMASSAY_DEBUG
+    return YES;
+#endif
+    
+    return [DeckLinkCaptureDevice isDriverInstalled];
+}
+
 - (void)loadCaptureDevices
 {
     NSDocumentController *documentController = [NSDocumentController sharedDocumentController];
     
     // Get currently attached capture devices
-    BOOL ignoreBuiltInCameras = [[NSUserDefaults standardUserDefaults] boolForKey:IgnoreBuiltInCamerasUserDefaultsKey];
-    NSArray *deviceURLs = [VideoSourceDocument cameraDeviceURLsIgnoringBuiltInCamera:ignoreBuiltInCameras];
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    BOOL ignoreBuiltInCameras = [defaults boolForKey:IgnoreBuiltInCamerasUserDefaultsKey];
+    BOOL useBlackmagicDeckLinkDriver = [defaults boolForKey:UseBlackmagicDeckLinkDriverDefaultsKey];
+    NSArray *deviceURLs = [VideoSourceDocument cameraDeviceURLsIgnoringBuiltInCamera:ignoreBuiltInCameras
+                                                         useBlackmagicDeckLinkDriver:useBlackmagicDeckLinkDriver];
     
     // Iterate through current capture devices, creating new documents for new ones
     for (NSURL *deviceURL in deviceURLs) {

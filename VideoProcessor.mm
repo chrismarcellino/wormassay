@@ -235,9 +235,9 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
                     cvResetImageROI(&debugImage);
                 };
                 
-                // Only parallelize well analysis if we have at least 4 (virtual) cores to be conservative, since doing so on
-                // a 2.1 ghz Core 2 Duo (with 2 virtual and physical cores) decreased performance 50% due to contention with decoding threads.
-                if ([_assayAnalyzer canProcessInParallel] && [[NSProcessInfo processInfo] activeProcessorCount] >= 4) {
+                // Only parallelize well analysis if we have more than 4 (virtual) cores to be conservative, since doing so on
+                // a 2.1 ghz Core 2 Duo (with 2 virtual/physical cores) decreased performance 50% due to contention with decoding threads.
+                if ([_assayAnalyzer canProcessInParallel] && [[NSProcessInfo processInfo] activeProcessorCount] > 4) {
                     dispatch_apply(_trackingWellCircles.size(), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), processWellBlock);
                 } else {
                     for (size_t i = 0; i < _trackingWellCircles.size(); i++) {

@@ -10,22 +10,22 @@
 #import <AVFoundation/AVFoundation.h>
 #import <QuartzCore/QuartzCore.h>
 #import "VideoProcessor.h"
+#import "DeckLinkCaptureDevice.h"
 
 @class VideoProcessor;
 @class BitmapOpenGLView;
-@class DeckLinkSource;
 
 extern NSString *const CaptureDeviceWasConnectedOrDisconnectedNotification;
 
 extern NSString *const AVFCaptureDeviceScheme;
 extern NSString *const AVFCaptureDeviceFileType;
 
-extern NSString *const BlackMagicDeckLinkCaptureDeviceScheme;
-extern NSString *const BlackMagicDeckLinkCaptureDeviceFileType;
+extern NSString *const BlackmagicDeckLinkCaptureDeviceScheme;
+extern NSString *const BlackmagicDeckLinkCaptureDeviceFileType;
 
 
 // A VideoSourceDocument corresponds to each document window and hence camera input
-@interface VideoSourceDocument : NSDocument <AVCaptureVideoDataOutputSampleBufferDelegate, VideoProcessorRecordingDelegate> {
+@interface VideoSourceDocument : NSDocument <AVCaptureVideoDataOutputSampleBufferDelegate, DeckLinkCaptureDeviceSampleBufferDelegate, VideoProcessorRecordingDelegate> {
     dispatch_queue_t _frameArrivalQueue;
     
     VideoProcessor *_processor;
@@ -40,12 +40,12 @@ extern NSString *const BlackMagicDeckLinkCaptureDeviceFileType;
     BOOL _currentlyProcessingFrame;
     BOOL _sendFramesToAssetWriter;
     BOOL _firstFrameToAssetWriter;
-    BOOL _encodingFrameDropLogOnce;
+    NSUInteger _recordingFrameDropCount;
                                                     
     // A document will have only one of the following sets of variables set depending on the input:
     
     // AVFoundation (QuickTime X) capture devices
-    AVCaptureDevice *_captureDevice;
+    AVCaptureDevice *_avCaptureDevice;
     AVCaptureSession *_captureSession;
     AVCaptureDeviceInput *_captureDeviceInput;
     AVCaptureVideoDataOutput *_captureVideoDataOutput;
@@ -55,15 +55,12 @@ extern NSString *const BlackMagicDeckLinkCaptureDeviceFileType;
     AVAssetReader *_assetReader;
     AVAssetReaderTrackOutput *_assetReaderOutput;
     
-    // BlackMagic DeckLink capture device
-    DeckLinkSource *_deckLinkSource;
+    // Blackmagic DeckLink capture device
+    DeckLinkCaptureDevice *_deckLinkCaptureDevice;
 }
 
-// Enable posting of CaptureDeviceWasConnectedOrDisconnectedNotification. Call only once.
-+ (void)registerForDeviceChangedNotifications;
-
 // unique urls for each camera device (only meaningful to this class)
-+ (NSArray *)cameraDeviceURLsIgnoringBuiltInCamera:(BOOL)ignoreBuiltInCameras;
++ (NSArray *)cameraDeviceURLsIgnoringBuiltInCamera:(BOOL)ignoreBuiltInCameras useBlackmagicDeckLinkDriver:(BOOL)useDeckLink;
 
 - (NSString *)sourceIdentifier;      // unique and suitable for logging
 

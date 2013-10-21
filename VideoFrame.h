@@ -19,9 +19,8 @@
 }
 
 - (id)initWithIplImageTakingOwnership:(IplImage *)image presentationTime:(NSTimeInterval)presentationTime;
-
-- (id)initByCopyingCVPixelBuffer:(CVPixelBufferRef)cvPixelBuffer resultChannelCount:(int)outChannels presentationTime:(NSTimeInterval)presentationTime;
-- (id)initByCopyingCGImage:(CGImageRef)cgImage resultChannelCount:(int)outChannels presentationTime:(NSTimeInterval)presentationTime;
+// Generates BGRA IplImages, converting if necessary.
+- (id)initByCopyingCVPixelBuffer:(CVPixelBufferRef)cvPixelBuffer presentationTime:(NSTimeInterval)presentationTime;
 
 @property(readonly) IplImage *image;
 @property(readonly) NSTimeInterval presentationTime;

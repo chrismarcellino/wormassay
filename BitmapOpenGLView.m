@@ -75,6 +75,7 @@
     IplImage *iplImage = image ? [image image] : [_lastImage image];
     if (iplImage) {
         NSAssert(iplImage->widthStep == iplImage->width * iplImage->nChannels, @"image not byte packed");
+        NSAssert(iplImage->nChannels == 4, @"image not 4 channel");
         // Set the texture image
         glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
                      0,
@@ -82,7 +83,7 @@
                      iplImage->width,
                      iplImage->height,
                      0,
-                     iplImage->nChannels == 4 ? GL_BGRA : GL_LUMINANCE,
+                     GL_BGRA,
                      GL_UNSIGNED_BYTE,
                      iplImage->imageData);
         
