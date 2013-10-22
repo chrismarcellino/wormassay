@@ -19,7 +19,7 @@
 }
 
 - (id)initWithIplImageTakingOwnership:(IplImage *)image presentationTime:(NSTimeInterval)presentationTime;
-// Generates BGRA IplImages, converting if necessary.
+// Generates BGRA IplImages, converting if necessary from 422YpCbCr8.
 - (id)initByCopyingCVPixelBuffer:(CVPixelBufferRef)cvPixelBuffer presentationTime:(NSTimeInterval)presentationTime;
 
 @property(readonly) IplImage *image;

@@ -13,6 +13,9 @@ using namespace std;
 
 NSString *const DeckLinkCaptureDeviceWasConnectedOrDisconnectedNotification = @"DeckLinkCaptureDeviceWasConnectedOrDisconnectedNotification";
 
+// YUV is the common denominator format of the DeckLink SDK
+static const BMDPixelFormat DeckLinkPixelFormat = bmdFormat8BitYUV;
+
 // C++ shim subclass for callbacks
 class DeckLinkCaptureDeviceCPP : public IDeckLinkInputCallback {
 public:
@@ -232,7 +235,7 @@ public:
     return model;
 }
 
-- (NSArray *)supportedCaptureModes
+- (NSArray *)allCaptureModes
 {
     NSMutableArray *modes = [NSMutableArray array];
     
@@ -256,16 +259,29 @@ public:
     return modes;
 }
 
-- (DeckLinkCaptureMode *)highestResolutionCaptureModeWithFieldDominance:(DeckLinkFieldDominance)fieldDominance
-                                                 targetMinFrameDuration:(NSTimeInterval)targetMinFrameDuration
+- (NSArray *)supportedCaptureModes
+{
+    NSMutableArray *supportedModes = [NSMutableArray array];
+    
+    for (DeckLinkCaptureMode *mode in [self allCaptureModes]) {
+        BMDDisplayModeSupport supported = bmdDisplayModeNotSupported;
+        _deckLinkInput->DoesSupportVideoMode([mode deckLinkDisplayMode], DeckLinkPixelFormat, bmdVideoInputFlagDefault, &supported, NULL);
+        if (supported == bmdDisplayModeSupported || supported == bmdDisplayModeSupportedWithConversion) {
+            [supportedModes addObject:mode];
+        }
+    }
+    
+    return supportedModes;
+}
+
+- (DeckLinkCaptureMode *)highestResolutionSupportedCaptureMode
 {
     DeckLinkCaptureMode *bestMode = nil;
-    
-    targetMinFrameDuration -= FLT_EPSILON;      // FLT gives us more room for error
     
     // If this default is set, return early with this mode
     NSString *const forceDeckLinkModeIndexDefaultsKey = @"ForceDeckLinkModeIndex";
     NSUInteger val = (NSUInteger)[[NSUserDefaults standardUserDefaults] integerForKey:forceDeckLinkModeIndexDefaultsKey];
+    
     if (val > 0) {
         val--;      // switch from natural to array indexing
         NSArray *captureModes = [self supportedCaptureModes];
@@ -279,7 +295,7 @@ public:
     
     if (!bestMode) {
         for (DeckLinkCaptureMode *mode in [self supportedCaptureModes]) {
-            // Start with the first, since barring the following rules, we want the frontmost mode
+            // Start with the first, since barring the following rules, we want the frontmost mode.
             if (!bestMode) {
                 bestMode = mode;
             }
@@ -288,12 +304,13 @@ public:
             else if ([mode frameSize].height > [bestMode frameSize].height) {
                 bestMode = mode;
             }
-            // Next, we prefer progressive scan
-            else if ([bestMode fieldDominance] != DeckLinkFieldDominanceProgressive && [mode fieldDominance] == DeckLinkFieldDominanceProgressive) {
-                bestMode = mode;
-            }
-            // Finally, if those prior rules haven't determined the mode, lets aim for <= 30 fps
-            else if ([bestMode frameDuration] < targetMinFrameDuration && [mode frameDuration] >= targetMinFrameDuration) {
+            // Next, we prefer interlaced scan, since if there is both an acceptable interlaced and progressive mode, the
+            // progressive mode will just be the misinterpreted interlaced scan. If interlaced isn't offered, this conditional wont
+            // be reached and we'll use the progressive. Over HDMI, we are likely to get an interlaced output anyhow.
+            else if (([bestMode fieldDominance] != DeckLinkFieldDominanceInterlacedLowerFieldFirst &&
+                      [bestMode fieldDominance] != DeckLinkFieldDominanceInterlacedUpperFieldFirst)
+                     && ([mode fieldDominance] == DeckLinkFieldDominanceInterlacedLowerFieldFirst ||
+                         [mode fieldDominance] == DeckLinkFieldDominanceInterlacedUpperFieldFirst)) {
                 bestMode = mode;
             }
         }
@@ -305,7 +322,7 @@ public:
 - (void)setSampleBufferDelegate:(id<DeckLinkCaptureDeviceSampleBufferDelegate>)sampleBufferDelegate queue:(dispatch_queue_t)sampleBufferCallbackQueue
 {
     dispatch_sync(_lock, ^{
-        NSAssert(_callbackQueue, @"sampleBufferCallbackQueue is required)");
+        NSAssert(sampleBufferCallbackQueue, @"sampleBufferCallbackQueue is required)");
         _callbackQueue = sampleBufferCallbackQueue;
         dispatch_retain(_callbackQueue);
         
@@ -337,16 +354,14 @@ public:
         _deckLinkInput->SetCallback(_cppObject);
         
         BMDDisplayMode displayMode = [captureMode deckLinkDisplayMode];
-        // We require BGRA for our image pipeline.
-        BMDPixelFormat pixelFormat = bmdFormat8BitBGRA;
         // Enable input video mode detection if the device supports it
         BMDVideoInputFlags videoInputFlags = supportsFormatDetection ? bmdVideoInputEnableFormatDetection : bmdVideoInputFlagDefault;
         
         BMDDisplayModeSupport supported = bmdDisplayModeNotSupported;
-        _deckLinkInput->DoesSupportVideoMode(displayMode, pixelFormat, videoInputFlags, &supported, NULL);
+        _deckLinkInput->DoesSupportVideoMode(displayMode, DeckLinkPixelFormat, videoInputFlags, &supported, NULL);
         if (supported == bmdDisplayModeSupported || supported == bmdDisplayModeSupportedWithConversion) {
             // Set the video input mode
-            if (_deckLinkInput->EnableVideoInput(displayMode, pixelFormat, videoInputFlags) == S_OK) {
+            if (_deckLinkInput->EnableVideoInput(displayMode, DeckLinkPixelFormat, videoInputFlags) == S_OK) {
                 if (_deckLinkInput->StartStreams() == S_OK) {
                     _capturingEnabled = YES;
                 } else if (outError) {
@@ -364,7 +379,7 @@ public:
                 *outError = [NSError errorWithDomain:NSCocoaErrorDomain code:0 userInfo:userInfo];
             }
         }  else if (outError) {
-            NSString *description = [NSString stringWithFormat:NSLocalizedString(@"Unable to obtain BGRA output for %@ in mode %@.", nil),
+            NSString *description = [NSString stringWithFormat:NSLocalizedString(@"Unable to obtain 422YpCbCr8 output for %@ in mode %@.", nil),
                                      [self localizedName], captureMode];
             NSString *recoverySuggestion = NSLocalizedString(@"Contact the WormAssay authors for further assistance.", nil);
             NSDictionary *userInfo = [NSDictionary dictionaryWithObjectsAndKeys:description, NSLocalizedDescriptionKey,
@@ -413,10 +428,15 @@ static void pixelBufferReleaseBytesCallback(void *releaseRefCon, const void *bas
         if (_capturingEnabled && videoFrame && hasValidInputSource && baseAddress) {
             videoFrame->AddRef();
             CVPixelBufferRef pixelBuffer = NULL;
+            // ensure our two video code constant FOURCC enum types are equivalent
+#if !(kCMPixelFormat_422YpCbCr8 == bmdFormat8BitYUV && kCMPixelFormat_422YpCbCr10 == bmdFormat10BitYUV && \
+                     kCMPixelFormat_32BGRA == bmdFormat8BitBGRA && kCMPixelFormat_32ARGB == bmdFormat8BitARGB)
+#error sanity check of useful FOURCC codes failed
+#endif
             CVReturn result = CVPixelBufferCreateWithBytes(NULL,
                                                            videoFrame->GetWidth(),
                                                            videoFrame->GetHeight(),
-                                                           kCMPixelFormat_32BGRA,
+                                                           videoFrame->GetPixelFormat(),
                                                            baseAddress,
                                                            videoFrame->GetRowBytes(),
                                                            pixelBufferReleaseBytesCallback,

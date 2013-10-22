@@ -116,8 +116,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     
     // Iterate through current capture devices
     for (AVCaptureDevice *device in [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo]) {
-        BOOL isADeckLinkDevice = [deckLinkNames count] > 0 &&
-                                    [deckLinkNames containsObject:[device localizedName]] &&
+        BOOL isADeckLinkDevice = [deckLinkNames containsObject:[device localizedName]] ||
                                     [deckLinkNames containsObject:[device modelID]];
         
         // See if we need to ignore this devices
@@ -133,7 +132,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 
 + (NSArray *)readableTypes
 {
-    return [NSArray arrayWithObjects:AVFCaptureDeviceFileType, @"public.movie", nil];
+    return [NSArray arrayWithObjects:AVFCaptureDeviceFileType, BlackmagicDeckLinkCaptureDeviceFileType, @"public.movie", nil];
 }
 
 + (NSArray *)writableTypes
@@ -270,8 +269,9 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     BOOL success = NO;
     NSString *fileSourceDisplayName = nil;
     
-    // While kCVPixelFormatType_422YpCbCr8 is the strictly most efficient for H.264 output, we use kCVPixelFormatType_32BGRA as
-    // it is the best format for both OpenCV and OpenGL processing.
+    // kCVPixelFormatType_422YpCbCr8 is the strictly most efficient for H.264 output and the canonical video format, but
+    // RGB lets us preserve more data for some input source and allows for simpler/more accurate gamma correction
+    // (and we use BGRA under the hood for OpenCV and OpenGL.)
     NSDictionary *bufferAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:
                                       [NSNumber numberWithInt:kCVPixelFormatType_32BGRA], kCVPixelBufferPixelFormatTypeKey,
                                       nil];
@@ -330,9 +330,8 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
         RunLog(@"Opened device \"%@\" with model ID \"%@\".", [self sourceIdentifier], [_deckLinkCaptureDevice modelName]);
         
         // Start capturing in our ideal mode
-        DeckLinkCaptureMode *captureMode = [_deckLinkCaptureDevice highestResolutionCaptureModeWithFieldDominance:DeckLinkFieldDominanceProgressive
-                                                                                           targetMinFrameDuration:(1.0 / 30.0)];
-        RunLog(@"Available capture modes: %@; selected mode: %@", [_deckLinkCaptureDevice supportedCaptureModes], captureMode);
+        DeckLinkCaptureMode *captureMode = [_deckLinkCaptureDevice highestResolutionSupportedCaptureMode];
+        RunLog(@"Supported capture modes: %@; selected mode: %@", [_deckLinkCaptureDevice supportedCaptureModes], captureMode);
         [_deckLinkCaptureDevice setSampleBufferDelegate:self queue:_frameArrivalQueue];
         success = [_deckLinkCaptureDevice startCaptureWithCaptureMode:captureMode error:outError];
     } else if ([absoluteURL isFileURL]) {           // Video files

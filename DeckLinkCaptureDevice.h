@@ -34,10 +34,10 @@ extern NSString *const DeckLinkCaptureDeviceWasConnectedOrDisconnectedNotificati
 - (NSString *)localizedName;
 - (NSString *)modelName;
 
-- (NSArray *)supportedCaptureModes;
+- (NSArray *)allCaptureModes;
+- (NSArray *)supportedCaptureModes;     // just the ones that can be currently enabled based on the attached camera
 // in order of priority: 1) resolution, 2) field dominance, 3) frame duration
-- (DeckLinkCaptureMode *)highestResolutionCaptureModeWithFieldDominance:(DeckLinkFieldDominance)fieldDominance
-                                                 targetMinFrameDuration:(NSTimeInterval)targetMinFrameDuration;
+- (DeckLinkCaptureMode *)highestResolutionSupportedCaptureMode;
 
 - (void)setSampleBufferDelegate:(id<DeckLinkCaptureDeviceSampleBufferDelegate>)sampleBufferDelegate
                           queue:(dispatch_queue_t)sampleBufferCallbackQueue;
