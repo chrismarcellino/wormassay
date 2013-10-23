@@ -13,9 +13,6 @@ using namespace std;
 
 NSString *const DeckLinkCaptureDeviceWasConnectedOrDisconnectedNotification = @"DeckLinkCaptureDeviceWasConnectedOrDisconnectedNotification";
 
-// YUV is the common denominator format of the DeckLink SDK
-static const BMDPixelFormat DeckLinkPixelFormat = bmdFormat8BitYUV;
-
 // C++ shim subclass for callbacks
 class DeckLinkCaptureDeviceCPP : public IDeckLinkInputCallback {
 public:
@@ -64,12 +61,18 @@ public:
 // C++ safe ivars
 @interface DeckLinkCaptureDevice () {
     DeckLinkCaptureDeviceCPP::DeckLinkCaptureDeviceCPP* _cppObject;
+    dispatch_queue_t _lockQueue;
+    
     IDeckLink* _deckLink;
     IDeckLinkInput *_deckLinkInput;
-    dispatch_queue_t _lock;
-    dispatch_queue_t _callbackQueue;
+    
     __weak id<DeckLinkCaptureDeviceSampleBufferDelegate> _sampleBufferDelegate;
-    BOOL _capturingEnabled;
+    dispatch_queue_t _callbackQueue;
+    
+    NSArray *_captureModesSearchList;       // nil if not capturing
+    NSUInteger _captureModesSearchListIndex;
+    BOOL _lastFrameHasValidInputSource;
+    BOOL _retryDispatchAfterPending;
 }
 
 @end
@@ -160,8 +163,10 @@ public:
 - (id)initWithDeckLinkInterface:(IDeckLink*)deckLink
 {
     if ((self = [super init])) {
-        _lock = dispatch_queue_create("decklink-device-atomicity-queue", NULL);
+        _lockQueue = dispatch_queue_create("decklink-device-lock-queue", NULL);
         _cppObject = new DeckLinkCaptureDeviceCPP::DeckLinkCaptureDeviceCPP(self);
+        // Set capture callback
+        _deckLinkInput->SetCallback(_cppObject);
         
         _deckLink = deckLink;
         _deckLink->AddRef();
@@ -181,6 +186,7 @@ public:
     }
     if (_deckLinkInput) {
         _deckLinkInput->StopStreams();
+        _deckLinkInput->SetCallback(NULL);
         _deckLinkInput->Release();
     }
     if (_callbackQueue) {
@@ -188,7 +194,7 @@ public:
     }
     
     delete _cppObject;
-    dispatch_release(_lock);
+    dispatch_release(_lockQueue);
 }
 
 - (NSString *)uniqueID
@@ -259,72 +265,41 @@ public:
     return modes;
 }
 
-- (NSArray *)supportedCaptureModes
+- (NSArray *)allCaptureModesSortedByDescendingResolutionAndFrameRate
 {
-    NSMutableArray *supportedModes = [NSMutableArray array];
-    
-    for (DeckLinkCaptureMode *mode in [self allCaptureModes]) {
-        BMDDisplayModeSupport supported = bmdDisplayModeNotSupported;
-        _deckLinkInput->DoesSupportVideoMode([mode deckLinkDisplayMode], DeckLinkPixelFormat, bmdVideoInputFlagDefault, &supported, NULL);
-        if (supported == bmdDisplayModeSupported || supported == bmdDisplayModeSupportedWithConversion) {
-            [supportedModes addObject:mode];
-        }
-    }
-    
-    return supportedModes;
-}
-
-- (DeckLinkCaptureMode *)highestResolutionSupportedCaptureMode
-{
-    DeckLinkCaptureMode *bestMode = nil;
-    
-    // If this default is set, return early with this mode
-    NSString *const forceDeckLinkModeIndexDefaultsKey = @"ForceDeckLinkModeIndex";
-    NSUInteger val = (NSUInteger)[[NSUserDefaults standardUserDefaults] integerForKey:forceDeckLinkModeIndexDefaultsKey];
-    
-    if (val > 0) {
-        val--;      // switch from natural to array indexing
-        NSArray *captureModes = [self supportedCaptureModes];
-        if (val < [captureModes count]) {
-            bestMode = [captureModes objectAtIndex:val];
-            NSLog(@"%@ defaults key set--forcing mode %@", forceDeckLinkModeIndexDefaultsKey, bestMode);
+    return [[self allCaptureModes] sortedArrayWithOptions:NSSortStable usingComparator:^NSComparisonResult(id obj1, id obj2) {
+        CGFloat width1 = [obj1 frameSize].width;
+        CGFloat width2 = [obj2 frameSize].width;
+        
+        if (width1 < width2) {
+            return NSOrderedDescending;     // reverse the normal convention to reverse our array
+        } else if (width1 > width2) {
+            return NSOrderedAscending;
         } else {
-            NSLog(@"%@ defaults key set beyond bounds (%lull)", forceDeckLinkModeIndexDefaultsKey, (unsigned long)[captureModes count]);
-        }
-    }
-    
-    if (!bestMode) {
-        for (DeckLinkCaptureMode *mode in [self supportedCaptureModes]) {
-            // Start with the first, since barring the following rules, we want the frontmost mode.
-            if (!bestMode) {
-                bestMode = mode;
-            }
-            // See if the this mode is better than our current one. Our highest priority is getting a large feed.
-            // 1080 is ideal, but if the user has a camera set to provide a larger feed (e.g 2k/4k), we will accept it.
-            else if ([mode frameSize].height > [bestMode frameSize].height) {
-                bestMode = mode;
-            }
-            // Next, we prefer interlaced scan, since if there is both an acceptable interlaced and progressive mode, the
-            // progressive mode will just be the misinterpreted interlaced scan. If interlaced isn't offered, this conditional wont
-            // be reached and we'll use the progressive. Over HDMI, we are likely to get an interlaced output anyhow.
-            else if (([bestMode fieldDominance] != DeckLinkFieldDominanceInterlacedLowerFieldFirst &&
-                      [bestMode fieldDominance] != DeckLinkFieldDominanceInterlacedUpperFieldFirst)
-                     && ([mode fieldDominance] == DeckLinkFieldDominanceInterlacedLowerFieldFirst ||
-                         [mode fieldDominance] == DeckLinkFieldDominanceInterlacedUpperFieldFirst)) {
-                bestMode = mode;
+            NSTimeInterval frameDuration1 = [obj1 frameDuration];
+            NSTimeInterval frameDuration2 = [obj2 frameDuration];
+            
+            if (frameDuration1 < frameDuration2) {
+                return NSOrderedAscending;     // double negative since frame rate is the inverse of frame duration
+            } else if (frameDuration1 > frameDuration2) {
+                return NSOrderedDescending;
+            } else {
+                return NSOrderedSame;
             }
         }
-    }
-    
-    return bestMode;
+    }];
 }
 
 - (void)setSampleBufferDelegate:(id<DeckLinkCaptureDeviceSampleBufferDelegate>)sampleBufferDelegate queue:(dispatch_queue_t)sampleBufferCallbackQueue
 {
-    dispatch_sync(_lock, ^{
-        NSAssert(sampleBufferCallbackQueue, @"sampleBufferCallbackQueue is required)");
+    dispatch_sync(_lockQueue, ^{
+        if (_callbackQueue) {
+            dispatch_release(_callbackQueue);
+        }
         _callbackQueue = sampleBufferCallbackQueue;
-        dispatch_retain(_callbackQueue);
+        if (_callbackQueue) {
+            dispatch_retain(_callbackQueue);
+        }
         
         _sampleBufferDelegate = sampleBufferDelegate;
     });
@@ -332,74 +307,115 @@ public:
 
 - (BOOL)startCaptureWithCaptureMode:(DeckLinkCaptureMode *)captureMode error:(NSError **)outError
 {
-    __block BOOL succcess = NO;
+    __block BOOL result;
     
-    dispatch_sync(_lock, ^{
-        // In case the caller just wants to update captureMode, or this is in response to a format change notification
-        if (_capturingEnabled) {
-            _deckLinkInput->StopStreams();
-            _capturingEnabled = NO;
-        }
-        
-        // See if input mode change events are supported
-        bool supportsFormatDetection = NO;
-        IDeckLinkAttributes* deckLinkAttributes = NULL;
-        _deckLink->QueryInterface(IID_IDeckLinkAttributes, (void**)&deckLinkAttributes);
-        if (deckLinkAttributes) {
-            deckLinkAttributes->GetFlag(BMDDeckLinkSupportsInputFormatDetection, &supportsFormatDetection);
-            deckLinkAttributes->Release();
-        }
-        
-        // Set capture callback
-        _deckLinkInput->SetCallback(_cppObject);
-        
-        BMDDisplayMode displayMode = [captureMode deckLinkDisplayMode];
-        // Enable input video mode detection if the device supports it
-        BMDVideoInputFlags videoInputFlags = supportsFormatDetection ? bmdVideoInputEnableFormatDetection : bmdVideoInputFlagDefault;
-        
-        BMDDisplayModeSupport supported = bmdDisplayModeNotSupported;
-        _deckLinkInput->DoesSupportVideoMode(displayMode, DeckLinkPixelFormat, videoInputFlags, &supported, NULL);
-        if (supported == bmdDisplayModeSupported || supported == bmdDisplayModeSupportedWithConversion) {
-            // Set the video input mode
-            if (_deckLinkInput->EnableVideoInput(displayMode, DeckLinkPixelFormat, videoInputFlags) == S_OK) {
-                if (_deckLinkInput->StartStreams() == S_OK) {
-                    _capturingEnabled = YES;
-                } else if (outError) {
-                    NSDictionary *userInfo = [NSDictionary dictionaryWithObject:NSLocalizedString(@"Unable to start the DeckLink stream.", nil)
-                                                                         forKey:NSLocalizedDescriptionKey];
-                    *outError = [NSError errorWithDomain:NSCocoaErrorDomain code:0 userInfo:userInfo];
-                }
+    dispatch_sync(_lockQueue, ^{
+        _captureModesSearchList = [NSArray arrayWithObject:captureMode];
+        _captureModesSearchListIndex = 0;
+        result = [self enableVideoInputInCurrentModeWithError:outError];
+    });
+    
+    return result;
+}
+
+// can't return a result or error here immediately as this is an async and indefinite search.
+- (void)startCaptureWithSearchForModeWithModes:(NSArray *)captureModeSearchList
+{
+    dispatch_sync(_lockQueue, ^{
+        _captureModesSearchList = [captureModeSearchList copy];
+        _captureModesSearchListIndex = 0;
+        NSAssert([_captureModesSearchList count] > 0, @"search list was empty");
+        [self enableVideoInputInCurrentModeWithError:nil];  // eat temporary errors
+    });
+}
+
+- (BOOL)enableVideoInputInCurrentModeWithError:(NSError **)outError
+{
+    NSAssert(!_captureModesSearchList, @"no search list");
+    BOOL success = NO;
+    // Stop for mode changes
+    _deckLinkInput->StopStreams();
+    
+    // See if input mode change events are supported
+    bool supportsFormatDetection = NO;
+    IDeckLinkAttributes* deckLinkAttributes = NULL;
+    _deckLink->QueryInterface(IID_IDeckLinkAttributes, (void**)&deckLinkAttributes);
+    if (deckLinkAttributes) {
+        deckLinkAttributes->GetFlag(BMDDeckLinkSupportsInputFormatDetection, &supportsFormatDetection);
+        deckLinkAttributes->Release();
+    }
+    
+    DeckLinkCaptureMode *captureMode = [_captureModesSearchList objectAtIndex:_captureModesSearchListIndex];
+    BMDDisplayMode displayMode = [captureMode deckLinkDisplayMode];
+    // YUV is the common denominator format of the DeckLink SDK
+    BMDPixelFormat pixelFormat = bmdFormat8BitYUV;
+    // Enable input video mode detection if the device supports it
+    BMDVideoInputFlags videoInputFlags = supportsFormatDetection ? bmdVideoInputEnableFormatDetection : bmdVideoInputFlagDefault;
+    
+    BMDDisplayModeSupport supported = bmdDisplayModeNotSupported;
+    _deckLinkInput->DoesSupportVideoMode(displayMode, pixelFormat, videoInputFlags, &supported, NULL);
+    if (supported == bmdDisplayModeSupported || supported == bmdDisplayModeSupportedWithConversion) {
+        // Set the video input mode
+        if (_deckLinkInput->EnableVideoInput(displayMode, pixelFormat, videoInputFlags) == S_OK) {
+            if (_deckLinkInput->StartStreams() == S_OK) {
+                success = YES;
             } else if (outError) {
-                NSString *description = [NSString stringWithFormat:NSLocalizedString(@"Unable to enable Blackmagic DeckLink video output for %@ in mode %@.", nil),
-                                         [self localizedName], captureMode];
-                NSString *recoverySuggestion = NSLocalizedString(@"Close any applications that may be using the device and verify that the camera is set to use supported settings.", nil);
-                NSDictionary *userInfo = [NSDictionary dictionaryWithObjectsAndKeys:description, NSLocalizedDescriptionKey,
-                                          recoverySuggestion, NSLocalizedRecoverySuggestionErrorKey,
-                                          nil];
+                NSDictionary *userInfo = [NSDictionary dictionaryWithObject:NSLocalizedString(@"Unable to start the DeckLink stream.", nil)
+                                                                     forKey:NSLocalizedDescriptionKey];
                 *outError = [NSError errorWithDomain:NSCocoaErrorDomain code:0 userInfo:userInfo];
             }
-        }  else if (outError) {
-            NSString *description = [NSString stringWithFormat:NSLocalizedString(@"Unable to obtain 422YpCbCr8 output for %@ in mode %@.", nil),
+        } else if (outError) {
+            NSString *description = [NSString stringWithFormat:NSLocalizedString(@"Unable to enable Blackmagic DeckLink video output for %@ in mode %@.", nil),
                                      [self localizedName], captureMode];
-            NSString *recoverySuggestion = NSLocalizedString(@"Contact the WormAssay authors for further assistance.", nil);
+            NSString *recoverySuggestion = NSLocalizedString(@"Close any applications that may be using the device and verify that the camera is set to use supported settings.", nil);
             NSDictionary *userInfo = [NSDictionary dictionaryWithObjectsAndKeys:description, NSLocalizedDescriptionKey,
                                       recoverySuggestion, NSLocalizedRecoverySuggestionErrorKey,
                                       nil];
             *outError = [NSError errorWithDomain:NSCocoaErrorDomain code:0 userInfo:userInfo];
         }
-        
-        succcess = _capturingEnabled;
-    });
+    }  else if (outError) {
+        NSString *description = [NSString stringWithFormat:NSLocalizedString(@"Unable to obtain 422YpCbCr8 output for %@ in mode %@.", nil),
+                                 [self localizedName], captureMode];
+        NSString *recoverySuggestion = NSLocalizedString(@"Contact the WormAssay authors for further assistance.", nil);
+        NSDictionary *userInfo = [NSDictionary dictionaryWithObjectsAndKeys:description, NSLocalizedDescriptionKey,
+                                  recoverySuggestion, NSLocalizedRecoverySuggestionErrorKey,
+                                  nil];
+        *outError = [NSError errorWithDomain:NSCocoaErrorDomain code:0 userInfo:userInfo];
+    }
     
-    return succcess;
+    if (!success) {
+        [self retryCaptureWithNextModeAfterDelay];
+    }
+    
+    return success;
 }
 
 - (void)stopCapture
 {
-    dispatch_sync(_lock, ^{
+    dispatch_sync(_lockQueue, ^{
         _deckLinkInput->StopStreams();
-        _capturingEnabled = NO;
+        _captureModesSearchList = nil;
+        _captureModesSearchListIndex = NSNotFound;
     });
+}
+
+- (void)retryCaptureWithNextModeAfterDelay
+{
+    // only one dispatch_after should be in flight at once
+    if (!_retryDispatchAfterPending) {
+        NSTimeInterval delay = 1.0 / 10.0;      // don't retry immediately to avoid tight polling and more coorect frames to arrive
+        dispatch_time_t dispatchTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC));
+        dispatch_after(dispatchTime, _lockQueue, ^{
+            _retryDispatchAfterPending = NO;
+            // ensure that capture hasn't been stopped or valid frames have been received in the interim
+            if (_captureModesSearchList && _lastFrameHasValidInputSource) {
+                // move to the next item in the queue looping if necessary
+                _captureModesSearchListIndex++;
+                _captureModesSearchListIndex %= [_captureModesSearchList count];
+                [self enableVideoInputInCurrentModeWithError:nil];
+            }
+        });
+    }
 }
 
 - (void)videoInputFormatChangedWithNotificationEvents:(BMDVideoInputFormatChangedEvents)notificationEvents
@@ -407,10 +423,13 @@ public:
                                   detectedSignalFlags:(BMDDetectedVideoInputFormatFlags)detectedSignalFlags
 {
     DeckLinkCaptureMode *captureMode = [[DeckLinkCaptureMode alloc] initWithIDeckLinkDisplayMode:newMode];
-    // XXX: there is an (unlikely) race here since the caller may have just turned off events. Need a _noLock variant.
-    if (_capturingEnabled) {
-        [self startCaptureWithCaptureMode:captureMode error:nil];
-    }
+    dispatch_sync(_lockQueue, ^{
+        // Must check and lock atomically to ensure there is no race where a client may disable and we reenable
+        if (_captureModesSearchList && [_captureModesSearchList containsObject:captureMode]) {
+            _captureModesSearchListIndex = 0;        // arbitrary; will begin next search from the top
+            [self enableVideoInputInCurrentModeWithError:nil];
+        }
+    });
 }
 
 static void pixelBufferReleaseBytesCallback(void *releaseRefCon, const void *baseAddress)
@@ -420,17 +439,23 @@ static void pixelBufferReleaseBytesCallback(void *releaseRefCon, const void *bas
 
 - (void)videoInputFrameArrived:(IDeckLinkVideoInputFrame*)videoFrame audioPacket:(IDeckLinkAudioInputPacket*)audioPacket
 {
-    dispatch_sync(_lock, ^{
-        BOOL hasValidInputSource = !(videoFrame->GetFlags() & bmdFrameHasNoInputSource);
+    dispatch_sync(_lockQueue, ^{
+        _lastFrameHasValidInputSource = videoFrame && !(videoFrame->GetFlags() & bmdFrameHasNoInputSource);
         void *baseAddress = NULL;
-        videoFrame->GetBytes(&baseAddress);
+        if (videoFrame) {
+            videoFrame->GetBytes(&baseAddress);
+        }
         
-        if (_capturingEnabled && videoFrame && hasValidInputSource && baseAddress) {
+        if (_captureModesSearchList && !_lastFrameHasValidInputSource) {
+            [self retryCaptureWithNextModeAfterDelay];
+        } else if (_captureModesSearchList && baseAddress) {
             videoFrame->AddRef();
             CVPixelBufferRef pixelBuffer = NULL;
             // ensure our two video code constant FOURCC enum types are equivalent
-#if !(kCMPixelFormat_422YpCbCr8 == bmdFormat8BitYUV && kCMPixelFormat_422YpCbCr10 == bmdFormat10BitYUV && \
-                     kCMPixelFormat_32BGRA == bmdFormat8BitBGRA && kCMPixelFormat_32ARGB == bmdFormat8BitARGB)
+#if !(kCMPixelFormat_422YpCbCr8 == bmdFormat8BitYUV && \
+    kCMPixelFormat_422YpCbCr10 == bmdFormat10BitYUV && \
+    kCMPixelFormat_32BGRA == bmdFormat8BitBGRA && \
+    kCMPixelFormat_32ARGB == bmdFormat8BitARGB)
 #error sanity check of useful FOURCC codes failed
 #endif
             CVReturn result = CVPixelBufferCreateWithBytes(NULL,
@@ -470,9 +495,10 @@ static void pixelBufferReleaseBytesCallback(void *releaseRefCon, const void *bas
                 CFRelease(formatDescription);
                 CFRelease(pixelBuffer);
                 
-                NSAssert(_sampleBufferDelegate && _callbackQueue, @"delegate and queue must be set before starting capture");
+                NSAssert(_sampleBufferDelegate && _callbackQueue, @"delegate and queue must be set when capturing is enabled");
                 dispatch_async(_callbackQueue, ^{
-                    [_sampleBufferDelegate captureDevice:self didOutputSampleBuffer:sampleBuffer];
+                    DeckLinkCaptureMode *mode = [_captureModesSearchList objectAtIndex:_captureModesSearchListIndex];
+                    [_sampleBufferDelegate captureDevice:self didOutputSampleBuffer:sampleBuffer inCaptureMode:mode];
                     CFRelease(sampleBuffer);
                 });
             } else {
@@ -546,6 +572,16 @@ static void pixelBufferReleaseBytesCallback(void *releaseRefCon, const void *bas
         _deckLinkDisplayMode = displayMode->GetDisplayMode();
     }
     return self;
+}
+
+- (BOOL)isEqual:(id)object
+{
+    return (self == object) ||
+        (object &&
+        NSEqualSizes(_frameSize, [object frameSize]) &&
+        _frameDuration == [object frameDuration] &&
+        _fieldDominance == [object fieldDominance] &&
+        _deckLinkDisplayMode == [object deckLinkDisplayMode]);
 }
 
 - (NSString *)description

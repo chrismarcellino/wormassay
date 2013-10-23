@@ -57,6 +57,7 @@ extern NSString *const BlackmagicDeckLinkCaptureDeviceFileType;
     
     // Blackmagic DeckLink capture device
     DeckLinkCaptureDevice *_deckLinkCaptureDevice;
+    DeckLinkCaptureMode *_lastMode;
 }
 
 // unique urls for each camera device (only meaningful to this class)

@@ -329,11 +329,12 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
         }
         RunLog(@"Opened device \"%@\" with model ID \"%@\".", [self sourceIdentifier], [_deckLinkCaptureDevice modelName]);
         
-        // Start capturing in our ideal mode
-        DeckLinkCaptureMode *captureMode = [_deckLinkCaptureDevice highestResolutionSupportedCaptureMode];
-        RunLog(@"Supported capture modes: %@; selected mode: %@", [_deckLinkCaptureDevice supportedCaptureModes], captureMode);
+        // Start capturing (including searching for a valid mode)
+        NSArray *captureModes = [_deckLinkCaptureDevice allCaptureModesSortedByDescendingResolutionAndFrameRate];
+        RunLog(@"Supported capture modes: %@", captureModes);
         [_deckLinkCaptureDevice setSampleBufferDelegate:self queue:_frameArrivalQueue];
-        success = [_deckLinkCaptureDevice startCaptureWithCaptureMode:captureMode error:outError];
+        [_deckLinkCaptureDevice startCaptureWithSearchForModeWithModes:captureModes];
+        success = YES;      // async and indefinite search
     } else if ([absoluteURL isFileURL]) {           // Video files
         _urlAsset = [AVAsset assetWithURL:absoluteURL];
         if (_urlAsset && [[_urlAsset tracksWithMediaType:AVMediaTypeVideo] count] > 0) {
@@ -442,8 +443,12 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 }
 
 // Called on _frameArrivalQueue
-- (void)captureDevice:(DeckLinkCaptureDevice *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
+- (void)captureDevice:(DeckLinkCaptureDevice *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer inCaptureMode:(DeckLinkCaptureMode *)mode
 {
+    if (![mode isEqual:_lastMode]) {
+        _lastMode = mode;
+        RunLog(@"Current capture mode: %@", mode);
+    }
     [self cmSampleBufferHasArrived:sampleBuffer];
 }
 
