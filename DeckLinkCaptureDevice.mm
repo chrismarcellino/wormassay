@@ -271,20 +271,32 @@ public:
         CGFloat width1 = [obj1 frameSize].width;
         CGFloat width2 = [obj2 frameSize].width;
         
+        // Most important factor is frame size (width)
         if (width1 < width2) {
-            return NSOrderedDescending;     // reverse the normal convention to reverse our array
+            return NSOrderedDescending;     // reverse the normal convention to have largest first
         } else if (width1 > width2) {
             return NSOrderedAscending;
         } else {
-            NSTimeInterval frameDuration1 = [obj1 frameDuration];
-            NSTimeInterval frameDuration2 = [obj2 frameDuration];
-            
-            if (frameDuration1 < frameDuration2) {
-                return NSOrderedAscending;     // double negative since frame rate is the inverse of frame duration
-            } else if (frameDuration1 > frameDuration2) {
+            // Next we must move interlaced sources ahead of non-interlaced sources so we don't have a false
+            // positive on an incorrectly interlaced progressive field
+            DeckLinkFieldDominance fd1 = [obj1 fieldDominance];
+            DeckLinkFieldDominance fd2 = [obj2 fieldDominance];
+            if (DeckLinkFieldDominanceIsInterlaced(fd1) && !DeckLinkFieldDominanceIsInterlaced(fd2)) {
+                return NSOrderedAscending;
+            } else if (!DeckLinkFieldDominanceIsInterlaced(fd1) && DeckLinkFieldDominanceIsInterlaced(fd2)) {
                 return NSOrderedDescending;
             } else {
-                return NSOrderedSame;
+                // Last, pick the highest frame rate (lowest frame duration) first
+                NSTimeInterval frameDuration1 = [obj1 frameDuration];
+                NSTimeInterval frameDuration2 = [obj2 frameDuration];
+                
+                if (frameDuration1 < frameDuration2) {
+                    return NSOrderedAscending;
+                } else if (frameDuration1 > frameDuration2) {
+                    return NSOrderedDescending;
+                } else {
+                    return NSOrderedSame;
+                }
             }
         }
     }];

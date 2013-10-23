@@ -19,6 +19,8 @@ typedef enum {
     DeckLinkFieldDominanceInterlacedLowerFieldFirst,
     DeckLinkFieldDominanceInterlacedUpperFieldFirst
 } DeckLinkFieldDominance;
+#define DeckLinkFieldDominanceIsInterlaced(x) ((x) == DeckLinkFieldDominanceInterlacedLowerFieldFirst ||\
+                                                (x) == DeckLinkFieldDominanceInterlacedUpperFieldFirst)
 
 extern NSString *const DeckLinkCaptureDeviceWasConnectedOrDisconnectedNotification;
 
