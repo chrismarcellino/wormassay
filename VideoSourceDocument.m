@@ -339,10 +339,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
         NSArray *videoTracks = [_urlAsset tracksWithMediaType:AVMediaTypeVideo];
         AVAssetTrack *videoTrack = [videoTracks objectAtIndex:0];
         _assetReaderOutput = [[AVAssetReaderTrackOutput alloc] initWithTrack:videoTrack outputSettings:bufferAttributes];
-        // This optimization is only available on 10.8+
-        if ([_assetReaderOutput respondsToSelector:@selector(setAlwaysCopiesSampleData:)]) {
-            [_assetReaderOutput setAlwaysCopiesSampleData:NO];
-        }
+        [_assetReaderOutput setAlwaysCopiesSampleData:NO];
         if ([_assetReader canAddOutput:_assetReaderOutput]) {
             [_assetReader addOutput:_assetReaderOutput];
             success = [_assetReader startReading];

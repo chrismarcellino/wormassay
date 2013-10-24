@@ -13,6 +13,7 @@
 
 @interface WormAssayAppDelegate : NSObject <NSApplicationDelegate, NSMenuDelegate> {
     NSWindowController *_loggingAndNotificationsWindowController;
+    NSArray *_loggingPanelTopLevelObjects;
 }
 
 @property(nonatomic, retain) IBOutlet NSMenu *assayAnalyzerMenu;

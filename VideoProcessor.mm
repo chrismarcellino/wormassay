@@ -19,6 +19,7 @@
 #import "zxing/DecodeHints.h"
 #import "zxing/common/HybridBinarizer.h"
 #import "zxing/ReaderException.h"
+#import <sys/sysctl.h>
 
 static const NSTimeInterval MinimumWellMatchTimeToBeginTracking = 0.500; // 500 ms
 static const NSTimeInterval BarcodeScanningPeriod = 0.5;
@@ -26,6 +27,8 @@ static const NSTimeInterval BarcodeRepeatSuccessCount = 3;
 static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 static const double WellDetectingAverageDeltaEndIdleThreshold = 5.0;
 static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
+
+static int numberOfPhysicalCPUS();
 
 // Here for C++ build safety
 @interface VideoProcessor() {
@@ -229,9 +232,11 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
                     cvResetImageROI(&debugImage);
                 };
                 
-                // Only parallelize well analysis if we have more than 4 (virtual) cores to be conservative, since doing so on
+                // Only parallelize well analysis if we have at least4 (physical) cores to be conservative, since doing so on
                 // a 2.1 ghz Core 2 Duo (with 2 virtual/physical cores) decreased performance 50% due to contention with decoding threads.
-                if ([_assayAnalyzer canProcessInParallel] && [[NSProcessInfo processInfo] activeProcessorCount] > 4) {
+                int physicalCPUs = 0;
+                NSAssert(physicalCPUs > 0, @"unable to get CPU count");
+                if ([_assayAnalyzer canProcessInParallel] && numberOfPhysicalCPUS() >= 4) {
                     dispatch_apply(_trackingWellCircles.size(), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), processWellBlock);
                 } else {
                     for (size_t i = 0; i < _trackingWellCircles.size(); i++) {
@@ -520,3 +525,12 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
 }
 
 @end
+
+static int numberOfPhysicalCPUS()
+{
+    int physicalCPUS = 0;
+    size_t length = sizeof(physicalCPUS);
+    sysctlbyname("hw.physicalcpu", &physicalCPUS, &length , NULL, 0);
+    NSCAssert(physicalCPUS > 0, @"unable to get CPU count");
+    return physicalCPUS;
+}

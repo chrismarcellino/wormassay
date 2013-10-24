@@ -38,7 +38,9 @@ static NSString *const UseBlackmagicDeckLinkDriverDefaultsKey = @"UseBlackmagicD
     [[DocumentController alloc] init];
     
     // Set up the logging panel
-    [NSBundle loadNibNamed:@"LoggingPanel" owner:self];
+    NSArray *topLevelObjects = nil;
+    [[NSBundle mainBundle] loadNibNamed:@"LoggingPanel" owner:self topLevelObjects:&topLevelObjects];
+    _loggingPanelTopLevelObjects = topLevelObjects;
     VideoProcessorController *videoProcessorController = [VideoProcessorController sharedInstance];
     [videoProcessorController setRunLogTextView:runLogTextView];
     [videoProcessorController setRunLogScrollView:runLogScrollView];
