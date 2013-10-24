@@ -163,13 +163,6 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     return nil;
 }
 
-- (void)dealloc
-{
-    if (_frameArrivalQueue) {
-        dispatch_release(_frameArrivalQueue);
-    }
-}
-
 - (NSString *)sourceIdentifier
 {
     NSString *sourceIdentifier;

@@ -129,7 +129,6 @@ static const char* WellOccupancyID = "Well Occupancy";
         });
         cvReleaseImage(&deltaThresholdedImage);
     });
-    dispatch_release(criticalSection);
     
     meanProportionPlateMoved /= [randomlyChosenFrames count];
     

@@ -55,11 +55,6 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
     return self;
 }
 
-- (void)dealloc
-{
-    dispatch_release(_queue);
-}
-
 - (NSArray *)assayAnalyzerClasses
 {
     NSMutableArray *assayAnalyzerClasses = [NSMutableArray array];

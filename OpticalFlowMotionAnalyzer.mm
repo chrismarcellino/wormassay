@@ -211,11 +211,11 @@ static const BOOL findInReverse = YES;
                 p.y += p.y - c.y;
                 cvLine(debugImage, cvPointFrom32f(p), cvPointFrom32f(c), lineColor, lineWidth);
                 double angle = atan2(p.y - c.y, p.x - c.x);
-                p.x = c.x + arrowLength * cos(angle + pi / 4);
-                p.y = c.y + arrowLength * sin(angle + pi / 4);
+                p.x = c.x + arrowLength * cos(angle + M_PI_4);
+                p.y = c.y + arrowLength * sin(angle + M_PI_4);
                 cvLine(debugImage, cvPointFrom32f(p), cvPointFrom32f(c), lineColor, lineWidth);
-                p.x = c.x + arrowLength * cos(angle - pi / 4);
-                p.y = c.y + arrowLength * sin(angle - pi / 4);
+                p.x = c.x + arrowLength * cos(angle - M_PI_4);
+                p.y = c.y + arrowLength * sin(angle - M_PI_4);
                 cvLine(debugImage, cvPointFrom32f(p), cvPointFrom32f(c), lineColor, lineWidth);
             }
         }

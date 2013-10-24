@@ -189,12 +189,8 @@ public:
         _deckLinkInput->SetCallback(NULL);
         _deckLinkInput->Release();
     }
-    if (_callbackQueue) {
-        dispatch_release(_callbackQueue);
-    }
     
     delete _cppObject;
-    dispatch_release(_lockQueue);
 }
 
 - (NSString *)uniqueID
@@ -305,14 +301,7 @@ public:
 - (void)setSampleBufferDelegate:(id<DeckLinkCaptureDeviceSampleBufferDelegate>)sampleBufferDelegate queue:(dispatch_queue_t)sampleBufferCallbackQueue
 {
     dispatch_sync(_lockQueue, ^{
-        if (_callbackQueue) {
-            dispatch_release(_callbackQueue);
-        }
         _callbackQueue = sampleBufferCallbackQueue;
-        if (_callbackQueue) {
-            dispatch_retain(_callbackQueue);
-        }
-        
         _sampleBufferDelegate = sampleBufferDelegate;
     });
 }

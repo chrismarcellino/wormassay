@@ -79,12 +79,6 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
     return self;
 }
 
-- (void)dealloc
-{
-    dispatch_release(_queue);
-    dispatch_release(_debugFrameCallbackQueue);
-}
-
 - (void)setDelegate:(id<VideoProcessorDelegate>)delegate
 {
     dispatch_async(_queue, ^{
