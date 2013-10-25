@@ -410,7 +410,7 @@ public:
         dispatch_after(dispatchTime, _lockQueue, ^{
             _retryDispatchAfterPending = NO;
             // ensure that capture hasn't been stopped or valid frames have been received in the interim
-            if (_captureModesSearchList && _lastFrameHasValidInputSource) {
+            if (_captureModesSearchList && !_lastFrameHasValidInputSource) {
                 // move to the next item in the queue looping if necessary
                 _captureModesSearchListIndex++;
                 _captureModesSearchListIndex %= [_captureModesSearchList count];
