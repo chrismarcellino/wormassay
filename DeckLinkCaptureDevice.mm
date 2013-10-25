@@ -333,7 +333,7 @@ public:
 
 - (BOOL)enableVideoInputInCurrentModeWithError:(NSError **)outError
 {
-    NSAssert(!_captureModesSearchList, @"no search list");
+    NSAssert(_captureModesSearchList, @"no search list");
     BOOL success = NO;
     // Stop for mode changes
     _deckLinkInput->StopStreams();
