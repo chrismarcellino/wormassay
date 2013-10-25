@@ -234,8 +234,6 @@ static int numberOfPhysicalCPUS();
                 
                 // Only parallelize well analysis if we have at least4 (physical) cores to be conservative, since doing so on
                 // a 2.1 ghz Core 2 Duo (with 2 virtual/physical cores) decreased performance 50% due to contention with decoding threads.
-                int physicalCPUs = 0;
-                NSAssert(physicalCPUs > 0, @"unable to get CPU count");
                 if ([_assayAnalyzer canProcessInParallel] && numberOfPhysicalCPUS() >= 4) {
                     dispatch_apply(_trackingWellCircles.size(), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), processWellBlock);
                 } else {

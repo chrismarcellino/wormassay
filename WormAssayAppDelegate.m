@@ -152,10 +152,6 @@ static NSString *const UseBlackmagicDeckLinkDriverDefaultsKey = @"UseBlackmagicD
 // used by menu item bindings
 - (BOOL)isBlackmagicDeckLinkDriverInstalled
 {
-#ifdef WORMASSAY_DEBUG
-    return YES;
-#endif
-    
     return [DeckLinkCaptureDevice isDriverInstalled];
 }
 

@@ -163,11 +163,6 @@ public:
 - (id)initWithDeckLinkInterface:(IDeckLink*)deckLink
 {
     if ((self = [super init])) {
-        _lockQueue = dispatch_queue_create("decklink-device-lock-queue", NULL);
-        _cppObject = new DeckLinkCaptureDeviceCPP::DeckLinkCaptureDeviceCPP(self);
-        // Set capture callback
-        _deckLinkInput->SetCallback(_cppObject);
-        
         _deckLink = deckLink;
         _deckLink->AddRef();
         
@@ -175,6 +170,12 @@ public:
         if (!_deckLinkInput) {
             return nil;
         }
+        
+        _cppObject = new DeckLinkCaptureDeviceCPP::DeckLinkCaptureDeviceCPP(self);
+        // Set capture callback
+        _deckLinkInput->SetCallback(_cppObject);
+        
+        _lockQueue = dispatch_queue_create("decklink-device-lock-queue", NULL);
     }
     return self;
 }

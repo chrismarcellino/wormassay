@@ -448,9 +448,9 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     if (_sendFramesToAssetWriter) {
         _recordingFrameDropCount++;
         if (_recordingFrameDropCount == 1 || _recordingFrameDropCount % 10 == 0) {
-            RunLog(@"Frames dropped from saved video: %lull", (unsigned long)_recordingFrameDropCount);
+            RunLog(@"Frames dropped from saved video: %lu", (unsigned long)_recordingFrameDropCount);
             if (_recordingFrameDropCount == 20) {       // i.e. only once per recording
-                RunLog(@"To reduced the number of dropped frames, quit all other running programs or use faster computer.");
+                RunLog(@"To reduced the number of dropped frames, quit all other running programs or use a faster computer.");
             }
         }
     }
@@ -586,14 +586,6 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 - (void)videoProcessor:(VideoProcessor *)vp shouldBeginRecordingToURL:(NSURL *)outputFileURL
 {
     dispatch_async(_frameArrivalQueue, ^{
-        if (_urlAsset) {
-#if WORMASSAY_DEBUG
-            RunLog(@"Reencoding video for debug build.");
-#else
-            return;
-#endif
-        }
-        
         // Create asset writers for output
         NSError *error = nil;
         _assetWriter = [[AVAssetWriter alloc] initWithURL:outputFileURL fileType:AVFileTypeMPEG4 error:&error];
