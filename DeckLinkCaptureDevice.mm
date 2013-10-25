@@ -335,7 +335,7 @@ public:
 {
     NSAssert(_captureModesSearchList, @"no search list");
     BOOL success = NO;
-    // Stop for mode changes
+    // Stop in case we're already running
     _deckLinkInput->StopStreams();
     
     // See if input mode change events are supported
@@ -405,6 +405,9 @@ public:
 {
     // only one dispatch_after should be in flight at once
     if (!_retryDispatchAfterPending) {
+        _retryDispatchAfterPending = YES;
+        _deckLinkInput->StopStreams();
+        
         NSTimeInterval delay = 1.0 / 10.0;      // don't retry immediately to avoid tight polling and more coorect frames to arrive
         dispatch_time_t dispatchTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC));
         dispatch_after(dispatchTime, _lockQueue, ^{
