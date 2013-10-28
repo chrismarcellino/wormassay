@@ -14,7 +14,6 @@
 #import "AssayAnalyzer.h"
 #import "DeckLinkCaptureDevice.h"
 #import "LoggingAndNotificationsSettingsWindowController.h"
-#import <IOKit/pwr_mgt/IOPMLib.h>
 
 static NSString *const IgnoreBuiltInCamerasUserDefaultsKey = @"IgnoreBuiltInCameras";
 static NSString *const UseBlackmagicDeckLinkDriverDefaultsKey = @"UseBlackmagicDeckLinkDriver";
@@ -97,13 +96,6 @@ static NSString *const UseBlackmagicDeckLinkDriverDefaultsKey = @"UseBlackmagicD
     
     [self loadCaptureDevices];
     
-    // Prevent display and system idle sleep for the life of the application
-    IOPMAssertionID assertionID;
-    IOPMAssertionCreateWithName(kIOPMAssertionTypeNoDisplaySleep,
-                                kIOPMAssertionLevelOn,
-                                (__bridge CFStringRef)[[NSBundle mainBundle] bundleIdentifier],
-                                &assertionID);
-    
     // Log if there are no devices attached
     if ([[[NSDocumentController sharedDocumentController] documents] count] == 0) {
         RunLog(@"Attach a camera or use \"File… Open for Testing\" to simulate one.");
@@ -184,6 +176,35 @@ static NSString *const UseBlackmagicDeckLinkDriverDefaultsKey = @"UseBlackmagicD
         if (![deviceURLs containsObject:url]) {
             [document close];
         }
+    }
+    
+    BOOL isProcessingVideo = [[VideoProcessorController sharedInstance] isProcessingVideo];
+    // On 10.9+, use the NSProcessInfo API
+    if ([[NSProcessInfo processInfo] respondsToSelector:@selector(beginActivityWithOptions:reason:)]) {
+        if (_processActivityObj) {
+            [[NSProcessInfo processInfo] endActivity:_processActivityObj];
+            _processActivityObj = nil;
+        }
+        // always want interactive termination since the main thread doesn't track the state (for simplicity)
+        NSString *reason = @"WormAssay is waiting for camera attachment and preventing system sleep in case a camera is connected by an automatic assay.";
+        NSActivityOptions options = NSActivitySuddenTerminationDisabled | NSActivityAutomaticTerminationDisabled;
+        if (isProcessingVideo) {
+            reason = @"WormAssay is analyzing real-time camera data for a scientific assay on a dedicated workstation and disabling all power management.";
+            // keep the display on and maximum power
+            options |= NSActivityUserInitiated;
+            options |= NSActivityIdleDisplaySleepDisabled;
+        }
+        _processActivityObj = [[NSProcessInfo processInfo] beginActivityWithOptions:options reason:reason];
+    } else {    // just deal with system sleep
+        // Prevent display or system idle sleep, depending on whether a camera is attached
+        if (assertionID != kIOPMNullAssertionID) {
+            IOPMAssertionRelease(assertionID);
+            assertionID = kIOPMNullAssertionID;
+        }
+        IOPMAssertionCreateWithName(isProcessingVideo ? kIOPMAssertionTypeNoDisplaySleep : kIOPMAssertPreventUserIdleSystemSleep,
+                                    kIOPMAssertionLevelOn,
+                                    (__bridge CFStringRef)[[NSBundle mainBundle] bundleIdentifier],
+                                    &assertionID);
     }
 }
 

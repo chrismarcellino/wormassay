@@ -44,6 +44,7 @@
 - (void)addVideoProcessor:(VideoProcessor *)videoProcessor;
 - (void)removeVideoProcessor:(VideoProcessor *)videoProcessor;
 
+- (BOOL)isProcessingVideo;
 - (BOOL)isTracking;
 - (BOOL)hasEncodingJobsRunning;
 

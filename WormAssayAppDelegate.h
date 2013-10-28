@@ -7,6 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import <IOKit/pwr_mgt/IOPMLib.h>
 
 @class VideoProcessor;
 @class ArrayTableView;
@@ -14,6 +15,8 @@
 @interface WormAssayAppDelegate : NSObject <NSApplicationDelegate, NSMenuDelegate> {
     NSWindowController *_loggingAndNotificationsWindowController;
     NSArray *_loggingPanelTopLevelObjects;
+    id _processActivityObj;
+    IOPMAssertionID assertionID;
 }
 
 @property(nonatomic, retain) IBOutlet NSMenu *assayAnalyzerMenu;

@@ -214,6 +214,15 @@ static void createFolderIfNecessary(NSString *path)
     });    
 }
 
+- (BOOL)isProcessingVideo
+{
+    __block BOOL isProcessingVideo = NO;
+    dispatch_sync(_queue, ^{
+        isProcessingVideo = [_videoProcessors count] > 0;
+    });
+    return isProcessingVideo;
+}
+
 - (BOOL)isTracking
 {
     __block BOOL isTracking = NO;
