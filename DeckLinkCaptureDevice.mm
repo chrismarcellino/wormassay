@@ -199,9 +199,7 @@ public:
     NSString *localizedName = [self localizedName];
     NSString *modelName = [self modelName];
     // Our only option for a psuedo-unqiue id is to use these strings
-    NSString *uniqueID =  [NSString stringWithFormat:@"%@-%@", modelName, localizedName];
-    NSArray *words = [uniqueID componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-    return [words componentsJoinedByString:@""];
+    return [modelName isEqual:localizedName] ? modelName : [NSString stringWithFormat:@"%@ (%@)", modelName, localizedName];
 }
 
 - (NSString *)localizedName
