@@ -358,8 +358,13 @@ CvPoint plateCenterForWellCircles(const std::vector<Circle> &circles)
 bool plateSequentialCirclesAppearSameAndStationary(const std::vector<Circle> &circlesPrevious,
                                                    const std::vector<Circle> &circlesCurrent)
 {
+    // Return true by defintion for no well mode
+    if (circlesPrevious.size() == 0 && circlesCurrent.size() == 0) {
+        return true;
+    }
+    
     // Return false if the number of circles have changed
-    if (circlesPrevious.size() != circlesCurrent.size() || circlesPrevious.size() == 0 || circlesCurrent.size() == 0) {
+    if (circlesPrevious.size() != circlesCurrent.size()) {
         return false;
     }
     

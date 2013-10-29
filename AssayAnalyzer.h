@@ -39,7 +39,8 @@ NSTimeInterval IgnoreFramesPostMovementTimeInterval();
 
 // This method is called once for each well on the plate (potentially in parallel if -canCallProcessMethodInParallel returns YES.)
 // The videoFrame and debugImage have their ROI set to cover only the square corresponding to the exact boundaries of the well circle.
-// Hence, the center point of the circle is the box midpoint. Well is 0 indexed and in row-major order.
+// Hence, the center point of the circle is the box midpoint. Well is 0 indexed and in row-major order, except may be -1 iff we're
+// imaging a non-well plate.
 // The underlying videoFrame IplImage is unique to the callee and may be modified, but the underlying data may not.
 // Both the plateData underlying IplImage and data may be modified, but only read/write atomicity is guaranteed for the ROI.
 - (void)processVideoFrameWellSynchronously:(IplImage*)wellImage

@@ -20,6 +20,7 @@ static inline void appendCSVElement(NSMutableString *output, NSString *element);
 @interface PlateData () {
     NSTimeInterval _startPresentationTime;
     NSTimeInterval _lastPresentationTime;
+    BOOL _nonWellPlate;
     std::vector<std::map<std::string, std::vector<double> > > _valuesByWellAndDataColumn;
     std::map<std::string, ReportingStyle> _reportingStyleByDataColumn;
     NSUInteger _receivedFrameCount;
@@ -43,6 +44,10 @@ static inline void appendCSVElement(NSMutableString *output, NSString *element);
 - (id)initWithWellCount:(NSUInteger)wellCount startPresentationTime:(NSTimeInterval)presentationTime
 {
     if ((self = [super init])) {
+        if (wellCount <= 0) {
+            wellCount = 1;
+            _nonWellPlate = YES;
+        }
         _startPresentationTime = _lastPresentationTime = presentationTime;
         _valuesByWellAndDataColumn.resize(wellCount);
         
@@ -58,6 +63,9 @@ static inline void appendCSVElement(NSMutableString *output, NSString *element);
         if (_lastPresentationTime != presentationTime) {
             _sampleCount++;
             _lastPresentationTime = presentationTime;
+        }
+        if (well == -1) {
+            well = 0;
         }
         [self appendResult:movementUnit toDataColumnID:MovementUnitID forWell:well];
         [self appendResult:presentationTime toDataColumnID:PresentationTimeID forWell:well];
@@ -81,6 +89,9 @@ static inline void appendCSVElement(NSMutableString *output, NSString *element);
 - (void)appendResult:(double)result toDataColumnID:(const char *)columnID forWell:(int)well
 {
     @synchronized(self) {
+        if (well == -1) {
+            well = 0;
+        }
         _valuesByWellAndDataColumn[well][std::string(columnID)].push_back(result);
     }
 }
@@ -98,6 +109,9 @@ static inline void appendCSVElement(NSMutableString *output, NSString *element);
 - (BOOL)movementUnitsMean:(double *)mean stdDev:(double *)stddev forWell:(int)well
 {
     @synchronized(self) {
+        if (well == -1) {
+            well = 0;
+        }
         return meanAndStdDev(_valuesByWellAndDataColumn[well][std::string(PresentationTimeID)], *mean, *stddev);
     }
 }
@@ -105,6 +119,9 @@ static inline void appendCSVElement(NSMutableString *output, NSString *element);
 - (BOOL)movementUnitsMean:(double *)mean stdDev:(double *)stddev forWell:(int)well inLastSeconds:(NSTimeInterval)seconds
 {
     @synchronized(self) {
+        if (well == -1) {
+            well = 0;
+        }
         NSTimeInterval time = [self lastPresentationTime] - seconds;
         std::vector<double>* presentationTimes = &_valuesByWellAndDataColumn[well][std::string(PresentationTimeID)];
         size_t index = std::lower_bound(presentationTimes->begin(), presentationTimes->end(), time) - presentationTimes->begin();
@@ -240,9 +257,16 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
             
             @autoreleasepool {
                 // Output the plate-well ID
-                std::string wellID = wellIdentifierStringForIndex(well, _valuesByWellAndDataColumn.size());
-                NSString *wellIDString = [NSString stringWithUTF8String:wellID.c_str()];
-                NSString *plateAndWellID = [NSString stringWithFormat:@"%@ Well %@", plateID, wellIDString];
+                NSString *wellIDString;
+                NSString *plateAndWellID;
+                if (_nonWellPlate) {
+                    wellIDString = @"entire plate";
+                    plateAndWellID = [NSString stringWithFormat:@"%@ %@", plateID, wellIDString];
+                } else {
+                    std::string wellID = wellIdentifierStringForIndex(well, _valuesByWellAndDataColumn.size());
+                    wellIDString = [NSString stringWithUTF8String:wellID.c_str()];
+                    plateAndWellID = [NSString stringWithFormat:@"%@ Well %@", plateID, wellIDString];
+                }
                 appendCSVElement(output, plateAndWellID);
                 
                 // Output the scan ID and well by themselves

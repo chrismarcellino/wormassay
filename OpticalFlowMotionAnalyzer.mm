@@ -120,17 +120,22 @@ static const BOOL findInReverse = YES;
     
     // Create a circle mask with all bits on in the circle using only a portion of the circle to avoid taking the well walls
     int radius = cvGetSize(wellImage).width / 2;
-    IplImage *insetCircleMask = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
-    fastZeroImage(insetCircleMask);
-    cvCircle(insetCircleMask, cvPoint(insetCircleMask->width / 2, insetCircleMask->height / 2), radius * WellEdgeFindingInsetProportion, cvRealScalar(255), CV_FILLED);        
+    IplImage *insetCircleMask = NULL;
+    if (well >= 0) {
+        insetCircleMask = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
+        fastZeroImage(insetCircleMask);
+        cvCircle(insetCircleMask, cvPoint(insetCircleMask->width / 2, insetCircleMask->height / 2), radius * WellEdgeFindingInsetProportion, cvRealScalar(255), CV_FILLED);
+    }
     
     // Find edges in the grayscale image
     IplImage* cannyEdges = cvCreateImage(cvGetSize(grayscalePrevImage), IPL_DEPTH_8U, 1);
     cvCanny(grayscalePrevImage, cannyEdges, 50, 150);
     
     // Mask off the edge pixels that correspond to the wells
-    cvAnd(cannyEdges, insetCircleMask, cannyEdges);
-    cvReleaseImage(&insetCircleMask);
+    if (insetCircleMask) {
+        cvAnd(cannyEdges, insetCircleMask, cannyEdges);
+        cvReleaseImage(&insetCircleMask);
+    }
     
     // Get the edge points
     std::vector<CvPoint2D32f> featuresPrev;

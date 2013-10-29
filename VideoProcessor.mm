@@ -218,13 +218,15 @@ static int numberOfPhysicalCPUS();
             if ([_assayAnalyzer willBeginFrameProcessing:videoFrame debugImage:[debugFrame image] plateData:_plateData]) {
                 void (^processWellBlock)(size_t) = ^(size_t i){
                     // Make stack copies of the headers so that they can have their own ROI's, etc.
-                    CvRect boundingSquare = boundingSquareForCircle(_trackingWellCircles[i]);
                     IplImage wellImage = *[videoFrame image];
-                    cvSetImageROI(&wellImage, boundingSquare);
                     IplImage debugImage = *[debugFrame image];
-                    cvSetImageROI(&debugImage, boundingSquare);
+                    if (_trackingWellCircles.size() > 0) {
+                        CvRect boundingSquare = boundingSquareForCircle(_trackingWellCircles[i]);
+                        cvSetImageROI(&wellImage, boundingSquare);
+                        cvSetImageROI(&debugImage, boundingSquare);
+                    }
                     [_assayAnalyzer processVideoFrameWellSynchronously:&wellImage
-                                                               forWell:i
+                                                               forWell:_trackingWellCircles.size() > 0 ? i : -1
                                                             debugImage:&debugImage
                                                       presentationTime:[videoFrame presentationTime]
                                                              plateData:_plateData];
@@ -232,12 +234,13 @@ static int numberOfPhysicalCPUS();
                     cvResetImageROI(&debugImage);
                 };
                 
-                // Only parallelize well analysis if we have at least4 (physical) cores to be conservative, since doing so on
+                // Only parallelize well analysis if we have at least 4 (physical) cores to be conservative, since doing so on
                 // a 2.1 ghz Core 2 Duo (with 2 virtual/physical cores) decreased performance 50% due to contention with decoding threads.
+                size_t iterations = _trackingWellCircles.size() > 0 ? _trackingWellCircles.size() : 1;      // i.e. wells
                 if ([_assayAnalyzer canProcessInParallel] && numberOfPhysicalCPUS() >= 4) {
-                    dispatch_apply(_trackingWellCircles.size(), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), processWellBlock);
+                    dispatch_apply(iterations, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), processWellBlock);
                 } else {
-                    for (size_t i = 0; i < _trackingWellCircles.size(); i++) {
+                    for (size_t i = 0; i < iterations; i++) {
                         processWellBlock(i);
                     }
                 }
@@ -246,7 +249,8 @@ static int numberOfPhysicalCPUS();
             
             // Print the results in the wells averaged over the last 30 seconds (to limit computational complexity)
             CvFont wellFont = fontForNormalizedScale(0.75, [debugFrame image]);
-            for (size_t i = 0; i < _trackingWellCircles.size(); i++) {
+            size_t labels = _trackingWellCircles.size() > 0 ? _trackingWellCircles.size() : 1;
+            for (size_t i = 0; i < labels; i++) {
                 double mean, stddev;
                 if ([_plateData movementUnitsMean:&mean stdDev:&stddev forWell:i inLastSeconds:30]) {
                     char text[20];
@@ -256,8 +260,14 @@ static int numberOfPhysicalCPUS();
                         snprintf(text, sizeof(text), "%.0f", mean);
                     }
                     
-                    float radius = _trackingWellCircles[i].radius;
-                    CvPoint textPoint = cvPoint(_trackingWellCircles[i].center[0] - radius * 0.5, _trackingWellCircles[i].center[1]);
+                    CvPoint textPoint;
+                    if (_trackingWellCircles.size() > 0) {
+                        float radius = _trackingWellCircles[i].radius;
+                        textPoint = cvPoint(_trackingWellCircles[i].center[0] - radius * 0.5, _trackingWellCircles[i].center[1]);
+                    } else {
+                        CvSize frameSize = cvGetSize([videoFrame image]);
+                        textPoint = cvPoint(frameSize.width / 2, frameSize.height / 2);
+                    }
                     cvPutText([debugFrame image],
                               text,
                               textPoint,
@@ -311,10 +321,8 @@ static int numberOfPhysicalCPUS();
         bool plateFound;
         if (wellFindingDisabled) {
             plateFound = YES;
-            CvSize imageSize = cvGetSize([videoFrame image]);
-            // Carve out a circle in the middle of the field of view
-            Circle circle = { { imageSize.width / 2.0, imageSize.height / 2.0 }, MIN(imageSize.width, imageSize.height) };
-            wellCircles.push_back(circle);
+        } else if (wellCircles.size() == 0) {
+            plateFound = NO;
         } else if (searchAllPlateSizes) {
             plateFound = findWellCircles([videoFrame image], wellCircles, wellCountHint);
         } else {
@@ -357,7 +365,11 @@ static int numberOfPhysicalCPUS();
                                 [_delegate videoProcessor:self didBeginTrackingPlateAtPresentationTime:[videoFrame presentationTime]];
                                 
                                 // Create plate data and analyzer
-                                RunLog(@"Began tracking %li well plate using %@ analyzer.", _trackingWellCircles.size(), [_assayAnalyzerClass analyzerName]);
+                                if (_trackingWellCircles.size () > 0) {
+                                    RunLog(@"Began tracking %li well plate using %@ analyzer.", _trackingWellCircles.size(), [_assayAnalyzerClass analyzerName]);
+                                } else {
+                                    RunLog(@"Began tracking entire plate using %@ analyzer.", [_assayAnalyzerClass analyzerName]);
+                                }
                                 NSAssert(!_plateData && !_assayAnalyzer, @"plate data or motion analyzer already exists");
                                 _plateData = [[PlateData alloc] initWithWellCount:wellCircles.size() startPresentationTime:[videoFrame presentationTime]];
                                 _assayAnalyzer = [[_assayAnalyzerClass alloc] init];

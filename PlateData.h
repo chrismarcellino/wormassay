@@ -20,6 +20,7 @@ typedef int ReportingStyle;
 // Thread-safe
 @interface PlateData : NSObject
 
+// Set wellCount to 0 for a non-well plate
 - (id)initWithWellCount:(NSUInteger)wellCount startPresentationTime:(NSTimeInterval)presentationTime;
 
 @property(readonly) NSUInteger wellCount;
