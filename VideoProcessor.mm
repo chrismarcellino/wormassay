@@ -321,8 +321,6 @@ static int numberOfPhysicalCPUS();
         bool plateFound;
         if (wellFindingDisabled) {
             plateFound = YES;
-        } else if (wellCircles.size() == 0) {
-            plateFound = NO;
         } else if (searchAllPlateSizes) {
             plateFound = findWellCircles([videoFrame image], wellCircles, wellCountHint);
         } else {
