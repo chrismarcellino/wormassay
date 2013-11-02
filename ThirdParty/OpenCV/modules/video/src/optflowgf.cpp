@@ -178,7 +178,7 @@ FarnebackPolyExp( const Mat& src, Mat& dst, int n, double sigma )
         }
     }
 
-    row -= n*3;
+    // row -= n*3;         // CRM dead store warning 11/1/2013
 }
 
 

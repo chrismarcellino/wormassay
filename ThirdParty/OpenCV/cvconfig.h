@@ -13,11 +13,20 @@
    */
 /* #undef HAVE_ALLOCA_H */
 
+/* Video for Windows support */
+/* #undef HAVE_VFW */
+
 /* V4L capturing support */
 /* #undef HAVE_CAMV4L */
 
 /* V4L2 capturing support */
 /* #undef HAVE_CAMV4L2 */
+
+/* V4L2 capturing support in videoio.h */
+/* #undef HAVE_VIDEOIO */
+
+/* V4L/V4L2 capturing support via libv4l */
+/* #undef HAVE_LIBV4L */
 
 /* Carbon windowing environment */
 /* #undef HAVE_CARBON */
@@ -37,17 +46,20 @@
 /* FFMpeg video library */
 /* #undef HAVE_FFMPEG */
 
+/* FFMpeg version flag */
+/* #undef NEW_FFMPEG */
+
 /* ffmpeg's libswscale */
 /* #undef HAVE_FFMPEG_SWSCALE */
 
 /* GStreamer multimedia framework */
 /* #undef HAVE_GSTREAMER */
 
-/* GStreamer with gstappsink & gstappsrc */
-/* #undef HAVE_GSTREAMER_APP */
-
 /* GTK+ 2.0 Thread support */
 /* #undef HAVE_GTHREAD */
+
+/* Win32 UI */
+/* #undef HAVE_WIN32UI */
 
 /* GTK+ 2.x toolkit */
 /* #undef HAVE_GTK */
@@ -56,7 +68,7 @@
 /* #undef HAVE_ILMIMF */
 
 /* Apple ImageIO Framework */
-#undef HAVE_IMAGEIO
+/* #undef HAVE_IMAGEIO */
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 /* #undef HAVE_INTTYPES_H */
@@ -100,6 +112,9 @@
 /* QuickTime video libraries */
 /* #undef HAVE_QUICKTIME */
 
+/* AVFoundation video libraries */
+/* #undef HAVE_AVFOUNDATION */
+
 /* TIFF codec */
 /* #undef HAVE_TIFF */
 
@@ -107,22 +122,22 @@
 /* #undef HAVE_UNICAP */
 
 /* Define to 1 if you have the <unistd.h> header file. */
-/* #undef HAVE_UNISTD_H */
+#define  HAVE_UNISTD_H 1
 
 /* Xine video library */
 /* #undef HAVE_XINE */
 
+/* OpenNI library */
+/* #undef HAVE_OPENNI */
+
 /* LZ77 compression/decompression library (used for PNG) */
-#undef HAVE_ZLIB
+/* #undef HAVE_ZLIB */
 
 /* Intel Integrated Performance Primitives */
 /* #undef HAVE_IPP */
 
-/* Have Apple LibVec */
-#define HAVE_VECLIB
-
 /* OpenCV compiled as static or dynamic libs */
-#define  OPENCV_BUILD_SHARED_LIB
+#define  BUILD_SHARED_LIBS
 
 /* Name of package */
 #define  PACKAGE "opencv"
@@ -134,24 +149,24 @@
 #define  PACKAGE_NAME "opencv"
 
 /* Define to the full name and version of this package. */
-#define  PACKAGE_STRING "opencv 2.2.0"
+#define  PACKAGE_STRING "opencv 2.4.6.1"
 
 /* Define to the one symbol short name of this package. */
 #define  PACKAGE_TARNAME "opencv"
 
 /* Define to the version of this package. */
-#define  PACKAGE_VERSION "2.2.0"
+#define  PACKAGE_VERSION "2.4.6.1"
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
    automatically deduced at runtime.
-	STACK_DIRECTION > 0 => grows toward higher addresses
-	STACK_DIRECTION < 0 => grows toward lower addresses
-	STACK_DIRECTION = 0 => direction of growth unknown */
+    STACK_DIRECTION > 0 => grows toward higher addresses
+    STACK_DIRECTION < 0 => grows toward lower addresses
+    STACK_DIRECTION = 0 => direction of growth unknown */
 /* #undef STACK_DIRECTION */
 
 /* Version number of package */
-#define  VERSION "2.2.0"
+#define  VERSION "2.4.6.1"
 
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */
@@ -160,11 +175,62 @@
 /* Intel Threading Building Blocks */
 /* #undef HAVE_TBB */
 
-/* Eigen2 Matrix & Linear Algebra Library */
-/* #undef HAVE_EIGEN2 */
+/* C= */
+/* #undef HAVE_CSTRIPES */
+
+/* Eigen Matrix & Linear Algebra Library */
+/* #undef HAVE_EIGEN */
 
 /* NVidia Cuda Runtime API*/
 /* #undef HAVE_CUDA */
 
-/* VideoInput library */
-/* #undef HAVE_VIDEOINPUT */
+/* NVidia Cuda Fast Fourier Transform (FFT) API*/
+/* #undef HAVE_CUFFT */
+
+/* NVidia Cuda Basic Linear Algebra Subprograms (BLAS) API*/
+/* #undef HAVE_CUBLAS */
+
+/* NVidia Video Decoding API*/
+/* #undef HAVE_NVCUVID */
+
+/* Compile for 'real' NVIDIA GPU architectures */
+#define CUDA_ARCH_BIN ""
+
+/* Compile for 'virtual' NVIDIA PTX architectures */
+#define CUDA_ARCH_PTX ""
+
+/* NVIDIA GPU features are used */
+#define CUDA_ARCH_FEATURES ""
+
+/* Create PTX or BIN for 1.0 compute capability */
+/* #undef CUDA_ARCH_BIN_OR_PTX_10 */
+
+/* OpenCL Support */
+#define HAVE_OPENCL
+
+/* AMD's OpenCL Fast Fourier Transform Library*/
+/* #undef HAVE_CLAMDFFT */
+
+/* AMD's Basic Linear Algebra Subprograms Library*/
+/* #undef HAVE_CLAMDBLAS */
+
+/* DirectShow Video Capture library */
+/* #undef HAVE_DSHOW */
+
+/* Microsoft Media Foundation Capture library */
+/* #undef HAVE_MSMF */
+
+/* XIMEA camera support */
+/* #undef HAVE_XIMEA */
+
+/* OpenGL support*/
+/* #undef HAVE_OPENGL */
+
+/* Clp support */
+/* #undef HAVE_CLP */
+
+/* Qt support */
+/* #undef HAVE_QT */
+
+/* Qt OpenGL support */
+/* #undef HAVE_QT_OPENGL */

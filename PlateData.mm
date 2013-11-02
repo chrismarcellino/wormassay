@@ -8,6 +8,7 @@
 
 #import "PlateData.h"
 #import "WellFinding.hpp"
+#import <map>
 
 // Required data column identifiers
 static const char* MovementUnitID = "Movement Units";
@@ -194,7 +195,7 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
 {
     @synchronized(self) {
         NSMutableArray *columnIDs = [NSMutableArray arrayWithCapacity:_valuesByWellAndDataColumn.size()];
-        for (map<std::string, std::vector<double> >::iterator it = _valuesByWellAndDataColumn[0].begin(); it != _valuesByWellAndDataColumn[0].end(); it++) {
+        for (std::map<std::string, std::vector<double> >::iterator it = _valuesByWellAndDataColumn[0].begin(); it != _valuesByWellAndDataColumn[0].end(); it++) {
             NSString *columnID = [[NSString alloc] initWithUTF8String:(it->first).c_str()];
             [columnIDs addObject:columnID];
         }
