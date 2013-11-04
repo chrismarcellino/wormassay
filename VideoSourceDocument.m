@@ -540,11 +540,16 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
         
         RunLog(@"Receiving %g x %g video from device \"%@\".", (double)squarePixelBufferSize.width, (double)squarePixelBufferSize.height, [self sourceIdentifier]);
         // Only set a buffer size if we have a non-square pixel size and this is a camera
-        if (_captureVideoDataOutput && !NSEqualSizes(bufferSize, squarePixelBufferSize)) {
-            NSMutableDictionary *bufferAttributes = [[_captureVideoDataOutput videoSettings] mutableCopy];
-            [bufferAttributes setObject:[NSNumber numberWithDouble:squarePixelBufferSize.width] forKey:(id)kCVPixelBufferWidthKey];
-            [bufferAttributes setObject:[NSNumber numberWithDouble:squarePixelBufferSize.height] forKey:(id)kCVPixelBufferHeightKey];
-            [_captureVideoDataOutput setVideoSettings:bufferAttributes];
+        if (!NSEqualSizes(bufferSize, squarePixelBufferSize)) {
+            if (_captureVideoDataOutput) {
+                NSMutableDictionary *bufferAttributes = [[_captureVideoDataOutput videoSettings] mutableCopy];
+                [bufferAttributes setObject:[NSNumber numberWithDouble:squarePixelBufferSize.width] forKey:(id)kCVPixelBufferWidthKey];
+                [bufferAttributes setObject:[NSNumber numberWithDouble:squarePixelBufferSize.height] forKey:(id)kCVPixelBufferHeightKey];
+                [_captureVideoDataOutput setVideoSettings:bufferAttributes];
+            } else {
+                RunLog(@"Non-square pixels are not supported for non-camera inputs. Please re-encode the video file to a suitable format.");
+                [self close];
+            }
         }
         
         dispatch_async(dispatch_get_main_queue(), ^{
