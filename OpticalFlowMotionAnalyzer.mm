@@ -49,12 +49,12 @@ static const BOOL findInReverse = YES;
 {
     // Find the most recent video frame that is at least 100 ms earlier than the current and discard older frames
     _prevFrame = nil;
-    while ([_lastFrames count] > 0) {
-        VideoFrame *aFrame = [_lastFrames objectAtIndex:0];
+    for (NSInteger i = (NSInteger)[_lastFrames count] - 1; i >= 0; i--) {
+        VideoFrame *aFrame = [_lastFrames objectAtIndex:i];
         if ([videoFrame presentationTime] - [aFrame presentationTime] >= MinimumIntervalFrameInterval) {
             _prevFrame = aFrame;
-            [_lastFrames removeObjectAtIndex:0];
-        } else {
+            // use i, not "i + 1" so we don't delete the one we chose in case we don't get a better one next time
+            [_lastFrames removeObjectsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, i)]];
             break;
         }
     }
