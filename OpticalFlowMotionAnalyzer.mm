@@ -18,6 +18,7 @@ static const double MaximumNumberOfFeaturePointsToAreaRatio = 1.0 / 200.0;
 static const double DeltaMeanMovementLimit = 20.0;
 static const double DeltaStdDevMovementLimit = 10.0;
 static const NSTimeInterval MinimumIntervalFrameInterval = 0.100;
+static const double MinimumMovementMagnitude = 1.0;
 static const BOOL findInReverse = YES;
 
 @implementation OpticalFlowMotionAnalyzer
@@ -197,7 +198,7 @@ static const BOOL findInReverse = YES;
         if (featuresCurFound[i]) {
             CvPoint2D32f delta = { featuresCur[i].x - featuresPrev[i].x, featuresCur[i].y - featuresPrev[i].y };
             float magnitude = sqrtf(delta.x * delta.x + delta.y * delta.y);
-            if (magnitude > 0.5 && magnitude < radius) {
+            if (magnitude > MinimumMovementMagnitude && magnitude < radius) {
                 countFound++;
                 averageMovement += magnitude;
                 
