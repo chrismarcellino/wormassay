@@ -586,7 +586,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 }
 
 - (void)videoProcessor:(VideoProcessor *)vp shouldBeginRecordingToURL:(NSURL *)outputFileURL
-{RunLog(@"RECORDING DISABLED!!!!!!!!!!!!!!!!!!!!!!!!");return;
+{
     dispatch_async(_frameArrivalQueue, ^{
         // Create asset writers for output
         NSError *error = nil;
