@@ -92,8 +92,8 @@ static int numberOfPhysicalCPUS();
 - (void)setAssayAnalyzerClass:(Class)assayAnalyzerClass
 {
     dispatch_async(_queue, ^{
-        _assayAnalyzerClass = assayAnalyzerClass;
         if (_assayAnalyzerClass != assayAnalyzerClass) {
+            _assayAnalyzerClass = assayAnalyzerClass;
             [self resetCaptureStateAndReportResults];
         }
     });
@@ -102,8 +102,8 @@ static int numberOfPhysicalCPUS();
 - (void)setPlateOrientation:(PlateOrientation)plateOrientation
 {
     dispatch_async(_queue, ^{
-        _plateOrientation = plateOrientation;
         if (_plateOrientation != plateOrientation) {
+            _plateOrientation = plateOrientation;
             [self resetCaptureStateAndReportResults];
         }
     });
