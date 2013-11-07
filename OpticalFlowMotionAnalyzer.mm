@@ -19,7 +19,6 @@ static const double DeltaMeanMovementLimit = 20.0;
 static const double DeltaStdDevMovementLimit = 10.0;
 static const NSTimeInterval MinimumIntervalFrameInterval = 0.100;
 static const double MinimumMovementMagnitude = 1.0;
-static const BOOL findInReverse = YES;
 
 @implementation OpticalFlowMotionAnalyzer
 
@@ -99,38 +98,25 @@ static const BOOL findInReverse = YES;
                           presentationTime:(NSTimeInterval)presentationTime
                                  plateData:(PlateData *)plateData
 {
+    CvSize size = cvGetSize(wellImage);
     // Get the previous well (using a local stack copy of the header for threadsafety)
-    IplImage prevFrameWell = *[_prevFrame image];
-    cvSetImageROI(&prevFrameWell, cvGetImageROI(wellImage));
-    
-    // Get grayscale subimages for the previous and current well
-    IplImage* grayscalePrevImage = cvCreateImage(cvGetSize(&prevFrameWell), IPL_DEPTH_8U, 1);
-    cvCvtColor(&prevFrameWell, grayscalePrevImage, CV_BGRA2GRAY);
-    
-    IplImage* grayscaleCurImage = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
-    cvCvtColor(wellImage, grayscaleCurImage, CV_BGRA2GRAY);
+    IplImage prevWellImage = *[_prevFrame image];
+    cvSetImageROI(&prevWellImage, cvGetImageROI(wellImage));
     
     // ======= Contour finding ========
     
-    // Find in reverse to make the edge outline match the preview image if set
-    if (findInReverse) {
-        IplImage *temp = grayscalePrevImage;
-        grayscalePrevImage = grayscaleCurImage;
-        grayscaleCurImage = temp;
-    }
-    
     // Create a circle mask with all bits on in the circle using only a portion of the circle to avoid taking the well walls
-    int radius = cvGetSize(wellImage).width / 2;
+    int radius = size.width / 2;
     IplImage *insetCircleMask = NULL;
     if (well >= 0) {
-        insetCircleMask = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
+        insetCircleMask = cvCreateImage(size, IPL_DEPTH_8U, 1);
         fastZeroImage(insetCircleMask);
         cvCircle(insetCircleMask, cvPoint(insetCircleMask->width / 2, insetCircleMask->height / 2), radius * WellEdgeFindingInsetProportion, cvRealScalar(255), CV_FILLED);
     }
     
     // Find edges in the grayscale image
-    IplImage* cannyEdges = cvCreateImage(cvGetSize(grayscalePrevImage), IPL_DEPTH_8U, 1);
-    cvCanny(grayscalePrevImage, cannyEdges, 50, 150);
+    IplImage* cannyEdges = cvCreateImage(size, IPL_DEPTH_8U, 1);
+    cvCanny(wellImage, cannyEdges, 50, 150);
     
     // Mask off the edge pixels that correspond to the wells
     if (insetCircleMask) {
@@ -139,26 +125,26 @@ static const BOOL findInReverse = YES;
     }
     
     // Get the edge points
-    std::vector<CvPoint2D32f> featuresPrev;
-    featuresPrev.reserve(1024);
+    std::vector<CvPoint2D32f> featuresCur;
+    featuresCur.reserve(1024);
     assert(cannyEdges->depth == IPL_DEPTH_8U);
     uchar *row = (uchar *)cannyEdges->imageData;
     for (int i = 0; i < cannyEdges->height; i++) {
         for (int j = 0; j < cannyEdges->width; j++) {
             if (row[j]) {
-                featuresPrev.push_back(cvPoint2D32f(j, i));
+                featuresCur.push_back(cvPoint2D32f(j, i));
             }
         }
         row += cannyEdges->widthStep;
     }
     // If we have too many points, randomly shuffle MaximumNumberOfFeaturePoints to the begining and keep that set
     size_t maxNumberOfFeatures = M_PI * radius * radius * MaximumNumberOfFeaturePointsToAreaRatio;
-    if (featuresPrev.size() > maxNumberOfFeatures) {
+    if (featuresCur.size() > maxNumberOfFeatures) {
         for (size_t i = 0; i < maxNumberOfFeatures; i++) {
-            size_t other = random() % featuresPrev.size();
-            std::swap(featuresPrev[i], featuresPrev[other]);
+            size_t other = random() % featuresCur.size();
+            std::swap(featuresCur[i], featuresCur[other]);
         }
-        featuresPrev.resize(maxNumberOfFeatures);
+        featuresCur.resize(maxNumberOfFeatures);
     }
     
     // Store the pixel counts and draw debugging images
@@ -169,24 +155,23 @@ static const BOOL findInReverse = YES;
     
     // ======== Motion measurement =========
     
-    CvSize wellSize = cvGetSize(wellImage);
-    CvSize pyrSize = cvSize(wellSize.width + 8, wellSize.height / 3);
-    IplImage* prevPyr = cvCreateImage(pyrSize, IPL_DEPTH_32F, 1);
+    CvSize pyrSize = cvSize(size.width + 8, size.height / 3);
 	IplImage* curPyr = cvCreateImage(pyrSize, IPL_DEPTH_32F, 1);
+    IplImage* prevPyr = cvCreateImage(pyrSize, IPL_DEPTH_32F, 1);
     
-    CvPoint2D32f* featuresCur = new CvPoint2D32f[featuresPrev.size()];
-    char *featuresCurFound = new char[featuresPrev.size()];
+    CvPoint2D32f* featuresPrev = new CvPoint2D32f[featuresCur.size()];
+    char *featuresPrevFound = new char[featuresCur.size()];
     
-    cvCalcOpticalFlowPyrLK(grayscalePrevImage,
-                           grayscaleCurImage,
-                           prevPyr,
+    cvCalcOpticalFlowPyrLK(wellImage,
+                           &prevWellImage,
                            curPyr,
-                           &*featuresPrev.begin(),
-                           featuresCur,
-                           featuresPrev.size(),
+                           prevPyr,
+                           &*featuresCur.begin(),
+                           featuresPrev,
+                           featuresCur.size(),
                            cvSize(15, 15),      // pyramid window size
                            5,                   // number of pyramid levels
-                           featuresCurFound,
+                           featuresPrevFound,
                            NULL,
                            cvTermCriteria(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.3),
                            0);
@@ -194,9 +179,9 @@ static const BOOL findInReverse = YES;
     // Iterate through the feature points and get the average movement
     float averageMovement = 0.0;
     size_t countFound = 0;
-    for (size_t i = 0; i < featuresPrev.size(); i++) {
-        if (featuresCurFound[i]) {
-            CvPoint2D32f delta = { featuresCur[i].x - featuresPrev[i].x, featuresCur[i].y - featuresPrev[i].y };
+    for (size_t i = 0; i < featuresCur.size(); i++) {
+        if (featuresPrevFound[i]) {
+            CvPoint2D32f delta = { featuresPrev[i].x - featuresCur[i].x, featuresPrev[i].y - featuresCur[i].y };
             float magnitude = sqrtf(delta.x * delta.x + delta.y * delta.y);
             if (magnitude > MinimumMovementMagnitude && magnitude < radius) {
                 countFound++;
@@ -208,11 +193,6 @@ static const BOOL findInReverse = YES;
                 const int arrowLength = 5;
                 CvPoint2D32f p = featuresPrev[i];
                 CvPoint2D32f c = featuresCur[i];
-                if (findInReverse) {
-                    CvPoint2D32f temp = p;
-                    p = c;
-                    c = temp;
-                }
                 p.x += p.x - c.x;       // double the vector length for visibility
                 p.y += p.y - c.y;
                 cvLine(debugImage, cvPointFrom32f(p), cvPointFrom32f(c), lineColor, lineWidth);
@@ -232,14 +212,12 @@ static const BOOL findInReverse = YES;
     double averageMovementPerSecond = averageMovement / (presentationTime - [_prevFrame presentationTime]);
     [plateData appendMovementUnit:averageMovementPerSecond atPresentationTime:presentationTime forWell:well];
     
-    cvReleaseImage(&prevPyr);
     cvReleaseImage(&curPyr);
-    delete[] featuresCurFound;
-    delete[] featuresCur;
+    cvReleaseImage(&prevPyr);
+    delete[] featuresPrevFound;
+    delete[] featuresPrev;
     
-    cvReleaseImage(&grayscalePrevImage);
-    cvReleaseImage(&grayscaleCurImage);
-    cvResetImageROI(&prevFrameWell);
+    cvResetImageROI(&prevWellImage);
 }
 
 - (void)didEndFrameProcessing:(VideoFrame *)videoFrame plateData:(PlateData *)plateData

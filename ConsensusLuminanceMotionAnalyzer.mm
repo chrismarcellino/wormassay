@@ -170,14 +170,9 @@ static const char* WellOccupancyID = "Well Occupancy";
         cvCircle(insetCircleMask, cvPoint(insetCircleMask->width / 2, insetCircleMask->height / 2), radius * WellEdgeFindingInsetProportion, cvRealScalar(255), CV_FILLED);
     }
     
-    // Get grayscale subimages for the well
-    IplImage* grayscaleImage = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
-    cvCvtColor(wellImage, grayscaleImage, CV_BGRA2GRAY);
-    
-    // Find edges in the grayscale image
-    IplImage* cannyEdges = cvCreateImage(cvGetSize(grayscaleImage), IPL_DEPTH_8U, 1);
-    cvCanny(grayscaleImage, cannyEdges, 50, 150);
-    cvReleaseImage(&grayscaleImage);
+    // Find edges in the image
+    IplImage* cannyEdges = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
+    cvCanny(wellImage, cannyEdges, 50, 150);
     
     // Mask off the edge pixels that correspond to the wells
     if (insetCircleMask) {
