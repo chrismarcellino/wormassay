@@ -33,8 +33,8 @@ NSTimeInterval IgnoreFramesPostMovementTimeInterval();
 // analyzer to perform any preprocessing or setup. 
 // PlateData should not be modified, but may be retained indefinitely (as resources permit). DebugImage does not have a ROI set.
 // The callee can return NO if processing of this frame should be aborted (e.g. poor image quality or movement) or if all computation is
-// already complete (e.g. entire frame was processed here), in which case the processVideoFrame:... method will not be called for this 
-// frame, but the didEndFrame:... method will still be called.
+// already complete (e.g. entire frame was processed here), in which case the processVideoFrame...: method will not be called for this
+// frame, but the didEndFrame...: method will still be called.
 - (BOOL)willBeginFrameProcessing:(VideoFrame *)videoFrame debugImage:(IplImage*)debugImage plateData:(PlateData *)plateData;
 
 // This method is called once for each well on the plate (potentially in parallel if -canCallProcessMethodInParallel returns YES.)

@@ -36,7 +36,7 @@ static void YpCbCr422toBGRA8(uint8_t *src, uint8_t *dest, uint32_t width, uint32
     return [[[self class] alloc] initWithIplImageTakingOwnership:cvCloneImage(_image) presentationTime:_presentationTime];
 }
 
-- (id)initByCopyingCVPixelBuffer:(CVPixelBufferRef)cvPixelBuffer presentationTime:(NSTimeInterval)presentationTime
+- (id)initByCopyingCVPixelBuffer:(CVPixelBufferRef)cvPixelBuffer naturalSize:(NSSize)naturalSize presentationTime:(NSTimeInterval)presentationTime
 {
     CVPixelBufferLockBaseAddress(cvPixelBuffer, kCVPixelBufferLock_ReadOnly);    
     
@@ -65,6 +65,14 @@ static void YpCbCr422toBGRA8(uint8_t *src, uint8_t *dest, uint32_t width, uint32
     NSAssert(iplImage, @"invalid format");
     
     CVPixelBufferUnlockBaseAddress(cvPixelBuffer, kCVPixelBufferLock_ReadOnly);
+    
+    // Rescale the image if necessary
+    if (naturalSize.width > 0 && (width != (size_t)naturalSize.width || height != (size_t)naturalSize.height)) {
+        IplImage *resizedImage = cvCreateImage(cvSize(naturalSize.width, naturalSize.height), iplImage->depth, iplImage->nChannels);
+        cvResize(iplImage, resizedImage, CV_INTER_AREA);
+        cvReleaseImage(&iplImage);
+        iplImage = resizedImage;
+    }
     
     return [self initWithIplImageTakingOwnership:iplImage presentationTime:presentationTime];
 }

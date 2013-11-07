@@ -1,3 +1,8 @@
+Version 1.32
+-----------
+Support video files with non-square pixels
+Use color Canny algorithms.
+
 Version 1.31
 -----------
 Support for Blackmagic DeckLink capture devices.

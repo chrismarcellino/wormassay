@@ -32,7 +32,7 @@ extern NSString *const BlackmagicDeckLinkCaptureDeviceFileType;
     BitmapOpenGLView *_bitmapOpenGLView;
     
     BOOL _closeCalled;
-    NSSize _lastFrameSize;
+    NSSize _frameSize;
     
     // Shared video encoders
     AVAssetWriter *_assetWriter;

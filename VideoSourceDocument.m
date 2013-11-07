@@ -74,14 +74,14 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 
 @interface VideoSourceDocument ()
 
-@property NSSize lastFrameSize;
+@property NSSize frameSize;
 
 @end
 
 
 @implementation VideoSourceDocument
 
-@synthesize lastFrameSize = _lastFrameSize;
+@synthesize frameSize = _frameSize;
 
 + (void)initialize
 {
@@ -242,7 +242,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 
 - (NSSize)expectedFrameSize
 {
-    NSSize size = [self lastFrameSize];
+    NSSize size = [self frameSize];
     
     if (size.width == 0 || size.height == 0) {
         if (_avCaptureDevice || _deckLinkCaptureDevice) {
@@ -265,13 +265,20 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     // kCVPixelFormatType_422YpCbCr8 is the strictly most efficient for H.264 output and the canonical video format, but
     // RGB lets us preserve more data for some input source and allows for simpler/more accurate gamma correction
     // (and we use BGRA under the hood for OpenCV and OpenGL.)
-    NSDictionary *bufferAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:
-                                      [NSNumber numberWithInt:kCVPixelFormatType_32BGRA], kCVPixelBufferPixelFormatTypeKey,
-                                      nil];
+    NSMutableDictionary *outputSettings = [[NSMutableDictionary alloc] initWithObjectsAndKeys:
+                                           [NSNumber numberWithInt:kCVPixelFormatType_32BGRA], kCVPixelBufferPixelFormatTypeKey,
+                                           nil];
     // Create the proper capture device/asset
     BOOL isBlackmagicDeckLinkDevice = NO;
     NSString *captureDeviceUniqueID = UniqueIDForCaptureDeviceURL(absoluteURL, &isBlackmagicDeckLinkDevice);
     if (captureDeviceUniqueID && !isBlackmagicDeckLinkDevice) {        // AVFoundation Capture devices
+        // Request square pixels to avoid unnecessary software resizing when possible
+        NSDictionary *squarePixels = [NSDictionary dictionaryWithObjectsAndKeys:
+                                      [NSNumber numberWithDouble:1.0], AVVideoPixelAspectRatioHorizontalSpacingKey,
+                                      [NSNumber numberWithDouble:1.0], AVVideoPixelAspectRatioVerticalSpacingKey,
+                                      nil];
+        [outputSettings setObject:squarePixels forKey:AVVideoPixelAspectRatioKey];
+        
         if (captureDeviceUniqueID) {
             _avCaptureDevice = [AVCaptureDevice deviceWithUniqueID:captureDeviceUniqueID];
             RunLog(@"Opened device \"%@\" with model ID \"%@\".", [self sourceIdentifier], [_avCaptureDevice modelID]);
@@ -289,7 +296,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
         _captureDeviceInput = [[AVCaptureDeviceInput alloc] initWithDevice:_avCaptureDevice error:outError];
         if (_captureDeviceInput) {
             _captureVideoDataOutput = [[AVCaptureVideoDataOutput alloc] init];
-            [_captureVideoDataOutput setVideoSettings:bufferAttributes];
+            [_captureVideoDataOutput setVideoSettings:outputSettings];
             [_captureVideoDataOutput setAlwaysDiscardsLateVideoFrames:NO];      // to ensure the saved video doesn't miss frames
             [_captureVideoDataOutput setSampleBufferDelegate:self queue:_frameArrivalQueue];
             
@@ -338,7 +345,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
         // Get frames from movie file
         NSArray *videoTracks = [_urlAsset tracksWithMediaType:AVMediaTypeVideo];
         AVAssetTrack *videoTrack = [videoTracks objectAtIndex:0];
-        _assetReaderOutput = [[AVAssetReaderTrackOutput alloc] initWithTrack:videoTrack outputSettings:bufferAttributes];
+        _assetReaderOutput = [[AVAssetReaderTrackOutput alloc] initWithTrack:videoTrack outputSettings:outputSettings];
         [_assetReaderOutput setAlwaysCopiesSampleData:NO];
         if ([_assetReader canAddOutput:_assetReaderOutput]) {
             [_assetReader addOutput:_assetReaderOutput];
@@ -503,7 +510,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 // do NOT call on _frameArrivalQueue as this blocks. called on a background thread.
 - (void)processPixelBufferSynchronously:(CVImageBufferRef)pixelBuffer
 {
-    // Ensure we have the proper frame size for this device, correcting for non-square pixels.
+    // Get the proper frame size for this device, correcting for non-square pixels.
     // AVCaptureDecompressedVideoOutput is guaranteed to be a CVPixelBufferRef.
     NSSize bufferSize = NSMakeSize(CVPixelBufferGetWidth(pixelBuffer), CVPixelBufferGetHeight(pixelBuffer));
     NSSize squarePixelBufferSize = bufferSize;
@@ -530,40 +537,25 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     }
     
     // If our pixel buffer doesn't match this size, or we don't have a square pixel buffer, set attributes and change the requested size.
-    if (!NSEqualSizes(bufferSize, squarePixelBufferSize) || !NSEqualSizes(squarePixelBufferSize, [self lastFrameSize])) {
+    if (!NSEqualSizes(squarePixelBufferSize, [self frameSize])) {
         // Arbitrarily limit UVC devices to 640x480 for maximum compatability. These cameras (webcams) should only be used for barcoding.
         if (_avCaptureDevice && DeviceIsUVCDevice(_avCaptureDevice)) {
             squarePixelBufferSize = NSMakeSize(640.0, 480.0);
         }
+        [self setFrameSize:squarePixelBufferSize];
         
-        [self setLastFrameSize:squarePixelBufferSize];
-        
-        RunLog(@"Receiving %g x %g video from device \"%@\".", (double)squarePixelBufferSize.width, (double)squarePixelBufferSize.height, [self sourceIdentifier]);
-        // Only set a buffer size if we have a non-square pixel size and this is a camera
-        if (!NSEqualSizes(bufferSize, squarePixelBufferSize)) {
-            if (_captureVideoDataOutput) {
-                NSMutableDictionary *bufferAttributes = [[_captureVideoDataOutput videoSettings] mutableCopy];
-                [bufferAttributes setObject:[NSNumber numberWithDouble:squarePixelBufferSize.width] forKey:(id)kCVPixelBufferWidthKey];
-                [bufferAttributes setObject:[NSNumber numberWithDouble:squarePixelBufferSize.height] forKey:(id)kCVPixelBufferHeightKey];
-                [_captureVideoDataOutput setVideoSettings:bufferAttributes];
-            } else {
-                RunLog(@"Non-square pixels are not supported for non-camera inputs. Please re-encode the video file to a suitable format.");
-                [self close];
-            }
-        }
+        RunLog(@"Receiving %g x %g video from device with nautral size %g x %g \"%@\".",
+               (double)bufferSize.width, (double)bufferSize.height,
+               (double)squarePixelBufferSize.width, (double)squarePixelBufferSize.height,
+               [self sourceIdentifier]);
         
         dispatch_async(dispatch_get_main_queue(), ^{
             [self adjustWindowSizing];
         });
-    } else {
-        // Use CPU (Mach) time to ensure a monotonically increasing time. It can later be subtracted from the current time to determine the sample time/date.
-        VideoFrame *frame = [[VideoFrame alloc] initByCopyingCVPixelBuffer:pixelBuffer presentationTime:CACurrentMediaTime()];
-        [self processVideoFrame:frame];
     }
-}
-
-- (void)processVideoFrame:(VideoFrame *)image
-{
+    
+    // Use CPU (Mach) time to ensure a monotonically increasing time. It can later be subtracted from the current time to determine the sample time/date.
+    VideoFrame *image = [[VideoFrame alloc] initByCopyingCVPixelBuffer:pixelBuffer naturalSize:[self frameSize] presentationTime:CACurrentMediaTime()];
     [_processor processVideoFrame:image debugFrameCallback:^(VideoFrame *image) {
         [_bitmapOpenGLView renderImage:image];
     }];
