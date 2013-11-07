@@ -1,4 +1,4 @@
-Version 1.3
+Version 1.31
 -----------
 Support for Blackmagic DeckLink capture devices.
 Switch from QTKit to AVFoundation (requires Mac OS X 10.7).
