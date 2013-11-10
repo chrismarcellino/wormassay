@@ -414,27 +414,28 @@ static int numberOfPhysicalCPUS();
         IplImage *grayscaleImage = cvCreateImage(cvGetSize([videoFrame image]), IPL_DEPTH_8U, 1);
         NSAssert(grayscaleImage->widthStep == grayscaleImage->width * grayscaleImage->nChannels, @"image not byte packed");
         cvCvtColor([videoFrame image], grayscaleImage, CV_BGRA2GRAY);
-        zxing::Ref<zxing::GreyscaleLuminanceSource> luminanceSource (new zxing::GreyscaleLuminanceSource((unsigned char *)grayscaleImage->imageData,
-                                                                                                         grayscaleImage->widthStep,
-                                                                                                         grayscaleImage->height,
-                                                                                                         0,
-                                                                                                         0,
-                                                                                                         grayscaleImage->width,
-                                                                                                         grayscaleImage->height));
+        zxing::ArrayRef<char> arrayRefData((char *)grayscaleImage->imageData, grayscaleImage->imageSize);
+        zxing::Ref<zxing::GreyscaleLuminanceSource> luminanceSource(new zxing::GreyscaleLuminanceSource(arrayRefData,
+                                                                                                        grayscaleImage->widthStep,
+                                                                                                        grayscaleImage->height,
+                                                                                                        0,
+                                                                                                        0,
+                                                                                                        grayscaleImage->width,
+                                                                                                        grayscaleImage->height));
         
         NSString *text = nil;
         // Binarize the image
         try {
             zxing::Ref<zxing::Binarizer> binarizer(new zxing::HybridBinarizer(luminanceSource));
-            zxing::Ref<zxing::BinaryBitmap> binaryBitmap (new zxing::BinaryBitmap(binarizer));
+            zxing::Ref<zxing::BinaryBitmap> binaryBitmap(new zxing::BinaryBitmap(binarizer));
             
             // Search for barcodes
             zxing::Ref<zxing::MultiFormatReader> reader(new zxing::MultiFormatReader());
             zxing::DecodeHints hints;
-            hints.addFormat(zxing::BarcodeFormat_QR_CODE);
-            hints.addFormat(zxing::BarcodeFormat_DATA_MATRIX);
-            hints.addFormat(zxing::BarcodeFormat_CODE_128);
-            hints.addFormat(zxing::BarcodeFormat_CODE_39);
+            hints.addFormat(zxing::BarcodeFormat::QR_CODE);
+            hints.addFormat(zxing::BarcodeFormat::DATA_MATRIX);
+            hints.addFormat(zxing::BarcodeFormat::CODE_128);
+            hints.addFormat(zxing::BarcodeFormat::CODE_39);
             hints.setTryHarder(true);           // rotate images in search of barcodes, etc.
             
             zxing::Ref<zxing::Result> barcodeResult = reader->decode(binaryBitmap, hints);
