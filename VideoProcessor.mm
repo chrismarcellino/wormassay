@@ -436,6 +436,8 @@ static int numberOfPhysicalCPUS();
             hints.addFormat(zxing::BarcodeFormat::DATA_MATRIX);
             hints.addFormat(zxing::BarcodeFormat::CODE_128);
             hints.addFormat(zxing::BarcodeFormat::CODE_39);
+            hints.addFormat(zxing::BarcodeFormat::AZTEC);
+            hints.addFormat(zxing::BarcodeFormat::PDF_417);
             hints.setTryHarder(true);           // rotate images in search of barcodes, etc.
             
             zxing::Ref<zxing::Result> barcodeResult = reader->decode(binaryBitmap, hints);
