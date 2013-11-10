@@ -2,6 +2,7 @@ Version 1.32
 -----------
 Support video files with non-square pixels.
 Use color Canny algorithms.
+Update OpenCV to 2.4.6 (under BSD license) and ZXing to 2.2 (under Apache license).
 
 Version 1.31
 -----------
