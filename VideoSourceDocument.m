@@ -115,15 +115,17 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     }
     
     // Iterate through current capture devices
-    for (AVCaptureDevice *device in [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo]) {
-        BOOL isADeckLinkDevice = [deckLinkNames containsObject:[device localizedName]] ||
-                                    [deckLinkNames containsObject:[device modelID]];
-        
-        // See if we need to ignore this devices
-        if (!isADeckLinkDevice && (!ignoreBuiltInCameras || !DeviceIsAppleUSBDevice(device))) {
-            // Construct the URL for the capture device
-            NSURL *url = URLForAVCaptureDevice(device);
-            [urls addObject:url];
+    for (AVCaptureDevice *device in [AVCaptureDevice devices]) {
+        if ([device hasMediaType:AVMediaTypeVideo] || [device hasMediaType:AVMediaTypeMuxed]) {
+            BOOL isADeckLinkDevice = [deckLinkNames containsObject:[device localizedName]] ||
+            [deckLinkNames containsObject:[device modelID]];
+            
+            // See if we need to ignore this devices
+            if (!isADeckLinkDevice && (!ignoreBuiltInCameras || !DeviceIsAppleUSBDevice(device))) {
+                // Construct the URL for the capture device
+                NSURL *url = URLForAVCaptureDevice(device);
+                [urls addObject:url];
+            }
         }
     }
     
@@ -308,6 +310,9 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
                 for (AVCaptureConnection *connection in [_captureVideoDataOutput connections]) {
                     if ([connection isVideoMinFrameDurationSupported]) {
                         [connection setVideoMinFrameDuration:CMTimeMake(1, 30)];
+                    }
+                    if ([[connection audioChannels] count] > 0) {
+                        [connection setEnabled:NO];
                     }
                 }
                 
@@ -536,12 +541,13 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
         }
     }
     
+    // Arbitrarily limit UVC devices to 640x480 for maximum compatability. These cameras (webcams) should only be used for barcoding.
+    if (_avCaptureDevice && DeviceIsUVCDevice(_avCaptureDevice)) {
+        squarePixelBufferSize = NSMakeSize(640.0, 480.0);
+    }
+    
     // If our pixel buffer doesn't match this size, or we don't have a square pixel buffer, set attributes and change the requested size.
     if (!NSEqualSizes(squarePixelBufferSize, [self frameSize])) {
-        // Arbitrarily limit UVC devices to 640x480 for maximum compatability. These cameras (webcams) should only be used for barcoding.
-        if (_avCaptureDevice && DeviceIsUVCDevice(_avCaptureDevice)) {
-            squarePixelBufferSize = NSMakeSize(640.0, 480.0);
-        }
         [self setFrameSize:squarePixelBufferSize];
         
         RunLog(@"Receiving %g x %g video from device with nautral size %g x %g \"%@\".",

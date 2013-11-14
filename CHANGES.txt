@@ -1,4 +1,4 @@
-Version 1.32
+Version 1.33
 -----------
 Support video files with non-square pixels.
 Use color Canny algorithms.
