@@ -35,6 +35,7 @@
 {
     if ((self = [super initWithFrame:frameRect pixelFormat:format])) {
         [self setCanDrawConcurrently:YES];
+        [self setWantsBestResolutionOpenGLSurface:YES];
     }
     
     return self;
@@ -51,10 +52,6 @@
     
     // Enable non-power-of-two textures
     glEnable(GL_TEXTURE_RECTANGLE_ARB);
-    GLenum error = glGetError();
-    if (error != GL_NO_ERROR) {
-        NSLog(@"Error: failed to enable GL_TEXTURE_RECTANGLE_ARB (%s)", gluErrorString(error));
-    }
     
     // Create the texture
     glGenTextures(1, &_imageTexture);
@@ -125,10 +122,13 @@
         _lastImage = image;
     }
     
-    GLenum error = glGetError();
-    if (error != GL_NO_ERROR) {
-        NSLog(@"Error: %@ drawing error (%s)", [self class], gluErrorString(error));
-    }
+    GLenum error;
+    do {
+        error = glGetError();
+        if (error != GL_NO_ERROR) {
+            NSLog(@"Error: %@ drawing error (%u)", [self class], error);
+        }
+    } while (error != GL_NO_ERROR);
     
     CGLSetCurrentContext(NULL);
     CGLUnlockContext(glContext);
@@ -156,7 +156,7 @@
     CGLLockContext(glContext);
     
     [super reshape];
-    _viewport = [self bounds];
+    _viewport = [self convertRectToBacking:[self bounds]];
     [context update];
     
     CGLUnlockContext(glContext);
