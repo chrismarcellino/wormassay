@@ -2263,7 +2263,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				FRAMEWORK_SEARCH_PATHS = "${SDK_DIR}/System/Library/Frameworks/Accelerate.framework/Frameworks";
-				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					HAVE_CVCONFIG_H,
 					HAVE_ALLOCA,
@@ -2272,7 +2271,6 @@
 					HAVE_UNISTD_H,
 					CVAPI_EXPORTS,
 				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
 				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
 				OPENCL_OTHER_BC_FLAGS = "";
 				PRODUCT_NAME = OpenCV;
@@ -2283,7 +2281,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				FRAMEWORK_SEARCH_PATHS = "${SDK_DIR}/System/Library/Frameworks/Accelerate.framework/Frameworks";
-				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					HAVE_CVCONFIG_H,
 					HAVE_ALLOCA,
@@ -2292,7 +2289,6 @@
 					HAVE_UNISTD_H,
 					CVAPI_EXPORTS,
 				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
 				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
 				OPENCL_OTHER_BC_FLAGS = "";
 				PRODUCT_NAME = OpenCV;

@@ -464,7 +464,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
         if (_recordingFrameDropCount == 1 || _recordingFrameDropCount % 10 == 0) {
             RunLog(@"Frames dropped from saved video: %lu", (unsigned long)_recordingFrameDropCount);
             if (_recordingFrameDropCount == 20) {       // i.e. only once per recording
-                RunLog(@"To reduced the number of dropped frames, quit all other running programs or use a faster computer.");
+                RunLog(@"(To reduced the number of dropped frames, quit all other running programs or use a faster computer or storage device.)");
             }
         }
     }
@@ -508,7 +508,6 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
             [_assetWriterInput appendSampleBuffer:sampleBuffer];
         } else {
             [self logFrameDroppedDuringEncoding];
-/// FIXME TODO XXX
         }
     }
 }
