@@ -60,7 +60,7 @@ static NSString *const UseBlackmagicDeckLinkDriverDefaultsKey = @"UseBlackmagicD
     unsigned long long freeSpace = [[fileAttributes objectForKey:NSFileSystemFreeSize] unsignedLongLongValue];
     double percentFree = (double)freeSpace / (double)fileSystemSize * 100.0;
     
-    RunLog(@"%@ version %@ launched. Storage has %@ (%.3g%%) free space. Mac OS %@",
+    RunLog(@"%@ version %@ launched. Storage has %@ (%.3g%%) free space. Mac OS %@.",
            [mainBundle objectForInfoDictionaryKey:(id)kCFBundleNameKey],
            [mainBundle objectForInfoDictionaryKey:(id)kCFBundleVersionKey],
            formattedDataSize(freeSpace),
@@ -71,7 +71,7 @@ static NSString *const UseBlackmagicDeckLinkDriverDefaultsKey = @"UseBlackmagicD
         RunLog(@"Blackmagic DeckLink API version %@ installed", [DeckLinkCaptureDevice deckLinkSystemVersion]);
     }
     
-    RunLog(@"Important: for best results set camera to 1080p and 24-30 fps, "
+    RunLog(@"Important: for best results set camera to 1080p and ≤30 fps, "
            "with image stabilization OFF and Instant Autofocus OFF (normal AF/TTL is optional.)");
 }
 
@@ -295,8 +295,9 @@ NSString *formattedDataSize(unsigned long long bytes)
     NSString *factors[] = { (bytes == 1 ? @"byte" : @"bytes"), @"KB", @"MB", @"GB", @"TB", @"PB", @"EB", @"ZB", @"YB", nil };
     int factorIndex = 0;
     double value = bytes;
-    while (value > 1024 && factors[factorIndex + 1]) {
-        value /= 1024;
+    const int factorBase = 1000;        // use modern metric definition
+    while (value > factorBase && factors[factorIndex + 1]) {
+        value /= factorBase;
         factorIndex++;
     }
     return [NSString stringWithFormat:@"%.4g %@", value, factors[factorIndex]];

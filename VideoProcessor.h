@@ -29,6 +29,9 @@ typedef enum {
 } PlateOrientation;
 
 
+FOUNDATION_EXPORT CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation);
+
+
 // Thread-safe.
 @interface VideoProcessor : NSObject
 // Instance variables are declared in the implementation file as they contain C++ objects
@@ -73,7 +76,7 @@ willStopRecordingToOutputFileURL:(NSURL *)outputFileURL;     // nil if not recor
 // Controls video file recording
 @protocol VideoProcessorRecordingDelegate <NSObject>
 
-- (void)videoProcessor:(VideoProcessor *)vp shouldBeginRecordingToURL:(NSURL *)outputFileURL;
+- (void)videoProcessor:(VideoProcessor *)vp shouldBeginRecordingToURL:(NSURL *)outputFileURL withNaturalOrientation:(PlateOrientation)orientation;
 - (void)videoProcessorShouldStopRecording:(VideoProcessor *)vp completion:(void (^)(NSError *error))completion; // error will be nil upon success
 
 @end

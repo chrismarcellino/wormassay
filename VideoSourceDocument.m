@@ -169,7 +169,9 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 {
     NSString *sourceIdentifier;
     if (_avCaptureDevice) {
-        sourceIdentifier = [[NSString alloc] initWithFormat:@"%@ (%@)", [_avCaptureDevice localizedName], [_avCaptureDevice uniqueID], nil];
+        // There is apparently space aroudn this string
+        NSString *prettyUniqueId = [[_avCaptureDevice uniqueID] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        sourceIdentifier = [[NSString alloc] initWithFormat:@"%@ (%@)", [_avCaptureDevice localizedName], prettyUniqueId, nil];
     } else if (_deckLinkCaptureDevice) {
         sourceIdentifier = [[NSString alloc] initWithFormat:@"%@ (%@)", [_deckLinkCaptureDevice localizedName], [_deckLinkCaptureDevice uniqueID], nil];
     } else {
@@ -192,7 +194,6 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
         styleMask |= NSClosableWindowMask;
     }
     NSWindow *window = [[NSWindow alloc] initWithContentRect:contentRect styleMask:styleMask backing:NSBackingStoreBuffered defer:YES];
-    // Enable multi-threaded drawing
     [window setPreferredBackingLocation:NSWindowBackingLocationVideoMemory];
 	[window useOptimizedDrawing:YES];       // since there are no overlapping subviews
     [window setOpaque:YES];
@@ -458,7 +459,6 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 
 - (void)logFrameDroppedDuringEncoding
 {
-    // This normally shouldn't happen as we ask for all frames to be queued
     if (_sendFramesToAssetWriter) {
         _recordingFrameDropCount++;
         if (_recordingFrameDropCount == 1 || _recordingFrameDropCount % 10 == 0) {
@@ -470,7 +470,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     }
 }
 
-// this must be called on _frameArrivalQueu
+// this must be called on _frameArrivalQueue
 - (void)cmSampleBufferHasArrived:(CMSampleBufferRef)sampleBuffer
 {
     if (_currentlyProcessingFrame) {
@@ -508,6 +508,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
             [_assetWriterInput appendSampleBuffer:sampleBuffer];
         } else {
             [self logFrameDroppedDuringEncoding];
+/// FIXME TODO XXX
         }
     }
 }
@@ -550,7 +551,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     if (!NSEqualSizes(squarePixelBufferSize, [self frameSize])) {
         [self setFrameSize:squarePixelBufferSize];
         
-        RunLog(@"Receiving %g x %g video from device with nautral size %g x %g \"%@\".",
+        RunLog(@"Receiving %g x %g video from device with natural size %g x %g \"%@\".",
                (double)bufferSize.width, (double)bufferSize.height,
                (double)squarePixelBufferSize.width, (double)squarePixelBufferSize.height,
                [self sourceIdentifier]);
@@ -588,7 +589,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     return displayName;
 }
 
-- (void)videoProcessor:(VideoProcessor *)vp shouldBeginRecordingToURL:(NSURL *)outputFileURL
+- (void)videoProcessor:(VideoProcessor *)vp shouldBeginRecordingToURL:(NSURL *)outputFileURL withNaturalOrientation:(PlateOrientation)orientation
 {
     dispatch_async(_frameArrivalQueue, ^{
         // Create asset writers for output
@@ -603,6 +604,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
                                             nil];
             _assetWriterInput = [[AVAssetWriterInput alloc] initWithMediaType:AVMediaTypeVideo outputSettings:outputSettings sourceFormatHint:NULL];
             [_assetWriterInput setExpectsMediaDataInRealTime:YES];
+            [_assetWriterInput setTransform:TransformForPlateOrientation(orientation)];
             [_assetWriter setShouldOptimizeForNetworkUse:NO];
             [_assetWriter addInput:_assetWriterInput];
             [_assetWriter startWriting];
@@ -624,15 +626,14 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     dispatch_async(_frameArrivalQueue, ^{
         _sendFramesToAssetWriter = NO;
         
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            // This call blocks so we perform it async
-            BOOL success = _assetWriter ? [_assetWriter finishWriting] : YES;
-            NSError *error = [_assetWriter error];
-            if (!success) {
-                RunLog(@"Error finishing recording to file \"%@\": %@", [[_assetWriter outputURL] path], error);
+        [_assetWriter finishWritingWithCompletionHandler:^{
+            NSError *error = nil;
+            if ([_assetWriter status] != AVAssetWriterStatusCompleted) {
+                error = [_assetWriter error];
+                RunLog(@"Error finishing recording to file \"%@\": %@", [[_assetWriter outputURL] path], [_assetWriter error]);
             }
             completion(error);
-        });
+        }];
     });
 }
 

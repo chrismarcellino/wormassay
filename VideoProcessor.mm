@@ -30,10 +30,32 @@ static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
 
 static int numberOfPhysicalCPUS();
 
+CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation)
+{
+    CGAffineTransform transform;
+    switch (plateOrientation) {
+        case PlateOrientationTopRead:
+        case PlateOrientationNoWells:
+            transform = CGAffineTransformIdentity;
+            break;
+        case PlateOrientationTopRead180DegreeRotated:
+            transform = CGAffineTransformMakeScale(-1.0, -1.0); // horizontal and vertical flip
+            break;
+        case PlateOrientationBottomRead:
+            transform = CGAffineTransformMakeScale(-1.0, 1.0);  // horizontal flip
+            break;
+        case PlateOrientationBottomRead180DegreeRotated:
+            transform = CGAffineTransformMakeScale(1.0, -1.0);  // vertical flip
+            break;
+    }
+    return transform;
+}
+
+
 // Here for C++ build safety
 @interface VideoProcessor() {
     __weak id<VideoProcessorDelegate> _delegate;                        // not retained
-    __weak id<VideoProcessorRecordingDelegate> _fileOutputDelegate;    // not retained
+    __weak id<VideoProcessorRecordingDelegate> _fileOutputDelegate;     // not retained
     NSString *_fileSourceDisplayName;
     Class _assayAnalyzerClass;
     PlateOrientation _plateOrientation;
@@ -378,7 +400,7 @@ static int numberOfPhysicalCPUS();
                                 _fileOutputURL = nil;
                                 if (_fileOutputDelegate) {
                                     _fileOutputURL = [_delegate outputFileURLForVideoProcessor:self];
-                                    [_fileOutputDelegate videoProcessor:self shouldBeginRecordingToURL:_fileOutputURL];
+                                    [_fileOutputDelegate videoProcessor:self shouldBeginRecordingToURL:_fileOutputURL withNaturalOrientation:_plateOrientation];
                                 }
                             } else {
                                 // There is still a plate, but it doesn't match or more likely is still moving moved, or not enough
