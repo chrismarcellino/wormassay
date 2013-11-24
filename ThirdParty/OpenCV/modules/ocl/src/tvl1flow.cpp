@@ -15,7 +15,7 @@
 // Third party copyrights are property of their respective owners.
 //
 // @Authors
-//		Jin Ma, jin@multicorewareinc.com
+//        Jin Ma, jin@multicorewareinc.com
 // Redistribution and use in source and binary forms, with or without modification,
 // are permitted provided that the following conditions are met:
 //
@@ -24,7 +24,7 @@
 //
 //   * Redistribution's in binary form must reproduce the above copyright notice,
 //     this list of conditions and the following disclaimer in the documentation
-//     and/or other oclMaterials provided with the distribution.
+//     and/or other materials provided with the distribution.
 //
 //   * The name of the copyright holders may not be used to endorse or promote products
 //     derived from this software without specific prior written permission.
@@ -42,20 +42,11 @@
 //
 //M*/
 
-
 #include "precomp.hpp"
-using namespace std;
+#include "opencl_kernels.hpp"
+
 using namespace cv;
 using namespace cv::ocl;
-
-namespace cv
-{
-    namespace ocl
-    {
-        ///////////////////////////OpenCL kernel strings///////////////////////////
-        extern const char* tvl1flow;
-    }
-}
 
 cv::ocl::OpticalFlowDual_TVL1_OCL::OpticalFlowDual_TVL1_OCL()
 {
@@ -130,10 +121,8 @@ void cv::ocl::OpticalFlowDual_TVL1_OCL::operator()(const oclMat& I0, const oclMa
             ocl::pyrDown(u1s[s - 1], u1s[s]);
             ocl::pyrDown(u2s[s - 1], u2s[s]);
 
-            //ocl::multiply(u1s[s], Scalar::all(0.5), u1s[s]);
-            multiply(0.5, u1s[s], u1s[s]);
-            //ocl::multiply(u2s[s], Scalar::all(0.5), u2s[s]);
-            multiply(0.5, u1s[s], u2s[s]);
+            ocl::multiply(0.5, u1s[s], u1s[s]);
+            ocl::multiply(0.5, u2s[s], u2s[s]);
         }
     }
 
@@ -165,16 +154,16 @@ namespace ocl_tvl1flow
 {
     void centeredGradient(const oclMat &src, oclMat &dx, oclMat &dy);
 
-    void warpBackward(const oclMat &I0, const oclMat &I1, oclMat &I1x, oclMat &I1y, 
-        oclMat &u1, oclMat &u2, oclMat &I1w, oclMat &I1wx, oclMat &I1wy, 
+    void warpBackward(const oclMat &I0, const oclMat &I1, oclMat &I1x, oclMat &I1y,
+        oclMat &u1, oclMat &u2, oclMat &I1w, oclMat &I1wx, oclMat &I1wy,
         oclMat &grad, oclMat &rho);
 
-    void estimateU(oclMat &I1wx, oclMat &I1wy, oclMat &grad, 
-        oclMat &rho_c, oclMat &p11, oclMat &p12, 
-        oclMat &p21, oclMat &p22, oclMat &u1, 
-        oclMat &u2, oclMat &error, float l_t, float theta);
+    void estimateU(oclMat &I1wx, oclMat &I1wy, oclMat &grad,
+        oclMat &rho_c, oclMat &p11, oclMat &p12,
+        oclMat &p21, oclMat &p22, oclMat &u1,
+        oclMat &u2, oclMat &error, float l_t, float theta, char calc_error);
 
-    void estimateDualVariables(oclMat &u1, oclMat &u2, 
+    void estimateDualVariables(oclMat &u1, oclMat &u2,
         oclMat &p11, oclMat &p12, oclMat &p21, oclMat &p22, float taut);
 }
 
@@ -229,17 +218,28 @@ void cv::ocl::OpticalFlowDual_TVL1_OCL::procOneScale(const oclMat &I0, const ocl
         warpBackward(I0, I1, I1x, I1y, u1, u2, I1w, I1wx, I1wy, grad, rho_c);
 
         double error = numeric_limits<double>::max();
+        double prev_error = 0;
         for (int n = 0; error > scaledEpsilon && n < iterations; ++n)
         {
-            estimateU(I1wx, I1wy, grad, rho_c, p11, p12, p21, p22, 
-                u1, u2, diff, l_t, static_cast<float>(theta));
-
-            error = ocl::sum(diff)[0];
-
+            // some tweaks to make sum operation less frequently
+            char calc_error = (n & 0x1) && (prev_error < scaledEpsilon);
+            estimateU(I1wx, I1wy, grad, rho_c, p11, p12, p21, p22,
+                      u1, u2, diff, l_t, static_cast<float>(theta), calc_error);
+            if(calc_error)
+            {
+                error = ocl::sum(diff)[0];
+                prev_error = error;
+            }
+            else
+            {
+                error = numeric_limits<double>::max();
+                prev_error -= scaledEpsilon;
+            }
             estimateDualVariables(u1, u2, p11, p12, p21, p22, taut);
 
         }
     }
+
 
 }
 
@@ -299,9 +299,9 @@ void ocl_tvl1flow::estimateDualVariables(oclMat &u1, oclMat &u2, oclMat &p11, oc
     Context *clCxt = u1.clCxt;
 
     size_t localThread[] = {32, 8, 1};
-    size_t globalThread[] = 
+    size_t globalThread[] =
     {
-        u1.cols, 
+        u1.cols,
         u1.rows,
         1
     };
@@ -345,17 +345,17 @@ void ocl_tvl1flow::estimateDualVariables(oclMat &u1, oclMat &u2, oclMat &p11, oc
     openCLExecuteKernel(clCxt, &tvl1flow, kernelName, globalThread, localThread, args, -1, -1);
 }
 
-void ocl_tvl1flow::estimateU(oclMat &I1wx, oclMat &I1wy, oclMat &grad, 
-    oclMat &rho_c, oclMat &p11, oclMat &p12, 
-    oclMat &p21, oclMat &p22, oclMat &u1, 
-    oclMat &u2, oclMat &error, float l_t, float theta)
+void ocl_tvl1flow::estimateU(oclMat &I1wx, oclMat &I1wy, oclMat &grad,
+    oclMat &rho_c, oclMat &p11, oclMat &p12,
+    oclMat &p21, oclMat &p22, oclMat &u1,
+    oclMat &u2, oclMat &error, float l_t, float theta, char calc_error)
 {
     Context* clCxt = I1wx.clCxt;
 
     size_t localThread[] = {32, 8, 1};
-    size_t globalThread[] = 
+    size_t globalThread[] =
     {
-        I1wx.cols, 
+        I1wx.cols,
         I1wx.rows,
         1
     };
@@ -401,6 +401,7 @@ void ocl_tvl1flow::estimateU(oclMat &I1wx, oclMat &I1wy, oclMat &grad,
     args.push_back( make_pair( sizeof(cl_int), (void*)&u1_offset_y));
     args.push_back( make_pair( sizeof(cl_int), (void*)&u2_offset_x));
     args.push_back( make_pair( sizeof(cl_int), (void*)&u2_offset_y));
+    args.push_back( make_pair( sizeof(cl_char), (void*)&calc_error));
 
     openCLExecuteKernel(clCxt, &tvl1flow, kernelName, globalThread, localThread, args, -1, -1);
 }
@@ -408,9 +409,6 @@ void ocl_tvl1flow::estimateU(oclMat &I1wx, oclMat &I1wy, oclMat &grad,
 void ocl_tvl1flow::warpBackward(const oclMat &I0, const oclMat &I1, oclMat &I1x, oclMat &I1y, oclMat &u1, oclMat &u2, oclMat &I1w, oclMat &I1wx, oclMat &I1wy, oclMat &grad, oclMat &rho)
 {
     Context* clCxt = I0.clCxt;
-    const bool isImgSupported = support_image2d(clCxt);
-    
-    CV_Assert(isImgSupported);
 
     int u1ElementSize = u1.elemSize();
     int u1Step = u1.step/u1ElementSize;
@@ -433,9 +431,9 @@ void ocl_tvl1flow::warpBackward(const oclMat &I0, const oclMat &I1, oclMat &I1x,
     u2_offset_x = u2_offset_x/u2.elemSize();
 
     size_t localThread[] = {32, 8, 1};
-    size_t globalThread[] = 
+    size_t globalThread[] =
     {
-        I0.cols, 
+        I0.cols,
         I0.rows,
         1
     };

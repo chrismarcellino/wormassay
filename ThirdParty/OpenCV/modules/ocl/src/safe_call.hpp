@@ -25,7 +25,7 @@
 //
 //   * Redistribution's in binary form must reproduce the above copyright notice,
 //     this list of conditions and the following disclaimer in the documentation
-//     and/or other GpuMaterials provided with the distribution.
+//     and/or other materials provided with the distribution.
 //
 //   * The name of the copyright holders may not be used to endorse or promote products
 //     derived from this software without specific prior written permission.
@@ -46,11 +46,7 @@
 #ifndef __OPENCV_OPENCL_SAFE_CALL_HPP__
 #define __OPENCV_OPENCL_SAFE_CALL_HPP__
 
-#if defined __APPLE__
-#include <OpenCL/opencl.h>
-#else
-#include <CL/cl.h>
-#endif
+#include "opencv2/ocl/cl_runtime/cl_runtime.hpp"
 
 #if defined(__GNUC__)
 #define openCLSafeCall(expr)  ___openCLSafeCall(expr, __FILE__, __LINE__, __func__)
@@ -70,7 +66,7 @@ namespace cv
 
         static inline void ___openCLSafeCall(int err, const char *file, const int line, const char *func = "")
         {
-            if( CL_SUCCESS != err)
+            if (CL_SUCCESS != err)
                 cv::ocl::error(getOpenCLErrorString(err), file, line, func);
         }
     }

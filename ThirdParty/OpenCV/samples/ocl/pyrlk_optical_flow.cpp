@@ -44,7 +44,8 @@ static void download(const oclMat& d_mat, vector<uchar>& vec)
     d_mat.download(mat);
 }
 
-static void drawArrows(Mat& frame, const vector<Point2f>& prevPts, const vector<Point2f>& nextPts, const vector<uchar>& status, Scalar line_color = Scalar(0, 0, 255))
+static void drawArrows(Mat& frame, const vector<Point2f>& prevPts, const vector<Point2f>& nextPts, const vector<uchar>& status,
+                       Scalar line_color = Scalar(0, 0, 255))
 {
     for (size_t i = 0; i < prevPts.size(); ++i)
     {
@@ -86,13 +87,6 @@ static void drawArrows(Mat& frame, const vector<Point2f>& prevPts, const vector<
 
 int main(int argc, const char* argv[])
 {
-    static std::vector<Info> ocl_info;
-    ocl::getDevice(ocl_info);
-    //if you want to use undefault device, set it here
-    setDevice(ocl_info[0]);
-
-    //set this to save kernel compile time from second time you run
-    ocl::setBinpath("./");
     const char* keys =
         "{ h   | help     | false           | print help message }"
         "{ l   | left     |                 | specify left image }"
@@ -109,9 +103,9 @@ int main(int argc, const char* argv[])
     if (cmd.get<bool>("help"))
     {
         cout << "Usage: pyrlk_optical_flow [options]" << endl;
-        cout << "Avaible options:" << endl;
+        cout << "Available options:" << endl;
         cmd.printParams();
-        return 0;
+        return EXIT_SUCCESS;
     }
 
     bool defaultPicturesFail = false;
@@ -143,7 +137,7 @@ int main(int argc, const char* argv[])
         Mat frame0Gray, frame1Gray;
         Mat ptr0, ptr1;
 
-        if(vdofile == "")
+        if(vdofile.empty())
             capture = cvCaptureFromCAM( inputName );
         else
             capture = cvCreateFileCapture(vdofile.c_str());
@@ -151,14 +145,12 @@ int main(int argc, const char* argv[])
         int c = inputName ;
         if(!capture)
         {
-            if(vdofile == "")
+            if(vdofile.empty())
                 cout << "Capture from CAM " << c << " didn't work" << endl;
             else
                 cout << "Capture from file " << vdofile << " failed" <<endl;
             if (defaultPicturesFail)
-            {
-                return -1;
-            }
+                return EXIT_FAILURE;
             goto nocamera;
         }
 
@@ -219,12 +211,9 @@ int main(int argc, const char* argv[])
             }
 
             if( waitKey( 10 ) >= 0 )
-                goto _cleanup_;
+                break;
         }
 
-        waitKey(0);
-
-_cleanup_:
         cvReleaseCapture( &capture );
     }
     else
@@ -271,5 +260,5 @@ nocamera:
 
     waitKey();
 
-    return 0;
+    return EXIT_SUCCESS;
 }

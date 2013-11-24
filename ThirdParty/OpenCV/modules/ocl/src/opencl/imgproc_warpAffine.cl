@@ -25,7 +25,7 @@
 //
 //   * Redistribution's in binary form must reproduce the above copyright notice,
 //     this list of conditions and the following disclaimer in the documentation
-//     and/or other GpuMaterials provided with the distribution.
+//     and/or other materials provided with the distribution.
 //
 //   * The name of the copyright holders may not be used to endorse or promote products
 //     derived from this software without specific prior written permission.
@@ -183,7 +183,7 @@ __kernel void warpAffineLinear_C1_D0(__global const uchar * restrict src, __glob
         spos1 = src_offset + sy * srcStep + sx + 1;
         spos2 = src_offset + (sy+1) * srcStep + sx;
         spos3 = src_offset + (sy+1) * srcStep + sx + 1;
-        
+
         v0.s0 = scon0.s0 ? src[spos0.s0] : 0;
         v1.s0 = scon1.s0 ? src[spos1.s0] : 0;
         v2.s0 = scon2.s0 ? src[spos2.s0] : 0;
@@ -203,7 +203,7 @@ __kernel void warpAffineLinear_C1_D0(__global const uchar * restrict src, __glob
         v1.s3 = scon1.s3 ? src[spos1.s3] : 0;
         v2.s3 = scon2.s3 ? src[spos2.s3] : 0;
         v3.s3 = scon3.s3 ? src[spos3.s3] : 0;
-      
+
         short4 itab0, itab1, itab2, itab3;
         float4 taby, tabx;
         taby = INTER_SCALE * convert_float4(ay);
@@ -537,9 +537,9 @@ __kernel void warpAffineLinear_C1_D5(__global float * src, __global float * dst,
 
         float tab[4];
         float taby[2], tabx[2];
-        taby[0] = 1.0 - 1.f/INTER_TAB_SIZE*ay0;
+        taby[0] = 1.0f - 1.f/INTER_TAB_SIZE*ay0;
         taby[1] = 1.f/INTER_TAB_SIZE*ay0;
-        tabx[0] = 1.0 - 1.f/INTER_TAB_SIZE*ax0;
+        tabx[0] = 1.0f - 1.f/INTER_TAB_SIZE*ax0;
         tabx[1] = 1.f/INTER_TAB_SIZE*ax0;
 
         tab[0] = taby[0] * tabx[0];
@@ -680,9 +680,9 @@ __kernel void warpAffineLinear_C4_D5(__global float4 * src, __global float4 * ds
 
         float tab[4];
         float taby[2], tabx[2];
-        taby[0] = 1.0 - 1.f/INTER_TAB_SIZE*ay0;
+        taby[0] = 1.0f - 1.f/INTER_TAB_SIZE*ay0;
         taby[1] = 1.f/INTER_TAB_SIZE*ay0;
-        tabx[0] = 1.0 - 1.f/INTER_TAB_SIZE*ax0;
+        tabx[0] = 1.0f - 1.f/INTER_TAB_SIZE*ax0;
         tabx[1] = 1.f/INTER_TAB_SIZE*ax0;
 
         tab[0] = taby[0] * tabx[0];

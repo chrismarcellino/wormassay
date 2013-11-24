@@ -72,6 +72,14 @@ int main(int argc, char** argv)
         "{ l |larger_win| false          | use 64x128 window}"
         "{ o |  output  |                | specify output path when input is images}";
     CommandLineParser cmd(argc, argv, keys);
+    if (cmd.get<bool>("help"))
+    {
+        cout << "Usage : hog [options]" << endl;
+        cout << "Available options:" << endl;
+        cmd.printParams();
+        return EXIT_SUCCESS;
+    }
+
     App app(cmd);
     try
     {
@@ -89,7 +97,7 @@ int main(int argc, char** argv)
     {
         return cout << "unknown exception" << endl, 1;
     }
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 App::App(CommandLineParser& cmd)
@@ -135,8 +143,6 @@ App::App(CommandLineParser& cmd)
 
 void App::run()
 {
-    vector<ocl::Info> oclinfo;
-    ocl::getDevice(oclinfo);
     running = true;
     VideoWriter video_writer;
 
@@ -439,4 +445,3 @@ double App::checkRectSimilarity(Size sz,
     }
     return final_test_result;
 }
-

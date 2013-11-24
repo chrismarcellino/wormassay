@@ -12,7 +12,7 @@ class_ignore_list = (
     #core
     "FileNode", "FileStorage", "KDTree",
     #highgui
-    "VideoWriter", "VideoCapture",
+    "VideoWriter",
 )
 
 const_ignore_list = (
@@ -512,6 +512,54 @@ JNIEXPORT jdoubleArray JNICALL Java_org_opencv_core_Core_n_1getTextSize
         "resizeWindow"      : {'j_code' : '', 'jn_code' : '', 'cpp_code' : '' },
     }, # Highgui
 
+    'VideoCapture' :
+    {
+        "getSupportedPreviewSizes" :
+        {
+            'j_code' :
+"""
+    public java.util.List<org.opencv.core.Size> getSupportedPreviewSizes()
+    {
+        String[] sizes_str = getSupportedPreviewSizes_0(nativeObj).split(",");
+        java.util.List<org.opencv.core.Size> sizes = new java.util.ArrayList<org.opencv.core.Size>(sizes_str.length);
+
+        for (String str : sizes_str) {
+            String[] wh = str.split("x");
+            sizes.add(new org.opencv.core.Size(Double.parseDouble(wh[0]), Double.parseDouble(wh[1])));
+        }
+
+        return sizes;
+    }
+
+""",
+            'jn_code' :
+"""\n    private static native String getSupportedPreviewSizes_0(long nativeObj);\n""",
+            'cpp_code' :
+"""
+JNIEXPORT jstring JNICALL Java_org_opencv_highgui_VideoCapture_getSupportedPreviewSizes_10
+  (JNIEnv *env, jclass, jlong self);
+
+JNIEXPORT jstring JNICALL Java_org_opencv_highgui_VideoCapture_getSupportedPreviewSizes_10
+  (JNIEnv *env, jclass, jlong self)
+{
+    static const char method_name[] = "highgui::VideoCapture_getSupportedPreviewSizes_10()";
+    try {
+        LOGD("%s", method_name);
+        VideoCapture* me = (VideoCapture*) self; //TODO: check for NULL
+        union {double prop; const char* name;} u;
+        u.prop = me->get(CV_CAP_PROP_SUPPORTED_PREVIEW_SIZES_STRING);
+        return env->NewStringUTF(u.name);
+    } catch(const std::exception &e) {
+        throwJavaException(env, &e, method_name);
+    } catch (...) {
+        throwJavaException(env, 0, method_name);
+    }
+    return env->NewStringUTF("");
+}
+
+""",
+        }, # getSupportedPreviewSizes
+    }, # VideoCapture
 }
 
 # { class : { func : {arg_name : ctype} } }
@@ -737,8 +785,20 @@ public class %(jc)s {
             version_suffix =  ''.join( (epoch, major, minor) )
             self.classes[class_name].imports.add("java.lang.String")
             self.java_code[class_name]["j_code"].write("""
-    public static final String VERSION = "%(v)s", NATIVE_LIBRARY_NAME = "opencv_java%(vs)s";
-    public static final int VERSION_EPOCH = %(ep)s, VERSION_MAJOR = %(ma)s, VERSION_MINOR = %(mi)s, VERSION_REVISION = %(re)s;
+    // these constants are wrapped inside functions to prevent inlining
+    private static String getVersion() { return "%(v)s"; }
+    private static String getNativeLibraryName() { return "opencv_java%(vs)s"; }
+    private static int getVersionEpoch() { return %(ep)s; }
+    private static int getVersionMajor() { return %(ma)s; }
+    private static int getVersionMinor() { return %(mi)s; }
+    private static int getVersionRevision() { return %(re)s; }
+
+    public static final String VERSION = getVersion();
+    public static final String NATIVE_LIBRARY_NAME = getNativeLibraryName();
+    public static final int VERSION_EPOCH = getVersionEpoch();
+    public static final int VERSION_MAJOR = getVersionMajor();
+    public static final int VERSION_MINOR = getVersionMinor();
+    public static final int VERSION_REVISION = getVersionRevision();
 """ % { 'v' : version_str, 'vs' : version_suffix, 'ep' : epoch, 'ma' : major, 'mi' : minor, 're' : revision } )
 
 
@@ -878,21 +938,48 @@ public class %(jc)s {
                     self.add_func(decl)
 
         self.cpp_code = StringIO()
-        self.cpp_code.write("""
+        self.cpp_code.write(Template("""
 //
 // This file is auto-generated, please don't edit!
 //
 
-#define LOG_TAG "org.opencv.%(m)s"
+#define LOG_TAG "org.opencv.$m"
 
 #include "common.h"
-#include "opencv2/%(m)s/%(m)s.hpp"
+
+#include "opencv2/opencv_modules.hpp"
+#ifdef HAVE_OPENCV_$M
+#include "opencv2/$m/$m.hpp"
 
 using namespace cv;
 
+/// throw java exception
+static void throwJavaException(JNIEnv *env, const std::exception *e, const char *method) {
+  std::string what = "unknown exception";
+  jclass je = 0;
+
+  if(e) {
+    std::string exception_type = "std::exception";
+
+    if(dynamic_cast<const cv::Exception*>(e)) {
+      exception_type = "cv::Exception";
+      je = env->FindClass("org/opencv/core/CvException");
+    }
+
+    what = exception_type + ": " + e->what();
+  }
+
+  if(!je) je = env->FindClass("java/lang/Exception");
+  env->ThrowNew(je, what.c_str());
+
+  LOGE("%s caught %s", method, what.c_str());
+  (void)method;        // avoid "unused" warning
+}
+
+
 extern "C" {
 
-""" % {'m' : module} )
+""").substitute( m = module, M = module.upper() ) )
 
         # generate code for the classes
         for name in self.classes.keys():
@@ -907,7 +994,7 @@ extern "C" {
             java_code = Template(java_code).substitute(imports = imports)
             self.save("%s/%s+%s.java" % (output_path, module, self.classes[name].jname), java_code)
 
-        self.cpp_code.write( '\n} // extern "C"\n' )
+        self.cpp_code.write( '\n} // extern "C"\n\n#endif // HAVE_OPENCV_%s\n' % module.upper() )
         self.save(output_path+"/"+module+".cpp",  self.cpp_code.getvalue())
 
         # report
@@ -1266,23 +1353,18 @@ JNIEXPORT $rtype JNICALL Java_org_opencv_${module}_${clazz}_$fname ($argst);
 JNIEXPORT $rtype JNICALL Java_org_opencv_${module}_${clazz}_$fname
   ($args)
 {
+    static const char method_name[] = "$module::$fname()";
     try {
-        LOGD("$module::$fname()");
+        LOGD("%s", method_name);
         $prologue
         $retval$cvname( $cvargs );
         $epilogue$ret
-    } catch(cv::Exception e) {
-        LOGD("$module::$fname() catched cv::Exception: %s", e.what());
-        jclass je = env->FindClass("org/opencv/core/CvException");
-        if(!je) je = env->FindClass("java/lang/Exception");
-        env->ThrowNew(je, e.what());
-        $default
+    } catch(const std::exception &e) {
+        throwJavaException(env, &e, method_name);
     } catch (...) {
-        LOGD("$module::$fname() catched unknown exception (...)");
-        jclass je = env->FindClass("java/lang/Exception");
-        env->ThrowNew(je, "Unknown exception in JNI code {$module::$fname()}");
-        $default
+        throwJavaException(env, 0, method_name);
     }
+    $default
 }
 
 
@@ -1410,9 +1492,15 @@ if __name__ == "__main__":
         hdr_parser_path = os.path.dirname(hdr_parser_path)
     sys.path.append(hdr_parser_path)
     import hdr_parser
-    module = sys.argv[2]
-    srcfiles = sys.argv[3:]
+    if (sys.argv[2] == "-android"):
+        class_ignore_list += ("VideoCapture",)
+        ManualFuncs.pop("VideoCapture")
+        module = sys.argv[3]
+        srcfiles = sys.argv[4:]
+    else:
+        module = sys.argv[2]
+        srcfiles = sys.argv[3:]
+
     #print "Generating module '" + module + "' from headers:\n\t" + "\n\t".join(srcfiles)
     generator = JavaWrapperGenerator()
     generator.gen(srcfiles, module, dstdir)
-

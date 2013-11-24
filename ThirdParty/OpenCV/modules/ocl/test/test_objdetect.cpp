@@ -43,15 +43,13 @@
 //
 //M*/
 
-#include "precomp.hpp"
+#include "test_precomp.hpp"
 #include "opencv2/core/core.hpp"
 #include "opencv2/objdetect/objdetect.hpp"
 
 using namespace cv;
 using namespace testing;
 #ifdef HAVE_OPENCL
-
-extern string workdir;
 
 ///////////////////// HOG /////////////////////////////
 PARAM_TEST_CASE(HOG, Size, int)
@@ -68,7 +66,7 @@ PARAM_TEST_CASE(HOG, Size, int)
     }
 };
 
-TEST_P(HOG, GetDescriptors)
+OCL_TEST_P(HOG, GetDescriptors)
 {
     // Convert image
     Mat img;
@@ -114,7 +112,7 @@ TEST_P(HOG, GetDescriptors)
     EXPECT_MAT_SIMILAR(down_descriptors, cpu_descriptors, 1e-2);
 }
 
-TEST_P(HOG, Detect)
+OCL_TEST_P(HOG, Detect)
 {
     // Convert image
     Mat img;
@@ -218,17 +216,12 @@ PARAM_TEST_CASE(Haar, int, CascadeName)
     }
 };
 
-TEST_P(Haar, FaceDetect)
+OCL_TEST_P(Haar, FaceDetect)
 {
-    MemStorage storage(cvCreateMemStorage(0));
-    CvSeq *_objects;
-    _objects = cascade.oclHaarDetectObjects(d_img, storage, 1.1, 3, 
-                                            flags, Size(30, 30), Size(0, 0));
-    vector<CvAvgComp> vecAvgComp;
-    Seq<CvAvgComp>(_objects).copyTo(vecAvgComp);
-    oclfaces.resize(vecAvgComp.size());
-    std::transform(vecAvgComp.begin(), vecAvgComp.end(), oclfaces.begin(), getRect());
-    
+    cascade.detectMultiScale(d_img, oclfaces,  1.1, 3,
+                                flags,
+                                Size(30, 30), Size(0, 0));
+
     cpucascade.detectMultiScale(img, faces,  1.1, 3,
                                 flags,
                                 Size(30, 30), Size(0, 0));
@@ -236,14 +229,11 @@ TEST_P(Haar, FaceDetect)
     EXPECT_LT(checkRectSimilarity(img.size(), faces, oclfaces), 1.0);
 }
 
-TEST_P(Haar, FaceDetectUseBuf)
+OCL_TEST_P(Haar, FaceDetectUseBuf)
 {
     ocl::OclCascadeClassifierBuf cascadebuf;
-    if(!cascadebuf.load(cascadeName))
-    {
-        std::cout << "ERROR: Could not load classifier cascade for FaceDetectUseBuf!" << std::endl;
-        return;
-    }
+    ASSERT_TRUE(cascadebuf.load(cascadeName)) << "could not load classifier cascade for FaceDetectUseBuf!";
+
     cascadebuf.detectMultiScale(d_img, oclfaces,  1.1, 3,
                                 flags,
                                 Size(30, 30), Size(0, 0));
@@ -261,7 +251,7 @@ TEST_P(Haar, FaceDetectUseBuf)
 }
 
 INSTANTIATE_TEST_CASE_P(OCL_ObjDetect, Haar,
-    Combine(Values(CV_HAAR_SCALE_IMAGE, 0), 
+    Combine(Values(CV_HAAR_SCALE_IMAGE, 0),
             Values(cascade_frontalface_alt/*, cascade_frontalface_alt2*/)));
 
 #endif //HAVE_OPENCL

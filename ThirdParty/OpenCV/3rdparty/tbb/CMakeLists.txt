@@ -11,7 +11,7 @@ if (WIN32 AND ARM)
   set(tbb_url "http://threadingbuildingblocks.org/sites/default/files/software_releases/source/tbb41_20130613oss_src.tgz")
   set(tbb_md5 "108c8c1e481b0aaea61878289eb28b6a")
   set(tbb_version_file "version_string.ver")
-  ocv_warnings_disable(CMAKE_CXX_FLAGS -Wshadow -Wunused-parameter)
+  ocv_warnings_disable(CMAKE_CXX_FLAGS /wd4702)
 else()
   # 4.1 update 2 - works fine
   set(tbb_ver "tbb41_20130116oss")
@@ -230,9 +230,15 @@ endif()
 ocv_warnings_disable(CMAKE_CXX_FLAGS -Wundef -Wmissing-declarations)
 string(REPLACE "-Werror=non-virtual-dtor" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
+if (WIN32)
+  set(tbb_debug_postfix "_debug") # to fit pragmas in _windef.h inside TBB
+else()
+  set(tbb_debug_postfix ${OPENCV_DEBUG_POSTFIX})
+endif()
+
 set_target_properties(tbb
   PROPERTIES OUTPUT_NAME tbb
-  DEBUG_POSTFIX "${OPENCV_DEBUG_POSTFIX}"
+  DEBUG_POSTFIX "${tbb_debug_postfix}"
   ARCHIVE_OUTPUT_DIRECTORY ${3P_LIBRARY_OUTPUT_PATH}
   RUNTIME_OUTPUT_DIRECTORY ${EXECUTABLE_OUTPUT_PATH}
   )
@@ -241,9 +247,11 @@ if(ENABLE_SOLUTION_FOLDERS)
   set_target_properties(tbb PROPERTIES FOLDER "3rdparty")
 endif()
 
-if(NOT BUILD_SHARED_LIBS)
-  install(TARGETS tbb ARCHIVE DESTINATION ${OPENCV_3P_LIB_INSTALL_PATH} COMPONENT main)
-endif()
+ocv_install_target(tbb EXPORT OpenCVModules
+    RUNTIME DESTINATION ${OPENCV_BIN_INSTALL_PATH} COMPONENT main
+    LIBRARY DESTINATION ${OPENCV_LIB_INSTALL_PATH} COMPONENT main
+    ARCHIVE DESTINATION ${OPENCV_3P_LIB_INSTALL_PATH} COMPONENT main
+    )
 
 # get TBB version
 ocv_parse_header("${tbb_src_dir}/include/tbb/tbb_stddef.h" TBB_VERSION_LINES TBB_VERSION_MAJOR TBB_VERSION_MINOR TBB_INTERFACE_VERSION CACHE)

@@ -149,13 +149,13 @@
 #define  PACKAGE_NAME "opencv"
 
 /* Define to the full name and version of this package. */
-#define  PACKAGE_STRING "opencv 2.4.6.1"
+#define  PACKAGE_STRING "opencv 2.4.7"
 
 /* Define to the one symbol short name of this package. */
 #define  PACKAGE_TARNAME "opencv"
 
 /* Define to the version of this package. */
-#define  PACKAGE_VERSION "2.4.6.1"
+#define  PACKAGE_VERSION "2.4.7"
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
@@ -166,7 +166,7 @@
 /* #undef STACK_DIRECTION */
 
 /* Version number of package */
-#define  VERSION "2.4.6.1"
+#define  VERSION "2.4.7"
 
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */

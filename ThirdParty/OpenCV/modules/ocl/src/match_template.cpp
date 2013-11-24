@@ -25,7 +25,7 @@
 //
 //   * Redistribution's in binary form must reproduce the above copyright notice,
 //     this list of conditions and the following disclaimer in the documentation
-//     and/or other oclMaterials provided with the distribution.
+//     and/or other materials provided with the distribution.
 //
 //   * The name of the copyright holders may not be used to endorse or promote products
 //     derived from this software without specific prior written permission.
@@ -44,22 +44,11 @@
 //M*/
 
 
-#include <iomanip>
 #include "precomp.hpp"
+#include "opencl_kernels.hpp"
 
 using namespace cv;
 using namespace cv::ocl;
-using namespace std;
-
-//helper routines
-namespace cv
-{
-    namespace ocl
-    {
-        ///////////////////////////OpenCL kernel strings///////////////////////////
-        extern const char *match_template;
-    }
-}
 
 namespace cv
 {
@@ -103,7 +92,7 @@ namespace cv
         {
             // FIXME!
             //   always use naive until convolve is imported
-            return true; 
+            return true;
         }
 
         //////////////////////////////////////////////////////////////////////
@@ -120,7 +109,7 @@ namespace cv
             else
             {
                 buf.image_sqsums.resize(1);
-                
+
                 // TODO, add double support for ocl::integral
                 // use CPU integral temporarily
                 Mat sums, sqsums;
@@ -360,7 +349,7 @@ namespace cv
             }
             else
             {
-                
+
                 split(image, buf.images);
                 templ_sum = sum(templ) / templ.size().area();
                 buf.image_sums.resize(buf.images.size());

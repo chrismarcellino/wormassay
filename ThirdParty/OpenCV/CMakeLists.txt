@@ -11,15 +11,6 @@
 
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
 
-# --------------------------------------------------------------
-# Indicate CMake 2.7 and above that we don't want to mix relative
-#  and absolute paths in linker lib lists.
-# Run "cmake --help-policy CMP0003" for more information.
-# --------------------------------------------------------------
-if(COMMAND cmake_policy)
-  cmake_policy(SET CMP0003 NEW)
-endif()
-
 # Following block can broke build in case of cross-compilng
 # but CMAKE_CROSSCOMPILING variable will be set only on project(OpenCV) command
 # so we will try to detect crosscompiling by presense of CMAKE_TOOLCHAIN_FILE
@@ -29,10 +20,6 @@ if(NOT CMAKE_TOOLCHAIN_FILE)
     set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "Installation Directory")
   else()
     set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Installation Directory")
-  endif()
-
-  if(MSVC)
-    set(CMAKE_USE_RELATIVE_PATHS ON CACHE INTERNAL "" FORCE)
   endif()
 else(NOT CMAKE_TOOLCHAIN_FILE)
   #Android: set output folder to ${CMAKE_BINARY_DIR}
@@ -52,6 +39,14 @@ else()
   cmake_minimum_required(VERSION 2.6.3)
 endif()
 
+if(POLICY CMP0017)
+  cmake_policy(SET CMP0017 NEW)
+endif()
+
+if(POLICY CMP0022)
+  cmake_policy(SET CMP0022 OLD)
+endif()
+
 # must go before the project command
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Configs" FORCE)
 if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_VERSION VERSION_GREATER "2.8")
@@ -60,7 +55,13 @@ endif()
 
 project(OpenCV CXX C)
 
+if(MSVC)
+  set(CMAKE_USE_RELATIVE_PATHS ON CACHE INTERNAL "" FORCE)
+endif()
+
 include(cmake/OpenCVUtils.cmake)
+
+ocv_clear_vars(OpenCVModules_TARGETS)
 
 # ----------------------------------------------------------------------------
 # Break in case of popular CMake configuration mistakes
@@ -149,10 +150,12 @@ OCV_OPTION(WITH_QT             "Build with Qt Backend support"               OFF
 OCV_OPTION(WITH_WIN32UI        "Build with Win32 UI Backend support"         ON   IF WIN32 )
 OCV_OPTION(WITH_QUICKTIME      "Use QuickTime for Video I/O insted of QTKit" OFF  IF APPLE )
 OCV_OPTION(WITH_TBB            "Include Intel TBB support"                   OFF  IF (NOT IOS) )
+OCV_OPTION(WITH_OPENMP         "Include OpenMP support"                      OFF)
 OCV_OPTION(WITH_CSTRIPES       "Include C= support"                          OFF  IF WIN32 )
 OCV_OPTION(WITH_TIFF           "Include TIFF support"                        ON   IF (NOT IOS) )
 OCV_OPTION(WITH_UNICAP         "Include Unicap support (GPL)"                OFF  IF (UNIX AND NOT APPLE AND NOT ANDROID) )
 OCV_OPTION(WITH_V4L            "Include Video 4 Linux support"               ON   IF (UNIX AND NOT ANDROID) )
+OCV_OPTION(WITH_LIBV4L         "Use libv4l for Video 4 Linux support"        ON   IF (UNIX AND NOT ANDROID) )
 OCV_OPTION(WITH_DSHOW          "Build HighGUI with DirectShow support"       ON   IF (WIN32 AND NOT ARM) )
 OCV_OPTION(WITH_MSMF           "Build HighGUI with Media Foundation support" OFF  IF WIN32 )
 OCV_OPTION(WITH_XIMEA          "Include XIMEA cameras support"               OFF  IF (NOT ANDROID AND NOT APPLE) )
@@ -189,6 +192,7 @@ OCV_OPTION(BUILD_TBB                "Download and build TBB from source" ANDROID
 
 # OpenCV installation options
 # ===================================================
+OCV_OPTION(INSTALL_CREATE_DISTRIB   "Change install rules to build the distribution package" OFF )
 OCV_OPTION(INSTALL_C_EXAMPLES       "Install C examples"        OFF )
 OCV_OPTION(INSTALL_PYTHON_EXAMPLES  "Install Python examples"   OFF )
 OCV_OPTION(INSTALL_ANDROID_EXAMPLES "Install Android examples"  OFF IF ANDROID )
@@ -212,7 +216,7 @@ OCV_OPTION(ENABLE_SSE42               "Enable SSE4.2 instructions"              
 OCV_OPTION(ENABLE_AVX                 "Enable AVX instructions"                                  OFF  IF ((MSVC OR CMAKE_COMPILER_IS_GNUCXX) AND (X86 OR X86_64)) )
 OCV_OPTION(ENABLE_NOISY_WARNINGS      "Show all warnings even if they are too noisy"             OFF )
 OCV_OPTION(OPENCV_WARNINGS_ARE_ERRORS "Treat warnings as errors"                                 OFF )
-
+OCV_OPTION(ENABLE_WINRT_MODE          "Build with Windows Runtime support"                       OFF  IF WIN32 )
 
 # uncategorized options
 # ===================================================
@@ -244,6 +248,21 @@ else()
   set(OPENCV_DOC_INSTALL_PATH share/OpenCV/doc)
 endif()
 
+if(WIN32)
+  if(DEFINED OpenCV_RUNTIME AND DEFINED OpenCV_ARCH)
+    set(OpenCV_INSTALL_BINARIES_PREFIX "${OpenCV_ARCH}/${OpenCV_RUNTIME}/")
+  else()
+    message(STATUS "Can't detect runtime and/or arch")
+    set(OpenCV_INSTALL_BINARIES_PREFIX "")
+  endif()
+else()
+  set(OpenCV_INSTALL_BINARIES_PREFIX "")
+endif()
+
+set(OPENCV_SAMPLES_BIN_INSTALL_PATH "${OpenCV_INSTALL_BINARIES_PREFIX}samples")
+
+set(OPENCV_BIN_INSTALL_PATH "${OpenCV_INSTALL_BINARIES_PREFIX}bin")
+
 if(ANDROID)
   set(LIBRARY_OUTPUT_PATH         "${OpenCV_BINARY_DIR}/lib/${ANDROID_NDK_ABI_NAME}")
   set(3P_LIBRARY_OUTPUT_PATH      "${OpenCV_BINARY_DIR}/3rdparty/lib/${ANDROID_NDK_ABI_NAME}")
@@ -254,9 +273,18 @@ if(ANDROID)
 else()
   set(LIBRARY_OUTPUT_PATH         "${OpenCV_BINARY_DIR}/lib")
   set(3P_LIBRARY_OUTPUT_PATH      "${OpenCV_BINARY_DIR}/3rdparty/lib${LIB_SUFFIX}")
-  set(OPENCV_LIB_INSTALL_PATH     lib${LIB_SUFFIX})
-  set(OPENCV_3P_LIB_INSTALL_PATH  share/OpenCV/3rdparty/${OPENCV_LIB_INSTALL_PATH})
-  set(OPENCV_INCLUDE_INSTALL_PATH include)
+  if(WIN32)
+    if(OpenCV_STATIC)
+      set(OPENCV_LIB_INSTALL_PATH   "${OpenCV_INSTALL_BINARIES_PREFIX}staticlib${LIB_SUFFIX}")
+    else()
+      set(OPENCV_LIB_INSTALL_PATH   "${OpenCV_INSTALL_BINARIES_PREFIX}lib${LIB_SUFFIX}")
+    endif()
+    set(OPENCV_3P_LIB_INSTALL_PATH  "${OpenCV_INSTALL_BINARIES_PREFIX}staticlib${LIB_SUFFIX}")
+  else()
+    set(OPENCV_LIB_INSTALL_PATH     lib${LIB_SUFFIX})
+    set(OPENCV_3P_LIB_INSTALL_PATH  share/OpenCV/3rdparty/${OPENCV_LIB_INSTALL_PATH})
+  endif()
+  set(OPENCV_INCLUDE_INSTALL_PATH "include")
 
   math(EXPR SIZEOF_VOID_P_BITS "8 * ${CMAKE_SIZEOF_VOID_P}")
   if(LIB_SUFFIX AND NOT SIZEOF_VOID_P_BITS EQUAL LIB_SUFFIX)
@@ -296,7 +324,6 @@ endif()
 #  Path for build/platform -specific headers
 # ----------------------------------------------------------------------------
 set(OPENCV_CONFIG_FILE_INCLUDE_DIR "${CMAKE_BINARY_DIR}/" CACHE PATH "Where to create the platform-dependant cvconfig.h")
-add_definitions(-DHAVE_CVCONFIG_H)
 ocv_include_directories(${OPENCV_CONFIG_FILE_INCLUDE_DIR})
 
 # ----------------------------------------------------------------------------
@@ -370,9 +397,6 @@ if(UNIX)
   include(CheckIncludeFile)
 
   if(NOT APPLE)
-    CHECK_INCLUDE_FILE(alloca.h HAVE_ALLOCA_H)
-    CHECK_FUNCTION_EXISTS(alloca HAVE_ALLOCA)
-    CHECK_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
     CHECK_INCLUDE_FILE(pthread.h HAVE_LIBPTHREAD)
     if(ANDROID)
       set(OPENCV_LINKER_LIBS ${OPENCV_LINKER_LIBS} dl m log)
@@ -382,7 +406,7 @@ if(UNIX)
       set(OPENCV_LINKER_LIBS ${OPENCV_LINKER_LIBS} dl m pthread rt)
     endif()
   else()
-    add_definitions(-DHAVE_ALLOCA -DHAVE_ALLOCA_H -DHAVE_LIBPTHREAD -DHAVE_UNISTD_H)
+    set(HAVE_LIBPTHREAD YES)
   endif()
 endif()
 
@@ -434,6 +458,18 @@ if(WITH_OPENCL)
   include(cmake/OpenCVDetectOpenCL.cmake)
 endif()
 
+# ----------------------------------------------------------------------------
+# Add CUDA libraries (needed for apps/tools, samples)
+# ----------------------------------------------------------------------------
+if(HAVE_CUDA)
+  set(OPENCV_LINKER_LIBS ${OPENCV_LINKER_LIBS} ${CUDA_LIBRARIES} ${CUDA_npp_LIBRARY})
+  if(HAVE_CUBLAS)
+    set(OPENCV_LINKER_LIBS ${OPENCV_LINKER_LIBS} ${CUDA_cublas_LIBRARY})
+  endif()
+  if(HAVE_CUFFT)
+    set(OPENCV_LINKER_LIBS ${OPENCV_LINKER_LIBS} ${CUDA_cufft_LIBRARY})
+  endif()
+endif()
 # ----------------------------------------------------------------------------
 # Solution folders:
 # ----------------------------------------------------------------------------
@@ -501,6 +537,8 @@ include(cmake/OpenCVGenAndroidMK.cmake)
 # Generate OpenCVСonfig.cmake and OpenCVConfig-version.cmake for cmake projects
 include(cmake/OpenCVGenConfig.cmake)
 
+# Generate Info.plist for the IOS framework
+include(cmake/OpenCVGenInfoPlist.cmake)
 
 # ----------------------------------------------------------------------------
 # Summary:
@@ -606,6 +644,16 @@ if(ANDROID)
   status("    Google Play package:" BUILD_ANDROID_PACKAGE                                         THEN YES ELSE NO)
   status("    Android examples:"    BUILD_ANDROID_EXAMPLES AND CAN_BUILD_ANDROID_PROJECTS         THEN YES ELSE NO)
 endif()
+
+# ================== Windows RT features ==================
+if(WIN32)
+status("")
+    status("  Windows RT support:" HAVE_WINRT THEN YES ELSE NO)
+    if (ENABLE_WINRT_MODE)
+      status("    Windows SDK v8.0:" ${WINDOWS_SDK_PATH})
+      status("    Visual Studio 2012:" ${VISUAL_STUDIO_PATH})
+    endif()
+endif(WIN32)
 
 # ========================== GUI ==========================
 status("")
@@ -739,8 +787,8 @@ if(DEFINED WITH_GIGEAPI)
 endif(DEFINED WITH_GIGEAPI)
 
 if(DEFINED WITH_QUICKTIME)
-  status("    QuickTime:"      WITH_QUICKTIME      THEN YES                                        ELSE NO)
-  status("    QTKit:"          WITH_QUICKTIME      THEN NO                                         ELSE YES)
+  status("    QuickTime:"      HAVE_QUICKTIME      THEN YES                                        ELSE NO)
+  status("    QTKit:"          HAVE_QTKIT          THEN YES                                        ELSE NO)
 endif(DEFINED WITH_QUICKTIME)
 
 if(DEFINED WITH_UNICAP)
@@ -815,12 +863,31 @@ endif()
 
 if(HAVE_OPENCL)
   status("")
-  status("  OpenCL")
+  status("  OpenCL:")
+  if(HAVE_OPENCL_STATIC)
+    set(__opencl_ver "static")
+  else()
+    set(__opencl_ver "dynamic")
+  endif()
+  status("    Version:"       ${__opencl_ver})
   if(OPENCL_INCLUDE_DIR)
     status("    Include path:"       ${OPENCL_INCLUDE_DIRS})
   endif()
   if(OPENCL_LIBRARIES)
-    status("    libraries:"          ${OPENCL_LIBRARIES})
+    set(__libs "")
+    foreach(l ${OPENCL_LIBRARIES})
+      if(TARGET ${l})
+        get_target_property(p ${l} LOCATION)
+        if(p MATCHES NOTFOUND)
+          list(APPEND __libs "${l}")
+        else()
+          list(APPEND __libs "${p}")
+        endif()
+      else()
+        list(APPEND __libs "${l}")
+      endif()
+    endforeach()
+    status("    libraries:"          ${__libs})
   endif()
   status("    Use AMD FFT:"          HAVE_CLAMDFFT  THEN YES ELSE NO)
   status("    Use AMD BLAS:"         HAVE_CLAMDBLAS THEN YES ELSE NO)
@@ -885,4 +952,3 @@ ocv_finalize_status()
 if("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
   message(WARNING "The source directory is the same as binary directory. \"make clean\" may damage the source tree")
 endif()
-

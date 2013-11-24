@@ -9,10 +9,16 @@ if(BUILD_DOCS AND HAVE_SPHINX)
 
   project(opencv_docs)
 
-  set(DOC_LIST "${OpenCV_SOURCE_DIR}/doc/opencv-logo.png" "${OpenCV_SOURCE_DIR}/doc/opencv-logo2.png"
-               "${OpenCV_SOURCE_DIR}/doc/opencv-logo-white.png" "${OpenCV_SOURCE_DIR}/doc/opencv.ico"
-               "${OpenCV_SOURCE_DIR}/doc/haartraining.htm" "${OpenCV_SOURCE_DIR}/doc/license.txt"
-               "${OpenCV_SOURCE_DIR}/doc/pattern.png" "${OpenCV_SOURCE_DIR}/doc/acircles_pattern.png")
+  set(DOC_LIST
+      "${OpenCV_SOURCE_DIR}/doc/opencv-logo.png"
+      "${OpenCV_SOURCE_DIR}/doc/opencv-logo2.png"
+      "${OpenCV_SOURCE_DIR}/doc/opencv-logo-white.png"
+      "${OpenCV_SOURCE_DIR}/doc/opencv.ico"
+      "${OpenCV_SOURCE_DIR}/doc/pattern.png"
+      "${OpenCV_SOURCE_DIR}/doc/acircles_pattern.png")
+  if(NOT INSTALL_CREATE_DISTRIB)
+    list(APPEND DOC_LIST "${OpenCV_SOURCE_DIR}/doc/haartraining.htm")
+  endif()
 
   set(OPTIONAL_DOC_LIST "")
 
@@ -49,7 +55,7 @@ if(BUILD_DOCS AND HAVE_SPHINX)
     set(toc_file "${OPENCV_MODULE_opencv_${mod}_LOCATION}/doc/${mod}.rst")
     if(EXISTS "${toc_file}")
       file(RELATIVE_PATH toc_file "${OpenCV_SOURCE_DIR}/modules" "${toc_file}")
-      set(OPENCV_REFMAN_TOC "${OPENCV_REFMAN_TOC}   ${toc_file}\r\n")
+      set(OPENCV_REFMAN_TOC "${OPENCV_REFMAN_TOC}   ${toc_file}\n")
     endif()
   endforeach()
 

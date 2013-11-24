@@ -45,6 +45,12 @@
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/contrib/hybridtracker.hpp"
 
+#ifdef HAVE_OPENCV_NONFREE
+#include "opencv2/nonfree/nonfree.hpp"
+
+static bool makeUseOfNonfree = initModule_nonfree();
+#endif
+
 using namespace cv;
 
 CvFeatureTracker::CvFeatureTracker(CvFeatureTrackerParams _params) :
@@ -59,6 +65,7 @@ CvFeatureTracker::CvFeatureTracker(CvFeatureTrackerParams _params) :
         dd->set("nOctaveLayers", 5);
         dd->set("contrastThreshold", 0.04);
         dd->set("edgeThreshold", 10.7);
+        break;
     case CvFeatureTrackerParams::SURF:
         dd = Algorithm::create<Feature2D>("Feature2D.SURF");
         if( dd.empty() )
@@ -66,8 +73,10 @@ CvFeatureTracker::CvFeatureTracker(CvFeatureTrackerParams _params) :
         dd->set("hessianThreshold", 400);
         dd->set("nOctaves", 3);
         dd->set("nOctaveLayers", 4);
+        break;
     default:
         CV_Error(CV_StsBadArg, "Unknown feature type");
+        break;
     }
 
     matcher = new BFMatcher(NORM_L2);
@@ -218,4 +227,3 @@ Point2f CvFeatureTracker::getTrackingCenter()
     center.y = (float)(prev_center.y + prev_trackwindow.height/2.0);
     return center;
 }
-

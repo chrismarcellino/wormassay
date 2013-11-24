@@ -27,7 +27,7 @@
 //
 //   * Redistribution's in binary form must reproduce the above copyright notice,
 //     this list of conditions and the following disclaimer in the documentation
-//     and/or other oclMaterials provided with the distribution.
+//     and/or other materials provided with the distribution.
 //
 //   * The name of the copyright holders may not be used to endorse or promote products
 //     derived from this software without specific prior written permission.
@@ -49,11 +49,19 @@
 #define __OPENCV_PRECOMP_H__
 
 #if defined _MSC_VER && _MSC_VER >= 1200
-#pragma warning( disable: 4267 4324 4244 4251 4710 4711 4514 4996 )
+#pragma warning( disable: 4127 4267 4324 4244 4251 4710 4711 4514 4996 )
 #endif
 
-#ifdef HAVE_CVCONFIG_H
+#if defined(_WIN32)
+#include <windows.h>
+#endif
+
 #include "cvconfig.h"
+
+#if defined(BUILD_SHARED_LIBS) && (defined WIN32 || defined _WIN32 || defined WINCE)
+#define CL_RUNTIME_EXPORT __declspec(dllexport)
+#else
+#define CL_RUNTIME_EXPORT
 #endif
 
 #include <map>
@@ -72,7 +80,6 @@
 #include "opencv2/ocl/ocl.hpp"
 
 #include "opencv2/core/internal.hpp"
-//#include "opencv2/highgui/highgui.hpp"
 
 #define __ATI__
 

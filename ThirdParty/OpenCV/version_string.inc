@@ -1,5 +1,5 @@
 "\n"
-"General configuration for OpenCV 2.4.6.1 =====================================\n"
+"General configuration for OpenCV 2.4.7 =====================================\n"
 "  Version control:               unknown\n"
 "\n"
 "  Platform:\n"

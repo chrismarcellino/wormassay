@@ -178,7 +178,7 @@ FarnebackPolyExp( const Mat& src, Mat& dst, int n, double sigma )
         }
     }
 
-    // row -= n*3;         // CRM dead store warning 11/1/2013
+    // row -= n*3;        // CRM silence dead store warning 11/24/2013
 }
 
 
@@ -658,4 +658,3 @@ CV_IMPL void cvCalcOpticalFlowFarneback(
     cv::calcOpticalFlowFarneback( prev, next, flow, pyr_scale, levels,
         winsize, iterations, poly_n, poly_sigma, flags );
 }
-

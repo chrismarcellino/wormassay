@@ -26,6 +26,10 @@ If a drawn figure is partially or completely outside the image, the drawing func
 
 .. note:: The functions do not support alpha-transparency when the target image is 4-channel. In this case, the ``color[3]`` is simply copied to the repainted pixels. Thus, if you want to paint semi-transparent shapes, you can paint them in a separate buffer and then blend it with the main image.
 
+.. note::
+
+   * An example on using variate drawing functions like line, rectangle, ... can be found at opencv_source_code/samples/cpp/drawing.cpp
+
 circle
 ----------
 Draws a circle.
@@ -102,7 +106,7 @@ Draws a simple or thick elliptic arc or fills an ellipse sector.
 
     :param center: Center of the ellipse.
 
-    :param axes: Length of the ellipse axes.
+    :param axes: Half of the size of the ellipse main axes.
 
     :param angle: Ellipse rotation angle in degrees.
 
@@ -140,7 +144,7 @@ Approximates an elliptic arc with a polyline.
 
     :param center: Center of the arc.
 
-    :param axes: Half-sizes of the arc. See the  :ocv:func:`ellipse`  for details.
+    :param axes: Half of the size of the ellipse main axes. See the  :ocv:func:`ellipse`  for details.
 
     :param angle: Rotation angle of the ellipse in degrees. See the  :ocv:func:`ellipse`  for details.
 
@@ -154,7 +158,6 @@ Approximates an elliptic arc with a polyline.
 
 The function ``ellipse2Poly`` computes the vertices of a polyline that approximates the specified elliptic arc. It is used by
 :ocv:func:`ellipse` .
-
 
 
 fillConvexPoly
@@ -412,8 +415,8 @@ The number of pixels along the line is stored in ``LineIterator::count`` . The m
 
     for(int i = 0; i < it.count; i++, ++it)
         buf[i] = *(const Vec3b)*it;
-    
-    // alternative way of iterating through the line    
+
+    // alternative way of iterating through the line
     for(int i = 0; i < it2.count; i++, ++it2)
     {
         Vec3b val = img.at<Vec3b>(it2.pos());
@@ -527,4 +530,3 @@ The function ``putText`` renders the specified text string in the image.
 Symbols that cannot be rendered using the specified font are
 replaced by question marks. See
 :ocv:func:`getTextSize` for a text rendering code example.
-
