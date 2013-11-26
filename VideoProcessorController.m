@@ -82,6 +82,9 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
     Class class = Nil;
     if (string) {
         class = NSClassFromString(string);
+        if (![class conformsToProtocol:@protocol(AssayAnalyzer)]) {
+            class = nil;
+        }
     }
     
     if (!class) {

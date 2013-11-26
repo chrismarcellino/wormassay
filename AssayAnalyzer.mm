@@ -10,13 +10,14 @@
 #import "opencv2/core/core_c.h"
 #import "VideoProcessorController.h"        // for run log
 
+static NSString *const IgnoreFramesPostMovementTimeIntervalKey = @"IgnoreFramesPostMovementTimeInterval";
 
 NSTimeInterval IgnoreFramesPostMovementTimeInterval()
 {
     static dispatch_once_t pred;
     static NSTimeInterval val;
     dispatch_once(&pred, ^{
-        val = [[NSUserDefaults standardUserDefaults] doubleForKey:@"IgnoreFramesPostMovementTimeInterval"];
+        val = [[NSUserDefaults standardUserDefaults] doubleForKey:IgnoreFramesPostMovementTimeIntervalKey];
         if (val) {
             RunLog(@"Using custom frame hystersis threshold of %g seconds set via IgnoreFramesPostMovementTimeInterval user default,", val);
         } else {

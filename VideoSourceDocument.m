@@ -23,6 +23,7 @@ NSString *const AVFCaptureDeviceFileType = @"dyn.avfcapturedevice";
 NSString *const BlackmagicDeckLinkCaptureDeviceScheme = @"blackmagicdecklink";
 NSString *const BlackmagicDeckLinkCaptureDeviceFileType = @"dyn.blackmagicdecklink";
 
+static NSString *const DontSetRotationMetadataOnSavedVideosKey = @"DontSetRotationMetadataOnSavedVideos";
 
 
 NSURL *URLForAVCaptureDevice(AVCaptureDevice *device)
@@ -595,6 +596,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
         NSError *error = nil;
         _assetWriter = [[AVAssetWriter alloc] initWithURL:outputFileURL fileType:AVFileTypeMPEG4 error:&error];
         if (_assetWriter) {
+            RunLog(@"Began recording video to disk.");
             NSSize size = [self expectedFrameSize];
             NSDictionary *outputSettings = [[NSDictionary alloc] initWithObjectsAndKeys:
                                             AVVideoCodecH264, AVVideoCodecKey,
@@ -603,7 +605,11 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
                                             nil];
             _assetWriterInput = [[AVAssetWriterInput alloc] initWithMediaType:AVMediaTypeVideo outputSettings:outputSettings sourceFormatHint:NULL];
             [_assetWriterInput setExpectsMediaDataInRealTime:YES];
-            [_assetWriterInput setTransform:TransformForPlateOrientation(orientation)];
+            if ([[NSUserDefaults standardUserDefaults] boolForKey:DontSetRotationMetadataOnSavedVideosKey]) {
+                RunLog(@"Not setting rotation metadata in saved videos.");
+            } else {
+                [_assetWriterInput setTransform:TransformForPlateOrientation(orientation)];
+            }
             [_assetWriter setShouldOptimizeForNetworkUse:NO];
             [_assetWriter addInput:_assetWriterInput];
             [_assetWriter startWriting];
@@ -611,7 +617,6 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
             _sendFramesToAssetWriter = YES;
             _firstFrameToAssetWriter = YES;
             _recordingFrameDropCount = 0;
-            RunLog(@"Began recording video to disk.");
         }
         if (error) {
             RunLog(@"Error recording video to disk: %@ %@", [error localizedDescription], [error localizedFailureReason]);
