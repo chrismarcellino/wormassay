@@ -113,7 +113,7 @@ static inline void appendCSVElement(NSMutableString *output, NSString *element);
         if (well == -1) {
             well = 0;
         }
-        return meanAndStdDev(_valuesByWellAndDataColumn[well][std::string(PresentationTimeID)], *mean, *stddev);
+        return meanAndStdDev(_valuesByWellAndDataColumn[well][std::string(MovementUnitID)], *mean, *stddev);
     }
 }
 
@@ -300,6 +300,18 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
                             if (!rawLine) {
                                 rawLine = [NSMutableString string];
                                 [rawColumnIDsToCSVStrings setObject:rawLine forKey:columnID];
+                                
+                                // Write out the header row with labels and times
+                                appendCSVElement(rawLine, @"Plate and Well");
+                                appendCSVElement(rawLine, @"Scan ID");
+                                appendCSVElement(rawLine, @"Well/Times");
+                                const std::vector<double>* rawTimes = &_valuesByWellAndDataColumn[well][std::string(PresentationTimeID)];
+                                for (size_t i = 0; i < rawTimes->size(); i++) {
+                                    @autoreleasepool {
+                                        appendCSVElement(rawLine, [NSString stringWithFormat:@"%.3f", rawTimes->at(i)]);
+                                    }
+                                }
+                                [rawLine appendString:@"\n"];
                             }
                             
                             appendCSVElement(rawLine, plateAndWellID);
@@ -320,6 +332,14 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
             }
         }
         [output appendString:@"\n"];
+        
+        // Append the additional information from the analyzer or the video processor
+        if (_additionalResultsText) {
+            [output appendString:@"\n"];
+            appendCSVElement(output, _additionalResultsText);
+            [output appendString:@"\n"];
+        }
+        
         return output;
     }
 }

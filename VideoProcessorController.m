@@ -13,6 +13,8 @@
 #import "Emailer.h"
 #import "ArrayTableView.h"
 
+static NSString *const OutputInColumnMajorOrderKey = @"OutputInColumnMajorOrder";
+
 static NSString *const AssayAnalyzerClassKey = @"AssayAnalyzerClass";
 static NSString *const NotificationEmailRecipientsKey = @"NotificationEmailRecipients";
 static NSString *const PlateOrientationKey = @"PlateOrientation";
@@ -114,7 +116,11 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
 
 - (PlateOrientation)plateOrientation
 {
-    return [[NSUserDefaults standardUserDefaults] integerForKey:PlateOrientationKey];
+    PlateOrientation orientation = (PlateOrientation)[[NSUserDefaults standardUserDefaults] integerForKey:PlateOrientationKey];
+    if (orientation > PlateOrientationMax) {
+        orientation = PlateOrientationTopRead;
+    }
+    return orientation;
 }
 
 - (void)setPlateOrientation:(PlateOrientation)plateOrietation
@@ -332,11 +338,12 @@ willStopRecordingToOutputFileURL:(NSURL *)outputFileURL     // nil if not record
                 
                 // Get the run CSV data and log it out to disk
                 NSMutableDictionary *rawOutputDictionary = [[NSMutableDictionary alloc] init];
+                BOOL columnMajorOrder = [[NSUserDefaults standardUserDefaults] boolForKey:OutputInColumnMajorOrderKey];
                 NSString *runOutput = [plateData csvOutputForPlateID:plateID
                                                               scanID:scanID
                                          withAdditionalRawDataOutput:rawOutputDictionary
                                                         analyzerName:[[self currentAssayAnalyzerClass] analyzerName]
-                                                    columnMajorOrder:[[NSUserDefaults standardUserDefaults] boolForKey:@"OutputInColumnMajorOrder"]];
+                                                    columnMajorOrder:columnMajorOrder];
                 
                 NSString *folder = [self runOutputFolderPath];
                 NSString *runOutputPath = [folder stringByAppendingPathComponent:
@@ -344,7 +351,8 @@ willStopRecordingToOutputFileURL:(NSURL *)outputFileURL     // nil if not record
                 [self appendString:runOutput toPath:runOutputPath];
                 [_filesToEmail addObject:runOutputPath];
                 
-                for (NSString *columnID in rawOutputDictionary) {
+                // Write out the raw values as CSV
+                for (NSString *columnID in rawOutputDictionary) {       // columnID is the name of the value being written (one per file)
                     NSString *rawDataCSVOutput = [rawOutputDictionary objectForKey:columnID];
                     NSString *rawOutputPath = [folder stringByAppendingPathComponent:
                                                [NSString stringWithFormat:@"%@ Raw %@ Values.csv", _currentOutputFilenamePrefix, columnID]];
@@ -452,7 +460,6 @@ willStopRecordingToOutputFileURL:(NSURL *)outputFileURL     // nil if not record
     
     [string appendString:@"\n"];        // Append a newline
     
-    // Nested these blocks to preserve ordering between the disk file and log window
     dispatch_async(dispatch_get_main_queue(), ^{
         NSTextView *textView = [self runLogTextView];
         NSScrollView *scrollView = [self runLogScrollView];

@@ -24,7 +24,7 @@
     unsigned long long _plateInRunNumber;
     NSString *_currentOutputFilenamePrefix;
     NSString *_runID;
-    NSTimeInterval _currentOutputLastWriteTime;      // in CPU time
+    NSTimeInterval _currentOutputLastWriteTime;     // in CPU time
     
     NSDictionary *_runLogTextAttributes;    // main thread only
 }

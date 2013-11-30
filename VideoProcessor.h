@@ -26,6 +26,7 @@ typedef enum {
     PlateOrientationBottomRead,
     PlateOrientationBottomRead180DegreeRotated,
     PlateOrientationNoWells
+#define PlateOrientationMax PlateOrientationNoWells
 } PlateOrientation;
 
 
