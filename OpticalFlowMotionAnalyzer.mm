@@ -18,7 +18,7 @@ static const double MaximumNumberOfFeaturePointsToAreaRatio = 1.0 / 200.0;
 static const double DeltaMeanMovementLimit = 20.0;
 static const double DeltaStdDevMovementLimit = 10.0;
 static const NSTimeInterval MinimumIntervalFrameInterval = 0.100;
-static const double MinimumMovementMagnitude = 1.0;
+static const double MinimumMovementMagnitude = 0.5;
 
 @implementation OpticalFlowMotionAnalyzer
 
