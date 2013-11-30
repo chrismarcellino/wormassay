@@ -180,15 +180,15 @@ static const char* WellOccupancyID = "Well Occupancy";
     }
     
     // Dilate the edge image
-    IplImage* dialtedEdges = cvCreateImage(cvGetSize(cannyEdges), IPL_DEPTH_8U, 1);
-    cvDilate(cannyEdges, dialtedEdges);
+    IplImage* dilatedEdges = cvCreateImage(cvGetSize(cannyEdges), IPL_DEPTH_8U, 1);
+    cvDilate(cannyEdges, dilatedEdges);
     cvReleaseImage(&cannyEdges);
     
     // Store the pixel counts and draw debugging images
-    double occupancyFraction = (double)cvCountNonZero(dialtedEdges) / (dialtedEdges->width * dialtedEdges->height);
+    double occupancyFraction = (double)cvCountNonZero(dilatedEdges) / (dilatedEdges->width * dilatedEdges->height);
     [plateData appendResult:occupancyFraction toDataColumnID:WellOccupancyID forWell:well];
-    cvSet(debugImage, CV_RGBA(0, 0, 255, 255), dialtedEdges);
-    cvReleaseImage(&dialtedEdges);
+    cvSet(debugImage, CV_RGBA(0, 0, 255, 255), dilatedEdges);
+    cvReleaseImage(&dilatedEdges);
     if (insetCircleMask) {
         cvReleaseImage(&insetCircleMask);
     }
