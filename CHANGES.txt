@@ -1,17 +1,21 @@
-Version 1.34
------------
+Version 1.3.6
+-------------
+Fix regression caused by using latest version of cvCalcOpticalFlowPyrLK(), which affected Optical Flow scoring.
+
+Version 1.3.4
+-------------
 Fix video encoding stalls which led to plate tracking loss.
 Add metadata to saved video files to indicate orientation of saved videos.
 Update OpenCV to 2.4.7 (under BSD license)
 (this version requires Mac OS X 10.9)
 
-Version 1.33
------------
+Version 1.3.3
+-------------
 Support video files with non-square pixels.
 Use color Canny algorithms.
 Update OpenCV to 2.4.6 (under BSD license) and ZXing to 2.2 (under Apache license).
 
-Version 1.31
+Version 1.3.1
 -----------
 Optimized selection of frames for use in the Consensus Luminance algorithm. NOTE: This results in MMU scores that are 50% higher than before and cannot be compared to runs before this version for only this algorithm. The Optical Flow algorithm is unaffected.
 Support for Blackmagic DeckLink capture devices.
@@ -25,7 +29,7 @@ Add option to disable well finding.
 Version 1.1
 -----------
 Fix bug preventing use of non-HD DV cameras. 
-Switch build tools to LLVM, and enable ARC. Convert code base to use ARC. 
+Switch build tools to LLVM and enable ARC. Convert code base to use ARC. 
 
 Version 1.01
 ------------
