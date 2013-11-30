@@ -13,6 +13,7 @@ Update OpenCV to 2.4.6 (under BSD license) and ZXing to 2.2 (under Apache licens
 
 Version 1.31
 -----------
+Optimized selection of frames for use in the Consensus Luminance algorithm. NOTE: This results in MMU scores that are 50% higher than before and cannot be compared to runs before this version for only this algorithm. The Optical Flow algorithm is unaffected.
 Support for Blackmagic DeckLink capture devices.
 Switch from QTKit to AVFoundation (requires Mac OS X 10.7).
 Encode videos in real-time.
