@@ -452,7 +452,6 @@ static void pixelBufferReleaseBytesCallback(void *releaseRefCon, const void *bas
         if (_captureModesSearchList && !_lastFrameHasValidInputSource) {
             [self retryCaptureWithNextModeAfterDelay];
         } else if (_captureModesSearchList && baseAddress) {
-            videoFrame->AddRef();
             CVPixelBufferRef pixelBuffer = NULL;
             // ensure our two video code constant FOURCC enum types are equivalent
 #if !(kCMPixelFormat_422YpCbCr8 == bmdFormat8BitYUV && \
@@ -472,6 +471,8 @@ static void pixelBufferReleaseBytesCallback(void *releaseRefCon, const void *bas
                                                            NULL,
                                                            &pixelBuffer);
             if (pixelBuffer) {
+                videoFrame->AddRef();           // released by pixelBufferReleaseBytesCallback() above owned by the CVPixelBuffer
+                
                 // Get timestamps
                 int32_t timescale = 60000;    // good numerator for 24, 29.97, 30 and 60 fps
                 BMDTimeValue frameTime;
