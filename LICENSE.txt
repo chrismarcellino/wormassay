@@ -1,4 +1,4 @@
-WormAssay, Chris Marcellino, Sandler Center, UCSF
+WormAssay, Chris Marcellino, UCSF Center for Discovery and Innovation in Parasitic Diseases, UCSF QB3
 Copyright (C) 2011, 2012, 2013, 2014 Chris Marcellino
 
 This program is free software; you can redistribute it and/or modify
