@@ -34,7 +34,7 @@
                         "end tell \n"
                         "send newMessage \n"
                         "end tell \n"
-                        // Make mail visible again if it already was visible
+                        // Make mail hidden again if it already was hidden
                         "if not mailWasVisible then tell application \"System Events\" \n"
                         "set visible of process \"Mail\" to false \n"
                         "end tell \n",
