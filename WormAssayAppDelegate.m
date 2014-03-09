@@ -29,7 +29,6 @@ static NSString *const UseBlackmagicDeckLinkDriverDefaultsKey = @"UseBlackmagicD
     NSDictionary *defaults = [[NSDictionary alloc] initWithObjectsAndKeys:
                               [NSNumber numberWithBool:YES], IgnoreBuiltInCamerasUserDefaultsKey,
                               [NSNumber numberWithBool:YES], UseBlackmagicDeckLinkDriverDefaultsKey,
-                              [NSNumber numberWithBool:YES], @"ApplePersistenceIgnoreState",    // prevent 10.7+ style window resuming
                               nil];
     [[NSUserDefaults standardUserDefaults] registerDefaults:defaults];
     

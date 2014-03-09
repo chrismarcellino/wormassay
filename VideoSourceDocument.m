@@ -200,6 +200,12 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     [window setOpaque:YES];
     [window setShowsResizeIndicator:NO];
     
+    // Prevent the window from saving it's location
+    [window setRestorationClass:Nil];
+    [window setRestorable:NO];
+    [window invalidateRestorableState];
+    [window disableSnapshotRestoration];
+    
     // Insert the bitmap view into the window (the view is created in init so that it is safe to access by the capture threads without locking)
     [_bitmapOpenGLView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
     [window setContentView:_bitmapOpenGLView];
