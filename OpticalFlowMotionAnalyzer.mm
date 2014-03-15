@@ -583,7 +583,7 @@ icvAdjustRect( const void* srcptr, int src_step, int pix_size,
 }
 
 
-static CvStatus CV_STDCALL icvGetRectSubPix_8u32f_C1R
+static CvStatus CV_STDCALL icvGetRectSubPix_8u32f_C1R_OpenCV2dot2
 ( const uchar* src, int src_step, CvSize src_size,
  float* dst, int dst_step, CvSize win_size, CvPoint2D32f center )
 {
@@ -761,7 +761,7 @@ namespace cv
                 u.y += (minI.y - (patchSize.height - maxI.y + 1))*0.5f;
                 
                 if( isz.width < 3 || isz.height < 3 ||
-                   icvGetRectSubPix_8u32f_C1R( imgI->data.ptr, imgI->step, levelSize,
+                   icvGetRectSubPix_8u32f_C1R_OpenCV2dot2( imgI->data.ptr, imgI->step, levelSize,
                                               patchI, isz.width*sizeof(patchI[0]), isz, u ) < 0 )
                 {
                     // point is outside the first image. take the next
@@ -792,7 +792,7 @@ namespace cv
                     _v.y = v.y + (minJ.y - (patchSize.height - maxJ.y + 1))*0.5f;
                     
                     if( jsz.width < 1 || jsz.height < 1 ||
-                       icvGetRectSubPix_8u32f_C1R( imgJ->data.ptr, imgJ->step, levelSize, patchJ,
+                       icvGetRectSubPix_8u32f_C1R_OpenCV2dot2( imgJ->data.ptr, imgJ->step, levelSize, patchJ,
                                                   jsz.width*sizeof(patchJ[0]), jsz, _v ) < 0 )
                     {
                         // point is outside of the second image. take the next
