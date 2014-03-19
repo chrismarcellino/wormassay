@@ -1,6 +1,4 @@
-Version 1.4.1
--------------
-Fix build settings so the project builds without warnings in Xcode 5.1.
+TOT: Fix build settings so the project builds without warnings in Xcode 5.1.
 
 Version 1.4
 -------------
