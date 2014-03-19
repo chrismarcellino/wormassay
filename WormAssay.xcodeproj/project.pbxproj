@@ -2209,7 +2209,6 @@
 					"-Wall",
 					"-Wextra",
 					"-Wno-unused-parameter",
-					"-Wno-unused-value",
 					"-Wno-overloaded-virtual",
 				);
 				WRAPPER_EXTENSION = app;
@@ -2228,7 +2227,6 @@
 					"-Wall",
 					"-Wextra",
 					"-Wno-unused-parameter",
-					"-Wno-unused-value",
 					"-Wno-overloaded-virtual",
 				);
 				WRAPPER_EXTENSION = app;

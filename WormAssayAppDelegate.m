@@ -33,7 +33,7 @@ static NSString *const UseBlackmagicDeckLinkDriverDefaultsKey = @"UseBlackmagicD
     [[NSUserDefaults standardUserDefaults] registerDefaults:defaults];
     
     // Create our NSDocumentController subclass first
-    [[DocumentController alloc] init];
+    (void)[[DocumentController alloc] init];
     
     // Set up the logging panel
     NSArray *topLevelObjects = nil;
