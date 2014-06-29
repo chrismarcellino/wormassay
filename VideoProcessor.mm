@@ -28,6 +28,14 @@ static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 static const double WellDetectingAverageDeltaEndIdleThreshold = 5.0;
 static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
 
+// Time lapse defaults keys
+static NSString *const TimeLapseAnalyzeEnabled = @"TimeLapseAnalyzeEnabled";
+static NSString *const TimeLapseAnalyzeDuration = @"TimeLapseAnalyzeDuration";
+static NSString *const TimeLapseLockoutInterval = @"TimeLapseLockoutInterval";
+static const NSTimeInterval TimeLapseAnalyzeDurationDefault = 60.0;
+static const NSTimeInterval TimeLapseLockoutIntervalDefault = 5 * 60.0;
+
+
 static int numberOfPhysicalCPUS();
 
 CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation)
@@ -73,6 +81,9 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
     NSTimeInterval _firstWellFrameTime;     // not the begining of tracking
     NSTimeInterval _lastBarcodeScanTime;
     NSTimeInterval _lastWellAnalysisBeginTime;  // the last time a well finding analysis was started. used to do idling when no plates present.
+    // These two are used only for the optional time lapse feature
+    NSTimeInterval _startOfTrackingFrameTime;
+    NSTimeInterval _lockoutStartFrameTime;
     
     id<AssayAnalyzer> _assayAnalyzer;
     PlateData *_plateData;
@@ -100,6 +111,7 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
         _queue = dispatch_queue_create("video-processor", NULL);
         _debugFrameCallbackQueue = dispatch_queue_create("video-processor-callback", NULL);
         _lastWellAnalysisBeginTime = PresentationTimeDistantPast;
+        _lockoutStartFrameTime = PresentationTimeDistantPast;
     }
     return self;
 }
@@ -375,7 +387,9 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
                             // If the second identification yields matching results as the first, and they are spread by at least
                             // 250 ms, begin motion tracking and video recording
                             if (plateSequentialCirclesAppearSameAndStationary(_trackingWellCircles, wellCircles) &&
-                                [videoFrame presentationTime] - _firstWellFrameTime >= MinimumWellMatchTimeToBeginTracking) {
+                                [videoFrame presentationTime] - _firstWellFrameTime >= MinimumWellMatchTimeToBeginTracking &&
+                                [videoFrame presentationTime] > _lockoutStartFrameTime) {
+                                _startOfTrackingFrameTime = [videoFrame presentationTime];
                                 _processingState = ProcessingStateTrackingMotion;
                                 _trackingWellCircles = wellCircles; // store the second set as the baseline for all remaining sets
                                 _trackedImageSize = cvGetSize([videoFrame image]);
@@ -413,12 +427,33 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
                         }
                         break;
                         
-                    case ProcessingStateTrackingMotion:
+                    case ProcessingStateTrackingMotion: {
+                        // Get values for the optional time lapse feature
+                        NSTimeInterval trackingLimit, lockoutTime;
+                        BOOL timeLapseEnabled = [[NSUserDefaults standardUserDefaults] boolForKey:TimeLapseAnalyzeEnabled];
+                        if (timeLapseEnabled) {
+                            trackingLimit = [[NSUserDefaults standardUserDefaults] doubleForKey:TimeLapseAnalyzeDuration];
+                            // Set sensible defaults
+                            if (trackingLimit <= 0.0) {
+                                trackingLimit = TimeLapseAnalyzeDurationDefault;
+                            }
+                            lockoutTime = [[NSUserDefaults standardUserDefaults] doubleForKey:TimeLapseLockoutInterval];
+                            if (lockoutTime <= 0.0) {
+                                lockoutTime = TimeLapseLockoutIntervalDefault;
+                            }
+                        }
+                        
                         // Since we've seen a plate in one camera, ignore any pending results from others.
                         // But if the plate is gone, moved or different, reset
                         if (!plateFound || !plateSequentialCirclesAppearSameAndStationary(_trackingWellCircles, wellCircles)) {
                             [self resetCaptureStateAndReportResults];
+                        } else if (timeLapseEnabled && [videoFrame presentationTime] > _startOfTrackingFrameTime + trackingLimit) {
+                            // We've hit the tracking limit, so stop capturing and wait until we aren't locked out
+                            [self resetCaptureStateAndReportResults];       // clears _lockoutStartFrameTime
+                            _lockoutStartFrameTime = [videoFrame presentationTime] + lockoutTime;
+                            RunLog(@"Pausing capture for %u:%02g for time lapse recording.", (unsigned)lockoutTime / 60, fmod(lockoutTime, 60.0));
                         }
+                    }
                 }
             }
         });
@@ -527,6 +562,8 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
     // Reset state
     _processingState = ProcessingStateNoPlate;
     _firstWellFrameTime = PresentationTimeDistantPast;
+    _startOfTrackingFrameTime = PresentationTimeDistantPast;
+    _lockoutStartFrameTime = PresentationTimeDistantPast;
     _lastBarcodeScanTime = PresentationTimeDistantPast;
     _lastWellAnalysisBeginTime = PresentationTimeDistantPast;
     _trackingWellCircles.clear();

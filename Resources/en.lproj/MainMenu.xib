@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="4510" systemVersion="12F45" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="5056" systemVersion="13D65" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
-        <deployment defaultVersion="1070" identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="4510"/>
+        <deployment defaultVersion="1090" identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="5056"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -389,6 +389,13 @@
                                     <binding destination="540" name="value" keyPath="values.IgnoreBuiltInCameras" id="542"/>
                                 </connections>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="584"/>
+                            <menuItem title="Use Time Lapse Recording" id="7Re-54-iuD">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <binding destination="540" name="value" keyPath="values.TimeLapseAnalyzeEnabled" id="HDt-60-6ka"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Use Blackmagic™ DeckLink Drivers" id="Xx0-FR-gvp">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
@@ -400,7 +407,7 @@
                                     <binding destination="540" name="value" keyPath="values.UseBlackmagicDeckLinkDriver" id="0BT-lV-LnN"/>
                                 </connections>
                             </menuItem>
-                            <menuItem isSeparatorItem="YES" id="584"/>
+                            <menuItem isSeparatorItem="YES" id="Bvd-hQ-ya3"/>
                             <menuItem title="Report results now and restart" keyEquivalent="r" id="583">
                                 <connections>
                                     <action selector="manuallyReportResultsAndResetProcessor:" target="-1" id="586"/>
