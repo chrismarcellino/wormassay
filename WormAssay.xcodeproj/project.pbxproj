@@ -44,7 +44,6 @@
 		21FF202E137776C1008B819B /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 21FF202C137776C1008B819B /* Credits.rtf */; };
 		BE1D7D1B18D48784003DAE83 /* lkpyramid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BE39A11F182461AA00704CA3 /* lkpyramid.cpp */; };
 		BE1D7D1C18D48787003DAE83 /* kalman.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BE39A11E182461AA00704CA3 /* kalman.cpp */; };
-		BE1D7D1D18D4878D003DAE83 /* OpticalFlowMotionAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 21DC6F3F137CE50000D38B13 /* OpticalFlowMotionAnalyzer.mm */; };
 		BE1D7D1E18D4878F003DAE83 /* bgfg_gmg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BE39A11C182461AA00704CA3 /* bgfg_gmg.cpp */; };
 		BE1D7D1F18D487B9003DAE83 /* bgfg_gaussmix2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BE39A11B182461AA00704CA3 /* bgfg_gaussmix2.cpp */; };
 		BE1D7D2018D487B9003DAE83 /* optflowgf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BE39A122182461AA00704CA3 /* optflowgf.cpp */; };
@@ -269,6 +268,7 @@
 		BE3FA2FC180E98F0006BC68C /* DeckLinkCaptureDevice.mm in Sources */ = {isa = PBXBuildFile; fileRef = BE3FA2FB180E98F0006BC68C /* DeckLinkCaptureDevice.mm */; };
 		BE3FA2FE180F40C2006BC68C /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE3FA2FD180F40C2006BC68C /* AVFoundation.framework */; };
 		BE3FA3001811DEEE006BC68C /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE3FA2FF1811DEEE006BC68C /* CoreMedia.framework */; };
+		BEA4238D199E630D00B51CF0 /* OpticalFlowMotionAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 21DC6F3F137CE50000D38B13 /* OpticalFlowMotionAnalyzer.mm */; };
 		BEF200C51823BA160079C39B /* core_c.h in Headers */ = {isa = PBXBuildFile; fileRef = BEF200B71823BA160079C39B /* core_c.h */; };
 		BEF200C61823BA160079C39B /* core.hpp in Headers */ = {isa = PBXBuildFile; fileRef = BEF200B81823BA160079C39B /* core.hpp */; };
 		BEF200C71823BA160079C39B /* cuda_devptrs.hpp in Headers */ = {isa = PBXBuildFile; fileRef = BEF200B91823BA160079C39B /* cuda_devptrs.hpp */; };
@@ -1925,6 +1925,7 @@
 			files = (
 				218DD55B13454411000B6475 /* main.m in Sources */,
 				218DD55F1345445B000B6475 /* WormAssayAppDelegate.m in Sources */,
+				BEA4238D199E630D00B51CF0 /* OpticalFlowMotionAnalyzer.mm in Sources */,
 				21426FAF134683DB00AF78E5 /* VideoSourceDocument.m in Sources */,
 				2180AC681346BB99008AF87B /* DocumentController.m in Sources */,
 				21CC725C1348CA5F001146DA /* BitmapOpenGLView.m in Sources */,
@@ -2097,7 +2098,6 @@
 				BE1D7D2518D487D7003DAE83 /* camshift.cpp in Sources */,
 				BEF2010A1823BA3E0079C39B /* persistence.cpp in Sources */,
 				BEF201551823BA640079C39B /* hough.cpp in Sources */,
-				BE1D7D1D18D4878D003DAE83 /* OpticalFlowMotionAnalyzer.mm in Sources */,
 				BEF201591823BA640079C39B /* moments.cpp in Sources */,
 				BE1D7D2418D487D2003DAE83 /* simpleflow.cpp in Sources */,
 				BE1D7D2318D487C8003DAE83 /* motempl.cpp in Sources */,
