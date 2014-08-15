@@ -170,7 +170,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 {
     NSString *sourceIdentifier;
     if (_avCaptureDevice) {
-        // There is apparently space aroudn this string
+        // There is apparently space around this string
         NSString *prettyUniqueId = [[_avCaptureDevice uniqueID] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
         sourceIdentifier = [[NSString alloc] initWithFormat:@"%@ (%@)", [_avCaptureDevice localizedName], prettyUniqueId, nil];
     } else if (_deckLinkCaptureDevice) {
