@@ -369,6 +369,7 @@ icvInitPyramidalAlgorithm( const CvMat* imgA, const CvMat* imgB,
     if( ((flags & CV_LKFLOW_PYR_A_READY) != 0 && !pyrA) ||
        ((flags & CV_LKFLOW_PYR_B_READY) != 0 && !pyrB) )
         CV_Error( CV_StsNullPtr, "Some of the precomputed pyramids are missing" );
+    assert(pyrA && pyrB);   // CRM 8/15/2014: silence static analyzer
     
     if( level < 0 )
         CV_Error( CV_StsOutOfRange, "The number of pyramid levels is negative" );
