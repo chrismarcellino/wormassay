@@ -2301,7 +2301,7 @@
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.9;
 				USER_HEADER_SEARCH_PATHS = "ThirdParty ThirdParty/OpenCV ThirdParty/OpenCV/include ThirdParty/OpenCV/modules/core/include ThirdParty/OpenCV/modules/flann/include ThirdParty/OpenCV/modules/imgproc/include ThirdParty/OpenCV/modules/video/include ThirdParty/OpenCV/modules/features2d/include ThirdParty/OpenCV/modules/objdetect/include ThirdParty/OpenCV/modules/calib3d/include ThirdParty/OpenCV/modules/highgui/include ThirdParty/OpenCV/modules/ml/include ThirdParty/OpenCV/modules/contrib/include ThirdParty/OpenCV/modules/photo/include ThirdParty/OpenCV/modules/ocl/include ThirdParty/zxing";
 			};
 			name = Debug;
@@ -2318,7 +2318,7 @@
 				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.9;
 				USER_HEADER_SEARCH_PATHS = "ThirdParty ThirdParty/OpenCV ThirdParty/OpenCV/include ThirdParty/OpenCV/modules/core/include ThirdParty/OpenCV/modules/flann/include ThirdParty/OpenCV/modules/imgproc/include ThirdParty/OpenCV/modules/video/include ThirdParty/OpenCV/modules/features2d/include ThirdParty/OpenCV/modules/objdetect/include ThirdParty/OpenCV/modules/calib3d/include ThirdParty/OpenCV/modules/highgui/include ThirdParty/OpenCV/modules/ml/include ThirdParty/OpenCV/modules/contrib/include ThirdParty/OpenCV/modules/photo/include ThirdParty/OpenCV/modules/ocl/include ThirdParty/zxing";
 			};
 			name = Release;
