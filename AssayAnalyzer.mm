@@ -19,7 +19,7 @@ NSTimeInterval IgnoreFramesPostMovementTimeInterval()
     dispatch_once(&pred, ^{
         val = [[NSUserDefaults standardUserDefaults] doubleForKey:IgnoreFramesPostMovementTimeIntervalKey];
         if (val) {
-            RunLog(@"Using custom frame hystersis threshold of %g seconds set via IgnoreFramesPostMovementTimeInterval user default,", val);
+            RunLog(@"Using custom frame hysteresis threshold of %g seconds set via IgnoreFramesPostMovementTimeInterval user default,", val);
         } else {
             val = 2.0;
         }
