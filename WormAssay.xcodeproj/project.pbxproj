@@ -7,16 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		210D6E9E134BAC5300BCD6F1 /* VideoProcessor.mm in Sources */ = {isa = PBXBuildFile; fileRef = 210D6E9D134BAC5300BCD6F1 /* VideoProcessor.mm */; };
-		2119D2CC135A101E00C5B32F /* PlateData.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2119D2CB135A101E00C5B32F /* PlateData.mm */; };
-		2124FF7F13848D700027EB2C /* NullMotionAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2124FF7E13848D700027EB2C /* NullMotionAnalyzer.mm */; };
-		21264FEC1353FAE600F2DCD8 /* VideoProcessorController.m in Sources */ = {isa = PBXBuildFile; fileRef = 21264FEB1353FAE600F2DCD8 /* VideoProcessorController.m */; };
-		21400837136E2B650066B8B3 /* LoggingAndNotificationsSettings.xib in Resources */ = {isa = PBXBuildFile; fileRef = 21400835136E2B650066B8B3 /* LoggingAndNotificationsSettings.xib */; };
-		21426FAF134683DB00AF78E5 /* VideoSourceDocument.m in Sources */ = {isa = PBXBuildFile; fileRef = 21426FAE134683DA00AF78E5 /* VideoSourceDocument.m */; };
-		215CD57D135D157400A558E3 /* WellFinding.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 215CD57B135D157400A558E3 /* WellFinding.cpp */; };
-		2162B18613521ABD0081EFDD /* VideoFrame.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2162B18513521ABC0081EFDD /* VideoFrame.mm */; };
-		2176AC3A1373672D00E51F2B /* Emailer.m in Sources */ = {isa = PBXBuildFile; fileRef = 2176AC391373672D00E51F2B /* Emailer.m */; };
-		2180AC681346BB99008AF87B /* DocumentController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2180AC671346BB99008AF87B /* DocumentController.m */; };
 		218DD53313453FC5000B6475 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD53213453FC5000B6475 /* Cocoa.framework */; };
 		218DD54913453FC6000B6475 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 218DD54713453FC6000B6475 /* MainMenu.xib */; };
 		218DD54D13453FCE000B6475 /* libOpenCV.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 21E7790912D322A9006C1554 /* libOpenCV.a */; };
@@ -24,24 +14,14 @@
 		218DD55113453FDD000B6475 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21E779A012D323D6006C1554 /* ApplicationServices.framework */; };
 		218DD55213453FDE000B6475 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 215AB59712CECC190047B13F /* Accelerate.framework */; };
 		218DD55313453FE0000B6475 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD5271345253D000B6475 /* libz.dylib */; };
-		218DD559134543FF000B6475 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 218DD557134543FF000B6475 /* MainMenu.xib */; };
-		218DD55B13454411000B6475 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 218DD55A13454411000B6475 /* main.m */; };
-		218DD55F1345445B000B6475 /* WormAssayAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 218DD55E1345445B000B6475 /* WormAssayAppDelegate.m */; };
-		218DD57613455374000B6475 /* Worm.icns in Resources */ = {isa = PBXBuildFile; fileRef = 218DD57513455374000B6475 /* Worm.icns */; };
 		219098A413575A7400EEE2BB /* libzxing.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2190977E1357598D00EEE2BB /* libzxing.a */; };
 		219099D21357A05C00EEE2BB /* libiconv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 219099D01357A05300EEE2BB /* libiconv.dylib */; };
 		2190AF18135B6E4A00C3853B /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2190AF17135B6E4A00C3853B /* IOKit.framework */; };
-		21965211137A7161004F2D57 /* LoggingAndNotificationsSettingsWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 21965210137A7161004F2D57 /* LoggingAndNotificationsSettingsWindowController.m */; };
-		21B5165F137A061B0055CFE7 /* ArrayTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = 21B5165E137A061B0055CFE7 /* ArrayTableView.m */; };
-		21B611D813612082002A47FB /* ConsensusLuminanceMotionAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 21B611D713612082002A47FB /* ConsensusLuminanceMotionAnalyzer.mm */; };
 		21CC72061347EDD4001146DA /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CC72051347EDD4001146DA /* CoreVideo.framework */; };
 		21CC724913484A79001146DA /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CC724813484A79001146DA /* QuartzCore.framework */; };
-		21CC725C1348CA5F001146DA /* BitmapOpenGLView.m in Sources */ = {isa = PBXBuildFile; fileRef = 21CC725B1348CA5F001146DA /* BitmapOpenGLView.m */; };
 		21CC725E1348D40B001146DA /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CC725D1348D40B001146DA /* OpenGL.framework */; };
-		21CDD25A1378A83B0000DBEE /* LoggingPanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = 21CDD2581378A83B0000DBEE /* LoggingPanel.xib */; };
 		21E778AE12D322A9006C1554 /* opencv.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 215AB44812CEC7130047B13F /* opencv.hpp */; };
 		21E7790512D322A9006C1554 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 215AB59712CECC190047B13F /* Accelerate.framework */; };
-		21FF202E137776C1008B819B /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 21FF202C137776C1008B819B /* Credits.rtf */; };
 		BE1D7D1B18D48784003DAE83 /* lkpyramid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BE39A11F182461AA00704CA3 /* lkpyramid.cpp */; };
 		BE1D7D1C18D48787003DAE83 /* kalman.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BE39A11E182461AA00704CA3 /* kalman.cpp */; };
 		BE1D7D1E18D4878F003DAE83 /* bgfg_gmg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BE39A11C182461AA00704CA3 /* bgfg_gmg.cpp */; };
@@ -263,12 +243,32 @@
 		BE2ABAD3182FC8C6003B8DB6 /* BigUnsignedInABase.hh in Headers */ = {isa = PBXBuildFile; fileRef = BE2ABAC4182FC8C6003B8DB6 /* BigUnsignedInABase.hh */; };
 		BE2ABAD5182FC8C6003B8DB6 /* NumberlikeArray.hh in Headers */ = {isa = PBXBuildFile; fileRef = BE2ABAC7182FC8C6003B8DB6 /* NumberlikeArray.hh */; };
 		BE39A15518249FB800704CA3 /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE39A15418249FB800704CA3 /* OpenCL.framework */; };
-		BE3C6B1C1783A246006C47D6 /* AssayAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = BE3C6B1B1783A246006C47D6 /* AssayAnalyzer.mm */; };
 		BE3FA2F7180E2FE4006BC68C /* DeckLinkAPIDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BE3FA2F0180E2FE4006BC68C /* DeckLinkAPIDispatch.cpp */; };
-		BE3FA2FC180E98F0006BC68C /* DeckLinkCaptureDevice.mm in Sources */ = {isa = PBXBuildFile; fileRef = BE3FA2FB180E98F0006BC68C /* DeckLinkCaptureDevice.mm */; };
 		BE3FA2FE180F40C2006BC68C /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE3FA2FD180F40C2006BC68C /* AVFoundation.framework */; };
 		BE3FA3001811DEEE006BC68C /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE3FA2FF1811DEEE006BC68C /* CoreMedia.framework */; };
-		BEA4238D199E630D00B51CF0 /* OpticalFlowMotionAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 21DC6F3F137CE50000D38B13 /* OpticalFlowMotionAnalyzer.mm */; };
+		BEB800C21A5E527F00FCE8D2 /* BitmapOpenGLView.m in Sources */ = {isa = PBXBuildFile; fileRef = BEB800C11A5E527F00FCE8D2 /* BitmapOpenGLView.m */; };
+		BEB800CC1A5E52A000FCE8D2 /* PlateData.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEB800C51A5E52A000FCE8D2 /* PlateData.mm */; };
+		BEB800CD1A5E52A000FCE8D2 /* VideoFrame.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEB800C71A5E52A000FCE8D2 /* VideoFrame.mm */; };
+		BEB800CE1A5E52A000FCE8D2 /* VideoProcessor.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEB800C91A5E52A000FCE8D2 /* VideoProcessor.mm */; };
+		BEB800CF1A5E52A000FCE8D2 /* WellFinding.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BEB800CA1A5E52A000FCE8D2 /* WellFinding.cpp */; };
+		BEB800D81A5E52B000FCE8D2 /* AssayAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEB800D11A5E52B000FCE8D2 /* AssayAnalyzer.mm */; };
+		BEB800D91A5E52B000FCE8D2 /* ConsensusLuminanceMotionAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEB800D31A5E52B000FCE8D2 /* ConsensusLuminanceMotionAnalyzer.mm */; };
+		BEB800DA1A5E52B000FCE8D2 /* NullMotionAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEB800D51A5E52B000FCE8D2 /* NullMotionAnalyzer.mm */; };
+		BEB800DB1A5E52B000FCE8D2 /* OpticalFlowMotionAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEB800D71A5E52B000FCE8D2 /* OpticalFlowMotionAnalyzer.mm */; };
+		BEB800EC1A5E530400FCE8D2 /* ArrayTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = BEB800DD1A5E530400FCE8D2 /* ArrayTableView.m */; };
+		BEB800ED1A5E530400FCE8D2 /* DeckLinkCaptureDevice.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEB800DF1A5E530400FCE8D2 /* DeckLinkCaptureDevice.mm */; };
+		BEB800EE1A5E530400FCE8D2 /* DocumentController.m in Sources */ = {isa = PBXBuildFile; fileRef = BEB800E11A5E530400FCE8D2 /* DocumentController.m */; };
+		BEB800EF1A5E530400FCE8D2 /* Emailer.m in Sources */ = {isa = PBXBuildFile; fileRef = BEB800E31A5E530400FCE8D2 /* Emailer.m */; };
+		BEB800F01A5E530400FCE8D2 /* LoggingAndNotificationsSettingsWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = BEB800E51A5E530400FCE8D2 /* LoggingAndNotificationsSettingsWindowController.m */; };
+		BEB800F11A5E530400FCE8D2 /* VideoProcessorController.m in Sources */ = {isa = PBXBuildFile; fileRef = BEB800E71A5E530400FCE8D2 /* VideoProcessorController.m */; };
+		BEB800F21A5E530400FCE8D2 /* VideoSourceDocument.m in Sources */ = {isa = PBXBuildFile; fileRef = BEB800E91A5E530400FCE8D2 /* VideoSourceDocument.m */; };
+		BEB800F31A5E530400FCE8D2 /* WormAssayAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = BEB800EB1A5E530400FCE8D2 /* WormAssayAppDelegate.m */; };
+		BEE1CAD71A5E565300F77BF0 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = BEE1CAD51A5E565300F77BF0 /* main.m */; };
+		BEE1CAE61A5E570C00F77BF0 /* Worm.icns in Resources */ = {isa = PBXBuildFile; fileRef = BEE1CAE11A5E570C00F77BF0 /* Worm.icns */; };
+		BEE1CAEF1A5E571F00F77BF0 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = BEE1CAE71A5E571F00F77BF0 /* Credits.rtf */; };
+		BEE1CAF01A5E571F00F77BF0 /* LoggingAndNotificationsSettings.xib in Resources */ = {isa = PBXBuildFile; fileRef = BEE1CAE91A5E571F00F77BF0 /* LoggingAndNotificationsSettings.xib */; };
+		BEE1CAF11A5E571F00F77BF0 /* LoggingPanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = BEE1CAEB1A5E571F00F77BF0 /* LoggingPanel.xib */; };
+		BEE1CAF21A5E571F00F77BF0 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = BEE1CAED1A5E571F00F77BF0 /* MainMenu.xib */; };
 		BEF200C51823BA160079C39B /* core_c.h in Headers */ = {isa = PBXBuildFile; fileRef = BEF200B71823BA160079C39B /* core_c.h */; };
 		BEF200C61823BA160079C39B /* core.hpp in Headers */ = {isa = PBXBuildFile; fileRef = BEF200B81823BA160079C39B /* core.hpp */; };
 		BEF200C71823BA160079C39B /* cuda_devptrs.hpp in Headers */ = {isa = PBXBuildFile; fileRef = BEF200B91823BA160079C39B /* cuda_devptrs.hpp */; };
@@ -392,60 +392,20 @@
 
 /* Begin PBXFileReference section */
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		210D6E9C134BAC5300BCD6F1 /* VideoProcessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoProcessor.h; sourceTree = SOURCE_ROOT; };
-		210D6E9D134BAC5300BCD6F1 /* VideoProcessor.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = VideoProcessor.mm; sourceTree = SOURCE_ROOT; };
-		2119D2CA135A101E00C5B32F /* PlateData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlateData.h; sourceTree = SOURCE_ROOT; };
-		2119D2CB135A101E00C5B32F /* PlateData.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = PlateData.mm; sourceTree = SOURCE_ROOT; };
-		2124FF7D13848D700027EB2C /* NullMotionAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NullMotionAnalyzer.h; sourceTree = SOURCE_ROOT; };
-		2124FF7E13848D700027EB2C /* NullMotionAnalyzer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = NullMotionAnalyzer.mm; sourceTree = SOURCE_ROOT; };
-		21264FEA1353FAE600F2DCD8 /* VideoProcessorController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoProcessorController.h; sourceTree = SOURCE_ROOT; };
-		21264FEB1353FAE600F2DCD8 /* VideoProcessorController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VideoProcessorController.m; sourceTree = SOURCE_ROOT; };
-		21400836136E2B650066B8B3 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/LoggingAndNotificationsSettings.xib; sourceTree = "<group>"; };
-		21426FAD134683DA00AF78E5 /* VideoSourceDocument.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoSourceDocument.h; sourceTree = SOURCE_ROOT; };
-		21426FAE134683DA00AF78E5 /* VideoSourceDocument.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VideoSourceDocument.m; sourceTree = SOURCE_ROOT; };
 		215AB44812CEC7130047B13F /* opencv.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = opencv.hpp; path = ThirdParty/OpenCV/include/opencv2/opencv.hpp; sourceTree = "<group>"; };
 		215AB59712CECC190047B13F /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
-		215CD57B135D157400A558E3 /* WellFinding.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WellFinding.cpp; sourceTree = SOURCE_ROOT; };
-		215CD57C135D157400A558E3 /* WellFinding.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = WellFinding.hpp; sourceTree = SOURCE_ROOT; };
-		2162B18413521ABC0081EFDD /* VideoFrame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoFrame.h; sourceTree = SOURCE_ROOT; };
-		2162B18513521ABC0081EFDD /* VideoFrame.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = VideoFrame.mm; sourceTree = SOURCE_ROOT; };
-		2176AC381373672D00E51F2B /* Emailer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Emailer.h; sourceTree = SOURCE_ROOT; };
-		2176AC391373672D00E51F2B /* Emailer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Emailer.m; sourceTree = SOURCE_ROOT; };
-		2180AC661346BB99008AF87B /* DocumentController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DocumentController.h; sourceTree = SOURCE_ROOT; };
-		2180AC671346BB99008AF87B /* DocumentController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DocumentController.m; sourceTree = SOURCE_ROOT; };
 		218DD5271345253D000B6475 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 		218DD53013453FC5000B6475 /* WormAssay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WormAssay.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		218DD53213453FC5000B6475 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		218DD53513453FC5000B6475 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
-		218DD558134543FF000B6475 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
-		218DD55A13454411000B6475 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		218DD55C1345441A000B6475 /* WormAssay-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "WormAssay-Info.plist"; sourceTree = SOURCE_ROOT; };
-		218DD55D1345445B000B6475 /* WormAssayAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = WormAssayAppDelegate.h; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
-		218DD55E1345445B000B6475 /* WormAssayAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = WormAssayAppDelegate.m; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
-		218DD57513455374000B6475 /* Worm.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Worm.icns; sourceTree = "<group>"; };
 		2190977E1357598D00EEE2BB /* libzxing.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libzxing.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		219099D01357A05300EEE2BB /* libiconv.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.dylib; path = usr/lib/libiconv.dylib; sourceTree = SDKROOT; };
 		2190AF17135B6E4A00C3853B /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
-		21910734135E2B5600A12F1F /* AssayAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AssayAnalyzer.h; sourceTree = SOURCE_ROOT; };
-		2196520F137A7161004F2D57 /* LoggingAndNotificationsSettingsWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LoggingAndNotificationsSettingsWindowController.h; sourceTree = SOURCE_ROOT; };
-		21965210137A7161004F2D57 /* LoggingAndNotificationsSettingsWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LoggingAndNotificationsSettingsWindowController.m; sourceTree = SOURCE_ROOT; };
-		21B5165D137A061B0055CFE7 /* ArrayTableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ArrayTableView.h; sourceTree = SOURCE_ROOT; };
-		21B5165E137A061B0055CFE7 /* ArrayTableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ArrayTableView.m; sourceTree = SOURCE_ROOT; };
-		21B611D613612082002A47FB /* ConsensusLuminanceMotionAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ConsensusLuminanceMotionAnalyzer.h; sourceTree = SOURCE_ROOT; };
-		21B611D713612082002A47FB /* ConsensusLuminanceMotionAnalyzer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ConsensusLuminanceMotionAnalyzer.mm; sourceTree = SOURCE_ROOT; };
 		21CC72051347EDD4001146DA /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		21CC724813484A79001146DA /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
-		21CC725A1348CA5F001146DA /* BitmapOpenGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BitmapOpenGLView.h; sourceTree = SOURCE_ROOT; };
-		21CC725B1348CA5F001146DA /* BitmapOpenGLView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BitmapOpenGLView.m; sourceTree = SOURCE_ROOT; };
 		21CC725D1348D40B001146DA /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
-		21CDD2591378A83B0000DBEE /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/LoggingPanel.xib; sourceTree = "<group>"; };
-		21DC6F3E137CE50000D38B13 /* OpticalFlowMotionAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OpticalFlowMotionAnalyzer.h; sourceTree = SOURCE_ROOT; };
-		21DC6F3F137CE50000D38B13 /* OpticalFlowMotionAnalyzer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; lineEnding = 0; path = OpticalFlowMotionAnalyzer.mm; sourceTree = SOURCE_ROOT; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		21E7790912D322A9006C1554 /* libOpenCV.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libOpenCV.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		21E779A012D323D6006C1554 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
-		21EBDA37134AE0F000736245 /* WormAssay-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "WormAssay-Prefix.pch"; sourceTree = "<group>"; };
-		21FCF94D134CBB8900ABD85C /* CvUtilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CvUtilities.hpp; sourceTree = SOURCE_ROOT; };
-		21FF202D137776C1008B819B /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
 		BE2AB917182FC836003B8DB6 /* AUTHORS */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = AUTHORS; sourceTree = "<group>"; };
 		BE2AB919182FC836003B8DB6 /* AztecDetectorResult.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AztecDetectorResult.cpp; sourceTree = "<group>"; };
 		BE2AB91A182FC836003B8DB6 /* AztecDetectorResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AztecDetectorResult.h; sourceTree = "<group>"; };
@@ -679,7 +639,6 @@
 		BE39A127182461AA00704CA3 /* tvl1flow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tvl1flow.cpp; sourceTree = "<group>"; };
 		BE39A128182461AA00704CA3 /* video_init.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = video_init.cpp; sourceTree = "<group>"; };
 		BE39A15418249FB800704CA3 /* OpenCL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = System/Library/Frameworks/OpenCL.framework; sourceTree = SDKROOT; };
-		BE3C6B1B1783A246006C47D6 /* AssayAnalyzer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AssayAnalyzer.mm; sourceTree = SOURCE_ROOT; };
 		BE3FA2E5180E2FE4006BC68C /* DeckLinkAPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPI.h; sourceTree = "<group>"; };
 		BE3FA2E6180E2FE4006BC68C /* DeckLinkAPI_v7_1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPI_v7_1.h; sourceTree = "<group>"; };
 		BE3FA2E7180E2FE4006BC68C /* DeckLinkAPI_v7_3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPI_v7_3.h; sourceTree = "<group>"; };
@@ -698,13 +657,54 @@
 		BE3FA2F4180E2FE4006BC68C /* DeckLinkAPIStreaming.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPIStreaming.h; sourceTree = "<group>"; };
 		BE3FA2F5180E2FE4006BC68C /* DeckLinkAPITypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPITypes.h; sourceTree = "<group>"; };
 		BE3FA2F6180E2FE4006BC68C /* DeckLinkAPIVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPIVersion.h; sourceTree = "<group>"; };
-		BE3FA2FA180E98F0006BC68C /* DeckLinkCaptureDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkCaptureDevice.h; sourceTree = SOURCE_ROOT; };
-		BE3FA2FB180E98F0006BC68C /* DeckLinkCaptureDevice.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DeckLinkCaptureDevice.mm; sourceTree = SOURCE_ROOT; };
 		BE3FA2FD180F40C2006BC68C /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		BE3FA2FF1811DEEE006BC68C /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
-		BEADBE68148826E600BEEC1A /* README.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };
-		BEADBE6A148826FA00BEEC1A /* CHANGES.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CHANGES.txt; sourceTree = "<group>"; };
-		BEADBE6B148826FA00BEEC1A /* LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
+		BEB800BD1A5E410200FCE8D2 /* CHANGES.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CHANGES.txt; sourceTree = "<group>"; };
+		BEB800BE1A5E410200FCE8D2 /* LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
+		BEB800BF1A5E410200FCE8D2 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		BEB800C01A5E527F00FCE8D2 /* BitmapOpenGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BitmapOpenGLView.h; path = Classes/BitmapOpenGLView.h; sourceTree = "<group>"; };
+		BEB800C11A5E527F00FCE8D2 /* BitmapOpenGLView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = BitmapOpenGLView.m; path = Classes/BitmapOpenGLView.m; sourceTree = "<group>"; };
+		BEB800C31A5E52A000FCE8D2 /* CvUtilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = CvUtilities.hpp; path = Classes/CvUtilities.hpp; sourceTree = SOURCE_ROOT; };
+		BEB800C41A5E52A000FCE8D2 /* PlateData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PlateData.h; path = Classes/PlateData.h; sourceTree = SOURCE_ROOT; };
+		BEB800C51A5E52A000FCE8D2 /* PlateData.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = PlateData.mm; path = Classes/PlateData.mm; sourceTree = SOURCE_ROOT; };
+		BEB800C61A5E52A000FCE8D2 /* VideoFrame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VideoFrame.h; path = Classes/VideoFrame.h; sourceTree = SOURCE_ROOT; };
+		BEB800C71A5E52A000FCE8D2 /* VideoFrame.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = VideoFrame.mm; path = Classes/VideoFrame.mm; sourceTree = SOURCE_ROOT; };
+		BEB800C81A5E52A000FCE8D2 /* VideoProcessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VideoProcessor.h; path = Classes/VideoProcessor.h; sourceTree = SOURCE_ROOT; };
+		BEB800C91A5E52A000FCE8D2 /* VideoProcessor.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = VideoProcessor.mm; path = Classes/VideoProcessor.mm; sourceTree = SOURCE_ROOT; };
+		BEB800CA1A5E52A000FCE8D2 /* WellFinding.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WellFinding.cpp; path = Classes/WellFinding.cpp; sourceTree = SOURCE_ROOT; };
+		BEB800CB1A5E52A000FCE8D2 /* WellFinding.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = WellFinding.hpp; path = Classes/WellFinding.hpp; sourceTree = SOURCE_ROOT; };
+		BEB800D01A5E52B000FCE8D2 /* AssayAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AssayAnalyzer.h; path = Classes/AssayAnalyzer.h; sourceTree = SOURCE_ROOT; };
+		BEB800D11A5E52B000FCE8D2 /* AssayAnalyzer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AssayAnalyzer.mm; path = Classes/AssayAnalyzer.mm; sourceTree = SOURCE_ROOT; };
+		BEB800D21A5E52B000FCE8D2 /* ConsensusLuminanceMotionAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConsensusLuminanceMotionAnalyzer.h; path = Classes/ConsensusLuminanceMotionAnalyzer.h; sourceTree = SOURCE_ROOT; };
+		BEB800D31A5E52B000FCE8D2 /* ConsensusLuminanceMotionAnalyzer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = ConsensusLuminanceMotionAnalyzer.mm; path = Classes/ConsensusLuminanceMotionAnalyzer.mm; sourceTree = SOURCE_ROOT; };
+		BEB800D41A5E52B000FCE8D2 /* NullMotionAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NullMotionAnalyzer.h; path = Classes/NullMotionAnalyzer.h; sourceTree = SOURCE_ROOT; };
+		BEB800D51A5E52B000FCE8D2 /* NullMotionAnalyzer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = NullMotionAnalyzer.mm; path = Classes/NullMotionAnalyzer.mm; sourceTree = SOURCE_ROOT; };
+		BEB800D61A5E52B000FCE8D2 /* OpticalFlowMotionAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OpticalFlowMotionAnalyzer.h; path = Classes/OpticalFlowMotionAnalyzer.h; sourceTree = SOURCE_ROOT; };
+		BEB800D71A5E52B000FCE8D2 /* OpticalFlowMotionAnalyzer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = OpticalFlowMotionAnalyzer.mm; path = Classes/OpticalFlowMotionAnalyzer.mm; sourceTree = SOURCE_ROOT; };
+		BEB800DC1A5E530400FCE8D2 /* ArrayTableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ArrayTableView.h; path = Classes/ArrayTableView.h; sourceTree = SOURCE_ROOT; };
+		BEB800DD1A5E530400FCE8D2 /* ArrayTableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ArrayTableView.m; path = Classes/ArrayTableView.m; sourceTree = SOURCE_ROOT; };
+		BEB800DE1A5E530400FCE8D2 /* DeckLinkCaptureDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DeckLinkCaptureDevice.h; path = Classes/DeckLinkCaptureDevice.h; sourceTree = SOURCE_ROOT; };
+		BEB800DF1A5E530400FCE8D2 /* DeckLinkCaptureDevice.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = DeckLinkCaptureDevice.mm; path = Classes/DeckLinkCaptureDevice.mm; sourceTree = SOURCE_ROOT; };
+		BEB800E01A5E530400FCE8D2 /* DocumentController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DocumentController.h; path = Classes/DocumentController.h; sourceTree = SOURCE_ROOT; };
+		BEB800E11A5E530400FCE8D2 /* DocumentController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DocumentController.m; path = Classes/DocumentController.m; sourceTree = SOURCE_ROOT; };
+		BEB800E21A5E530400FCE8D2 /* Emailer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Emailer.h; path = Classes/Emailer.h; sourceTree = SOURCE_ROOT; };
+		BEB800E31A5E530400FCE8D2 /* Emailer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Emailer.m; path = Classes/Emailer.m; sourceTree = SOURCE_ROOT; };
+		BEB800E41A5E530400FCE8D2 /* LoggingAndNotificationsSettingsWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LoggingAndNotificationsSettingsWindowController.h; path = Classes/LoggingAndNotificationsSettingsWindowController.h; sourceTree = SOURCE_ROOT; };
+		BEB800E51A5E530400FCE8D2 /* LoggingAndNotificationsSettingsWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = LoggingAndNotificationsSettingsWindowController.m; path = Classes/LoggingAndNotificationsSettingsWindowController.m; sourceTree = SOURCE_ROOT; };
+		BEB800E61A5E530400FCE8D2 /* VideoProcessorController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VideoProcessorController.h; path = Classes/VideoProcessorController.h; sourceTree = SOURCE_ROOT; };
+		BEB800E71A5E530400FCE8D2 /* VideoProcessorController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = VideoProcessorController.m; path = Classes/VideoProcessorController.m; sourceTree = SOURCE_ROOT; };
+		BEB800E81A5E530400FCE8D2 /* VideoSourceDocument.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VideoSourceDocument.h; path = Classes/VideoSourceDocument.h; sourceTree = SOURCE_ROOT; };
+		BEB800E91A5E530400FCE8D2 /* VideoSourceDocument.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = VideoSourceDocument.m; path = Classes/VideoSourceDocument.m; sourceTree = SOURCE_ROOT; };
+		BEB800EA1A5E530400FCE8D2 /* WormAssayAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WormAssayAppDelegate.h; path = Classes/WormAssayAppDelegate.h; sourceTree = SOURCE_ROOT; };
+		BEB800EB1A5E530400FCE8D2 /* WormAssayAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = WormAssayAppDelegate.m; path = Classes/WormAssayAppDelegate.m; sourceTree = SOURCE_ROOT; };
+		BEE1CAD51A5E565300F77BF0 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = Classes/main.m; sourceTree = "<group>"; };
+		BEE1CAD61A5E565300F77BF0 /* WormAssay-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "WormAssay-Prefix.pch"; path = "Classes/WormAssay-Prefix.pch"; sourceTree = "<group>"; };
+		BEE1CAE11A5E570C00F77BF0 /* Worm.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = Worm.icns; path = Classes/Resources/Worm.icns; sourceTree = SOURCE_ROOT; };
+		BEE1CAE81A5E571F00F77BF0 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = Classes/Resources/en.lproj/Credits.rtf; sourceTree = SOURCE_ROOT; };
+		BEE1CAEA1A5E571F00F77BF0 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = Classes/Resources/en.lproj/LoggingAndNotificationsSettings.xib; sourceTree = SOURCE_ROOT; };
+		BEE1CAEC1A5E571F00F77BF0 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = Classes/Resources/en.lproj/LoggingPanel.xib; sourceTree = SOURCE_ROOT; };
+		BEE1CAEE1A5E571F00F77BF0 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = Classes/Resources/en.lproj/MainMenu.xib; sourceTree = SOURCE_ROOT; };
+		BEE1CAF31A5E573A00F77BF0 /* WormAssay-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "WormAssay-Info.plist"; path = "Classes/WormAssay-Info.plist"; sourceTree = SOURCE_ROOT; };
 		BEF200B71823BA160079C39B /* core_c.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = core_c.h; sourceTree = "<group>"; };
 		BEF200B81823BA160079C39B /* core.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = core.hpp; sourceTree = "<group>"; };
 		BEF200B91823BA160079C39B /* cuda_devptrs.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = cuda_devptrs.hpp; sourceTree = "<group>"; };
@@ -1038,12 +1038,12 @@
 		2161366312CD7BFD006687D3 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				218DD55C1345441A000B6475 /* WormAssay-Info.plist */,
-				21FF202C137776C1008B819B /* Credits.rtf */,
-				218DD557134543FF000B6475 /* MainMenu.xib */,
-				21CDD2581378A83B0000DBEE /* LoggingPanel.xib */,
-				21400835136E2B650066B8B3 /* LoggingAndNotificationsSettings.xib */,
-				218DD57513455374000B6475 /* Worm.icns */,
+				BEE1CAF31A5E573A00F77BF0 /* WormAssay-Info.plist */,
+				BEE1CAE71A5E571F00F77BF0 /* Credits.rtf */,
+				BEE1CAE91A5E571F00F77BF0 /* LoggingAndNotificationsSettings.xib */,
+				BEE1CAEB1A5E571F00F77BF0 /* LoggingPanel.xib */,
+				BEE1CAED1A5E571F00F77BF0 /* MainMenu.xib */,
+				BEE1CAE11A5E570C00F77BF0 /* Worm.icns */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -1051,14 +1051,14 @@
 		21910731135E2B3100A12F1F /* Analysis */ = {
 			isa = PBXGroup;
 			children = (
-				21910734135E2B5600A12F1F /* AssayAnalyzer.h */,
-				BE3C6B1B1783A246006C47D6 /* AssayAnalyzer.mm */,
-				21B611D613612082002A47FB /* ConsensusLuminanceMotionAnalyzer.h */,
-				21B611D713612082002A47FB /* ConsensusLuminanceMotionAnalyzer.mm */,
-				21DC6F3E137CE50000D38B13 /* OpticalFlowMotionAnalyzer.h */,
-				21DC6F3F137CE50000D38B13 /* OpticalFlowMotionAnalyzer.mm */,
-				2124FF7D13848D700027EB2C /* NullMotionAnalyzer.h */,
-				2124FF7E13848D700027EB2C /* NullMotionAnalyzer.mm */,
+				BEB800D01A5E52B000FCE8D2 /* AssayAnalyzer.h */,
+				BEB800D11A5E52B000FCE8D2 /* AssayAnalyzer.mm */,
+				BEB800D21A5E52B000FCE8D2 /* ConsensusLuminanceMotionAnalyzer.h */,
+				BEB800D31A5E52B000FCE8D2 /* ConsensusLuminanceMotionAnalyzer.mm */,
+				BEB800D61A5E52B000FCE8D2 /* OpticalFlowMotionAnalyzer.h */,
+				BEB800D71A5E52B000FCE8D2 /* OpticalFlowMotionAnalyzer.mm */,
+				BEB800D41A5E52B000FCE8D2 /* NullMotionAnalyzer.h */,
+				BEB800D51A5E52B000FCE8D2 /* NullMotionAnalyzer.mm */,
 			);
 			name = Analysis;
 			path = WormAssay;
@@ -1067,8 +1067,8 @@
 		21A45B0A134F5F3800A075BF /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				21CC725A1348CA5F001146DA /* BitmapOpenGLView.h */,
-				21CC725B1348CA5F001146DA /* BitmapOpenGLView.m */,
+				BEB800C01A5E527F00FCE8D2 /* BitmapOpenGLView.h */,
+				BEB800C11A5E527F00FCE8D2 /* BitmapOpenGLView.m */,
 			);
 			name = Views;
 			sourceTree = "<group>";
@@ -1076,22 +1076,22 @@
 		21A96B7912D1696D002E1DC6 /* Controllers */ = {
 			isa = PBXGroup;
 			children = (
-				218DD55D1345445B000B6475 /* WormAssayAppDelegate.h */,
-				218DD55E1345445B000B6475 /* WormAssayAppDelegate.m */,
-				2180AC661346BB99008AF87B /* DocumentController.h */,
-				2180AC671346BB99008AF87B /* DocumentController.m */,
-				21426FAD134683DA00AF78E5 /* VideoSourceDocument.h */,
-				21426FAE134683DA00AF78E5 /* VideoSourceDocument.m */,
-				21264FEA1353FAE600F2DCD8 /* VideoProcessorController.h */,
-				21264FEB1353FAE600F2DCD8 /* VideoProcessorController.m */,
-				BE3FA2FA180E98F0006BC68C /* DeckLinkCaptureDevice.h */,
-				BE3FA2FB180E98F0006BC68C /* DeckLinkCaptureDevice.mm */,
-				2176AC381373672D00E51F2B /* Emailer.h */,
-				2176AC391373672D00E51F2B /* Emailer.m */,
-				21B5165D137A061B0055CFE7 /* ArrayTableView.h */,
-				21B5165E137A061B0055CFE7 /* ArrayTableView.m */,
-				2196520F137A7161004F2D57 /* LoggingAndNotificationsSettingsWindowController.h */,
-				21965210137A7161004F2D57 /* LoggingAndNotificationsSettingsWindowController.m */,
+				BEB800EA1A5E530400FCE8D2 /* WormAssayAppDelegate.h */,
+				BEB800EB1A5E530400FCE8D2 /* WormAssayAppDelegate.m */,
+				BEB800E81A5E530400FCE8D2 /* VideoSourceDocument.h */,
+				BEB800E91A5E530400FCE8D2 /* VideoSourceDocument.m */,
+				BEB800E61A5E530400FCE8D2 /* VideoProcessorController.h */,
+				BEB800E71A5E530400FCE8D2 /* VideoProcessorController.m */,
+				BEB800DC1A5E530400FCE8D2 /* ArrayTableView.h */,
+				BEB800DD1A5E530400FCE8D2 /* ArrayTableView.m */,
+				BEB800E01A5E530400FCE8D2 /* DocumentController.h */,
+				BEB800E11A5E530400FCE8D2 /* DocumentController.m */,
+				BEB800E21A5E530400FCE8D2 /* Emailer.h */,
+				BEB800E31A5E530400FCE8D2 /* Emailer.m */,
+				BEB800E41A5E530400FCE8D2 /* LoggingAndNotificationsSettingsWindowController.h */,
+				BEB800E51A5E530400FCE8D2 /* LoggingAndNotificationsSettingsWindowController.m */,
+				BEB800DE1A5E530400FCE8D2 /* DeckLinkCaptureDevice.h */,
+				BEB800DF1A5E530400FCE8D2 /* DeckLinkCaptureDevice.mm */,
 			);
 			name = Controllers;
 			path = WormAssay;
@@ -1100,15 +1100,15 @@
 		21EBDA26134AD3BA00736245 /* Image Processing */ = {
 			isa = PBXGroup;
 			children = (
-				210D6E9C134BAC5300BCD6F1 /* VideoProcessor.h */,
-				210D6E9D134BAC5300BCD6F1 /* VideoProcessor.mm */,
-				215CD57C135D157400A558E3 /* WellFinding.hpp */,
-				215CD57B135D157400A558E3 /* WellFinding.cpp */,
-				2162B18413521ABC0081EFDD /* VideoFrame.h */,
-				2162B18513521ABC0081EFDD /* VideoFrame.mm */,
-				2119D2CA135A101E00C5B32F /* PlateData.h */,
-				2119D2CB135A101E00C5B32F /* PlateData.mm */,
-				21FCF94D134CBB8900ABD85C /* CvUtilities.hpp */,
+				BEB800C31A5E52A000FCE8D2 /* CvUtilities.hpp */,
+				BEB800C41A5E52A000FCE8D2 /* PlateData.h */,
+				BEB800C51A5E52A000FCE8D2 /* PlateData.mm */,
+				BEB800C61A5E52A000FCE8D2 /* VideoFrame.h */,
+				BEB800C71A5E52A000FCE8D2 /* VideoFrame.mm */,
+				BEB800C81A5E52A000FCE8D2 /* VideoProcessor.h */,
+				BEB800C91A5E52A000FCE8D2 /* VideoProcessor.mm */,
+				BEB800CA1A5E52A000FCE8D2 /* WellFinding.cpp */,
+				BEB800CB1A5E52A000FCE8D2 /* WellFinding.hpp */,
 			);
 			name = "Image Processing";
 			path = WormAssay;
@@ -1127,9 +1127,9 @@
 		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
 			isa = PBXGroup;
 			children = (
-				BEADBE6A148826FA00BEEC1A /* CHANGES.txt */,
-				BEADBE6B148826FA00BEEC1A /* LICENSE.txt */,
-				BEADBE68148826E600BEEC1A /* README.txt */,
+				BEB800BD1A5E410200FCE8D2 /* CHANGES.txt */,
+				BEB800BE1A5E410200FCE8D2 /* LICENSE.txt */,
+				BEB800BF1A5E410200FCE8D2 /* README.md */,
 				21A96B7912D1696D002E1DC6 /* Controllers */,
 				21A45B0A134F5F3800A075BF /* Views */,
 				21EBDA26134AD3BA00736245 /* Image Processing */,
@@ -1146,8 +1146,8 @@
 		29B97315FDCFA39411CA2CEA /* Other Sources */ = {
 			isa = PBXGroup;
 			children = (
-				218DD55A13454411000B6475 /* main.m */,
-				21EBDA37134AE0F000736245 /* WormAssay-Prefix.pch */,
+				BEE1CAD51A5E565300F77BF0 /* main.m */,
+				BEE1CAD61A5E565300F77BF0 /* WormAssay-Prefix.pch */,
 			);
 			name = "Other Sources";
 			sourceTree = "<group>";
@@ -1868,7 +1868,7 @@
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0500;
+				LastUpgradeCheck = 0610;
 				ORGANIZATIONNAME = "Chris Marcellino";
 			};
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "WormAssay" */;
@@ -1908,11 +1908,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				218DD54913453FC6000B6475 /* MainMenu.xib in Resources */,
-				218DD559134543FF000B6475 /* MainMenu.xib in Resources */,
-				218DD57613455374000B6475 /* Worm.icns in Resources */,
-				21400837136E2B650066B8B3 /* LoggingAndNotificationsSettings.xib in Resources */,
-				21FF202E137776C1008B819B /* Credits.rtf in Resources */,
-				21CDD25A1378A83B0000DBEE /* LoggingPanel.xib in Resources */,
+				BEE1CAF11A5E571F00F77BF0 /* LoggingPanel.xib in Resources */,
+				BEE1CAF01A5E571F00F77BF0 /* LoggingAndNotificationsSettings.xib in Resources */,
+				BEE1CAEF1A5E571F00F77BF0 /* Credits.rtf in Resources */,
+				BEE1CAE61A5E570C00F77BF0 /* Worm.icns in Resources */,
+				BEE1CAF21A5E571F00F77BF0 /* MainMenu.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1923,25 +1923,25 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				218DD55B13454411000B6475 /* main.m in Sources */,
-				218DD55F1345445B000B6475 /* WormAssayAppDelegate.m in Sources */,
-				BEA4238D199E630D00B51CF0 /* OpticalFlowMotionAnalyzer.mm in Sources */,
-				21426FAF134683DB00AF78E5 /* VideoSourceDocument.m in Sources */,
-				2180AC681346BB99008AF87B /* DocumentController.m in Sources */,
-				21CC725C1348CA5F001146DA /* BitmapOpenGLView.m in Sources */,
-				BE3FA2FC180E98F0006BC68C /* DeckLinkCaptureDevice.mm in Sources */,
-				210D6E9E134BAC5300BCD6F1 /* VideoProcessor.mm in Sources */,
-				2162B18613521ABD0081EFDD /* VideoFrame.mm in Sources */,
-				21264FEC1353FAE600F2DCD8 /* VideoProcessorController.m in Sources */,
-				2119D2CC135A101E00C5B32F /* PlateData.mm in Sources */,
-				215CD57D135D157400A558E3 /* WellFinding.cpp in Sources */,
-				21B611D813612082002A47FB /* ConsensusLuminanceMotionAnalyzer.mm in Sources */,
-				2176AC3A1373672D00E51F2B /* Emailer.m in Sources */,
-				21B5165F137A061B0055CFE7 /* ArrayTableView.m in Sources */,
+				BEB800F11A5E530400FCE8D2 /* VideoProcessorController.m in Sources */,
+				BEB800DA1A5E52B000FCE8D2 /* NullMotionAnalyzer.mm in Sources */,
+				BEB800DB1A5E52B000FCE8D2 /* OpticalFlowMotionAnalyzer.mm in Sources */,
+				BEB800EF1A5E530400FCE8D2 /* Emailer.m in Sources */,
+				BEB800CC1A5E52A000FCE8D2 /* PlateData.mm in Sources */,
+				BEB800CD1A5E52A000FCE8D2 /* VideoFrame.mm in Sources */,
+				BEB800CF1A5E52A000FCE8D2 /* WellFinding.cpp in Sources */,
+				BEB800C21A5E527F00FCE8D2 /* BitmapOpenGLView.m in Sources */,
+				BEE1CAD71A5E565300F77BF0 /* main.m in Sources */,
+				BEB800ED1A5E530400FCE8D2 /* DeckLinkCaptureDevice.mm in Sources */,
+				BEB800CE1A5E52A000FCE8D2 /* VideoProcessor.mm in Sources */,
+				BEB800F21A5E530400FCE8D2 /* VideoSourceDocument.m in Sources */,
 				BE3FA2F7180E2FE4006BC68C /* DeckLinkAPIDispatch.cpp in Sources */,
-				21965211137A7161004F2D57 /* LoggingAndNotificationsSettingsWindowController.m in Sources */,
-				2124FF7F13848D700027EB2C /* NullMotionAnalyzer.mm in Sources */,
-				BE3C6B1C1783A246006C47D6 /* AssayAnalyzer.mm in Sources */,
+				BEB800EC1A5E530400FCE8D2 /* ArrayTableView.m in Sources */,
+				BEB800D91A5E52B000FCE8D2 /* ConsensusLuminanceMotionAnalyzer.mm in Sources */,
+				BEB800F01A5E530400FCE8D2 /* LoggingAndNotificationsSettingsWindowController.m in Sources */,
+				BEB800F31A5E530400FCE8D2 /* WormAssayAppDelegate.m in Sources */,
+				BEB800EE1A5E530400FCE8D2 /* DocumentController.m in Sources */,
+				BEB800D81A5E52B000FCE8D2 /* AssayAnalyzer.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2153,44 +2153,44 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
-		21400835136E2B650066B8B3 /* LoggingAndNotificationsSettings.xib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				21400836136E2B650066B8B3 /* en */,
-			);
-			name = LoggingAndNotificationsSettings.xib;
-			sourceTree = "<group>";
-		};
 		218DD54713453FC6000B6475 /* MainMenu.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
 			);
 			name = MainMenu.xib;
-			path = /Users/chrismarcellino/Documents/WormAssay/Source/WormAssay;
+			path = /Users/chrismarcellino/Documents/WormAssay/Classes/WormAssay;
 			sourceTree = "<absolute>";
 		};
-		218DD557134543FF000B6475 /* MainMenu.xib */ = {
+		BEE1CAE71A5E571F00F77BF0 /* Credits.rtf */ = {
 			isa = PBXVariantGroup;
 			children = (
-				218DD558134543FF000B6475 /* en */,
+				BEE1CAE81A5E571F00F77BF0 /* en */,
 			);
-			name = MainMenu.xib;
+			name = Credits.rtf;
 			sourceTree = "<group>";
 		};
-		21CDD2581378A83B0000DBEE /* LoggingPanel.xib */ = {
+		BEE1CAE91A5E571F00F77BF0 /* LoggingAndNotificationsSettings.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
-				21CDD2591378A83B0000DBEE /* en */,
+				BEE1CAEA1A5E571F00F77BF0 /* en */,
+			);
+			name = LoggingAndNotificationsSettings.xib;
+			sourceTree = "<group>";
+		};
+		BEE1CAEB1A5E571F00F77BF0 /* LoggingPanel.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				BEE1CAEC1A5E571F00F77BF0 /* en */,
 			);
 			name = LoggingPanel.xib;
 			sourceTree = "<group>";
 		};
-		21FF202C137776C1008B819B /* Credits.rtf */ = {
+		BEE1CAED1A5E571F00F77BF0 /* MainMenu.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
-				21FF202D137776C1008B819B /* en */,
+				BEE1CAEE1A5E571F00F77BF0 /* en */,
 			);
-			name = Credits.rtf;
+			name = MainMenu.xib;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -2201,8 +2201,8 @@
 			buildSettings = {
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "WormAssay-Prefix.pch";
-				INFOPLIST_FILE = "WormAssay-Info.plist";
+				GCC_PREFIX_HEADER = "Classes/WormAssay-Prefix.pch";
+				INFOPLIST_FILE = "Classes/WormAssay-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RUN_CLANG_STATIC_ANALYZER = YES;
 				WARNING_CFLAGS = (
@@ -2219,8 +2219,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "WormAssay-Prefix.pch";
-				INFOPLIST_FILE = "WormAssay-Info.plist";
+				GCC_PREFIX_HEADER = "Classes/WormAssay-Prefix.pch";
+				INFOPLIST_FILE = "Classes/WormAssay-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RUN_CLANG_STATIC_ANALYZER = YES;
 				WARNING_CFLAGS = (
