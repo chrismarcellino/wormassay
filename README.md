@@ -1,5 +1,4 @@
 # wormassay
-automated whole plate screening of macroscopic parasites
 
 WormAssay is a Mac application for the automated screening of the motility of macroscopic parasites and other organisms in 6 through 96 well microtiter plates. A variety of HD and better camera hardware is supported (QuickTime X compatible or Blackmagic capture devices) and a Mac running Mac OS X 10.9 Mavericks is required. 
 
