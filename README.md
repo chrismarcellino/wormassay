@@ -15,7 +15,7 @@ WormAssay's source code is distributed under the GPLv2 (or later, your choice). 
 
 **An open-access manuscript describing the publication is available in PLoS NTDs at [doi:10.1371/journal.pntd.0001494](http://www.plosntds.org/article/info%3Adoi%2F10.1371%2Fjournal.pntd.0001494). See a [video demonstrating WormAssay in use](http://vimeo.com/34962651) at the Sandler Center for Drug Discovery.**
 
-The [change log]() can be viewed in the source section.
+The [change log](https://github.com/chrismarcellino/wormassay/blob/master/CHANGES.txt) can be viewed in the source section.
 
 This work was supported by grants from the Bill & Melinda Gates Foundation and the Sandler Center for Drug Discovery. 
 
