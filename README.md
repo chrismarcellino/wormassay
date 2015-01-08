@@ -24,3 +24,21 @@ Case Western Reserve University School of Medicine
 
 Judy Sakanari, PhD
 UCSF Center for Discovery and Innovation in Parasitic Diseases, UCSF QB3
+
+
+## Links:
+[Manuscript at PLoS NTDs] (http://www.plosntds.org/article/info%3Adoi%2F10.1371%2Fjournal.pntd.0001494)
+
+[California Institute for Quantitative Biosciences] (http://qb3.org/)
+
+[Center for Innovation and Discovery in Parasitic Diseases](http://www.cdipd.org)
+
+[Bill & Melinda Gates Foundation](http://www.gatesfoundation.org/)
+
+[Demonstration Video](http://vimeo.com/34962651)
+
+[OpenCV](http://opencv.org)
+
+[Blackmagic Design](http://www.blackmagicdesign.com)
+
+[ZXing](https://code.google.com/p/zxing/)
