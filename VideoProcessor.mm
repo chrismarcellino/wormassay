@@ -544,10 +544,11 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
         
         // Notify the two delegates
         [_delegate videoProcessor:self didFinishAcquiringPlateData:_plateData successfully:longEnough willStopRecordingToOutputFileURL:_fileOutputURL];
+        NSURL *fileOutputURL = _fileOutputURL;   // since two in flight encodings could overlap e.g. during a short recording after a long one
+        _fileOutputURL = nil;
         [_fileOutputDelegate videoProcessorShouldStopRecording:self completion:^(NSError *error) {
             dispatch_async(_queue, ^{
-                [_delegate videoProcessorDidFinishRecordingToFileURL:_fileOutputURL error:error];
-                _fileOutputURL = nil;
+                [_delegate videoProcessorDidFinishRecordingToFileURL:fileOutputURL error:error];
             });
         }];
     
