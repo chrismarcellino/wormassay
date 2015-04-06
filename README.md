@@ -19,7 +19,7 @@ The [change log](https://github.com/chrismarcellino/wormassay/blob/master/CHANGE
 
 This work was supported by grants from the Bill & Melinda Gates Foundation and the Sandler Center for Drug Discovery. 
 
-Chris Marcellino
+Chris Marcellino, MD
 UCSF Center for Discovery and Innovation in Parasitic Diseases, UCSF QB3
 Case Western Reserve University School of Medicine
 
