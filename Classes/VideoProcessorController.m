@@ -20,6 +20,7 @@ static NSString *const NotificationEmailRecipientsKey = @"NotificationEmailRecip
 static NSString *const PlateOrientationKey = @"PlateOrientation";
 
 static NSString *const RunOutputFolderPathKey = @"RunOutputFolderPath";
+static NSString *const DisableVideoSavingKey = @"DisableVideoSaving";
 static NSString *const SortableLoggingDateFormat = @"yyyy-MM-dd HH:mm zzz";
 static NSString *const SortableLoggingFilenameSafeDateFormat = @"yyyy-MM-dd HHmm zzz";
 static NSString *const RunIDDateFormat = @"yyyyMMddHHmm";
@@ -159,6 +160,18 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
     [defaults synchronize];
 }
 
+- (BOOL)disableVideoSaving
+{
+    return [[NSUserDefaults standardUserDefaults] boolForKey:DisableVideoSavingKey];
+}
+
+- (void)setDisableVideoSaving:(BOOL)flag
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setBool:flag forKey:DisableVideoSavingKey];
+    [defaults synchronize];
+}
+
 static void createFolderIfNecessary(NSString *path)
 {
     NSFileManager *fileManager = [[NSFileManager alloc] init];
@@ -241,7 +254,7 @@ static void createFolderIfNecessary(NSString *path)
     return isTracking;
 }
 
-- (BOOL)hasEncodingJobsRunning
+- (BOOL)hasEncodingJobsRunning      // e.g. during the interval between stopping recording and when QuickTime finalizes the video
 {
     __block BOOL hasEncodingJobsRunning = NO;
     dispatch_sync(_queue, ^{
@@ -432,7 +445,7 @@ willStopRecordingToOutputFileURL:(NSURL *)outputFileURL     // nil if not record
         NSURL *destinationURL = [_videoTempURLsToDestinationURLs objectForKey:outputFileURL];
         NSFileManager *fileManager = [[NSFileManager alloc] init];
         NSError *fileManagerError = nil;
-        if (destinationURL) {
+        if (destinationURL && ![self disableVideoSaving]) {     // check to see if we should delete every file
             // Move the file into place
             if ([fileManager moveItemAtURL:outputFileURL toURL:destinationURL error:&fileManagerError]) {
                 RunLog(@"Wrote video at \"%@\" to disk.", [destinationURL path]);

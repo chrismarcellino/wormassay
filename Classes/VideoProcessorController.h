@@ -35,6 +35,7 @@
 @property(assign) Class currentAssayAnalyzerClass;
 @property(assign) PlateOrientation plateOrientation;
 @property(copy) NSString *runOutputFolderPath;
+@property BOOL disableVideoSaving;
 - (NSString *)runOutputFolderPathCreatingIfNecessary:(BOOL)create;
 - (NSString *)videoFolderPathCreatingIfNecessary:(BOOL)create;
 @property(copy) NSString *notificationEmailRecipients;
