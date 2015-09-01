@@ -19,12 +19,12 @@ The [change log](https://github.com/chrismarcellino/wormassay/blob/master/CHANGE
 
 This work was supported by grants from the Bill & Melinda Gates Foundation and the Sandler Center for Drug Discovery. 
 
-Chris Marcellino, MD
-UCSF Center for Discovery and Innovation in Parasitic Diseases, UCSF QB3
-Case Western Reserve University School of Medicine
-Mayo Clinic, Department of Neurological Surgery
+Chris Marcellino, MD<br>
+UCSF Center for Discovery and Innovation in Parasitic Diseases, UCSF QB3<br>
+Case Western Reserve University School of Medicine<br>
+Mayo Clinic, Department of Neurological Surgery<br>
 
-Judy Sakanari, PhD
+Judy Sakanari, PhD<br>
 UCSF Center for Discovery and Innovation in Parasitic Diseases, UCSF QB3
 
 
