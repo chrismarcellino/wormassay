@@ -174,7 +174,7 @@ static inline void appendCSVElement(NSMutableString *output, NSString *element);
 
 static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &stddev, NSUInteger firstIndex)
 {
-    int numSamples = vec.size() - firstIndex;
+    NSInteger numSamples = vec.size() - firstIndex;
     double sum = 0.0;
     for (size_t i = firstIndex; i < vec.size(); i++) {
         sum += vec[i];
@@ -246,11 +246,11 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
         NSString *assayDateTime = [dateFormatter stringFromDate:[NSDate dateWithTimeIntervalSinceNow:-elapsedTime]];
         
         // Write stats for each well
-        for (size_t i = 0; i < _valuesByWellAndDataColumn.size(); i++) {
-            size_t well;
+        for (int i = 0; i < (int)_valuesByWellAndDataColumn.size(); i++) {
+            int well;
             if (columnMajorOrder) {
                 int rows, columns;
-                getPlateConfigurationForWellCount(_valuesByWellAndDataColumn.size(), rows, columns);
+                getPlateConfigurationForWellCount((int)_valuesByWellAndDataColumn.size(), rows, columns);
                 well = (i % rows) * columns + i / rows;
             } else {
                 well = i;
@@ -264,7 +264,7 @@ static bool meanAndStdDev(const std::vector<double>& vec, double &mean, double &
                     wellIDString = @"entire plate";
                     plateAndWellID = [NSString stringWithFormat:@"%@ %@", plateID, wellIDString];
                 } else {
-                    std::string wellID = wellIdentifierStringForIndex(well, _valuesByWellAndDataColumn.size());
+                    std::string wellID = wellIdentifierStringForIndex(well, (int)_valuesByWellAndDataColumn.size());
                     wellIDString = [NSString stringWithUTF8String:wellID.c_str()];
                     plateAndWellID = [NSString stringWithFormat:@"%@ Well %@", plateID, wellIDString];
                 }

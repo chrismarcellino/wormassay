@@ -187,7 +187,7 @@ static const double MinimumMovementMagnitude = 0.5;
                                        prevPyr,
                                        &*featuresCur.begin(),
                                        featuresPrev,
-                                       featuresCur.size(),
+                                       (int)featuresCur.size(),
                                        cvSize(15, 15),      // pyramid window size
                                        5,                   // number of pyramid levels
                                        featuresPrevFound,

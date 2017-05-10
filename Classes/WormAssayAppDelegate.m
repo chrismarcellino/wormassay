@@ -161,11 +161,13 @@ static NSString *const UseBlackmagicDeckLinkDriverDefaultsKey = @"UseBlackmagicD
     for (NSURL *deviceURL in deviceURLs) {
         // If there is no open VideoSourceDocument document for this URL, create one
         if (![documentController documentForURL:deviceURL]) {
-            NSError *error = nil;
-            [documentController openDocumentWithContentsOfURL:deviceURL display:YES error:&error];
-            if (error) {
-                [[NSAlert alertWithError:error] runModal];
-            }
+            [documentController openDocumentWithContentsOfURL:deviceURL
+                                                      display:YES
+                                            completionHandler:^(NSDocument *document, BOOL alreadyOpen, NSError *error){
+                                                if (error) {
+                                                    [[NSAlert alertWithError:error] runModal];
+                                                }
+                                            }];
         }
     }
 

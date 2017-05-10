@@ -45,11 +45,10 @@
         NSDictionary *errorDict = nil;
         [script executeAndReturnError:&errorDict];
         if (errorDict) {
-            NSAlert *alert = [NSAlert alertWithMessageText:NSLocalizedString(@"Unable to send email", nil)
-                                             defaultButton:NSLocalizedString(@"OK", nil)
-                                           alternateButton:nil
-                                               otherButton:nil
-                                 informativeTextWithFormat:@"Error running AppleScript to send email: %@", errorDict];
+            NSAlert *alert = [[NSAlert alloc] init];
+            [alert setMessageText:NSLocalizedString(@"Unable to send email", nil)];
+            [alert setInformativeText:NSLocalizedString(@"Error running AppleScript to send email: %@", errorDict)];
+            [alert addButtonWithTitle:NSLocalizedString(@"OK", nil)];
             [alert runModal];
         }
     });

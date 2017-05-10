@@ -51,7 +51,7 @@ extern NSString *const BlackmagicDeckLinkCaptureDeviceFileType;
     AVCaptureVideoDataOutput *_captureVideoDataOutput;
     
     // AVFoundation movie file input
-    AVURLAsset *_urlAsset;
+    AVAsset *_urlAsset;
     AVAssetReader *_assetReader;
     AVAssetReaderTrackOutput *_assetReaderOutput;
     

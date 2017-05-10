@@ -406,7 +406,7 @@ static IplImage* createUnsharpMaskImage(IplImage* image, float radius, float amo
     IplImage* gaussian = cvCreateImage(cvGetSize(image), IPL_DEPTH_32F, image->nChannels);
     
     int stddev = radius + 1.0;
-    int kernelSize = lroundf(4 * (stddev + 1)) | 1;
+    int kernelSize = (int)lroundf(4 * (stddev + 1)) | 1;
     cvSmooth(source, gaussian, CV_GAUSSIAN, kernelSize, kernelSize, stddev, stddev);
     
     IplImage* resultFloat = cvCreateImage(cvGetSize(image), IPL_DEPTH_32F, image->nChannels);
@@ -425,7 +425,7 @@ void drawWellCirclesAndLabelsOnDebugImage(std::vector<Circle> circles, CvScalar 
 {
     CvFont wellFont = fontForNormalizedScale(1.0, debugImage);
     
-    for (size_t i = 0; i < circles.size(); i++) {
+    for (int i = 0; i < (int)circles.size(); i++) {
         CvPoint center = cvPoint(circles[i].center[0], circles[i].center[1]);
         int radius = circles[i].radius;
         
@@ -436,7 +436,7 @@ void drawWellCirclesAndLabelsOnDebugImage(std::vector<Circle> circles, CvScalar 
         if (drawLabels) {
             CvPoint textPoint = cvPoint(center.x - radius, center.y - 0.9 * radius);
             cvPutText(debugImage,
-                      wellIdentifierStringForIndex(i, circles.size()).c_str(),
+                      wellIdentifierStringForIndex(i, (int)circles.size()).c_str(),
                       textPoint,
                       &wellFont,
                       CV_RGBA(0, 255, 255, 255));

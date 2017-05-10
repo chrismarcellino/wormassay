@@ -25,7 +25,6 @@
         NSOpenGLPFADepthSize, (NSOpenGLPixelFormatAttribute)0,
         NSOpenGLPFAStencilSize, (NSOpenGLPixelFormatAttribute)0,
         NSOpenGLPFAAccumSize, (NSOpenGLPixelFormatAttribute)0,
-        NSOpenGLPFAWindow,
         (NSOpenGLPixelFormatAttribute)NULL
     };
     return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];

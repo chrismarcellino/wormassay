@@ -42,9 +42,9 @@ static void YpCbCr422toBGRA8(uint8_t *src, uint8_t *dest, uint32_t width, uint32
     
     OSType formatType = CVPixelBufferGetPixelFormatType(cvPixelBuffer);
     void *baseAddress = CVPixelBufferGetBaseAddress(cvPixelBuffer);
-    size_t width = CVPixelBufferGetWidth(cvPixelBuffer);
-    size_t height = CVPixelBufferGetHeight(cvPixelBuffer);
-    size_t bytesPerRow = CVPixelBufferGetBytesPerRow(cvPixelBuffer);
+    int width = (int)CVPixelBufferGetWidth(cvPixelBuffer);
+    int height = (int)CVPixelBufferGetHeight(cvPixelBuffer);
+    int bytesPerRow = (int)CVPixelBufferGetBytesPerRow(cvPixelBuffer);
     
     IplImage *iplImage = NULL;
     
@@ -67,7 +67,7 @@ static void YpCbCr422toBGRA8(uint8_t *src, uint8_t *dest, uint32_t width, uint32
     CVPixelBufferUnlockBaseAddress(cvPixelBuffer, kCVPixelBufferLock_ReadOnly);
     
     // Rescale the image if necessary
-    if (naturalSize.width > 0 && (width != (size_t)naturalSize.width || height != (size_t)naturalSize.height)) {
+    if (naturalSize.width > 0 && (width != naturalSize.width || height != naturalSize.height)) {
         IplImage *resizedImage = cvCreateImage(cvSize(naturalSize.width, naturalSize.height), iplImage->depth, iplImage->nChannels);
         cvResize(iplImage, resizedImage, CV_INTER_AREA);
         cvReleaseImage(&iplImage);

@@ -435,10 +435,7 @@ willStopRecordingToOutputFileURL:(NSURL *)outputFileURL     // nil if not record
         if (error) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 NSAlert *alert = [NSAlert alertWithError:error];
-                [alert beginSheetModalForWindow:nil
-                                  modalDelegate:nil
-                                 didEndSelector:nil
-                                    contextInfo:NULL];
+                [alert runModal];
             });
         }
         

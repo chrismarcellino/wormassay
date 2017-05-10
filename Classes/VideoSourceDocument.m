@@ -29,17 +29,19 @@ static NSString *const DontSetRotationMetadataOnSavedVideosKey = @"DontSetRotati
 NSURL *URLForAVCaptureDevice(AVCaptureDevice *device)
 {
     NSString *uniqueID = [device uniqueID];
-    return [[NSURL alloc] initWithScheme:AVFCaptureDeviceScheme
-                                    host:@""
-                                    path:[@"/" stringByAppendingString:uniqueID]];
+    NSURLComponents *components = [[NSURLComponents alloc] init];
+    [components setScheme:AVFCaptureDeviceScheme];
+    [components setPath:[@"/" stringByAppendingString:uniqueID]];
+    return [components URL];
 }
 
 NSURL *URLForBlackmagicDeckLinkDevice(DeckLinkCaptureDevice *device)
 {
     NSString *uniqueID = [device uniqueID];
-    return [[NSURL alloc] initWithScheme:BlackmagicDeckLinkCaptureDeviceScheme
-                                    host:@""
-                                    path:[@"/" stringByAppendingString:uniqueID]];
+    NSURLComponents *components = [[NSURLComponents alloc] init];
+    [components setScheme:BlackmagicDeckLinkCaptureDeviceScheme];
+    [components setPath:[@"/" stringByAppendingString:uniqueID]];
+    return [components URL];
 }
 
 NSString *UniqueIDForCaptureDeviceURL(NSURL *url, BOOL *isBlackmagicDeckLinkDevice)
@@ -190,13 +192,12 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
                                      visibleScreenFrame.origin.y + visibleScreenFrame.size.height - contentRect.size.height);
     
     // Create the window to hold the content view and contrain it to preserve the aspect ratio
-    NSUInteger styleMask = NSTitledWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask;
+    NSUInteger styleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable;
     if (_urlAsset) {
-        styleMask |= NSClosableWindowMask;
+        styleMask |= NSWindowStyleMaskClosable;
     }
     NSWindow *window = [[NSWindow alloc] initWithContentRect:contentRect styleMask:styleMask backing:NSBackingStoreBuffered defer:YES];
     [window setPreferredBackingLocation:NSWindowBackingLocationVideoMemory];
-	[window useOptimizedDrawing:YES];       // since there are no overlapping subviews
     [window setOpaque:YES];
     [window setShowsResizeIndicator:NO];
     

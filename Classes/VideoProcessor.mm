@@ -260,7 +260,7 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
                         cvSetImageROI(&debugImage, boundingSquare);
                     }
                     [_assayAnalyzer processVideoFrameWellSynchronously:&wellImage
-                                                               forWell:_trackingWellCircles.size() > 0 ? i : -1
+                                                               forWell:_trackingWellCircles.size() > 0 ? (int)i : -1
                                                             debugImage:&debugImage
                                                       presentationTime:[videoFrame presentationTime]
                                                              plateData:_plateData];
@@ -286,7 +286,7 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
             size_t labels = _trackingWellCircles.size() > 0 ? _trackingWellCircles.size() : 1;
             for (size_t i = 0; i < labels; i++) {
                 double mean, stddev;
-                if ([_plateData movementUnitsMean:&mean stdDev:&stddev forWell:i inLastSeconds:30]) {
+                if ([_plateData movementUnitsMean:&mean stdDev:&stddev forWell:(int)i inLastSeconds:30]) {
                     char text[20];
                     if (_trackingWellCircles.size() <= 24) {        // Draw the SD if the wells are large enough
                         snprintf(text, sizeof(text), "%.0f (SD: %.0f)", mean, stddev);
@@ -370,7 +370,7 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
                 _lastCircles = wellCircles;
                 // If we've found a plate, store the well count to improve the performance of future searches
                 if (plateFound) {
-                    _wellCountHint = wellCircles.size();
+                    _wellCountHint = (int)wellCircles.size();
                 }
                 
                 switch (_processingState) {
