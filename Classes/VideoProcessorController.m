@@ -74,7 +74,9 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
     free(classes);
     
     // Sort by display name
-    [assayAnalyzerClasses sortUsingSelector:@selector(analyzerName)];
+    [assayAnalyzerClasses sortUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+        return [[obj1 analyzerName] localizedStandardCompare:[obj2 analyzerName]];
+    }];
     
     return assayAnalyzerClasses;
 }
