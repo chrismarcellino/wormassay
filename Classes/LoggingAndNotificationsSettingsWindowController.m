@@ -34,7 +34,7 @@
     [panel setPrompt:NSLocalizedString(@"Choose", nil)];
     [panel setTitle:NSLocalizedString(@"Output Folder", nil)];
     
-    if ([panel runModal] == NSFileHandlingPanelOKButton) {
+    if ([panel runModal] == NSModalResponseOK) {
         [videoProcessorController setRunOutputFolderPath:[[panel URL] path]];
     }
 }

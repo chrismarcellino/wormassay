@@ -606,7 +606,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
             RunLog(@"Began recording video to disk.");
             NSSize size = [self expectedFrameSize];
             NSDictionary *outputSettings = [[NSDictionary alloc] initWithObjectsAndKeys:
-                                            AVVideoCodecH264, AVVideoCodecKey,
+                                            AVVideoCodecTypeH264, AVVideoCodecKey,
                                             [NSNumber numberWithInteger:size.width], AVVideoWidthKey,
                                             [NSNumber numberWithInteger:size.height], AVVideoHeightKey,
                                             nil];
