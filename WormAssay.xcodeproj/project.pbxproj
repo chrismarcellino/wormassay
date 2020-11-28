@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		218DD53313453FC5000B6475 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD53213453FC5000B6475 /* Cocoa.framework */; };
-		218DD54913453FC6000B6475 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 218DD54713453FC6000B6475 /* MainMenu.xib */; };
 		218DD54D13453FCE000B6475 /* libOpenCV.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 21E7790912D322A9006C1554 /* libOpenCV.a */; };
 		218DD54E13453FD3000B6475 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
 		218DD55113453FDD000B6475 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21E779A012D323D6006C1554 /* ApplicationServices.framework */; };
@@ -17,6 +16,7 @@
 		219098A413575A7400EEE2BB /* libzxing.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2190977E1357598D00EEE2BB /* libzxing.a */; };
 		219099D21357A05C00EEE2BB /* libiconv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 219099D01357A05300EEE2BB /* libiconv.dylib */; };
 		2190AF18135B6E4A00C3853B /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2190AF17135B6E4A00C3853B /* IOKit.framework */; };
+		21A8958A2571F56E00E033D7 /* DeckLinkAPIDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21A895672571F56C00E033D7 /* DeckLinkAPIDispatch.cpp */; };
 		21CC72061347EDD4001146DA /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CC72051347EDD4001146DA /* CoreVideo.framework */; };
 		21CC724913484A79001146DA /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CC724813484A79001146DA /* QuartzCore.framework */; };
 		21CC725E1348D40B001146DA /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CC725D1348D40B001146DA /* OpenGL.framework */; };
@@ -243,7 +243,6 @@
 		BE2ABAD3182FC8C6003B8DB6 /* BigUnsignedInABase.hh in Headers */ = {isa = PBXBuildFile; fileRef = BE2ABAC4182FC8C6003B8DB6 /* BigUnsignedInABase.hh */; };
 		BE2ABAD5182FC8C6003B8DB6 /* NumberlikeArray.hh in Headers */ = {isa = PBXBuildFile; fileRef = BE2ABAC7182FC8C6003B8DB6 /* NumberlikeArray.hh */; };
 		BE39A15518249FB800704CA3 /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE39A15418249FB800704CA3 /* OpenCL.framework */; };
-		BE3FA2F7180E2FE4006BC68C /* DeckLinkAPIDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BE3FA2F0180E2FE4006BC68C /* DeckLinkAPIDispatch.cpp */; };
 		BE3FA2FE180F40C2006BC68C /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE3FA2FD180F40C2006BC68C /* AVFoundation.framework */; };
 		BE3FA3001811DEEE006BC68C /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE3FA2FF1811DEEE006BC68C /* CoreMedia.framework */; };
 		BEB800C21A5E527F00FCE8D2 /* BitmapOpenGLView.m in Sources */ = {isa = PBXBuildFile; fileRef = BEB800C11A5E527F00FCE8D2 /* BitmapOpenGLView.m */; };
@@ -401,6 +400,8 @@
 		2190977E1357598D00EEE2BB /* libzxing.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libzxing.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		219099D01357A05300EEE2BB /* libiconv.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.dylib; path = usr/lib/libiconv.dylib; sourceTree = SDKROOT; };
 		2190AF17135B6E4A00C3853B /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
+		21A895672571F56C00E033D7 /* DeckLinkAPIDispatch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DeckLinkAPIDispatch.cpp; sourceTree = "<group>"; };
+		21A8957C2571F56D00E033D7 /* DeckLinkAPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPI.h; sourceTree = "<group>"; };
 		21CC72051347EDD4001146DA /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		21CC724813484A79001146DA /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		21CC725D1348D40B001146DA /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
@@ -639,24 +640,6 @@
 		BE39A127182461AA00704CA3 /* tvl1flow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tvl1flow.cpp; sourceTree = "<group>"; };
 		BE39A128182461AA00704CA3 /* video_init.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = video_init.cpp; sourceTree = "<group>"; };
 		BE39A15418249FB800704CA3 /* OpenCL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = System/Library/Frameworks/OpenCL.framework; sourceTree = SDKROOT; };
-		BE3FA2E5180E2FE4006BC68C /* DeckLinkAPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPI.h; sourceTree = "<group>"; };
-		BE3FA2E6180E2FE4006BC68C /* DeckLinkAPI_v7_1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPI_v7_1.h; sourceTree = "<group>"; };
-		BE3FA2E7180E2FE4006BC68C /* DeckLinkAPI_v7_3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPI_v7_3.h; sourceTree = "<group>"; };
-		BE3FA2E8180E2FE4006BC68C /* DeckLinkAPI_v7_6.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPI_v7_6.h; sourceTree = "<group>"; };
-		BE3FA2E9180E2FE4006BC68C /* DeckLinkAPI_v7_9.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPI_v7_9.h; sourceTree = "<group>"; };
-		BE3FA2EA180E2FE4006BC68C /* DeckLinkAPI_v8_0.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPI_v8_0.h; sourceTree = "<group>"; };
-		BE3FA2EB180E2FE4006BC68C /* DeckLinkAPI_v8_1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPI_v8_1.h; sourceTree = "<group>"; };
-		BE3FA2EC180E2FE4006BC68C /* DeckLinkAPI_v9_2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPI_v9_2.h; sourceTree = "<group>"; };
-		BE3FA2ED180E2FE4006BC68C /* DeckLinkAPIConfiguration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPIConfiguration.h; sourceTree = "<group>"; };
-		BE3FA2EE180E2FE4006BC68C /* DeckLinkAPIDeckControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPIDeckControl.h; sourceTree = "<group>"; };
-		BE3FA2EF180E2FE4006BC68C /* DeckLinkAPIDiscovery.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPIDiscovery.h; sourceTree = "<group>"; };
-		BE3FA2F0180E2FE4006BC68C /* DeckLinkAPIDispatch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DeckLinkAPIDispatch.cpp; sourceTree = "<group>"; };
-		BE3FA2F1180E2FE4006BC68C /* DeckLinkAPIDispatch_v7_6.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DeckLinkAPIDispatch_v7_6.cpp; sourceTree = "<group>"; };
-		BE3FA2F2180E2FE4006BC68C /* DeckLinkAPIDispatch_v8_0.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DeckLinkAPIDispatch_v8_0.cpp; sourceTree = "<group>"; };
-		BE3FA2F3180E2FE4006BC68C /* DeckLinkAPIModes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPIModes.h; sourceTree = "<group>"; };
-		BE3FA2F4180E2FE4006BC68C /* DeckLinkAPIStreaming.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPIStreaming.h; sourceTree = "<group>"; };
-		BE3FA2F5180E2FE4006BC68C /* DeckLinkAPITypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPITypes.h; sourceTree = "<group>"; };
-		BE3FA2F6180E2FE4006BC68C /* DeckLinkAPIVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeckLinkAPIVersion.h; sourceTree = "<group>"; };
 		BE3FA2FD180F40C2006BC68C /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		BE3FA2FF1811DEEE006BC68C /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		BEB800BD1A5E410200FCE8D2 /* CHANGES.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CHANGES.txt; sourceTree = "<group>"; };
@@ -1045,7 +1028,8 @@
 				BEE1CAED1A5E571F00F77BF0 /* MainMenu.xib */,
 				BEE1CAE11A5E570C00F77BF0 /* Worm.icns */,
 			);
-			path = Resources;
+			name = Resources;
+			path = Classes/Resources;
 			sourceTree = "<group>";
 		};
 		21910731135E2B3100A12F1F /* Analysis */ = {
@@ -1061,7 +1045,7 @@
 				BEB800D51A5E52B000FCE8D2 /* NullMotionAnalyzer.mm */,
 			);
 			name = Analysis;
-			path = WormAssay;
+			path = Classes;
 			sourceTree = "<group>";
 		};
 		21A45B0A134F5F3800A075BF /* Views */ = {
@@ -1094,15 +1078,7 @@
 				BEB800DF1A5E530400FCE8D2 /* DeckLinkCaptureDevice.mm */,
 			);
 			name = Controllers;
-			path = WormAssay;
-			sourceTree = "<group>";
-		};
-		21AB966D202BFC1700A7EC3E /* Recovered References */ = {
-			isa = PBXGroup;
-			children = (
-				218DD54713453FC6000B6475 /* MainMenu.xib */,
-			);
-			name = "Recovered References";
+			path = Classes;
 			sourceTree = "<group>";
 		};
 		21EBDA26134AD3BA00736245 /* Image Processing */ = {
@@ -1119,7 +1095,7 @@
 				BEB800CB1A5E52A000FCE8D2 /* WellFinding.hpp */,
 			);
 			name = "Image Processing";
-			path = WormAssay;
+			path = Classes;
 			sourceTree = "<group>";
 		};
 		21FA749512CD579300D11B6D /* Third Party */ = {
@@ -1147,7 +1123,6 @@
 				2161366312CD7BFD006687D3 /* Resources */,
 				29B97323FDCFA39411CA2CEA /* Frameworks */,
 				19C28FACFE9D520D11CA2CBB /* Products */,
-				21AB966D202BFC1700A7EC3E /* Recovered References */,
 			);
 			name = CustomTemplate;
 			sourceTree = "<group>";
@@ -1580,24 +1555,8 @@
 		BE3FA2E4180E2FE4006BC68C /* DeckLink */ = {
 			isa = PBXGroup;
 			children = (
-				BE3FA2E5180E2FE4006BC68C /* DeckLinkAPI.h */,
-				BE3FA2E6180E2FE4006BC68C /* DeckLinkAPI_v7_1.h */,
-				BE3FA2E7180E2FE4006BC68C /* DeckLinkAPI_v7_3.h */,
-				BE3FA2E8180E2FE4006BC68C /* DeckLinkAPI_v7_6.h */,
-				BE3FA2E9180E2FE4006BC68C /* DeckLinkAPI_v7_9.h */,
-				BE3FA2EA180E2FE4006BC68C /* DeckLinkAPI_v8_0.h */,
-				BE3FA2EB180E2FE4006BC68C /* DeckLinkAPI_v8_1.h */,
-				BE3FA2EC180E2FE4006BC68C /* DeckLinkAPI_v9_2.h */,
-				BE3FA2ED180E2FE4006BC68C /* DeckLinkAPIConfiguration.h */,
-				BE3FA2EE180E2FE4006BC68C /* DeckLinkAPIDeckControl.h */,
-				BE3FA2EF180E2FE4006BC68C /* DeckLinkAPIDiscovery.h */,
-				BE3FA2F0180E2FE4006BC68C /* DeckLinkAPIDispatch.cpp */,
-				BE3FA2F1180E2FE4006BC68C /* DeckLinkAPIDispatch_v7_6.cpp */,
-				BE3FA2F2180E2FE4006BC68C /* DeckLinkAPIDispatch_v8_0.cpp */,
-				BE3FA2F3180E2FE4006BC68C /* DeckLinkAPIModes.h */,
-				BE3FA2F4180E2FE4006BC68C /* DeckLinkAPIStreaming.h */,
-				BE3FA2F5180E2FE4006BC68C /* DeckLinkAPITypes.h */,
-				BE3FA2F6180E2FE4006BC68C /* DeckLinkAPIVersion.h */,
+				21A8957C2571F56D00E033D7 /* DeckLinkAPI.h */,
+				21A895672571F56C00E033D7 /* DeckLinkAPIDispatch.cpp */,
 			);
 			name = DeckLink;
 			path = ThirdParty/DeckLink;
@@ -1877,7 +1836,7 @@
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0920;
+				LastUpgradeCheck = 1220;
 				ORGANIZATIONNAME = "Chris Marcellino";
 			};
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "WormAssay" */;
@@ -1886,19 +1845,7 @@
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				English,
-				Japanese,
-				French,
-				German,
-				de,
 				en,
-				fr,
-				eu,
-				ja,
-				ko,
-				nl,
-				vi,
-				zh_CN,
-				es,
 			);
 			mainGroup = 29B97314FDCFA39411CA2CEA /* CustomTemplate */;
 			projectDirPath = "";
@@ -1916,7 +1863,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				218DD54913453FC6000B6475 /* MainMenu.xib in Resources */,
 				BEE1CAF11A5E571F00F77BF0 /* LoggingPanel.xib in Resources */,
 				BEE1CAF01A5E571F00F77BF0 /* LoggingAndNotificationsSettings.xib in Resources */,
 				BEE1CAEF1A5E571F00F77BF0 /* Credits.rtf in Resources */,
@@ -1938,13 +1884,13 @@
 				BEB800EF1A5E530400FCE8D2 /* Emailer.m in Sources */,
 				BEB800CC1A5E52A000FCE8D2 /* PlateData.mm in Sources */,
 				BEB800CD1A5E52A000FCE8D2 /* VideoFrame.mm in Sources */,
+				21A8958A2571F56E00E033D7 /* DeckLinkAPIDispatch.cpp in Sources */,
 				BEB800CF1A5E52A000FCE8D2 /* WellFinding.cpp in Sources */,
 				BEB800C21A5E527F00FCE8D2 /* BitmapOpenGLView.m in Sources */,
 				BEE1CAD71A5E565300F77BF0 /* main.m in Sources */,
 				BEB800ED1A5E530400FCE8D2 /* DeckLinkCaptureDevice.mm in Sources */,
 				BEB800CE1A5E52A000FCE8D2 /* VideoProcessor.mm in Sources */,
 				BEB800F21A5E530400FCE8D2 /* VideoSourceDocument.m in Sources */,
-				BE3FA2F7180E2FE4006BC68C /* DeckLinkAPIDispatch.cpp in Sources */,
 				BEB800EC1A5E530400FCE8D2 /* ArrayTableView.m in Sources */,
 				BEB800D91A5E52B000FCE8D2 /* ConsensusLuminanceMotionAnalyzer.mm in Sources */,
 				BEB800F01A5E530400FCE8D2 /* LoggingAndNotificationsSettingsWindowController.m in Sources */,
@@ -2162,14 +2108,6 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
-		218DD54713453FC6000B6475 /* MainMenu.xib */ = {
-			isa = PBXVariantGroup;
-			children = (
-			);
-			name = MainMenu.xib;
-			path = /Users/chrismarcellino/Documents/WormAssay/Classes/WormAssay;
-			sourceTree = "<absolute>";
-		};
 		BEE1CAE71A5E571F00F77BF0 /* Credits.rtf */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -2208,10 +2146,13 @@
 		218DD54B13453FC6000B6475 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CURRENT_PROJECT_VERSION = 1.5;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Classes/WormAssay-Prefix.pch";
 				INFOPLIST_FILE = "Classes/WormAssay-Info.plist";
+				MARKETING_VERSION = 1.5;
 				PRODUCT_BUNDLE_IDENTIFIER = org.chrismarcellino.wormassay;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RUN_CLANG_STATIC_ANALYZER = YES;
@@ -2228,9 +2169,12 @@
 		218DD54C13453FC6000B6475 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CURRENT_PROJECT_VERSION = 1.5;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Classes/WormAssay-Prefix.pch";
 				INFOPLIST_FILE = "Classes/WormAssay-Info.plist";
+				MARKETING_VERSION = 1.5;
 				PRODUCT_BUNDLE_IDENTIFIER = org.chrismarcellino.wormassay;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RUN_CLANG_STATIC_ANALYZER = YES;
@@ -2277,7 +2221,6 @@
 					CVAPI_EXPORTS,
 				);
 				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
-				OPENCL_OTHER_BC_FLAGS = "";
 				PRODUCT_NAME = OpenCV;
 			};
 			name = Debug;
@@ -2295,7 +2238,6 @@
 					CVAPI_EXPORTS,
 				);
 				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
-				OPENCL_OTHER_BC_FLAGS = "";
 				PRODUCT_NAME = OpenCV;
 			};
 			name = Release;
@@ -2305,18 +2247,24 @@
 			buildSettings = {
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COMBINE_HIDPI_IMAGES = YES;
 				DEAD_CODE_STRIPPING = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
@@ -2329,6 +2277,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
 				USER_HEADER_SEARCH_PATHS = "ThirdParty ThirdParty/OpenCV ThirdParty/OpenCV/include ThirdParty/OpenCV/modules/core/include ThirdParty/OpenCV/modules/flann/include ThirdParty/OpenCV/modules/imgproc/include ThirdParty/OpenCV/modules/video/include ThirdParty/OpenCV/modules/features2d/include ThirdParty/OpenCV/modules/objdetect/include ThirdParty/OpenCV/modules/calib3d/include ThirdParty/OpenCV/modules/highgui/include ThirdParty/OpenCV/modules/ml/include ThirdParty/OpenCV/modules/contrib/include ThirdParty/OpenCV/modules/photo/include ThirdParty/OpenCV/modules/ocl/include ThirdParty/zxing";
@@ -2340,18 +2289,24 @@
 			buildSettings = {
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COMBINE_HIDPI_IMAGES = YES;
 				DEAD_CODE_STRIPPING = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEPLOYMENT_POSTPROCESSING = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
@@ -2364,6 +2319,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				SDKROOT = macosx;
 				USER_HEADER_SEARCH_PATHS = "ThirdParty ThirdParty/OpenCV ThirdParty/OpenCV/include ThirdParty/OpenCV/modules/core/include ThirdParty/OpenCV/modules/flann/include ThirdParty/OpenCV/modules/imgproc/include ThirdParty/OpenCV/modules/video/include ThirdParty/OpenCV/modules/features2d/include ThirdParty/OpenCV/modules/objdetect/include ThirdParty/OpenCV/modules/calib3d/include ThirdParty/OpenCV/modules/highgui/include ThirdParty/OpenCV/modules/ml/include ThirdParty/OpenCV/modules/contrib/include ThirdParty/OpenCV/modules/photo/include ThirdParty/OpenCV/modules/ocl/include ThirdParty/zxing";
 			};

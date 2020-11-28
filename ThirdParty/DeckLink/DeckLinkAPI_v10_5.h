@@ -1,5 +1,5 @@
 /* -LICENSE-START-
-** Copyright (c) 2020 Blackmagic Design
+** Copyright (c) 2015 Blackmagic Design
 **
 ** Permission is hereby granted, free of charge, to any person or organization
 ** obtaining a copy of the software and accompanying documentation covered by
@@ -25,53 +25,22 @@
 ** -LICENSE-END-
 */
 
-#ifndef BMD_DECKLINKAPIDISCOVERY_H
-#define BMD_DECKLINKAPIDISCOVERY_H
+#ifndef BMD_DECKLINKAPI_v10_5_H
+#define BMD_DECKLINKAPI_v10_5_H
 
-
-#ifndef BMD_CONST
-    #if defined(_MSC_VER)
-        #define BMD_CONST __declspec(selectany) static const
-    #else
-        #define BMD_CONST static const
-    #endif
-#endif
-
-#ifndef BMD_PUBLIC
-	#define BMD_PUBLIC
-#endif
+#include "DeckLinkAPI.h"
 
 // Type Declarations
 
+/* Enum BMDDeckLinkAttributeID - DeckLink Attribute ID */
 
-// Interface ID Declarations
+typedef uint32_t BMDDeckLinkAttributeID_v10_5;
+enum _BMDDeckLinkAttributeID_v10_5 {
 
-BMD_CONST REFIID IID_IDeckLink                                    = /* C418FBDD-0587-48ED-8FE5-640F0A14AF91 */ { 0xC4,0x18,0xFB,0xDD,0x05,0x87,0x48,0xED,0x8F,0xE5,0x64,0x0F,0x0A,0x14,0xAF,0x91 };
+    /* Integers */
 
-#if defined(__cplusplus)
-
-// Forward Declarations
-
-class IDeckLink;
-
-/* Interface IDeckLink - Represents a DeckLink device */
-
-class BMD_PUBLIC IDeckLink : public IUnknown
-{
-public:
-    virtual HRESULT GetModelName (/* out */ CFStringRef* modelName) = 0;
-    virtual HRESULT GetDisplayName (/* out */ CFStringRef* displayName) = 0;
-
-protected:
-    virtual ~IDeckLink () {} // call Release method to drop reference count
+    BMDDeckLinkDeviceBusyState_v10_5                             = /* 'dbst' */ 0x64627374,
 };
 
-/* Functions */
+#endif /* defined(BMD_DECKLINKAPI_v10_5_H) */
 
-extern "C" {
-
-
-}
-
-#endif /* defined(__cplusplus) */
-#endif /* defined(BMD_DECKLINKAPIDISCOVERY_H) */

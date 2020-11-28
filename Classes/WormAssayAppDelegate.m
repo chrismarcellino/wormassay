@@ -59,7 +59,7 @@ static NSString *const UseBlackmagicDeckLinkDriverDefaultsKey = @"UseBlackmagicD
     unsigned long long freeSpace = [[fileAttributes objectForKey:NSFileSystemFreeSize] unsignedLongLongValue];
     double percentFree = (double)freeSpace / (double)fileSystemSize * 100.0;
     
-    RunLog(@"%@ version %@ launched. Storage has %@ (%.3g%%) free space. Mac OS %@.",
+    RunLog(@"%@ version %@ launched. Storage has %@ (%.3g%%) free space. macOS %@.",
            [mainBundle objectForInfoDictionaryKey:(id)kCFBundleNameKey],
            [mainBundle objectForInfoDictionaryKey:(id)kCFBundleVersionKey],
            formattedDataSize(freeSpace),

@@ -1,5 +1,5 @@
 /* -LICENSE-START-
- * ** Copyright (c) 2013 Blackmagic Design
+ * ** Copyright (c) 2014 Blackmagic Design
  * **
  * ** Permission is hereby granted, free of charge, to any person or organization
  * ** obtaining a copy of the software and accompanying documentation covered by
@@ -27,11 +27,11 @@
 
 /* DeckLinkAPIVersion.h */
 
-#ifndef __DeckLink_API_Verison_h__
+#ifndef __DeckLink_API_Version_h__
 #define __DeckLink_API_Version_h__
 
-#define BLACKMAGIC_DECKLINK_API_VERSION					0x09070700
-#define BLACKMAGIC_DECKLINK_API_VERSION_STRING			"9.7.7"
+#define BLACKMAGIC_DECKLINK_API_VERSION					0x0b070000
+#define BLACKMAGIC_DECKLINK_API_VERSION_STRING			"11.7"
 
 #endif	// __DeckLink_API_Version_h__
 

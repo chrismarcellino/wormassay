@@ -1,9 +1,9 @@
 [Download the latest release of WormAssay](https://github.com/chrismarcellino/wormassay/releases/latest) | [Read the manuscript](http://www.plosntds.org/article/info%3Adoi%2F10.1371%2Fjournal.pntd.0001494) | [Watch the video](http://vimeo.com/34962651)
 
 ## WormAssay
-WormAssay is a Mac application for the automated screening of the motility of macroscopic parasites and other organisms in 6 through 96 well microtiter plates. A variety of HD and better camera hardware is supported (QuickTime X compatible or Blackmagic capture devices) and a Mac running Mac OS X 10.9 Mavericks or later is required. 
+WormAssay is a Mac application for the automated screening of the motility of macroscopic parasites and other organisms in 6 through 96 well microtiter plates. A variety of HD and better camera hardware is supported (QuickTime X compatible or Blackmagic capture devices) and a Mac running macOS 11.0 Big Sur or later is required. 
 
-To use, download the latest WormAssay binary above (or build from source) and simply run the application and attach a camera (see below). On recent versions of Mac OS X, Gatekeeper may give you a security warning about this applicationb being from an unidentified developer the first time you run it--just control-click the icon and choose Open twice. Use the Options menu to choose an algorithm and to choose the proper orientation of the plate so that it appears with A1 in the upper left on screen.
+To use, download the latest WormAssay binary above (or build from source) and simply run the application and attach a camera (see below). Use the Options menu to choose an algorithm and to choose the proper orientation of the plate so that it appears with A1 in the upper left on screen.
 
 We have had excellent results screening *B. malayi* with the Canon Vivia HV30 and HV40 camcorders attached via IEEE1394 (FireWire) or with Canon HD camcorders attached through Blackmagic capture hardware via HDMI, and white LED lights illuminating the sides of the plate in a dark box, recording the plate from below (i.e. dark-field for maximum contrast). See the manuscript below for more information on recording conditions. 
 
@@ -29,9 +29,9 @@ UCSF Center for Discovery and Innovation in Parasitic Diseases, UCSF QB3
 
 
 ## Links:
-[Manuscript at PLoS NTDs] (http://www.plosntds.org/article/info%3Adoi%2F10.1371%2Fjournal.pntd.0001494)
+[Manuscript at PLoS NTDs](http://www.plosntds.org/article/info%3Adoi%2F10.1371%2Fjournal.pntd.0001494)
 
-[California Institute for Quantitative Biosciences] (http://qb3.org/)
+[California Institute for Quantitative Biosciences](http://qb3.org/)
 
 [Center for Innovation and Discovery in Parasitic Diseases](http://www.cdipd.org)
 

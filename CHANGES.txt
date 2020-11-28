@@ -1,6 +1,11 @@
+Version 1.5
+-------------
+Update DeckLink SDK and build settings to cross-compile for ARM M1 in addition to x64.
+Fix OpenGL crash on macOS 11 BigSur. 
+
 Version 1.4.4
 -------------
-Update code base to build on Mac OS X 10.12+ and remove deprecated code references.
+Update code base to build on Mac OS X 10.13+ and remove deprecated code references.
 Fix benign misordering in Assay Analyzer menu item text.
 
 Version 1.4.3

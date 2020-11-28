@@ -60,7 +60,7 @@ public:
 
 // C++ safe ivars
 @interface DeckLinkCaptureDevice () {
-    DeckLinkCaptureDeviceCPP::DeckLinkCaptureDeviceCPP* _cppObject;
+    DeckLinkCaptureDeviceCPP* _cppObject;
     dispatch_queue_t _lockQueue;
     
     IDeckLink* _deckLink;
@@ -171,7 +171,7 @@ public:
             return nil;
         }
         
-        _cppObject = new DeckLinkCaptureDeviceCPP::DeckLinkCaptureDeviceCPP(self);
+        _cppObject = new DeckLinkCaptureDeviceCPP(self);
         // Set capture callback
         _deckLinkInput->SetCallback(_cppObject);
         
@@ -308,13 +308,15 @@ public:
 - (BOOL)startCaptureWithCaptureMode:(DeckLinkCaptureMode *)captureMode error:(NSError **)outError
 {
     __block BOOL result;
+    __block NSError *tempOutError;
     
     dispatch_sync(_lockQueue, ^{
         _captureModesSearchList = [NSArray arrayWithObject:captureMode];
         _captureModesSearchListIndex = 0;
-        result = [self enableVideoInputInCurrentModeWithError:outError];
+        result = [self enableVideoInputInCurrentModeWithError:&tempOutError];
     });
     
+    *outError = tempOutError;
     return result;
 }
 
@@ -338,8 +340,8 @@ public:
     
     // See if input mode change events are supported
     bool supportsFormatDetection = NO;
-    IDeckLinkAttributes* deckLinkAttributes = NULL;
-    _deckLink->QueryInterface(IID_IDeckLinkAttributes, (void**)&deckLinkAttributes);
+    IDeckLinkProfileAttributes* deckLinkAttributes = NULL;
+    _deckLink->QueryInterface(IID_IDeckLinkProfileAttributes, (void**)&deckLinkAttributes);
     if (deckLinkAttributes) {
         deckLinkAttributes->GetFlag(BMDDeckLinkSupportsInputFormatDetection, &supportsFormatDetection);
         deckLinkAttributes->Release();
@@ -352,9 +354,9 @@ public:
     // Enable input video mode detection if the device supports it
     BMDVideoInputFlags videoInputFlags = supportsFormatDetection ? bmdVideoInputEnableFormatDetection : bmdVideoInputFlagDefault;
     
-    BMDDisplayModeSupport supported = bmdDisplayModeNotSupported;
-    _deckLinkInput->DoesSupportVideoMode(displayMode, pixelFormat, videoInputFlags, &supported, NULL);
-    if (supported == bmdDisplayModeSupported || supported == bmdDisplayModeSupportedWithConversion) {
+    bool supported = NO;
+    _deckLinkInput->DoesSupportVideoMode(NULL, displayMode, pixelFormat, NULL, videoInputFlags, NULL, &supported);
+    if (supported) {
         // Set the video input mode
         if (_deckLinkInput->EnableVideoInput(displayMode, pixelFormat, videoInputFlags) == S_OK) {
             if (_deckLinkInput->StartStreams() == S_OK) {

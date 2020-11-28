@@ -33,7 +33,6 @@
 - (id)initWithFrame:(NSRect)frameRect pixelFormat:(NSOpenGLPixelFormat *)format
 {
     if ((self = [super initWithFrame:frameRect pixelFormat:format])) {
-        [self setCanDrawConcurrently:YES];
         [self setWantsBestResolutionOpenGLSurface:YES];
     }
     
@@ -42,6 +41,7 @@
 
 - (void)prepareOpenGL
 {
+    [super prepareOpenGL];
     CGLContextObj glContext = [[self openGLContext] CGLContextObj];
     CGLLockContext(glContext);
     
