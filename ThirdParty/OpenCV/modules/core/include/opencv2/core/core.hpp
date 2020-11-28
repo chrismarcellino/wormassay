@@ -179,7 +179,7 @@ public:
 
   \param exc the exception raisen.
  */
-CV_EXPORTS void error( const Exception& exc );
+CV_EXPORTS void error( const Exception& exc )  __attribute__((analyzer_noreturn));
 
 //! Sets/resets the break-on-error mode.
 
