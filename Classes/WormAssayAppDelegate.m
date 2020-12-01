@@ -131,7 +131,7 @@ static NSString *const UseBlackmagicDeckLinkDriverDefaultsKey = @"UseBlackmagicD
     [videoProcessorController setCurrentAssayAnalyzerClass:class];
     
     for (NSInteger i = 0; i < [menu numberOfItems]; i++) {
-        [[menu itemAtIndex:i] setState:i == selectedIndex ? NSControlStateValueOn : NSControlStateValueOff];
+        [[menu itemAtIndex:i] setState:(i == selectedIndex) ? NSControlStateValueOn : NSControlStateValueOff];
     }
 }
 
