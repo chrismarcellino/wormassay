@@ -355,8 +355,13 @@ public:
     BMDVideoInputFlags videoInputFlags = supportsFormatDetection ? bmdVideoInputEnableFormatDetection : bmdVideoInputFlagDefault;
     
     bool supported = NO;
-    _deckLinkInput->DoesSupportVideoMode(NULL, displayMode, pixelFormat, NULL, videoInputFlags, NULL, &supported);
-    if (supported) {
+    if (_deckLinkInput->DoesSupportVideoMode(bmdVideoConnectionUnspecified,
+                                             displayMode,
+                                             pixelFormat,
+                                             bmdNoVideoInputConversion,
+                                             videoInputFlags,
+                                             &displayMode,
+                                             &supported) == S_OK && supported) {
         // Set the video input mode
         if (_deckLinkInput->EnableVideoInput(displayMode, pixelFormat, videoInputFlags) == S_OK) {
             if (_deckLinkInput->StartStreams() == S_OK) {

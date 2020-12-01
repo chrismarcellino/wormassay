@@ -1,6 +1,6 @@
-Version 1.5
+Version 1.5.1
 -------------
-Update DeckLink SDK and build settings to cross-compile for ARM M1 in addition to x64.
+Update DeckLink SDK and build settings to build a universal binary for ARM in addition to x64.
 Fix OpenGL crash on macOS 11 BigSur. 
 
 Version 1.4.4

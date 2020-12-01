@@ -110,14 +110,14 @@ static NSString *const UseBlackmagicDeckLinkDriverDefaultsKey = @"UseBlackmagicD
         VideoProcessorController *videoProcessorController = [VideoProcessorController sharedInstance];
         for (Class class in [videoProcessorController assayAnalyzerClasses]) {
             NSMenuItem *item = [menu addItemWithTitle:[class analyzerName] action:@selector(assayAnalyzerMenuItemSelected:) keyEquivalent:@""];
-            [item setState:([class isEqual:[videoProcessorController currentAssayAnalyzerClass]] ? NSOnState : NSOffState)];
+            [item setState:([class isEqual:[videoProcessorController currentAssayAnalyzerClass]] ? NSControlStateValueOn : NSControlStateValueOff)];
         }
     } else if (menu == [self plateOrientationMenu]) {
         // Set enabled flags on plate orientation menu items
         PlateOrientation plateOrientation = [[VideoProcessorController sharedInstance] plateOrientation];
         for (NSInteger i = 0; i < [menu numberOfItems]; i++) {
             NSMenuItem *item = [menu itemAtIndex:i];
-            [item setState:(i == plateOrientation) ? NSOnState : NSOffState];
+            [item setState:(i == plateOrientation) ? NSControlStateValueOn : NSControlStateValueOff];
         }
     }
 }
@@ -131,7 +131,7 @@ static NSString *const UseBlackmagicDeckLinkDriverDefaultsKey = @"UseBlackmagicD
     [videoProcessorController setCurrentAssayAnalyzerClass:class];
     
     for (NSInteger i = 0; i < [menu numberOfItems]; i++) {
-        [[menu itemAtIndex:i] setState:i == selectedIndex ? NSOnState : NSOffState];
+        [[menu itemAtIndex:i] setState:i == selectedIndex ? NSControlStateValueOn : NSControlStateValueOff];
     }
 }
 

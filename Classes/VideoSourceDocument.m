@@ -197,7 +197,6 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
         styleMask |= NSWindowStyleMaskClosable;
     }
     NSWindow *window = [[NSWindow alloc] initWithContentRect:contentRect styleMask:styleMask backing:NSBackingStoreBuffered defer:YES];
-    [window setPreferredBackingLocation:NSWindowBackingLocationVideoMemory];
     [window setOpaque:YES];
     [window setShowsResizeIndicator:NO];
     
