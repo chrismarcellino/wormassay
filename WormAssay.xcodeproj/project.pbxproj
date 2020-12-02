@@ -804,8 +804,6 @@
 		BEE1CAEC1A5E571F00F77BF0 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = Classes/Resources/en.lproj/LoggingPanel.xib; sourceTree = SOURCE_ROOT; };
 		BEE1CAEE1A5E571F00F77BF0 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = Classes/Resources/en.lproj/MainMenu.xib; sourceTree = SOURCE_ROOT; };
 		BEE1CAF31A5E573A00F77BF0 /* WormAssay-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "WormAssay-Info.plist"; path = "Classes/WormAssay-Info.plist"; sourceTree = SOURCE_ROOT; };
-		BEF2017118245C610079C39B /* version_string.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = version_string.inc; path = ThirdParty/OpenCV/version_string.inc; sourceTree = "<group>"; };
-		BEF2017318245D250079C39B /* cvconfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = cvconfig.h; path = ThirdParty/OpenCV/cvconfig.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -862,8 +860,6 @@
 		215AB44612CEC6C60047B13F /* OpenCV */ = {
 			isa = PBXGroup;
 			children = (
-				BEF2017118245C610079C39B /* version_string.inc */,
-				BEF2017318245D250079C39B /* cvconfig.h */,
 				21A324C32578519300E5B80E /* core */,
 				21A324BA2578519300E5B80E /* dynamicuda */,
 				21A3247F2578519300E5B80E /* imgproc */,

@@ -440,9 +440,7 @@ int64 getCPUTickCount(void)
 
 const std::string& getBuildInformation()
 {
-    static std::string build_info =
-#include "version_string.inc"
-    ;
+    static std::string build_info = "";
     return build_info;
 }
 
