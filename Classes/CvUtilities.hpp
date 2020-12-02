@@ -6,7 +6,7 @@
 //  Copyright 2011 Chris Marcellino. All rights reserved.
 //
 
-#import "opencv2/opencv.hpp"
+#import "opencv2/core/core.hpp"
 
 static inline int rectArea(const CvRect& rect)
 {

@@ -8,6 +8,7 @@
 
 #import "PlateData.h"
 #import "WellFinding.hpp"
+#import <string>
 #import <map>
 
 // Required data column identifiers

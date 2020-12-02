@@ -41,7 +41,7 @@
 
 #include "precomp.hpp"
 
-#if (__GNUC__ == 4) && (__GNUC_MINOR__ == 8)
+#if defined(__GNUC__) && (__GNUC__ == 4) && (__GNUC_MINOR__ == 8)
 # pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
 
@@ -469,6 +469,12 @@ cvFloodFill( CvArr* arr, CvPoint seed_point,
     type = CV_MAT_TYPE( img->type );
     depth = CV_MAT_DEPTH(type);
     cn = CV_MAT_CN(type);
+
+    if ( (cn != 1) && (cn != 3) )
+    {
+        CV_Error( CV_StsBadArg, "Number of channels in input image must be 1 or 3" );
+        return;
+    }
 
     if( connectivity == 0 )
         connectivity = 4;

@@ -7,7 +7,7 @@
 //
 
 #import "VideoFrame.h"
-#import "opencv2/opencv.hpp"
+#import "opencv2/imgproc/imgproc_c.h"
 
 static void YpCbCr422toBGRA8(uint8_t *src, uint8_t *dest, uint32_t width, uint32_t height);
 

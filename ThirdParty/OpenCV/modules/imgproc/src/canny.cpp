@@ -41,12 +41,13 @@
 
 #include "precomp.hpp"
 
+/*
 #if defined (HAVE_IPP) && (IPP_VERSION_MAJOR >= 7)
 #define USE_IPP_CANNY 1
 #else
 #undef USE_IPP_CANNY
 #endif
-
+*/
 #ifdef USE_IPP_CANNY
 namespace cv
 {
@@ -170,7 +171,7 @@ void cv::Canny( InputArray _src, OutputArray _dst,
     #define CANNY_PUSH(d)    *(d) = uchar(2), *stack_top++ = (d)
     #define CANNY_POP(d)     (d) = *--stack_top
 
-    // calculate magnitude and angle of gradient, perform non-maxima supression.
+    // calculate magnitude and angle of gradient, perform non-maxima suppression.
     // fill the map with one of the following values:
     //   0 - the pixel might belong to an edge
     //   1 - the pixel can not belong to an edge
@@ -229,7 +230,7 @@ void cv::Canny( InputArray _src, OutputArray _dst,
         if ((stack_top - stack_bottom) + src.cols > maxsize)
         {
             int sz = (int)(stack_top - stack_bottom);
-            maxsize = maxsize * 3/2;
+            maxsize = std::max(sz + src.cols, maxsize * 3/2);
             stack.resize(maxsize);
             stack_bottom = &stack[0];
             stack_top = stack_bottom + sz;

@@ -20,6 +20,8 @@
 #import "zxing/common/HybridBinarizer.h"
 #import "zxing/ReaderException.h"
 #import <sys/sysctl.h>
+#import "opencv2/imgproc/types_c.h"
+#import "opencv2/imgproc/imgproc_c.h"
 
 static const NSTimeInterval MinimumWellMatchTimeToBeginTracking = 0.500; // 500 ms
 static const NSTimeInterval BarcodeScanningPeriod = 0.5;

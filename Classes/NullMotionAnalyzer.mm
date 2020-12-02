@@ -8,7 +8,7 @@
 
 #import "NullMotionAnalyzer.h"
 #import "VideoFrame.h"
-#import "opencv2/opencv.hpp"
+//#import "opencv2/opencv.hpp"
 #import "CvUtilities.hpp"
 
 @implementation NullMotionAnalyzer

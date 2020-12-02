@@ -87,10 +87,41 @@
 
 #ifdef HAVE_WINRT
 #include <wrl/client.h>
+#ifndef __cplusplus_winrt
+#include <windows.storage.h>
+#pragma comment(lib, "runtimeobject.lib")
+#endif
 
 std::wstring GetTempPathWinRT()
 {
+#ifdef __cplusplus_winrt
     return std::wstring(Windows::Storage::ApplicationData::Current->TemporaryFolder->Path->Data());
+#else
+    Microsoft::WRL::ComPtr<ABI::Windows::Storage::IApplicationDataStatics> appdataFactory;
+    Microsoft::WRL::ComPtr<ABI::Windows::Storage::IApplicationData> appdataRef;
+    Microsoft::WRL::ComPtr<ABI::Windows::Storage::IStorageFolder> storagefolderRef;
+    Microsoft::WRL::ComPtr<ABI::Windows::Storage::IStorageItem> storageitemRef;
+    HSTRING str;
+    HSTRING_HEADER hstrHead;
+    std::wstring wstr;
+    if (FAILED(WindowsCreateStringReference(RuntimeClass_Windows_Storage_ApplicationData,
+                                            (UINT32)wcslen(RuntimeClass_Windows_Storage_ApplicationData), &hstrHead, &str)))
+        return wstr;
+    if (FAILED(RoGetActivationFactory(str, IID_PPV_ARGS(appdataFactory.ReleaseAndGetAddressOf()))))
+        return wstr;
+    if (FAILED(appdataFactory->get_Current(appdataRef.ReleaseAndGetAddressOf())))
+        return wstr;
+    if (FAILED(appdataRef->get_TemporaryFolder(storagefolderRef.ReleaseAndGetAddressOf())))
+        return wstr;
+    if (FAILED(storagefolderRef.As(&storageitemRef)))
+        return wstr;
+    str = NULL;
+    if (FAILED(storageitemRef->get_Path(&str)))
+        return wstr;
+    wstr = WindowsGetStringRawBuffer(str, NULL);
+    WindowsDeleteString(str);
+    return wstr;
+#endif
 }
 
 std::wstring GetTempFileNameWinRT(std::wstring prefix)
@@ -126,14 +157,12 @@ std::wstring GetTempFileNameWinRT(std::wstring prefix)
 
 #include <stdarg.h>
 
-#if defined __linux__ || defined __APPLE__
+#if defined __linux__ || defined __APPLE__ || defined __EMSCRIPTEN__ || defined __QNX__
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/types.h>
 #if defined ANDROID
 #include <sys/sysconf.h>
-#else
-#include <sys/sysctl.h>
 #endif
 #endif
 
@@ -220,6 +249,42 @@ struct HWFeatures
             f.have[CV_CPU_SSE4_2] = (cpuid_data[2] & (1<<20)) != 0;
             f.have[CV_CPU_POPCNT] = (cpuid_data[2] & (1<<23)) != 0;
             f.have[CV_CPU_AVX]    = (((cpuid_data[2] & (1<<28)) != 0)&&((cpuid_data[2] & (1<<27)) != 0));//OS uses XSAVE_XRSTORE and CPU support AVX
+        }
+
+    #if defined _MSC_VER && (defined _M_IX86 || defined _M_X64)
+        __cpuidex(cpuid_data, 7, 0);
+    #elif defined __GNUC__ && (defined __i386__ || defined __x86_64__)
+        #ifdef __x86_64__
+        asm __volatile__
+        (
+         "movl $7, %%eax\n\t"
+         "movl $0, %%ecx\n\t"
+         "cpuid\n\t"
+         :[eax]"=a"(cpuid_data[0]),[ebx]"=b"(cpuid_data[1]),[ecx]"=c"(cpuid_data[2]),[edx]"=d"(cpuid_data[3])
+         :
+         : "cc"
+        );
+        #else
+        // We need to preserve ebx since we are compiling PIC code.
+        // This means we cannot use "=b" for the 2nd output register.
+        asm volatile
+        (
+         "pushl %%ebx\n\t"
+         "movl $7,%%eax\n\t"
+         "movl $0,%%ecx\n\t"
+         "cpuid\n\t"
+         "movl %%ebx,%1\n\t"
+         "popl %%ebx\n\t"
+         : "=a"(cpuid_data[0]), "=r"(cpuid_data[1]), "=c"(cpuid_data[2]), "=d"(cpuid_data[3])
+         :
+         : "cc"
+        );
+        #endif
+    #endif
+
+        if( f.x86_family >= 6 )
+        {
+            f.have[CV_CPU_AVX2] = (cpuid_data[1] & (1<<5)) != 0;
         }
 
         return f;
@@ -392,27 +457,23 @@ string format( const char* fmt, ... )
 
 string tempfile( const char* suffix )
 {
-#ifdef HAVE_WINRT
-    std::wstring temp_dir = L"";
-    const wchar_t* opencv_temp_dir = _wgetenv(L"OPENCV_TEMP_PATH");
-    if (opencv_temp_dir)
-        temp_dir = std::wstring(opencv_temp_dir);
-#else
+    string fname;
+#ifndef HAVE_WINRT
     const char *temp_dir = getenv("OPENCV_TEMP_PATH");
 #endif
-    string fname;
 
 #if defined WIN32 || defined _WIN32
 #ifdef HAVE_WINRT
     RoInitialize(RO_INIT_MULTITHREADED);
-    std::wstring temp_dir2;
-    if (temp_dir.empty())
-        temp_dir = GetTempPathWinRT();
+    std::wstring temp_dir = L"";
+    const wchar_t* opencv_temp_dir = GetTempPathWinRT().c_str();
+    if (opencv_temp_dir)
+        temp_dir = std::wstring(opencv_temp_dir);
 
     std::wstring temp_file;
     temp_file = GetTempFileNameWinRT(L"ocv");
     if (temp_file.empty())
-        return std::string();
+        return string();
 
     temp_file = temp_dir + std::wstring(L"\\") + temp_file;
     DeleteFileW(temp_file.c_str());
@@ -420,7 +481,7 @@ string tempfile( const char* suffix )
     char aname[MAX_PATH];
     size_t copied = wcstombs(aname, temp_file.c_str(), MAX_PATH);
     CV_Assert((copied != MAX_PATH) && (copied != (size_t)-1));
-    fname = std::string(aname);
+    fname = string(aname);
     RoUninitialize();
 #else
     char temp_dir2[MAX_PATH] = { 0 };
@@ -806,24 +867,6 @@ cvGetModuleInfo( const char* name, const char **version, const char **plugin_lis
         *plugin_list = plugin_list_buf;
 }
 
-#if defined CVAPI_EXPORTS && defined WIN32 && !defined WINCE
-#ifdef HAVE_WINRT
-    #pragma warning(disable:4447) // Disable warning 'main' signature found without threading model
-#endif
-
-BOOL WINAPI DllMain( HINSTANCE, DWORD  fdwReason, LPVOID );
-
-BOOL WINAPI DllMain( HINSTANCE, DWORD  fdwReason, LPVOID )
-{
-    if( fdwReason == DLL_THREAD_DETACH || fdwReason == DLL_PROCESS_DETACH )
-    {
-        cv::deleteThreadAllocData();
-        cv::deleteThreadRNGData();
-    }
-    return TRUE;
-}
-#endif
-
 namespace cv
 {
 
@@ -863,6 +906,11 @@ int _interlockedExchangeAdd(int* addr, int delta)
 
 #elif defined __APPLE__
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 #include <libkern/OSAtomic.h>
 
 struct Mutex::Impl
@@ -878,7 +926,11 @@ struct Mutex::Impl
     int refcount;
 };
 
-#elif defined __linux__ && !defined ANDROID
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
+#elif defined __linux__ && !defined ANDROID && !defined __LINUXTHREADS_OLD__
 
 struct Mutex::Impl
 {
@@ -941,6 +993,232 @@ void Mutex::lock() { impl->lock(); }
 void Mutex::unlock() { impl->unlock(); }
 bool Mutex::trylock() { return impl->trylock(); }
 
+
+//////////////////////////////// thread-local storage ////////////////////////////////
+
+class TLSStorage
+{
+    std::vector<void*> tlsData_;
+public:
+    TLSStorage() { tlsData_.reserve(16); }
+    ~TLSStorage();
+    inline void* getData(int key) const
+    {
+        CV_DbgAssert(key >= 0);
+        return (key < (int)tlsData_.size()) ? tlsData_[key] : NULL;
+    }
+    inline void setData(int key, void* data)
+    {
+        CV_DbgAssert(key >= 0);
+        if (key >= (int)tlsData_.size())
+        {
+            tlsData_.resize(key + 1, NULL);
+        }
+        tlsData_[key] = data;
+    }
+
+    inline static TLSStorage* get();
+};
+
+#ifdef WIN32
+#ifdef _MSC_VER
+#pragma warning(disable:4505) // unreferenced local function has been removed
+#endif
+
+#ifdef HAVE_WINRT
+    // using C++11 thread attribute for local thread data
+    static __declspec( thread ) TLSStorage* g_tlsdata = NULL;
+
+    static void deleteThreadData()
+    {
+        if (g_tlsdata)
+        {
+            delete g_tlsdata;
+            g_tlsdata = NULL;
+        }
+    }
+
+    inline TLSStorage* TLSStorage::get()
+    {
+        if (!g_tlsdata)
+        {
+            g_tlsdata = new TLSStorage;
+        }
+        return g_tlsdata;
+    }
+#else
+#ifdef WINCE
+#   define TLS_OUT_OF_INDEXES ((DWORD)0xFFFFFFFF)
+#endif
+    static DWORD tlsKey = TLS_OUT_OF_INDEXES;
+
+    static void deleteThreadData()
+    {
+        if(tlsKey != TLS_OUT_OF_INDEXES)
+        {
+            delete (TLSStorage*)TlsGetValue(tlsKey);
+            TlsSetValue(tlsKey, NULL);
+        }
+    }
+
+    inline TLSStorage* TLSStorage::get()
+    {
+        if (tlsKey == TLS_OUT_OF_INDEXES)
+        {
+            tlsKey = TlsAlloc();
+            CV_Assert(tlsKey != TLS_OUT_OF_INDEXES);
+        }
+        TLSStorage* d = (TLSStorage*)TlsGetValue(tlsKey);
+        if (!d)
+        {
+            d = new TLSStorage;
+            TlsSetValue(tlsKey, d);
+        }
+        return d;
+    }
+#endif //HAVE_WINRT
+
+#if defined CVAPI_EXPORTS && defined WIN32 && !defined WINCE
+#ifdef HAVE_WINRT
+    #pragma warning(disable:4447) // Disable warning 'main' signature found without threading model
+#endif
+
+BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID);
+
+BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID)
+{
+    if (fdwReason == DLL_THREAD_DETACH || fdwReason == DLL_PROCESS_DETACH)
+    {
+        cv::deleteThreadAllocData();
+        cv::deleteThreadRNGData();
+        cv::deleteThreadData();
+    }
+    return TRUE;
 }
+#endif
+
+#else
+    static pthread_key_t tlsKey = 0;
+    static pthread_once_t tlsKeyOnce = PTHREAD_ONCE_INIT;
+
+    static void deleteTLSStorage(void* data)
+    {
+        delete (TLSStorage*)data;
+    }
+
+    static void makeKey()
+    {
+        int errcode = pthread_key_create(&tlsKey, deleteTLSStorage);
+        CV_Assert(errcode == 0);
+    }
+
+    inline TLSStorage* TLSStorage::get()
+    {
+        pthread_once(&tlsKeyOnce, makeKey);
+        TLSStorage* d = (TLSStorage*)pthread_getspecific(tlsKey);
+        if( !d )
+        {
+            d = new TLSStorage;
+            pthread_setspecific(tlsKey, d);
+        }
+        return d;
+    }
+#endif
+
+class TLSContainerStorage
+{
+    cv::Mutex mutex_;
+    std::vector<TLSDataContainer*> tlsContainers_;
+public:
+    TLSContainerStorage() { }
+    ~TLSContainerStorage()
+    {
+        for (size_t i = 0; i < tlsContainers_.size(); i++)
+        {
+            CV_DbgAssert(tlsContainers_[i] == NULL); // not all keys released
+            tlsContainers_[i] = NULL;
+        }
+    }
+
+    int allocateKey(TLSDataContainer* pContainer)
+    {
+        cv::AutoLock lock(mutex_);
+        tlsContainers_.push_back(pContainer);
+        return (int)tlsContainers_.size() - 1;
+    }
+    void releaseKey(int id, TLSDataContainer* pContainer)
+    {
+        cv::AutoLock lock(mutex_);
+        CV_Assert(tlsContainers_[id] == pContainer);
+        tlsContainers_[id] = NULL;
+        // currently, we don't go into thread's TLSData and release data for this key
+    }
+
+    void destroyData(int key, void* data)
+    {
+        cv::AutoLock lock(mutex_);
+        TLSDataContainer* k = tlsContainers_[key];
+        if (!k)
+            return;
+        try
+        {
+            k->deleteDataInstance(data);
+        }
+        catch (...)
+        {
+            CV_DbgAssert(k == NULL); // Debug this!
+        }
+    }
+};
+
+// This is a wrapper function that will ensure 'tlsContainerStorage' is constructed on first use.
+// For more information: http://www.parashift.com/c++-faq/static-init-order-on-first-use.html
+static TLSContainerStorage& getTLSContainerStorage()
+{
+    static TLSContainerStorage *tlsContainerStorage = new TLSContainerStorage();
+    return *tlsContainerStorage;
+}
+
+TLSDataContainer::TLSDataContainer()
+    : key_(-1)
+{
+    key_ = getTLSContainerStorage().allocateKey(this);
+}
+
+TLSDataContainer::~TLSDataContainer()
+{
+    getTLSContainerStorage().releaseKey(key_, this);
+    key_ = -1;
+}
+
+void* TLSDataContainer::getData() const
+{
+    CV_Assert(key_ >= 0);
+    TLSStorage* tlsData = TLSStorage::get();
+    void* data = tlsData->getData(key_);
+    if (!data)
+    {
+        data = this->createDataInstance();
+        CV_DbgAssert(data != NULL);
+        tlsData->setData(key_, data);
+    }
+    return data;
+}
+
+TLSStorage::~TLSStorage()
+{
+    for (int i = 0; i < (int)tlsData_.size(); i++)
+    {
+        void*& data = tlsData_[i];
+        if (data)
+        {
+            getTLSContainerStorage().destroyData(i, data);
+            data = NULL;
+        }
+    }
+    tlsData_.clear();
+}
+
+} // namespace cv
 
 /* End of file. */

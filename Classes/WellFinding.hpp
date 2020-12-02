@@ -6,6 +6,7 @@
 //  Copyright 2011 Chris Marcellino. All rights reserved.
 //
 
+#import <vector>
 #import "opencv2/core/core_c.h"
 
 // C compatible Circle structure

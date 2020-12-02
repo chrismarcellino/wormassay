@@ -3,7 +3,7 @@
 //
 
 #ifdef __cplusplus
-    #import "opencv2/opencv.hpp"        // import first since there is a conflicting (but compatible) definition of MIN, etc.
+   // #import "opencv2/opencv.hpp"        // import first since there is a conflicting (but compatible) definition of MIN, etc.
 #endif
 
 #ifdef __OBJC__

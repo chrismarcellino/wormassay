@@ -7,6 +7,7 @@ using namespace std;
 using namespace cv;
 
 namespace {
+#if 0
 void helpParser()
 {
     printf("\nThe CommandLineParser class is designed for command line arguments parsing\n"
@@ -50,6 +51,7 @@ void helpParser()
            "                          It also works with 'unsigned int', 'double', and 'float' types \n"
            );
 }
+#endif
 
 vector<string> split_string(const string& str, const string& delimiters)
 {
@@ -91,6 +93,22 @@ string del_space(string name)
 }
 
 }//namespace
+
+static bool keyIsNumber(const std::string & option, size_t start)
+{
+    bool isNumber = true;
+    size_t end = option.find_first_of('=', start);
+    end = option.npos == end ? option.length() : end;
+
+    for ( ; start < end; ++start)
+        if (!isdigit(option[start]))
+        {
+            isNumber = false;
+            break;
+        }
+
+    return isNumber;
+}
 
 CommandLineParser::CommandLineParser(int argc, const char* const argv[], const char* keys)
 {
@@ -144,13 +162,13 @@ CommandLineParser::CommandLineParser(int argc, const char* const argv[], const c
         if (!argv[i])
             break;
         curName = argv[i];
-        if (curName.find('-') == 0 && ((curName[1] < '0') || (curName[1] > '9')))
-        {
-            while (curName.find('-') == 0)
-                curName.erase(curName.begin(), (curName.begin() + 1));
-        }
-            else
-                withNoKey = true;
+
+        size_t nondash = curName.find_first_not_of("-");
+        if (nondash == 0 || nondash == curName.npos || keyIsNumber(curName, nondash))
+            withNoKey = true;
+        else
+            curName.erase(0, nondash);
+
         if (curName.find('=') != curName.npos)
         {
             hasValueThroughEq = true;
