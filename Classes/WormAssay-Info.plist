@@ -24,6 +24,8 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>${MACOSX_DEPLOYMENT_TARGET}</string>
+	<key>NSCameraUsageDescription</key>
+	<string>WormAssay needs to access cameras in order to analyze and record specimen plates and barcodes.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2011-2021 Chris Marcellino</string>
 	<key>NSMainNibFile</key>

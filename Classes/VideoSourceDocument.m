@@ -63,10 +63,20 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url, BOOL *isBlackmagicDeckLinkDevi
     return uniqueID;
 }
 
-BOOL DeviceIsAppleUSBDevice(AVCaptureDevice *device)
+BOOL DeviceIsBuiltInCamera(AVCaptureDevice *device)
 {
-    NSString *modelID = [device modelID];
-    return modelID && [modelID rangeOfString:@"VendorID_1452"].location != NSNotFound;
+    if (@available(macOS 10.15, *)) {
+        NSString *const builtInString = @"BuiltIn";
+        // Sanity check that const string definition matches its symbol name so we can catch all current and
+        // future ...BuiltIn... types without relying on Apple specifically (and not unintentionally exclude non-built-in
+        // Apple cameras such as the iSight IEEE1394 camera which can be used for barcode reading etc. 
+        NSCAssert([AVCaptureDeviceTypeBuiltInWideAngleCamera containsString:builtInString],
+                  @"AVCaptureDeviceTypeBuiltIn... strings have been changed to not have \"BuiltIn\" in them and this comparison should be updated.");
+        
+        return [[device deviceType] containsString:builtInString];
+    } else {
+        return [[device manufacturer] isEqual:@"Apple Inc."];
+    }
 }
 
 BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
@@ -124,7 +134,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
             [deckLinkNames containsObject:[device modelID]];
             
             // See if we need to ignore this devices
-            if (!isADeckLinkDevice && (!ignoreBuiltInCameras || !DeviceIsAppleUSBDevice(device))) {
+            if (!isADeckLinkDevice && (!ignoreBuiltInCameras || !DeviceIsBuiltInCamera(device))) {
                 // Construct the URL for the capture device
                 NSURL *url = URLForAVCaptureDevice(device);
                 [urls addObject:url];

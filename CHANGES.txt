@@ -1,3 +1,8 @@
+Version 1.5.2
+-------------
+Fix mac OS 11 BigSur crash on launch due to missing NSCameraUsageDescription privacy key.
+Update built in camera detection to work with newer Apple Silicon hardware and be manufacturer dependent when API is available. 
+
 Version 1.5.1
 -------------
 Update DeckLink SDK and build settings to build a universal binary for ARM in addition to x64.
