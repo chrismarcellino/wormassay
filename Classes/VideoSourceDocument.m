@@ -362,7 +362,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
         _urlAsset = [AVAsset assetWithURL:absoluteURL];
         if (_urlAsset && [[_urlAsset tracksWithMediaType:AVMediaTypeVideo] count] > 0) {
             _assetReader = [[AVAssetReader alloc] initWithAsset:_urlAsset error:outError];
-            RunLog(@"Opened file \"%@\".", [self sourceIdentifier]);
+            RunLog(@"Opening file \"%@\".", [self sourceIdentifier]);
         }
         
         // Get frames from movie file
@@ -400,7 +400,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     if (!_closeCalled) {
         _closeCalled = YES;
         _sendFramesToAssetWriter = NO;
-        RunLog(@"Closing %@: %@", (_avCaptureDevice || _deckLinkCaptureDevice) ? @"removed device" : @"file", [self sourceIdentifier]);
+        RunLog(@"Closing %@ \"%@\".", (_avCaptureDevice || _deckLinkCaptureDevice) ? @"removed device" : @"file", [self sourceIdentifier]);
         [[VideoProcessorController sharedInstance] removeVideoProcessor:_processor];
         
         if (_avCaptureDevice) {
