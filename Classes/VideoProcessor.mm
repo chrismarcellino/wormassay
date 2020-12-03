@@ -13,15 +13,20 @@
 #import "AssayAnalyzer.h"
 #import "WellFinding.hpp"
 #import "VideoProcessorController.h"   // for RunLog()
-#import "zxing/common/GreyscaleLuminanceSource.h"
-#import "zxing/MultiFormatReader.h"
-#import "zxing/BarcodeFormat.h"
-#import "zxing/DecodeHints.h"
-#import "zxing/common/HybridBinarizer.h"
-#import "zxing/ReaderException.h"
 #import <sys/sysctl.h>
+// OpenCV
 #import "opencv2/imgproc/types_c.h"
 #import "opencv2/imgproc/imgproc_c.h"
+// ZXing
+#import "ReadBarcode.h"
+#import "BarcodeFormat.h"
+
+#if BYTE_ORDER == BIG_ENDIAN
+#define NS_WCHAR_ENCODING NSUTF32BigEndianStringEncoding
+#elif BYTE_ORDER == LITTLE_ENDIAN
+#define NS_WCHAR_ENCODING NSUTF32LittleEndianStringEncoding
+#endif
+
 
 static const NSTimeInterval MinimumWellMatchTimeToBeginTracking = 0.500; // 500 ms
 static const NSTimeInterval BarcodeScanningPeriod = 0.5;
@@ -469,40 +474,33 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
     
     // Perform the calculation on a concurrent queue so that we don't block the current thread
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        // Convert the image to grayscale
-        IplImage *grayscaleImage = cvCreateImage(cvGetSize([videoFrame image]), IPL_DEPTH_8U, 1);
-        NSAssert(grayscaleImage->widthStep == grayscaleImage->width * grayscaleImage->nChannels, @"image not byte packed");
-        cvCvtColor([videoFrame image], grayscaleImage, CV_BGRA2GRAY);
-        zxing::ArrayRef<char> arrayRefData((char *)grayscaleImage->imageData, grayscaleImage->imageSize);
-        zxing::Ref<zxing::GreyscaleLuminanceSource> luminanceSource(new zxing::GreyscaleLuminanceSource(arrayRefData,
-                                                                                                        grayscaleImage->widthStep,
-                                                                                                        grayscaleImage->height,
-                                                                                                        0,
-                                                                                                        0,
-                                                                                                        grayscaleImage->width,
-                                                                                                        grayscaleImage->height));
-        
+        IplImage *videoFrameImage = [videoFrame image];
         NSString *text = nil;
-        // Binarize the image
         try {
-            zxing::Ref<zxing::Binarizer> binarizer(new zxing::HybridBinarizer(luminanceSource));
-            zxing::Ref<zxing::BinaryBitmap> binaryBitmap(new zxing::BinaryBitmap(binarizer));
-            
             // Search for barcodes
-            zxing::Ref<zxing::MultiFormatReader> reader(new zxing::MultiFormatReader());
-            zxing::DecodeHints hints;
-            hints.addFormat(zxing::BarcodeFormat::QR_CODE);
-            hints.addFormat(zxing::BarcodeFormat::DATA_MATRIX);
-            hints.addFormat(zxing::BarcodeFormat::CODE_128);
-            hints.addFormat(zxing::BarcodeFormat::CODE_39);
-            hints.addFormat(zxing::BarcodeFormat::AZTEC);
-            hints.addFormat(zxing::BarcodeFormat::PDF_417);
-            hints.setTryHarder(true);           // rotate images in search of barcodes, etc.
+            ZXing::DecodeHints hints;
+            hints.setFormats(ZXing::BarcodeFormat::QR_CODE |
+                             ZXing::BarcodeFormat::DATA_MATRIX |
+                             ZXing::BarcodeFormat::CODE_128 |
+                             ZXing::BarcodeFormat::CODE_39 |
+                             ZXing::BarcodeFormat::AZTEC |
+                             ZXing::BarcodeFormat::PDF_417);
+            // rotate images in search of barcodes, etc.
+            hints.setTryRotate(true);
+            hints.setTryHarder(true);
             
-            zxing::Ref<zxing::Result> barcodeResult = reader->decode(binaryBitmap, hints);
-            text = [NSString stringWithUTF8String:barcodeResult->getText()->getText().c_str()];
+            ZXing::ImageView imageView((const uint8_t*)videoFrameImage->imageData,
+                                       videoFrameImage->width,
+                                       videoFrameImage->height,
+                                       ZXing::ImageFormat::BGRX);
+            ZXing::Result barcodeResult = ZXing::ReadBarcode(imageView, hints);
+            if (barcodeResult.isValid()) {
+                text = [[NSString alloc] initWithBytes:barcodeResult.text().data()
+                                                length:barcodeResult.text().size() * sizeof(wchar_t)
+                                              encoding:NS_WCHAR_ENCODING];
+            }
         } catch (...) {
-            // No barcode found or error binarizing image
+            RunLog(@"Barcode processing error. Ignoring.");
         }
         
         // Process and store the results when holding _queue
@@ -523,8 +521,6 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
                 [_delegate videoProcessor:self didCaptureBarcodeText:text atTime:[videoFrame presentationTime]];
             }
         });
-        
-        cvReleaseImage(&grayscaleImage);
     });
 }
 

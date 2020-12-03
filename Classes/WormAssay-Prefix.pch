@@ -2,10 +2,6 @@
 // Prefix header for all source files of the 'WormAssay' target in the 'WormAssay' project
 //
 
-#ifdef __cplusplus
-   // #import "opencv2/opencv.hpp"        // import first since there is a conflicting (but compatible) definition of MIN, etc.
-#endif
-
 #ifdef __OBJC__
     #import <Cocoa/Cocoa.h>
 #endif
