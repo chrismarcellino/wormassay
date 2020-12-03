@@ -9,9 +9,9 @@
 #import "WellFinding.hpp"
 #import <math.h>
 #import <dispatch/dispatch.h>
-#import "opencv2/core/core.hpp"
-#import "opencv2/imgproc/imgproc.hpp"
-#import "opencv2/imgproc/imgproc_c.h"
+#import <opencv2/core/core.hpp>
+#import <opencv2/imgproc/imgproc.hpp>
+#import <opencv2/imgproc/imgproc_c.h>
 #import "CvUtilities.hpp"
 
 static bool findWellCirclesForWellCounts(IplImage* inputImage, std::vector<int> wellCounts, std::vector<Circle> &circles);

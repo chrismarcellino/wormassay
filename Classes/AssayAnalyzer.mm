@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "opencv2/core/core_c.h"
+#import <opencv2/core/core_c.h>
 #import "VideoProcessorController.h"        // for run log
 
 static NSString *const IgnoreFramesPostMovementTimeIntervalKey = @"IgnoreFramesPostMovementTimeInterval";

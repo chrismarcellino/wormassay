@@ -8,7 +8,7 @@
 
 #import "BitmapOpenGLView.h"
 #import <OpenGL/glu.h>
-#import "opencv2/core/core_c.h"
+#import <opencv2/core/core_c.h>
 #import "VideoFrame.h"
 
 

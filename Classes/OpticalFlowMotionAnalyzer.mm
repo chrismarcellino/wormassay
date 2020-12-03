@@ -10,8 +10,8 @@
 #import "PlateData.h"
 #import "VideoFrame.h"
 #import "CvUtilities.hpp"
-#import "opencv2/imgproc/imgproc_c.h"
-#import "opencv2/video/tracking.hpp"
+#import <opencv2/imgproc/imgproc_c.h>
+#import <opencv2/video/tracking.hpp>
 
 // See comments below
 static void cvCalcOpticalFlowPyrLK_OpenCV2dot2(const void* arrA, const void* arrB,

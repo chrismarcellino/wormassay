@@ -8,7 +8,7 @@
 
 #import "VideoSourceDocument.h"
 #import <QuartzCore/QuartzCore.h>
-#import "opencv2/core/core_c.h"
+#import <opencv2/core/core_c.h>
 #import "BitmapOpenGLView.h"
 #import "VideoProcessorController.h"
 #import "VideoProcessor.h"

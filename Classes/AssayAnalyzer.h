@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "opencv2/core/core_c.h"
+#import <opencv2/core/core_c.h>
 
 // Shared defines
 NSTimeInterval IgnoreFramesPostMovementTimeInterval(void);

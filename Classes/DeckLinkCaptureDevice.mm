@@ -7,7 +7,7 @@
 //
 
 #import "DeckLinkCaptureDevice.h"
-#import "DeckLinkAPI.h"
+#import <DeckLinkAPI.h>
 
 using namespace std;
 

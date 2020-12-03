@@ -15,8 +15,8 @@
 #import "VideoProcessorController.h"   // for RunLog()
 #import <sys/sysctl.h>
 // OpenCV
-#import "opencv2/imgproc/types_c.h"
-#import "opencv2/imgproc/imgproc_c.h"
+#import <opencv2/imgproc/types_c.h>
+#import <opencv2/imgproc/imgproc_c.h>
 // ZXing
 #import "ReadBarcode.h"
 #import "BarcodeFormat.h"

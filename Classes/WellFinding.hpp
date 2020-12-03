@@ -7,7 +7,7 @@
 //
 
 #import <vector>
-#import "opencv2/core/core_c.h"
+#import <opencv2/core/core_c.h>
 
 // C compatible Circle structure
 typedef struct {

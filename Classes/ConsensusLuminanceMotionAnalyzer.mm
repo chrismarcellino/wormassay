@@ -10,8 +10,8 @@
 #import "PlateData.h"
 #import "VideoFrame.h"
 #import "CvUtilities.hpp"
-#import "opencv2/imgproc/types_c.h"
-#import "opencv2/imgproc/imgproc_c.h"
+#import <opencv2/imgproc/types_c.h>
+#import <opencv2/imgproc/imgproc_c.h>
 
 static const double WellEdgeFindingInsetProportion = 0.7;
 static const double PlateMovingProportionAboveThresholdLimit = 0.06;
