@@ -1,7 +1,7 @@
 [Download the latest release of WormAssay](https://github.com/chrismarcellino/wormassay/releases/latest) | [Read the manuscript](http://www.plosntds.org/article/info%3Adoi%2F10.1371%2Fjournal.pntd.0001494) | [Watch the video](http://vimeo.com/34962651)
 
 ## WormAssay
-WormAssay is a Mac application for the automated screening of the motility of macroscopic parasites and other organisms in 6 through 96 well microtiter plates. A variety of HD and better camera hardware is supported (QuickTime X compatible or Blackmagic capture devices) and a Mac running macOS 10.13 High Sierra or later is required. Both Intel (x86-64) and Apple Silicon (arm64) Macs are supported.
+WormAssay is a Mac application for the automated screening of the motility of macroscopic parasites and other organisms in 6 through 96 well microtiter plates. A variety of HD and better camera hardware is supported (QuickTime X compatible or Blackmagic capture devices) and a Mac running macOS 10.14 Mojave or later is required. Both Intel (x86-64) and Apple Silicon (arm64) Macs are supported.
 
 To use, download the latest WormAssay binary above (or build from source) and simply run the application and attach a camera (see below). Use the Options menu to choose a screening algorithm and to set the proper orientation of the plate so that it appears with A1 in the upper left on screen so that results are not transposed.
 
