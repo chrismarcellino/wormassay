@@ -33,10 +33,9 @@
     VideoFrame *image = [self image];
     
     if (image) {
-        CGContextRef context = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
         CGImageRef cgImage =  [image createCGImage];
         // Draw the image into the graphics context
-        CGContextDrawImage(context, [self bounds], cgImage);
+        CGContextDrawImage([[NSGraphicsContext currentContext] CGContext], [self bounds], cgImage);
         CGImageRelease(cgImage);
     } else {
         // Draw black

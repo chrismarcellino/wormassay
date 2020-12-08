@@ -2634,7 +2634,7 @@
 					"ThirdParty/zxing-1.1.1",
 					"ThirdParty/decklink-11.7",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
 			};
@@ -2683,7 +2683,7 @@
 					"ThirdParty/zxing-1.1.1",
 					"ThirdParty/decklink-11.7",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				SDKROOT = macosx;
 			};
 			name = Release;
