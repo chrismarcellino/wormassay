@@ -2538,8 +2538,6 @@
 		2190977C1357598D00EEE2BB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
-				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
 				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
 				PRODUCT_NAME = zxing;
 				SKIP_INSTALL = YES;
@@ -2549,8 +2547,6 @@
 		2190977D1357598D00EEE2BB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
-				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
 				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
 				PRODUCT_NAME = zxing;
 				SKIP_INSTALL = YES;
