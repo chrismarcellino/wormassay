@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import <CoreVideo/CoreVideo.h>
 #import <QuartzCore/QuartzCore.h>
+#import <CoreGraphics/CoreGraphics.h>
 #import <ApplicationServices/ApplicationServices.h>
 #import <opencv2/core/core_c.h>
 
@@ -25,6 +26,7 @@
 @property(readonly) IplImage *image;
 @property(readonly) NSTimeInterval presentationTime;
 
-- (NSData *)imageData;      // returned object retains parent during its lifetime
+- (NSData *)imageData;                           // returned object retains callee during its lifetime
+- (CGImageRef)createCGImage CF_RETURNS_RETAINED;   // returned object retains callee during its lifetime
 
 @end

@@ -2,7 +2,7 @@ Version 1.6.0
 -------------
 Update OpenCV modules used to final 2.x version (2.4.13.6).
 Update zxing-cpp to 1.1.1.
-Migrate from OpenGL to Metal.
+Remove unnecessary OpenGL blitting code.
 
 Version 1.5.3
 -------------

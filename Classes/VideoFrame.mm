@@ -86,6 +86,40 @@ static void YpCbCr422toBGRA8(uint8_t *src, uint8_t *dest, uint32_t width, uint32
     }];
 }
 
+- (CGImageRef)createCGImage
+{
+    // Generate the bitmap info:
+    // OpenCV uses BGRA, so tell CG to use XRGB in little endian mode to reverse it
+    CGBitmapInfo bitmapInfo = kCGBitmapByteOrder32Little;
+    if (_image->nChannels == 4) {
+        bitmapInfo |= kCGImageAlphaNoneSkipFirst; // can ignore the alpha channel when present since it is not used here
+    } else {
+        bitmapInfo |= kCGImageAlphaNone;
+    }
+    
+    // Create an RBG color space
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    
+    // Create the data provider (this does not retain the VideoFrame so must only be local in scope)
+    CGDataProviderRef dataProvider = CGDataProviderCreateWithCFData((CFDataRef)[self imageData]);
+    CGImageRef cgImage = CGImageCreate(_image->width,
+                                       _image->height,
+                                       _image->depth,
+                                       _image->depth * _image->nChannels,
+                                       _image->widthStep,
+                                       colorSpace,
+                                       bitmapInfo,
+                                       dataProvider,
+                                       NULL,
+                                       false,
+                                       kCGRenderingIntentDefault);
+    
+    CGDataProviderRelease(dataProvider);
+    CGColorSpaceRelease(colorSpace);
+    
+    return cgImage;
+}
+
 @end
 
 
