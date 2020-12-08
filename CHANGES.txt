@@ -8,7 +8,7 @@ Version 1.5.3
 -------------
 Fix mac OS 11 BigSur crash on launch due to missing NSCameraUsageDescription privacy key.
 Update built in camera detection to work with newer Apple Silicon hardware and be manufacturer dependent when API is available.
-Fix codesigning.
+Fix codesigning and notarization.
 
 Version 1.5.1
 -------------

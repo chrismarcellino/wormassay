@@ -428,12 +428,12 @@
 		21A3300B2578B06600E5B80E /* PerspectiveTransform.h in Headers */ = {isa = PBXBuildFile; fileRef = 21A32EE72578B06600E5B80E /* PerspectiveTransform.h */; };
 		21CC72061347EDD4001146DA /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CC72051347EDD4001146DA /* CoreVideo.framework */; };
 		21CC724913484A79001146DA /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CC724813484A79001146DA /* QuartzCore.framework */; };
-		21CC725E1348D40B001146DA /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CC725D1348D40B001146DA /* OpenGL.framework */; };
 		21E7790512D322A9006C1554 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 215AB59712CECC190047B13F /* Accelerate.framework */; };
+		21F1F0B9257EEE1E00BA1C09 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21F1F0B8257EEE1E00BA1C09 /* CoreGraphics.framework */; };
 		BE39A15518249FB800704CA3 /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE39A15418249FB800704CA3 /* OpenCL.framework */; };
 		BE3FA2FE180F40C2006BC68C /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE3FA2FD180F40C2006BC68C /* AVFoundation.framework */; };
 		BE3FA3001811DEEE006BC68C /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE3FA2FF1811DEEE006BC68C /* CoreMedia.framework */; };
-		BEB800C21A5E527F00FCE8D2 /* BitmapOpenGLView.m in Sources */ = {isa = PBXBuildFile; fileRef = BEB800C11A5E527F00FCE8D2 /* BitmapOpenGLView.m */; };
+		BEB800C21A5E527F00FCE8D2 /* BitmapView.m in Sources */ = {isa = PBXBuildFile; fileRef = BEB800C11A5E527F00FCE8D2 /* BitmapView.m */; };
 		BEB800CC1A5E52A000FCE8D2 /* PlateData.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEB800C51A5E52A000FCE8D2 /* PlateData.mm */; };
 		BEB800CD1A5E52A000FCE8D2 /* VideoFrame.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEB800C71A5E52A000FCE8D2 /* VideoFrame.mm */; };
 		BEB800CE1A5E52A000FCE8D2 /* VideoProcessor.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEB800C91A5E52A000FCE8D2 /* VideoProcessor.mm */; };
@@ -916,17 +916,17 @@
 		21C040DE25783008009BD442 /* WormAssay.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WormAssay.entitlements; sourceTree = "<group>"; };
 		21CC72051347EDD4001146DA /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		21CC724813484A79001146DA /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
-		21CC725D1348D40B001146DA /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		21E7790912D322A9006C1554 /* libOpenCV.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libOpenCV.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		21E779A012D323D6006C1554 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
+		21F1F0B8257EEE1E00BA1C09 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		BE39A15418249FB800704CA3 /* OpenCL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = System/Library/Frameworks/OpenCL.framework; sourceTree = SDKROOT; };
 		BE3FA2FD180F40C2006BC68C /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		BE3FA2FF1811DEEE006BC68C /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		BEB800BD1A5E410200FCE8D2 /* CHANGES.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CHANGES.txt; sourceTree = "<group>"; };
 		BEB800BE1A5E410200FCE8D2 /* LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 		BEB800BF1A5E410200FCE8D2 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		BEB800C01A5E527F00FCE8D2 /* BitmapOpenGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BitmapOpenGLView.h; path = Classes/BitmapOpenGLView.h; sourceTree = "<group>"; };
-		BEB800C11A5E527F00FCE8D2 /* BitmapOpenGLView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = BitmapOpenGLView.m; path = Classes/BitmapOpenGLView.m; sourceTree = "<group>"; };
+		BEB800C01A5E527F00FCE8D2 /* BitmapView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BitmapView.h; path = Classes/BitmapView.h; sourceTree = "<group>"; };
+		BEB800C11A5E527F00FCE8D2 /* BitmapView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = BitmapView.m; path = Classes/BitmapView.m; sourceTree = "<group>"; };
 		BEB800C31A5E52A000FCE8D2 /* CvUtilities.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = CvUtilities.hpp; path = Classes/CvUtilities.hpp; sourceTree = SOURCE_ROOT; };
 		BEB800C41A5E52A000FCE8D2 /* PlateData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PlateData.h; path = Classes/PlateData.h; sourceTree = SOURCE_ROOT; };
 		BEB800C51A5E52A000FCE8D2 /* PlateData.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = PlateData.mm; path = Classes/PlateData.mm; sourceTree = SOURCE_ROOT; };
@@ -982,10 +982,10 @@
 				21CC72061347EDD4001146DA /* CoreVideo.framework in Frameworks */,
 				21CC724913484A79001146DA /* QuartzCore.framework in Frameworks */,
 				BE3FA3001811DEEE006BC68C /* CoreMedia.framework in Frameworks */,
-				21CC725E1348D40B001146DA /* OpenGL.framework in Frameworks */,
 				218DD55313453FE0000B6475 /* libz.dylib in Frameworks */,
 				218DD54D13453FCE000B6475 /* libOpenCV.a in Frameworks */,
 				219098A413575A7400EEE2BB /* libzxing.a in Frameworks */,
+				21F1F0B9257EEE1E00BA1C09 /* CoreGraphics.framework in Frameworks */,
 				219099D21357A05C00EEE2BB /* libiconv.dylib in Frameworks */,
 				BE3FA2FE180F40C2006BC68C /* AVFoundation.framework in Frameworks */,
 				2190AF18135B6E4A00C3853B /* IOKit.framework in Frameworks */,
@@ -1750,8 +1750,8 @@
 		21A45B0A134F5F3800A075BF /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				BEB800C01A5E527F00FCE8D2 /* BitmapOpenGLView.h */,
-				BEB800C11A5E527F00FCE8D2 /* BitmapOpenGLView.m */,
+				BEB800C01A5E527F00FCE8D2 /* BitmapView.h */,
+				BEB800C11A5E527F00FCE8D2 /* BitmapView.m */,
 			);
 			name = Views;
 			sourceTree = "<group>";
@@ -1841,9 +1841,9 @@
 			children = (
 				218DD53213453FC5000B6475 /* Cocoa.framework */,
 				1D30AB110D05D00D00671497 /* Foundation.framework */,
+				21F1F0B8257EEE1E00BA1C09 /* CoreGraphics.framework */,
 				21CC724813484A79001146DA /* QuartzCore.framework */,
 				BE39A15418249FB800704CA3 /* OpenCL.framework */,
-				21CC725D1348D40B001146DA /* OpenGL.framework */,
 				BE3FA2FD180F40C2006BC68C /* AVFoundation.framework */,
 				BE3FA2FF1811DEEE006BC68C /* CoreMedia.framework */,
 				21CC72051347EDD4001146DA /* CoreVideo.framework */,
@@ -2194,7 +2194,7 @@
 				BEB800CC1A5E52A000FCE8D2 /* PlateData.mm in Sources */,
 				BEB800CD1A5E52A000FCE8D2 /* VideoFrame.mm in Sources */,
 				BEB800CF1A5E52A000FCE8D2 /* WellFinding.cpp in Sources */,
-				BEB800C21A5E527F00FCE8D2 /* BitmapOpenGLView.m in Sources */,
+				BEB800C21A5E527F00FCE8D2 /* BitmapView.m in Sources */,
 				BEE1CAD71A5E565300F77BF0 /* main.m in Sources */,
 				BEB800ED1A5E530400FCE8D2 /* DeckLinkCaptureDevice.mm in Sources */,
 				BEB800CE1A5E52A000FCE8D2 /* VideoProcessor.mm in Sources */,

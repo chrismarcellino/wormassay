@@ -25,4 +25,6 @@
 @property(readonly) IplImage *image;
 @property(readonly) NSTimeInterval presentationTime;
 
+- (NSData *)imageData;      // returned object retains parent during its lifetime
+
 @end

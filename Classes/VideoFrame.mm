@@ -77,6 +77,15 @@ static void YpCbCr422toBGRA8(uint8_t *src, uint8_t *dest, uint32_t width, uint32
     return [self initWithIplImageTakingOwnership:iplImage presentationTime:presentationTime];
 }
 
+- (NSData *)imageData
+{
+    return [[NSData alloc] initWithBytesNoCopy:_image->imageData
+                                        length:_image->imageSize
+                                   deallocator:^(void * _Nonnull bytes, NSUInteger length) {
+        [self class];       // explicitly retain self so we can ensure the backing bytes are valid during the lifetime of the NSData
+    }];
+}
+
 @end
 
 

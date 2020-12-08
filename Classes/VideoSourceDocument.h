@@ -13,7 +13,7 @@
 #import "DeckLinkCaptureDevice.h"
 
 @class VideoProcessor;
-@class BitmapOpenGLView;
+@class BitmapView;
 
 extern NSString *const CaptureDeviceWasConnectedOrDisconnectedNotification;
 
@@ -29,7 +29,7 @@ extern NSString *const BlackmagicDeckLinkCaptureDeviceFileType;
     dispatch_queue_t _frameArrivalQueue;
     
     VideoProcessor *_processor;
-    BitmapOpenGLView *_bitmapOpenGLView;
+    BitmapView *_bitmapMetalView;
     
     BOOL _closeCalled;
     NSSize _frameSize;

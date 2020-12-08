@@ -9,7 +9,7 @@
 #import "VideoSourceDocument.h"
 #import <QuartzCore/QuartzCore.h>
 #import <opencv2/core/core_c.h>
-#import "BitmapOpenGLView.h"
+#import "BitmapView.h"
 #import "VideoProcessorController.h"
 #import "VideoProcessor.h"
 #import "VideoFrame.h"
@@ -159,7 +159,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 {
     if ((self = [super init])) {
         [self setHasUndoManager:NO];
-        _bitmapOpenGLView = [[BitmapOpenGLView alloc] init];
+        _bitmapMetalView = [[BitmapView alloc] init];
         _frameArrivalQueue = dispatch_queue_create("frame-arrival-queue", NULL);
     }
     
@@ -217,8 +217,8 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     [window disableSnapshotRestoration];
     
     // Insert the bitmap view into the window (the view is created in init so that it is safe to access by the capture threads without locking)
-    [_bitmapOpenGLView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-    [window setContentView:_bitmapOpenGLView];
+    [_bitmapMetalView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+    [window setContentView:_bitmapMetalView];
     
     // Create the window controller
     NSWindowController *windowController = [[NSWindowController alloc] initWithWindow:window];
@@ -580,7 +580,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     // Use CPU (Mach) time to ensure a monotonically increasing time. It can later be subtracted from the current time to determine the sample time/date.
     VideoFrame *image = [[VideoFrame alloc] initByCopyingCVPixelBuffer:pixelBuffer naturalSize:[self frameSize] presentationTime:CACurrentMediaTime()];
     [_processor processVideoFrame:image debugFrameCallback:^(VideoFrame *image) {
-        [_bitmapOpenGLView renderImage:image];
+        [_bitmapMetalView renderImage:image];
     }];
 }
 
