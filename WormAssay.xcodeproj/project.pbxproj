@@ -916,6 +916,9 @@
 		21C040DE25783008009BD442 /* WormAssay.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WormAssay.entitlements; sourceTree = "<group>"; };
 		21CC72051347EDD4001146DA /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		21CC724813484A79001146DA /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		21DF5A54258D530100D4C272 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LoggingAndNotificationsSettings.xib; sourceTree = "<group>"; };
+		21DF5A55258D530100D4C272 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LoggingPanel.xib; sourceTree = "<group>"; };
+		21DF5A56258D530100D4C272 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		21E7790912D322A9006C1554 /* libOpenCV.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libOpenCV.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		21E779A012D323D6006C1554 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
 		21F1F0B8257EEE1E00BA1C09 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -964,9 +967,6 @@
 		BEE1CAD61A5E565300F77BF0 /* WormAssay-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "WormAssay-Prefix.pch"; path = "Classes/WormAssay-Prefix.pch"; sourceTree = "<group>"; };
 		BEE1CAE11A5E570C00F77BF0 /* Worm.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = Worm.icns; path = Classes/Resources/Worm.icns; sourceTree = SOURCE_ROOT; };
 		BEE1CAE81A5E571F00F77BF0 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = Classes/Resources/en.lproj/Credits.rtf; sourceTree = SOURCE_ROOT; };
-		BEE1CAEA1A5E571F00F77BF0 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = Classes/Resources/en.lproj/LoggingAndNotificationsSettings.xib; sourceTree = SOURCE_ROOT; };
-		BEE1CAEC1A5E571F00F77BF0 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = Classes/Resources/en.lproj/LoggingPanel.xib; sourceTree = SOURCE_ROOT; };
-		BEE1CAEE1A5E571F00F77BF0 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = Classes/Resources/en.lproj/MainMenu.xib; sourceTree = SOURCE_ROOT; };
 		BEE1CAF31A5E573A00F77BF0 /* WormAssay-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "WormAssay-Info.plist"; path = "Classes/WormAssay-Info.plist"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
@@ -2140,7 +2140,7 @@
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1220;
+				LastUpgradeCheck = 1230;
 				ORGANIZATIONNAME = "Chris Marcellino";
 				TargetAttributes = {
 					218DD52F13453FC5000B6475 = {
@@ -2150,11 +2150,11 @@
 			};
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "WormAssay" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 1;
 			knownRegions = (
-				English,
 				en,
+				Base,
 			);
 			mainGroup = 29B97314FDCFA39411CA2CEA /* CustomTemplate */;
 			projectDirPath = "";
@@ -2456,7 +2456,7 @@
 		BEE1CAE91A5E571F00F77BF0 /* LoggingAndNotificationsSettings.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
-				BEE1CAEA1A5E571F00F77BF0 /* en */,
+				21DF5A54258D530100D4C272 /* Base */,
 			);
 			name = LoggingAndNotificationsSettings.xib;
 			sourceTree = "<group>";
@@ -2464,7 +2464,7 @@
 		BEE1CAEB1A5E571F00F77BF0 /* LoggingPanel.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
-				BEE1CAEC1A5E571F00F77BF0 /* en */,
+				21DF5A55258D530100D4C272 /* Base */,
 			);
 			name = LoggingPanel.xib;
 			sourceTree = "<group>";
@@ -2472,7 +2472,7 @@
 		BEE1CAED1A5E571F00F77BF0 /* MainMenu.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
-				BEE1CAEE1A5E571F00F77BF0 /* en */,
+				21DF5A56258D530100D4C272 /* Base */,
 			);
 			name = MainMenu.xib;
 			sourceTree = "<group>";
@@ -2610,6 +2610,7 @@
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = NO;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
@@ -2658,6 +2659,7 @@
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = NO;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
