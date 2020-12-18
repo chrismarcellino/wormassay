@@ -1,7 +1,7 @@
-Version 1.6.1
+Version 1.6.2
 -------------
 Dark mode support on macOS Mojave and later (minor changes to make logging text readable.)
-Remove unused framework dependencies and update XIB files to current normal. 
+Remove unused framework dependencies, deprecated build settings and update XIB files to current formats
 
 Version 1.6.0
 -------------
