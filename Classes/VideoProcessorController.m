@@ -479,11 +479,10 @@ willStopRecordingToOutputFileURL:(NSURL *)outputFileURL     // nil if not record
         [textView frame].size.height <= [scrollView frame].size.height ||
         [[scrollView verticalScroller] floatValue] >= 1.0;
         
-        if (!_runLogTextAttributes) {
-            _runLogTextAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:
-                                     [NSFont fontWithName:@"Menlo Regular" size:12], NSFontAttributeName, nil];
-        }
-        NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:string attributes:_runLogTextAttributes];
+        NSDictionary * runLogTextAttributes = @{ NSFontAttributeName : [NSFont fontWithName:@"Menlo Regular" size:12],
+                                                 NSForegroundColorAttributeName : [NSColor textColor] };
+        NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:string
+                                                                               attributes:runLogTextAttributes];
         NSTextStorage *textStorage = [textView textStorage];
         [textStorage beginEditing];
         [textStorage appendAttributedString:attributedString];

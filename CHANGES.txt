@@ -1,3 +1,8 @@
+Version 1.6.1
+-------------
+Dark mode support on macOS Mojave and later (minor changes to make logging text readable.)
+Xcode project configuration updates for ease of building.
+
 Version 1.6.0
 -------------
 Update OpenCV modules used to final 2.x version (2.4.13.6).

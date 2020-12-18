@@ -25,8 +25,6 @@
     NSString *_currentOutputFilenamePrefix;
     NSString *_runID;
     NSTimeInterval _currentOutputLastWriteTime;     // in CPU time
-    
-    NSDictionary *_runLogTextAttributes;    // main thread only
 }
 
 + (VideoProcessorController *)sharedInstance;
