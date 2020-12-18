@@ -10,7 +10,6 @@
 		218DD53313453FC5000B6475 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD53213453FC5000B6475 /* Cocoa.framework */; };
 		218DD54D13453FCE000B6475 /* libOpenCV.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 21E7790912D322A9006C1554 /* libOpenCV.a */; };
 		218DD54E13453FD3000B6475 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
-		218DD55113453FDD000B6475 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21E779A012D323D6006C1554 /* ApplicationServices.framework */; };
 		218DD55313453FE0000B6475 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD5271345253D000B6475 /* libz.dylib */; };
 		219098A413575A7400EEE2BB /* libzxing.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2190977E1357598D00EEE2BB /* libzxing.a */; };
 		219099D21357A05C00EEE2BB /* libiconv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 219099D01357A05300EEE2BB /* libiconv.dylib */; };
@@ -917,7 +916,6 @@
 		21DF5A55258D530100D4C272 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LoggingPanel.xib; sourceTree = "<group>"; };
 		21DF5A56258D530100D4C272 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		21E7790912D322A9006C1554 /* libOpenCV.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libOpenCV.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		21E779A012D323D6006C1554 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.1.sdk/System/Library/Frameworks/ApplicationServices.framework; sourceTree = "<absolute>"; };
 		21F1F0B8257EEE1E00BA1C09 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		BE39A15418249FB800704CA3 /* OpenCL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = System/Library/Frameworks/OpenCL.framework; sourceTree = SDKROOT; };
 		BE3FA2FD180F40C2006BC68C /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
@@ -974,7 +972,6 @@
 			files = (
 				218DD54E13453FD3000B6475 /* Foundation.framework in Frameworks */,
 				218DD53313453FC5000B6475 /* Cocoa.framework in Frameworks */,
-				218DD55113453FDD000B6475 /* ApplicationServices.framework in Frameworks */,
 				21CC72061347EDD4001146DA /* CoreVideo.framework in Frameworks */,
 				21CC724913484A79001146DA /* QuartzCore.framework in Frameworks */,
 				BE3FA3001811DEEE006BC68C /* CoreMedia.framework in Frameworks */,
@@ -1842,7 +1839,6 @@
 				BE3FA2FD180F40C2006BC68C /* AVFoundation.framework */,
 				BE3FA2FF1811DEEE006BC68C /* CoreMedia.framework */,
 				21CC72051347EDD4001146DA /* CoreVideo.framework */,
-				21E779A012D323D6006C1554 /* ApplicationServices.framework */,
 				218DD53513453FC5000B6475 /* AppKit.framework */,
 				2190AF17135B6E4A00C3853B /* IOKit.framework */,
 				219099D01357A05300EEE2BB /* libiconv.dylib */,

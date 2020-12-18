@@ -10,7 +10,7 @@
 #import <CoreVideo/CoreVideo.h>
 #import <QuartzCore/QuartzCore.h>
 #import <CoreGraphics/CoreGraphics.h>
-#import <ApplicationServices/ApplicationServices.h>
+//#import <ApplicationServices/ApplicationServices.h>
 #import <opencv2/core/core_c.h>
 
 // A reference-counted wrapper over IplImage to avoid unnecessary memory copying during the image pipeline.
