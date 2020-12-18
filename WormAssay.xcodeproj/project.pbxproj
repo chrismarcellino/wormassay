@@ -3,18 +3,13 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		218DD53313453FC5000B6475 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD53213453FC5000B6475 /* Cocoa.framework */; };
 		218DD54D13453FCE000B6475 /* libOpenCV.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 21E7790912D322A9006C1554 /* libOpenCV.a */; };
-		218DD54E13453FD3000B6475 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
-		218DD55113453FDD000B6475 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21E779A012D323D6006C1554 /* ApplicationServices.framework */; };
-		218DD55213453FDE000B6475 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 215AB59712CECC190047B13F /* Accelerate.framework */; };
-		218DD55313453FE0000B6475 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD5271345253D000B6475 /* libz.dylib */; };
 		219098A413575A7400EEE2BB /* libzxing.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2190977E1357598D00EEE2BB /* libzxing.a */; };
-		219099D21357A05C00EEE2BB /* libiconv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 219099D01357A05300EEE2BB /* libiconv.dylib */; };
 		2190AF18135B6E4A00C3853B /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2190AF17135B6E4A00C3853B /* IOKit.framework */; };
 		21A326B82578573E00E5B80E /* DeckLinkAPIDispatch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21A326972578573E00E5B80E /* DeckLinkAPIDispatch.cpp */; };
 		21A3285F2578578600E5B80E /* tracking.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 21A327D62578578600E5B80E /* tracking.hpp */; };
@@ -426,9 +421,12 @@
 		21A330092578B06600E5B80E /* ZXBigInteger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21A32EE52578B06600E5B80E /* ZXBigInteger.cpp */; };
 		21A3300A2578B06600E5B80E /* ResultPoint.h in Headers */ = {isa = PBXBuildFile; fileRef = 21A32EE62578B06600E5B80E /* ResultPoint.h */; };
 		21A3300B2578B06600E5B80E /* PerspectiveTransform.h in Headers */ = {isa = PBXBuildFile; fileRef = 21A32EE72578B06600E5B80E /* PerspectiveTransform.h */; };
+		21A5298C258D6AA800FF7EA4 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD5271345253D000B6475 /* libz.dylib */; };
+		21A5298D258D6AAA00FF7EA4 /* libiconv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 219099D01357A05300EEE2BB /* libiconv.dylib */; };
+		21A52994258D6AD100FF7EA4 /* libiconv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 219099D01357A05300EEE2BB /* libiconv.dylib */; };
+		21A52995258D6AD300FF7EA4 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD5271345253D000B6475 /* libz.dylib */; };
 		21CC72061347EDD4001146DA /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CC72051347EDD4001146DA /* CoreVideo.framework */; };
 		21CC724913484A79001146DA /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CC724813484A79001146DA /* QuartzCore.framework */; };
-		21E7790512D322A9006C1554 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 215AB59712CECC190047B13F /* Accelerate.framework */; };
 		21F1F0B9257EEE1E00BA1C09 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21F1F0B8257EEE1E00BA1C09 /* CoreGraphics.framework */; };
 		BE39A15518249FB800704CA3 /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE39A15418249FB800704CA3 /* OpenCL.framework */; };
 		BE3FA2FE180F40C2006BC68C /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BE3FA2FD180F40C2006BC68C /* AVFoundation.framework */; };
@@ -488,12 +486,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		215AB59712CECC190047B13F /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		218DD5271345253D000B6475 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 		218DD53013453FC5000B6475 /* WormAssay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WormAssay.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		218DD53213453FC5000B6475 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
-		218DD53513453FC5000B6475 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		2190977E1357598D00EEE2BB /* libzxing.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libzxing.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		219099D01357A05300EEE2BB /* libiconv.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.dylib; path = usr/lib/libiconv.dylib; sourceTree = SDKROOT; };
 		2190AF17135B6E4A00C3853B /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
@@ -920,7 +915,6 @@
 		21DF5A55258D530100D4C272 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LoggingPanel.xib; sourceTree = "<group>"; };
 		21DF5A56258D530100D4C272 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		21E7790912D322A9006C1554 /* libOpenCV.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libOpenCV.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		21E779A012D323D6006C1554 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = System/Library/Frameworks/ApplicationServices.framework; sourceTree = SDKROOT; };
 		21F1F0B8257EEE1E00BA1C09 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		BE39A15418249FB800704CA3 /* OpenCL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = System/Library/Frameworks/OpenCL.framework; sourceTree = SDKROOT; };
 		BE3FA2FD180F40C2006BC68C /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
@@ -964,7 +958,6 @@
 		BEB800EA1A5E530400FCE8D2 /* WormAssayAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WormAssayAppDelegate.h; path = Classes/WormAssayAppDelegate.h; sourceTree = SOURCE_ROOT; };
 		BEB800EB1A5E530400FCE8D2 /* WormAssayAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = WormAssayAppDelegate.m; path = Classes/WormAssayAppDelegate.m; sourceTree = SOURCE_ROOT; };
 		BEE1CAD51A5E565300F77BF0 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = Classes/main.m; sourceTree = "<group>"; };
-		BEE1CAD61A5E565300F77BF0 /* WormAssay-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "WormAssay-Prefix.pch"; path = "Classes/WormAssay-Prefix.pch"; sourceTree = "<group>"; };
 		BEE1CAE11A5E570C00F77BF0 /* Worm.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = Worm.icns; path = Classes/Resources/Worm.icns; sourceTree = SOURCE_ROOT; };
 		BEE1CAE81A5E571F00F77BF0 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = Classes/Resources/en.lproj/Credits.rtf; sourceTree = SOURCE_ROOT; };
 		BEE1CAF31A5E573A00F77BF0 /* WormAssay-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "WormAssay-Info.plist"; path = "Classes/WormAssay-Info.plist"; sourceTree = SOURCE_ROOT; };
@@ -975,20 +968,17 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				218DD54E13453FD3000B6475 /* Foundation.framework in Frameworks */,
+				21A52995258D6AD300FF7EA4 /* libz.dylib in Frameworks */,
 				218DD53313453FC5000B6475 /* Cocoa.framework in Frameworks */,
-				218DD55113453FDD000B6475 /* ApplicationServices.framework in Frameworks */,
-				218DD55213453FDE000B6475 /* Accelerate.framework in Frameworks */,
 				21CC72061347EDD4001146DA /* CoreVideo.framework in Frameworks */,
 				21CC724913484A79001146DA /* QuartzCore.framework in Frameworks */,
 				BE3FA3001811DEEE006BC68C /* CoreMedia.framework in Frameworks */,
-				218DD55313453FE0000B6475 /* libz.dylib in Frameworks */,
-				218DD54D13453FCE000B6475 /* libOpenCV.a in Frameworks */,
-				219098A413575A7400EEE2BB /* libzxing.a in Frameworks */,
+				21A52994258D6AD100FF7EA4 /* libiconv.dylib in Frameworks */,
 				21F1F0B9257EEE1E00BA1C09 /* CoreGraphics.framework in Frameworks */,
-				219099D21357A05C00EEE2BB /* libiconv.dylib in Frameworks */,
 				BE3FA2FE180F40C2006BC68C /* AVFoundation.framework in Frameworks */,
 				2190AF18135B6E4A00C3853B /* IOKit.framework in Frameworks */,
+				218DD54D13453FCE000B6475 /* libOpenCV.a in Frameworks */,
+				219098A413575A7400EEE2BB /* libzxing.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1003,8 +993,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				21E7790512D322A9006C1554 /* Accelerate.framework in Frameworks */,
+				21A5298D258D6AAA00FF7EA4 /* libiconv.dylib in Frameworks */,
 				BE39A15518249FB800704CA3 /* OpenCL.framework in Frameworks */,
+				21A5298C258D6AA800FF7EA4 /* libz.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1830,7 +1821,6 @@
 			isa = PBXGroup;
 			children = (
 				BEE1CAD51A5E565300F77BF0 /* main.m */,
-				BEE1CAD61A5E565300F77BF0 /* WormAssay-Prefix.pch */,
 				21C040DE25783008009BD442 /* WormAssay.entitlements */,
 			);
 			name = "Other Sources";
@@ -1840,16 +1830,12 @@
 			isa = PBXGroup;
 			children = (
 				218DD53213453FC5000B6475 /* Cocoa.framework */,
-				1D30AB110D05D00D00671497 /* Foundation.framework */,
 				21F1F0B8257EEE1E00BA1C09 /* CoreGraphics.framework */,
 				21CC724813484A79001146DA /* QuartzCore.framework */,
 				BE39A15418249FB800704CA3 /* OpenCL.framework */,
 				BE3FA2FD180F40C2006BC68C /* AVFoundation.framework */,
 				BE3FA2FF1811DEEE006BC68C /* CoreMedia.framework */,
 				21CC72051347EDD4001146DA /* CoreVideo.framework */,
-				21E779A012D323D6006C1554 /* ApplicationServices.framework */,
-				215AB59712CECC190047B13F /* Accelerate.framework */,
-				218DD53513453FC5000B6475 /* AppKit.framework */,
 				2190AF17135B6E4A00C3853B /* IOKit.framework */,
 				219099D01357A05300EEE2BB /* libiconv.dylib */,
 				218DD5271345253D000B6475 /* libz.dylib */,
@@ -2149,7 +2135,7 @@
 				};
 			};
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "WormAssay" */;
-			compatibilityVersion = "Xcode 3.2";
+			compatibilityVersion = "Xcode 12.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 1;
 			knownRegions = (
@@ -2486,15 +2472,13 @@
 				CODE_SIGN_ENTITLEMENTS = WormAssay.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 1.6.1;
+				CURRENT_PROJECT_VERSION = 1.6.2;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "Classes/WormAssay-Prefix.pch";
 				INFOPLIST_FILE = "Classes/WormAssay-Info.plist";
-				MARKETING_VERSION = 1.6.1;
+				MARKETING_VERSION = 1.6.2;
 				PRODUCT_BUNDLE_IDENTIFIER = org.chrismarcellino.wormassay;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -2515,14 +2499,12 @@
 				CODE_SIGN_ENTITLEMENTS = WormAssay.entitlements;
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 1.6.1;
+				CURRENT_PROJECT_VERSION = 1.6.2;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 94XJ98ESL8;
 				ENABLE_HARDENED_RUNTIME = YES;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "Classes/WormAssay-Prefix.pch";
 				INFOPLIST_FILE = "Classes/WormAssay-Info.plist";
-				MARKETING_VERSION = 1.6.1;
+				MARKETING_VERSION = 1.6.2;
 				PRODUCT_BUNDLE_IDENTIFIER = org.chrismarcellino.wormassay;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -2560,7 +2542,6 @@
 		21E7790712D322A9006C1554 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				FRAMEWORK_SEARCH_PATHS = "${SDK_DIR}/System/Library/Frameworks/Accelerate.framework/Frameworks";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					HAVE_ALLOCA,
 					HAVE_ALLOCA_H,
@@ -2578,7 +2559,6 @@
 		21E7790812D322A9006C1554 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				FRAMEWORK_SEARCH_PATHS = "${SDK_DIR}/System/Library/Frameworks/Accelerate.framework/Frameworks";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					HAVE_ALLOCA,
 					HAVE_ALLOCA_H,
