@@ -500,10 +500,8 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
         
         // Do processing work on another queue so the arrival queue isn't blocked and new frames can be dropped in the interim
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            @autoreleasepool {
-                [self processPixelBufferSynchronously:pixelBuffer];
-                CVPixelBufferRelease(pixelBuffer);
-            }
+            [self processPixelBufferSynchronously:pixelBuffer];
+            CVPixelBufferRelease(pixelBuffer);
             
             // Mark that we're done
             dispatch_sync(_frameArrivalQueue, ^{

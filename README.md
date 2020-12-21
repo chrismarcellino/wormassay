@@ -44,5 +44,3 @@ UCSF Center for Discovery and Innovation in Parasitic Diseases, UCSF QB3
 [OpenCV](http://opencv.org)
 
 [Blackmagic Design](http://www.blackmagicdesign.com)
-
-[ZXing](https://code.google.com/p/zxing/)

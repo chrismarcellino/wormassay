@@ -146,7 +146,7 @@ static bool findWellCirclesForWellCountsUsingImage(IplImage* image,
     
     // Execute searches for different plate sizes in parallel
     dispatch_queue_t criticalSection = dispatch_queue_create(NULL, NULL);
-    dispatch_apply(wellCounts.size(), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(size_t i){
+    dispatch_apply(wellCounts.size(), DISPATCH_APPLY_AUTO, ^(size_t i){
         std::vector<Circle> currentCircles;
         double currentScore;
         bool currentSuccess = findWellCirclesForWellCountUsingImage(image, wellCounts[i], currentCircles, currentScore, expectedRadius);

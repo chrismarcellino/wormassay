@@ -1,3 +1,7 @@
+Version 1.6.3
+-------------
+Use Vision (built-in macOS library) for barcode reading, and remove zxing-cpp project.
+
 Version 1.6.2
 -------------
 Dark mode support on macOS Mojave and later (minor changes to make logging text readable.)

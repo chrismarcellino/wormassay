@@ -14,12 +14,10 @@
 #import "WellFinding.hpp"
 #import "VideoProcessorController.h"   // for RunLog()
 #import <sys/sysctl.h>
+#import <Vision/Vision.h>
 // OpenCV
 #import <opencv2/imgproc/types_c.h>
 #import <opencv2/imgproc/imgproc_c.h>
-// ZXing
-#import "ReadBarcode.h"
-#import "BarcodeFormat.h"
 
 #if BYTE_ORDER == BIG_ENDIAN
 #define NS_WCHAR_ENCODING NSUTF32BigEndianStringEncoding
@@ -30,7 +28,7 @@
 
 static const NSTimeInterval MinimumWellMatchTimeToBeginTracking = 0.500; // 500 ms
 static const NSTimeInterval BarcodeScanningPeriod = 0.5;
-static const NSTimeInterval BarcodeRepeatSuccessCount = 3;
+static const NSTimeInterval BarcodeRepeatSuccessCount = 3;      // to avoid incidental capture
 static const NSTimeInterval PresentationTimeDistantPast = -DBL_MAX;
 static const double WellDetectingAverageDeltaEndIdleThreshold = 5.0;
 static const NSTimeInterval WellDetectingUnconditionalSearchPeriod = 10.0;
@@ -85,7 +83,7 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
     ProcessingState _processingState;
     int _wellCountHint;
     CvScalar _lastWellAnalyzedFrameAverageValues;
-    NSTimeInterval _firstWellFrameTime;     // not the begining of tracking
+    NSTimeInterval _firstWellFrameTime;     // not the beginning of tracking
     NSTimeInterval _lastBarcodeScanTime;
     NSTimeInterval _lastWellAnalysisBeginTime;  // the last time a well finding analysis was started. used to do idling when no plates present.
     // These two are used only for the optional time lapse feature
@@ -171,14 +169,18 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
             [_plateData incrementReceivedFrameCount];
         }
         
-        // Always look for barcodes since another camera might have a plate.
-        // Do this before flipping so we aren't flipping any barcodes. 
+        // Always look for barcodes since another camera might have a plate. Do this before rotating/flipping
+        // since barcode stickers should always be plainly visible by a camera (except simple rotation may be needed.)
         if (!_scanningForBarcodes && _lastBarcodeScanTime < [videoFrame presentationTime] - BarcodeScanningPeriod) {
-            VideoFrame *copy = [videoFrame copy];
-            [self performBarcodeReadingAsyncWithFrame:copy];
+            _scanningForBarcodes = YES;
+            VideoFrame *copy = [videoFrame copy];       // copy prior to dispatching since we are going to flip the data below
+            // Perform the calculation on a concurrent queue so that we don't block the current thread
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                [self performBarcodeReadingSynchronouslyWithFrame:copy];
+            });
         }
         
-        // Rotate image if necessary
+        // Flip/rotate image if necessary
         BOOL flip = NO;
         int flipMode;
         switch (_plateOrientation) {
@@ -211,7 +213,7 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
                                     ABS(currentAvg.val[1] - _lastWellAnalyzedFrameAverageValues.val[1]) +
                                     ABS(currentAvg.val[2] - _lastWellAnalyzedFrameAverageValues.val[2]) / 3;
             
-            // Always scan if we are not idle, and scan if the average values change signifigantly or if we haven't scanned in a while
+            // Always scan if we are not idle, and scan if the average values change significantly or if we haven't scanned in a while
             if (_processingState != ProcessingStateNoPlate ||
                 averageDelta > WellDetectingAverageDeltaEndIdleThreshold ||
                 _lastWellAnalysisBeginTime + WellDetectingUnconditionalSearchPeriod < CACurrentMediaTime()) {
@@ -219,8 +221,7 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
                 _lastWellAnalysisBeginTime = CACurrentMediaTime();
                 _lastWellAnalyzedFrameAverageValues = currentAvg;
                 
-                VideoFrame *copy = [videoFrame copy];
-                [self performWellDeterminationCalculationAsyncWithFrame:copy];
+                [self performWellDeterminationCalculationAsyncWithFrame:videoFrame];
             }
         }
         
@@ -279,7 +280,7 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
                 // a 2.1 ghz Core 2 Duo (with 2 virtual/physical cores) decreased performance 50% due to contention with decoding threads.
                 size_t iterations = _trackingWellCircles.size() > 0 ? _trackingWellCircles.size() : 1;      // i.e. wells
                 if ([_assayAnalyzer canProcessInParallel] && numberOfPhysicalCPUS() >= 4) {
-                    dispatch_apply(iterations, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), processWellBlock);
+                    dispatch_apply(iterations, DISPATCH_APPLY_AUTO, processWellBlock);
                 } else {
                     for (size_t i = 0; i < iterations; i++) {
                         processWellBlock(i);
@@ -317,7 +318,7 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
                 }
             }
             
-            // Print performance statistics. The mean/stddev are for just the procesing time. The frame rate is the total net rate.
+            // Print performance statistics. The mean/stddev are for just the processing time. The frame rate is the total net rate.
             double mean, stddev;
             if ([_plateData processingTimeMean:&mean stdDev:&stddev inLastFrames:15]) {
                 char text[100];
@@ -467,65 +468,68 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
     });
 }
 
-// requires _queue to be held
-- (void)performBarcodeReadingAsyncWithFrame:(VideoFrame *)videoFrame
+- (void)performBarcodeReadingSynchronouslyWithFrame:(VideoFrame *)videoFrame
 {
-    _scanningForBarcodes = YES;
+    CGImageRef cgImage = [videoFrame createCGImage];
     
-    // Perform the calculation on a concurrent queue so that we don't block the current thread
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        IplImage *videoFrameImage = [videoFrame image];
-        NSString *text = nil;
-        try {
-            // Search for barcodes
-            ZXing::DecodeHints hints;
-            hints.setFormats(ZXing::BarcodeFormat::QR_CODE |
-                             ZXing::BarcodeFormat::DATA_MATRIX |
-                             ZXing::BarcodeFormat::CODE_128 |
-                             ZXing::BarcodeFormat::CODE_39 |
-                             ZXing::BarcodeFormat::AZTEC |
-                             ZXing::BarcodeFormat::PDF_417);
-            // rotate images in search of barcodes, etc.
-            hints.setTryRotate(true);
-            hints.setTryHarder(true);
-            
-            ZXing::ImageView imageView((const uint8_t*)videoFrameImage->imageData,
-                                       videoFrameImage->width,
-                                       videoFrameImage->height,
-                                       ZXing::ImageFormat::BGRX);
-            ZXing::Result barcodeResult = ZXing::ReadBarcode(imageView, hints);
-            if (barcodeResult.isValid()) {
-                text = [[NSString alloc] initWithBytes:barcodeResult.text().data()
-                                                length:barcodeResult.text().size() * sizeof(wchar_t)
-                                              encoding:NS_WCHAR_ENCODING];
-            }
-        } catch (...) {
-            RunLog(@"Barcode processing error. Ignoring.");
+    // Create the request
+    VNDetectBarcodesRequest *request = [[VNDetectBarcodesRequest alloc] initWithCompletionHandler:NULL];
+    NSArray *requestArray = @[ request ];
+    VNSequenceRequestHandler *handler = [[VNSequenceRequestHandler alloc] init];
+    
+    // (These are the pure rotations. We don't need to flip since the image is coming straight from a camera and is a barcode label.)
+    CGImagePropertyOrientation orientations[] = {
+        kCGImagePropertyOrientationUp,
+        kCGImagePropertyOrientationDown,
+        kCGImagePropertyOrientationRight,
+        kCGImagePropertyOrientationLeft
+    };
+    // Perform the request in all orientations since the barcode may not match the reading orientation and use the highest confidence result.
+    VNBarcodeObservation *bestObservation = nil;
+    for (NSUInteger i = 0; i < sizeof(orientations) / sizeof(*orientations); i++) {
+        NSError *error = nil;
+        if (![handler performRequests:requestArray onCGImage:cgImage orientation:orientations[i] error:&error]) {
+            RunLog(@"Error creating barcode reading request: %@ (orientation %u)", error, orientations[i]);
         }
-        
-        // Process and store the results when holding _queue
-        dispatch_async(_queue, ^{
-            _scanningForBarcodes = NO;
-            _lastBarcodeScanTime = [videoFrame presentationTime];
-            _lastBarcodeThisProcessor = text;
-            
-            if (text && _lastBarcodeThisProcessor && [text isEqual:_lastBarcodeThisProcessor]) {
-                _lastBarcodeThisProcessorRepeatCount++;
-            } else if (text) {
-                _lastBarcodeThisProcessorRepeatCount = 1;
-            } else {
-                _lastBarcodeThisProcessorRepeatCount = 0;
+        for (VNBarcodeObservation *observation in [request results]) {
+            NSAssert([observation isKindOfClass:[VNBarcodeObservation class]], @"unexpected return observation type: %@", observation);
+            // Use the highest confidence barcode over all orientations. There will be many reads of even the same code
+            // (though almost always the same final result but different bounding rects etc. of no importance to us.)
+            if (!bestObservation || [observation confidence] > [bestObservation confidence]) {
+                bestObservation = observation;
             }
-            
-            if (text && _lastBarcodeThisProcessorRepeatCount >= BarcodeRepeatSuccessCount) {
-                [_delegate videoProcessor:self didCaptureBarcodeText:text atTime:[videoFrame presentationTime]];
-            }
-        });
+        }
+    }
+    CGImageRelease(cgImage);
+    
+    NSString *barcodeString = [bestObservation payloadStringValue];     // may be nil if no result or non-string barcode
+    // Process and store the results when holding _queue unconditionally (since we need to mark barcode reading completed to try again)
+    dispatch_async(_queue, ^{
+        [self barcodeReadingCompletedWithFrame:videoFrame resultString:barcodeString];
     });
 }
 
-// requires _queue to be held
-- (void)resetCaptureStateAndReportResults
+// must be called at the end of a barcode analysis whether or not a string was found; requires _queue to be held
+- (void)barcodeReadingCompletedWithFrame:(VideoFrame *)videoFrame resultString:(NSString *)barcodeString
+{
+    _scanningForBarcodes = NO;
+    _lastBarcodeScanTime = [videoFrame presentationTime];
+    _lastBarcodeThisProcessor = barcodeString;
+    
+    if (barcodeString && _lastBarcodeThisProcessor && [barcodeString isEqual:_lastBarcodeThisProcessor]) {
+        _lastBarcodeThisProcessorRepeatCount++;
+    } else if (barcodeString) {
+        _lastBarcodeThisProcessorRepeatCount = 1;
+    } else {
+        _lastBarcodeThisProcessorRepeatCount = 0;
+    }
+    
+    if (barcodeString && _lastBarcodeThisProcessorRepeatCount >= BarcodeRepeatSuccessCount) {
+        [_delegate videoProcessor:self didCaptureBarcodeText:barcodeString atTime:[videoFrame presentationTime]];
+    }
+}
+
+- (void)resetCaptureStateAndReportResults       // requires _queue to be held
 {
     [_assayAnalyzer didEndTrackingPlateWithPlateData:_plateData];
     

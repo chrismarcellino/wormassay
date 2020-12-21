@@ -101,7 +101,7 @@ static const char* WellOccupancyID = "Well Occupancy";
     fastZeroImage(_pixelwiseVotes);
     
     dispatch_queue_t criticalSection = dispatch_queue_create(NULL, NULL);
-    dispatch_apply([randomlyChosenFrames count], dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(size_t i){
+    dispatch_apply([randomlyChosenFrames count], DISPATCH_APPLY_AUTO, ^(size_t i){
         VideoFrame *pastFrame = [randomlyChosenFrames objectAtIndex:i];
         // Subtract the entire plate images channelwise
         IplImage* plateDelta = cvCreateImage(cvGetSize([videoFrame image]), IPL_DEPTH_8U, 4);

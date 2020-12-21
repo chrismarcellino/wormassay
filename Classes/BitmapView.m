@@ -33,7 +33,7 @@
     VideoFrame *image = [self image];
     
     if (image) {
-        CGImageRef cgImage =  [image createCGImage];
+        CGImageRef cgImage =  [image createCGImage];     // no need to copy since this is the end of the line
         // Draw the image into the graphics context
         CGContextDrawImage([[NSGraphicsContext currentContext] CGContext], [self bounds], cgImage);
         CGImageRelease(cgImage);

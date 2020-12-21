@@ -66,7 +66,7 @@ static void YpCbCr422toBGRA8(uint8_t *src, uint8_t *dest, uint32_t width, uint32
     
     CVPixelBufferUnlockBaseAddress(cvPixelBuffer, kCVPixelBufferLock_ReadOnly);
     
-    // Rescale the image if necessary
+    // Rescale the image if necessary in case the camera source is anamorphic
     if (naturalSize.width > 0 && (width != naturalSize.width || height != naturalSize.height)) {
         IplImage *resizedImage = cvCreateImage(cvSize(naturalSize.width, naturalSize.height), iplImage->depth, iplImage->nChannels);
         cvResize(iplImage, resizedImage, CV_INTER_AREA);
@@ -81,8 +81,10 @@ static void YpCbCr422toBGRA8(uint8_t *src, uint8_t *dest, uint32_t width, uint32
 {
     return [[NSData alloc] initWithBytesNoCopy:_image->imageData
                                         length:_image->imageSize
-                                   deallocator:^(void * _Nonnull bytes, NSUInteger length) {
-        [self class];       // explicitly retain self so we can ensure the backing bytes are valid during the lifetime of the NSData
+                                   deallocator:^(void *bytes, NSUInteger length) {
+        // explicitly retain self (by calling a pointless method) so we can ensure that the backing
+        // bytes are extant during the lifetime of the returned NSData even if they are mutable
+        [self self];
     }];
 }
 

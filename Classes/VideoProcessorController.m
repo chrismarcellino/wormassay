@@ -74,7 +74,7 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
     free(classes);
     
     // Sort by display name
-    [assayAnalyzerClasses sortUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+    [assayAnalyzerClasses sortUsingComparator:^NSComparisonResult(id obj1, id obj2) {
         return [[obj1 analyzerName] localizedStandardCompare:[obj2 analyzerName]];
     }];
     
@@ -105,9 +105,7 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
 - (void)setCurrentAssayAnalyzerClass:(Class)assayAnalyzerClass
 {
     if (assayAnalyzerClass != [self currentAssayAnalyzerClass]) {
-        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-        [defaults setObject:NSStringFromClass(assayAnalyzerClass) forKey:AssayAnalyzerClassKey];
-        [defaults synchronize];
+        [[NSUserDefaults standardUserDefaults] setObject:NSStringFromClass(assayAnalyzerClass) forKey:AssayAnalyzerClassKey];
         
         dispatch_async(_queue, ^{
             for (VideoProcessor *videoProcessor in _videoProcessors) {
@@ -129,9 +127,7 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
 - (void)setPlateOrientation:(PlateOrientation)plateOrietation
 {
     if (plateOrietation != [self plateOrientation]) {
-        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-        [defaults setInteger:plateOrietation forKey:PlateOrientationKey];
-        [defaults synchronize];
+        [[NSUserDefaults standardUserDefaults] setInteger:plateOrietation forKey:PlateOrientationKey];
         
         dispatch_async(_queue, ^{
             for (VideoProcessor *videoProcessor in _videoProcessors) {
@@ -157,9 +153,7 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
         path = [path stringByAbbreviatingWithTildeInPath];
     }
     
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    [defaults setObject:path forKey:RunOutputFolderPathKey];
-    [defaults synchronize];
+    [[NSUserDefaults standardUserDefaults] setObject:path forKey:RunOutputFolderPathKey];
 }
 
 - (BOOL)disableVideoSaving
@@ -169,9 +163,7 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
 
 - (void)setDisableVideoSaving:(BOOL)flag
 {
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    [defaults setBool:flag forKey:DisableVideoSavingKey];
-    [defaults synchronize];
+    [[NSUserDefaults standardUserDefaults] setBool:flag forKey:DisableVideoSavingKey];
 }
 
 static void createFolderIfNecessary(NSString *path)
@@ -207,9 +199,7 @@ static void createFolderIfNecessary(NSString *path)
 
 - (void)setNotificationEmailRecipients:(NSString *)recipients
 {
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    [defaults setObject:recipients forKey:NotificationEmailRecipientsKey];
-    [defaults synchronize];
+    [[NSUserDefaults standardUserDefaults] setObject:recipients forKey:NotificationEmailRecipientsKey];
 }
 
 - (void)manuallyReportResultsForCurrentProcessor
