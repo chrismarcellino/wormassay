@@ -11,6 +11,7 @@
 
 @interface Emailer : NSObject
 
+// must call on main thread
 + (void)sendMailMessageToRecipients:(NSString *)recipients subject:(NSString *)subject body:(NSString *)body attachmentPaths:(NSArray *)attachmentPaths;
 
 @end

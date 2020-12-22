@@ -13,6 +13,8 @@
 
 + (void)sendMailMessageToRecipients:(NSString *)recipients subject:(NSString *)subject body:(NSString *)body attachmentPaths:(NSArray *)attachmentPaths
 {
+    NSAssert([NSThread isMainThread], @"must call on main thread");
+    
     // Create the attachment commands
     NSMutableString *attachmentCommands = [NSMutableString string];
     for (NSString *path in attachmentPaths) {
@@ -40,18 +42,22 @@
                         "end tell \n",
                         subject, body, recipients, attachmentCommands];
     
-    dispatch_async(dispatch_get_main_queue(), ^{
-        NSAppleScript *script = [[NSAppleScript alloc] initWithSource:source];
-        NSDictionary *errorDict = nil;
-        [script executeAndReturnError:&errorDict];
-        if (errorDict) {
-            NSAlert *alert = [[NSAlert alloc] init];
-            [alert setMessageText:NSLocalizedString(@"Unable to send email", nil)];
-            [alert setInformativeText:NSLocalizedString(@"Error running AppleScript to send email: %@", errorDict)];
-            [alert addButtonWithTitle:NSLocalizedString(@"OK", nil)];
-            [alert runModal];
+    NSAppleScript *script = [[NSAppleScript alloc] initWithSource:source];
+    NSDictionary *errorDict = nil;
+    [script executeAndReturnError:&errorDict];
+    if (errorDict) {
+        NSString *errorText = [errorDict objectForKey:NSAppleScriptErrorMessage];
+        if (!errorText) {
+            errorText = [errorDict description];
         }
-    });
+        
+        NSAlert *alert = [[NSAlert alloc] init];
+        [alert setMessageText:NSLocalizedString(@"Unable to send email", nil)];
+        [alert setInformativeText:[NSString stringWithFormat:NSLocalizedString(@"Error running AppleScript to send email: %@\n\nCheck the security settings in System Preferences > Security & Privacy > Privacy > Automation.", @"alert format string"),
+                                   errorText]];
+        [alert addButtonWithTitle:NSLocalizedString(@"OK", nil)];
+        [alert runModal];
+    }
 }
 
 @end
