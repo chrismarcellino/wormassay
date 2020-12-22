@@ -12,8 +12,8 @@
 #import "PlateData.h"
 #import "AssayAnalyzer.h"
 #import "WellFinding.hpp"
+#import "NSOperationQueue-Utility.h"
 #import "VideoProcessorController.h"   // for RunLog()
-#import <sys/sysctl.h>
 #import <Vision/Vision.h>
 // OpenCV
 #import <opencv2/imgproc/types_c.h>
@@ -40,8 +40,6 @@ static NSString *const TimeLapseLockoutInterval = @"TimeLapseLockoutInterval";
 static const NSTimeInterval TimeLapseAnalyzeDurationDefault = 60.0;
 static const NSTimeInterval TimeLapseLockoutIntervalDefault = 5 * 60.0;
 
-
-static int numberOfPhysicalCPUS();
 
 CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation)
 {
@@ -72,8 +70,6 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
     NSString *_fileSourceDisplayName;
     Class _assayAnalyzerClass;
     PlateOrientation _plateOrientation;
-    dispatch_queue_t _queue;        // protects all state and serializes
-    dispatch_queue_t _debugFrameCallbackQueue;
     NSURL *_fileOutputURL;
     
     BOOL _shouldScanForWells;
@@ -113,8 +109,6 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
     if ((self = [super init])) {
         _fileOutputDelegate = fileOutputDelegate;
         _fileSourceDisplayName = [fileSourceDisplayName copy];
-        _queue = dispatch_queue_create("video-processor", NULL);
-        _debugFrameCallbackQueue = dispatch_queue_create("video-processor-callback", NULL);
         _lastWellAnalysisBeginTime = PresentationTimeDistantPast;
         _lockoutStartFrameTime = PresentationTimeDistantPast;
     }
@@ -123,48 +117,49 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
 
 - (void)setDelegate:(id<VideoProcessorDelegate>)delegate
 {
-    dispatch_async(_queue, ^{
+    @synchronized (self) {
         _delegate = delegate;       // not retained
-    });
+    };
 }
 
 - (void)setAssayAnalyzerClass:(Class)assayAnalyzerClass
 {
-    dispatch_async(_queue, ^{
+    @synchronized (self) {
         if (_assayAnalyzerClass != assayAnalyzerClass) {
             _assayAnalyzerClass = assayAnalyzerClass;
             [self resetCaptureStateAndReportResults];
         }
-    });
+    };
 }
 
 - (void)setPlateOrientation:(PlateOrientation)plateOrientation
 {
-    dispatch_async(_queue, ^{
+    @synchronized (self) {
         if (_plateOrientation != plateOrientation) {
             _plateOrientation = plateOrientation;
             [self resetCaptureStateAndReportResults];
         }
-    });
+    };
 }
 
 - (void)setShouldScanForWells:(BOOL)shouldScanForWells
 {
-    dispatch_async(_queue, ^{
+    @synchronized (self) {
         _shouldScanForWells = shouldScanForWells;
         // If no longer scanning (e.g. another camera has a plate), reset our state
         if (!shouldScanForWells) {
             [self resetCaptureStateAndReportResults];
         }
-    });
+    };
 }
 
 - (void)processVideoFrame:(VideoFrame *)videoFrame debugFrameCallback:(void (^)(VideoFrame *image))callback
 {
     NSTimeInterval processingStartTime = CACurrentMediaTime();
+    VideoFrame *debugFrame;
     
     // This method is synchronous so that we don't enqueue frames faster than they should be processed. The document will drop the overflow.
-    dispatch_sync(_queue, ^{
+    @synchronized (self) {
         if (_plateData) {
             [_plateData incrementReceivedFrameCount];
         }
@@ -175,9 +170,9 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
             _scanningForBarcodes = YES;
             VideoFrame *copy = [videoFrame copy];       // copy prior to dispatching since we are going to flip the data below
             // Perform the calculation on a concurrent queue so that we don't block the current thread
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            [NSOperationQueue addOperationToGlobalQueueWithBlock:^{
                 [self performBarcodeReadingSynchronouslyWithFrame:copy];
-            });
+            }];
         }
         
         // Flip/rotate image if necessary
@@ -225,8 +220,8 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
             }
         }
         
-        // Create a copy of the frame to draw debugging info on, which we will send back
-        VideoFrame *debugFrame = [videoFrame copy];
+        // Create a copy of the frame to draw debugging info/live feedback on, which we will send back
+        debugFrame = [videoFrame copy];
         
         // First, draw debugging well circles and labels on each frame so that they appear underneath other drawing
         if (_shouldScanForWells) {
@@ -258,7 +253,8 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
         // Analyze tracked images synchronously (at frame rate), so that we drop frames if we can't keep up.
         if (_processingState == ProcessingStateTrackingMotion && sizeEqualsSize(_trackedImageSize, cvGetSize([videoFrame image]))) {
             if ([_assayAnalyzer willBeginFrameProcessing:videoFrame debugImage:[debugFrame image] plateData:_plateData]) {
-                void (^processWellBlock)(size_t) = ^(size_t i){
+                // Make a block to parallelize
+                void (^processWellBlock)(NSUInteger, id) = ^(NSUInteger i, id criticalSection){
                     // Make stack copies of the headers so that they can have their own ROI's, etc.
                     IplImage wellImage = *[videoFrame image];
                     IplImage debugImage = *[debugFrame image];
@@ -276,14 +272,16 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
                     cvResetImageROI(&debugImage);
                 };
                 
-                // Only parallelize well analysis if we have at least 4 (physical) cores to be conservative, since doing so on
-                // a 2.1 ghz Core 2 Duo (with 2 virtual/physical cores) decreased performance 50% due to contention with decoding threads.
+                // Previously, this was conditionalized to only parallelize well analysis if we had at least 4 physical
+                // cores to be conservative, since doing so on a 2.1 ghz Core 2 Duo (with 2 virtual/physical cores) decreased
+                // performance 50% due to contention with decoding threads, however, the minimum linked version of the
+                // OS now means that all computers will meet this requirement, and libdispatch has also improved somewhat since then.
                 size_t iterations = _trackingWellCircles.size() > 0 ? _trackingWellCircles.size() : 1;      // i.e. wells
-                if ([_assayAnalyzer canProcessInParallel] && numberOfPhysicalCPUS() >= 4) {
-                    dispatch_apply(iterations, DISPATCH_APPLY_AUTO, processWellBlock);
+                if ([_assayAnalyzer canProcessInParallel]) {
+                    [NSOperationQueue addOperationsInParallelWithInstances:iterations onGlobalQueueForBlock:processWellBlock];
                 } else {
                     for (size_t i = 0; i < iterations; i++) {
-                        processWellBlock(i);
+                        processWellBlock(i, nil);
                     }
                 }
             }
@@ -329,22 +327,18 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
                 cvPutText([debugFrame image], text, cvPoint(0, 15), &font, CV_RGBA(232, 0, 217, 255));
             }
         }
-                
-        // Dispatch the debug image asynchronously to increase parallelism 
-        dispatch_async(_debugFrameCallbackQueue, ^{
-            @autoreleasepool {
-                callback(debugFrame);
-            }
-        });
         
-        // Add the processing time last
+        // Add the processing time
         if (_plateData) {
             [_plateData addProcessingTime:CACurrentMediaTime() - processingStartTime];
         }
-    });
+    }
+        
+    // Dispatch the debug image callback block last
+    callback(debugFrame);
 }
 
-// requires _queue to be held
+// requires lock to be held
 - (void)performWellDeterminationCalculationAsyncWithFrame:(VideoFrame *)videoFrame
 {
     // If well finding is disabled, report success and bail
@@ -352,12 +346,12 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
     
     _scanningForWells = YES;
     
-    // Get instance variables while holding _queue for thread-safety
+    // Get instance variables while locked for thread-safety
     int wellCountHint = _wellCountHint;
     bool searchAllPlateSizes = _processingState == ProcessingStateNoPlate;
     
     // Perform the calculation on a concurrent queue so that we don't block the current thread
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    [NSOperationQueue addOperationToGlobalQueueWithBlock:^{
         // Get wells in row major order
         std::vector<Circle> wellCircles;
         bool plateFound;
@@ -369,8 +363,8 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
             plateFound = findWellCirclesForWellCount([videoFrame image], wellCountHint, wellCircles);
         }
         
-        // Process and store the results when holding _queue
-        dispatch_async(_queue, ^{
+        // Process and store the results while locked
+        @synchronized (self) {
             _scanningForWells = NO;
             // If the device was removed, etc., ignore any detected plates
             if (_shouldScanForWells) {
@@ -464,8 +458,8 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
                     }
                 }
             }
-        });
-    });
+        };
+    }];
 }
 
 - (void)performBarcodeReadingSynchronouslyWithFrame:(VideoFrame *)videoFrame
@@ -503,13 +497,13 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
     CGImageRelease(cgImage);
     
     NSString *barcodeString = [bestObservation payloadStringValue];     // may be nil if no result or non-string barcode
-    // Process and store the results when holding _queue unconditionally (since we need to mark barcode reading completed to try again)
-    dispatch_async(_queue, ^{
+    // Process and store the results unconditionally (since we need to mark barcode reading completed to try again)
+    @synchronized (self) {
         [self barcodeReadingCompletedWithFrame:videoFrame resultString:barcodeString];
-    });
+    };
 }
 
-// must be called at the end of a barcode analysis whether or not a string was found; requires _queue to be held
+// must be called at the end of a barcode analysis whether or not a string was found; requires lock to be held
 - (void)barcodeReadingCompletedWithFrame:(VideoFrame *)videoFrame resultString:(NSString *)barcodeString
 {
     _scanningForBarcodes = NO;
@@ -529,7 +523,7 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
     }
 }
 
-- (void)resetCaptureStateAndReportResults       // requires _queue to be held
+- (void)resetCaptureStateAndReportResults       // requires lock to be held
 {
     [_assayAnalyzer didEndTrackingPlateWithPlateData:_plateData];
     
@@ -544,21 +538,28 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
             RunLog(@"Ignoring truncated run of %.3f seconds", trackingDuration);
         }
         
-        // Notify the two delegates
-        [_delegate videoProcessor:self didFinishAcquiringPlateData:_plateData successfully:longEnough willStopRecordingToOutputFileURL:_fileOutputURL];
-        NSURL *fileOutputURL = _fileOutputURL;   // since two in flight encodings could overlap e.g. during a short recording after a long one
-        _fileOutputURL = nil;
-        [_fileOutputDelegate videoProcessorShouldStopRecording:self completion:^(NSError *error) {
-            dispatch_async(_queue, ^{
+        // Notify the two delegates in a delayed fashion to avoid re-entry, and without using instance variables
+        // since they can change, and instead snapshot with local variables
+        PlateData *plateData = _plateData;
+        NSURL *fileOutputURL = _fileOutputURL;   // esp. since two in flight encodings could overlap e.g. during a short recording after a long one
+        
+        [NSOperationQueue addOperationToGlobalQueueWithBlock:^{
+            [_delegate videoProcessor:self
+          didFinishAcquiringPlateData:plateData
+                         successfully:longEnough
+     willStopRecordingToOutputFileURL:fileOutputURL];
+            
+            [_fileOutputDelegate videoProcessorShouldStopRecording:self completion:^(NSError *error) {
                 [_delegate videoProcessorDidFinishRecordingToFileURL:fileOutputURL error:error];
-            });
+            }];
         }];
-    
-        // Release the analyzer
-        _assayAnalyzer = nil;
-    
-        // Release the plate data
+        
+        // Release the plate data and output URL
         _plateData = nil;
+        _fileOutputURL = nil;
+        
+        // Clear the analyzer
+        _assayAnalyzer = nil;
     }
     NSAssert(!_assayAnalyzer && !_plateData, @"inconsistent state");
     
@@ -575,35 +576,26 @@ CGAffineTransform TransformForPlateOrientation(PlateOrientation plateOrientation
 
 - (void)reportFinalResultsBeforeRemoval
 {
-    dispatch_async(_queue, ^{
+    @synchronized (self) {
         [self resetCaptureStateAndReportResults];
         [self setShouldScanForWells:NO];
-    });
+    };
 }
 
 - (void)manuallyReportResultsAndReset
 {
-    dispatch_async(_queue, ^{
+    @synchronized (self) {
         [self resetCaptureStateAndReportResults];
-    });
+    };
 }
 
 - (void)noteVideoFrameWasDropped
 {
-    dispatch_async(_queue, ^{
+    @synchronized (self) {
         if (_plateData) {
             [_plateData incrementFrameDropCount];
         }
-    });
+    };
 }
 
 @end
-
-static int numberOfPhysicalCPUS()
-{
-    int physicalCPUS = 0;
-    size_t length = sizeof(physicalCPUS);
-    sysctlbyname("hw.physicalcpu", &physicalCPUS, &length , NULL, 0);
-    NSCAssert(physicalCPUS > 0, @"unable to get CPU count");
-    return physicalCPUS;
-}

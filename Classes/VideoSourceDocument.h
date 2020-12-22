@@ -26,11 +26,11 @@ extern NSString *const BlackmagicDeckLinkCaptureDeviceFileType;
 
 // A VideoSourceDocument corresponds to each document window and hence camera input
 @interface VideoSourceDocument : NSDocument <AVCaptureVideoDataOutputSampleBufferDelegate, DeckLinkCaptureDeviceSampleBufferDelegate, VideoProcessorRecordingDelegate> {
-    dispatch_queue_t _frameArrivalQueue;
+    NSOperationQueue *_frameArrivalQueue;           // serial; protects instance variables
+    NSOperationQueue *_frameProcessingQueue;        // serial; protects nothing (for background processing)
     
     VideoProcessor *_processor;
     BitmapView *_bitmapMetalView;
-    
     BOOL _closeCalled;
     NSSize _frameSize;
     

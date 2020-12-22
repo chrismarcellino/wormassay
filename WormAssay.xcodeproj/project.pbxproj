@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		213D430625918A40001D0C18 /* NSOperationQueue-Utility.m in Sources */ = {isa = PBXBuildFile; fileRef = 213D430525918A40001D0C18 /* NSOperationQueue-Utility.m */; };
 		218DD53313453FC5000B6475 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 218DD53213453FC5000B6475 /* Cocoa.framework */; };
 		218DD54D13453FCE000B6475 /* libOpenCV.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 21E7790912D322A9006C1554 /* libOpenCV.a */; };
 		2190AF18135B6E4A00C3853B /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2190AF17135B6E4A00C3853B /* IOKit.framework */; };
@@ -143,7 +144,7 @@
 		BEB800CC1A5E52A000FCE8D2 /* PlateData.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEB800C51A5E52A000FCE8D2 /* PlateData.mm */; };
 		BEB800CD1A5E52A000FCE8D2 /* VideoFrame.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEB800C71A5E52A000FCE8D2 /* VideoFrame.mm */; };
 		BEB800CE1A5E52A000FCE8D2 /* VideoProcessor.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEB800C91A5E52A000FCE8D2 /* VideoProcessor.mm */; };
-		BEB800CF1A5E52A000FCE8D2 /* WellFinding.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BEB800CA1A5E52A000FCE8D2 /* WellFinding.cpp */; };
+		BEB800CF1A5E52A000FCE8D2 /* WellFinding.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEB800CA1A5E52A000FCE8D2 /* WellFinding.mm */; };
 		BEB800D81A5E52B000FCE8D2 /* AssayAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEB800D11A5E52B000FCE8D2 /* AssayAnalyzer.mm */; };
 		BEB800D91A5E52B000FCE8D2 /* ConsensusLuminanceMotionAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEB800D31A5E52B000FCE8D2 /* ConsensusLuminanceMotionAnalyzer.mm */; };
 		BEB800DA1A5E52B000FCE8D2 /* NullMotionAnalyzer.mm in Sources */ = {isa = PBXBuildFile; fileRef = BEB800D51A5E52B000FCE8D2 /* NullMotionAnalyzer.mm */; };
@@ -187,6 +188,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		213D430425918A40001D0C18 /* NSOperationQueue-Utility.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSOperationQueue-Utility.h"; sourceTree = "<group>"; };
+		213D430525918A40001D0C18 /* NSOperationQueue-Utility.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSOperationQueue-Utility.m"; sourceTree = "<group>"; };
 		218DD5271345253D000B6475 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 		218DD53013453FC5000B6475 /* WormAssay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WormAssay.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		218DD53213453FC5000B6475 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
@@ -337,7 +340,7 @@
 		BEB800C71A5E52A000FCE8D2 /* VideoFrame.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = VideoFrame.mm; path = Classes/VideoFrame.mm; sourceTree = SOURCE_ROOT; };
 		BEB800C81A5E52A000FCE8D2 /* VideoProcessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VideoProcessor.h; path = Classes/VideoProcessor.h; sourceTree = SOURCE_ROOT; };
 		BEB800C91A5E52A000FCE8D2 /* VideoProcessor.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = VideoProcessor.mm; path = Classes/VideoProcessor.mm; sourceTree = SOURCE_ROOT; };
-		BEB800CA1A5E52A000FCE8D2 /* WellFinding.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WellFinding.cpp; path = Classes/WellFinding.cpp; sourceTree = SOURCE_ROOT; };
+		BEB800CA1A5E52A000FCE8D2 /* WellFinding.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = WellFinding.mm; path = Classes/WellFinding.mm; sourceTree = SOURCE_ROOT; };
 		BEB800CB1A5E52A000FCE8D2 /* WellFinding.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = WellFinding.hpp; path = Classes/WellFinding.hpp; sourceTree = SOURCE_ROOT; };
 		BEB800D01A5E52B000FCE8D2 /* AssayAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AssayAnalyzer.h; path = Classes/AssayAnalyzer.h; sourceTree = SOURCE_ROOT; };
 		BEB800D11A5E52B000FCE8D2 /* AssayAnalyzer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AssayAnalyzer.mm; path = Classes/AssayAnalyzer.mm; sourceTree = SOURCE_ROOT; };
@@ -797,6 +800,8 @@
 				BEB800E51A5E530400FCE8D2 /* LoggingAndNotificationsSettingsWindowController.m */,
 				BEB800DE1A5E530400FCE8D2 /* DeckLinkCaptureDevice.h */,
 				BEB800DF1A5E530400FCE8D2 /* DeckLinkCaptureDevice.mm */,
+				213D430425918A40001D0C18 /* NSOperationQueue-Utility.h */,
+				213D430525918A40001D0C18 /* NSOperationQueue-Utility.m */,
 			);
 			name = Controllers;
 			path = Classes;
@@ -812,7 +817,7 @@
 				BEB800C71A5E52A000FCE8D2 /* VideoFrame.mm */,
 				BEB800C81A5E52A000FCE8D2 /* VideoProcessor.h */,
 				BEB800C91A5E52A000FCE8D2 /* VideoProcessor.mm */,
-				BEB800CA1A5E52A000FCE8D2 /* WellFinding.cpp */,
+				BEB800CA1A5E52A000FCE8D2 /* WellFinding.mm */,
 				BEB800CB1A5E52A000FCE8D2 /* WellFinding.hpp */,
 			);
 			name = "Image Processing";
@@ -1017,7 +1022,7 @@
 				BEB800EF1A5E530400FCE8D2 /* Emailer.m in Sources */,
 				BEB800CC1A5E52A000FCE8D2 /* PlateData.mm in Sources */,
 				BEB800CD1A5E52A000FCE8D2 /* VideoFrame.mm in Sources */,
-				BEB800CF1A5E52A000FCE8D2 /* WellFinding.cpp in Sources */,
+				BEB800CF1A5E52A000FCE8D2 /* WellFinding.mm in Sources */,
 				BEB800C21A5E527F00FCE8D2 /* BitmapView.m in Sources */,
 				BEE1CAD71A5E565300F77BF0 /* main.m in Sources */,
 				BEB800ED1A5E530400FCE8D2 /* DeckLinkCaptureDevice.mm in Sources */,
@@ -1030,6 +1035,7 @@
 				BEB800F31A5E530400FCE8D2 /* WormAssayAppDelegate.m in Sources */,
 				BEB800EE1A5E530400FCE8D2 /* DocumentController.m in Sources */,
 				BEB800D81A5E52B000FCE8D2 /* AssayAnalyzer.mm in Sources */,
+				213D430625918A40001D0C18 /* NSOperationQueue-Utility.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1173,13 +1179,13 @@
 				CODE_SIGN_ENTITLEMENTS = WormAssay.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 1.6.3;
+				CURRENT_PROJECT_VERSION = 1.6.5;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				INFOPLIST_FILE = "Classes/WormAssay-Info.plist";
-				MARKETING_VERSION = 1.6.3;
+				MARKETING_VERSION = 1.6.5;
 				PRODUCT_BUNDLE_IDENTIFIER = org.chrismarcellino.wormassay;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1189,6 +1195,7 @@
 					"-Wextra",
 					"-Wno-unused-parameter",
 					"-Wno-overloaded-virtual",
+					"-Wno-arc-retain-cycles",
 				);
 				WRAPPER_EXTENSION = app;
 			};
@@ -1200,13 +1207,13 @@
 				CODE_SIGN_ENTITLEMENTS = WormAssay.entitlements;
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 1.6.3;
+				CURRENT_PROJECT_VERSION = 1.6.5;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 94XJ98ESL8;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = "Classes/WormAssay-Info.plist";
 				LLVM_LTO = YES;
-				MARKETING_VERSION = 1.6.3;
+				MARKETING_VERSION = 1.6.5;
 				PRODUCT_BUNDLE_IDENTIFIER = org.chrismarcellino.wormassay;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1216,6 +1223,7 @@
 					"-Wextra",
 					"-Wno-unused-parameter",
 					"-Wno-overloaded-virtual",
+					"-Wno-arc-retain-cycles",
 				);
 				WRAPPER_EXTENSION = app;
 			};

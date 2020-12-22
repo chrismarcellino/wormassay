@@ -6,13 +6,14 @@
 //  Copyright 2011 Chris Marcellino. All rights reserved.
 //
 
-#import "WellFinding.hpp"
 #import <math.h>
 #import <dispatch/dispatch.h>
 #import <opencv2/core/core.hpp>
 #import <opencv2/imgproc/imgproc.hpp>
 #import <opencv2/imgproc/imgproc_c.h>
+#import "WellFinding.hpp"
 #import "CvUtilities.hpp"
+#import "NSOperationQueue-Utility.h"
 
 static bool findWellCirclesForWellCounts(IplImage* inputImage, std::vector<int> wellCounts, std::vector<Circle> &circles);
 
@@ -145,21 +146,19 @@ static bool findWellCirclesForWellCountsUsingImage(IplImage* image,
     __block bool success = false;
     
     // Execute searches for different plate sizes in parallel
-    dispatch_queue_t criticalSection = dispatch_queue_create(NULL, NULL);
-    dispatch_apply(wellCounts.size(), DISPATCH_APPLY_AUTO, ^(size_t i){
+    [NSOperationQueue addOperationsInParallelWithInstances:wellCounts.size() onGlobalQueueForBlock:^(NSUInteger i, id criticalSection) {
         std::vector<Circle> currentCircles;
         double currentScore;
         bool currentSuccess = findWellCirclesForWellCountUsingImage(image, wellCounts[i], currentCircles, currentScore, expectedRadius);
         
-        dispatch_sync(criticalSection, ^{
+        @synchronized(criticalSection) {
             if (!success && (currentSuccess || currentScore > *score)) {
                 success = currentSuccess;
                 *score = currentScore;
                 *circles = currentCircles;
             }
-        });
-    });
-    dispatch_release(criticalSection);
+        }
+    }];
     
     return success;
 }

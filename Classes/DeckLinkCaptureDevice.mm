@@ -6,8 +6,9 @@
 //  Copyright (c) 2013 Chris Marcellino. All rights reserved.
 //
 
-#import "DeckLinkCaptureDevice.h"
 #import <DeckLinkAPI.h>
+#import "DeckLinkCaptureDevice.h"
+#import "NSOperationQueue-Utility.h"
 
 using namespace std;
 
@@ -61,13 +62,12 @@ public:
 // C++ safe ivars
 @interface DeckLinkCaptureDevice () {
     DeckLinkCaptureDeviceCPP* _cppObject;
-    dispatch_queue_t _lockQueue;
     
     IDeckLink* _deckLink;
     IDeckLinkInput *_deckLinkInput;
     
     __weak id<DeckLinkCaptureDeviceSampleBufferDelegate> _sampleBufferDelegate;
-    dispatch_queue_t _callbackQueue;
+    NSOperationQueue *_callbackQueue;
     
     NSArray *_captureModesSearchList;       // nil if not capturing
     NSUInteger _captureModesSearchListIndex;
@@ -174,8 +174,6 @@ public:
         _cppObject = new DeckLinkCaptureDeviceCPP(self);
         // Set capture callback
         _deckLinkInput->SetCallback(_cppObject);
-        
-        _lockQueue = dispatch_queue_create("decklink-device-lock-queue", NULL);
     }
     return self;
 }
@@ -297,12 +295,13 @@ public:
     }];
 }
 
-- (void)setSampleBufferDelegate:(id<DeckLinkCaptureDeviceSampleBufferDelegate>)sampleBufferDelegate queue:(dispatch_queue_t)sampleBufferCallbackQueue
+- (void)setSampleBufferDelegate:(id<DeckLinkCaptureDeviceSampleBufferDelegate>)sampleBufferDelegate
+                          queue:(NSOperationQueue *)sampleBufferCallbackQueue
 {
-    dispatch_sync(_lockQueue, ^{
+    @synchronized (self) {
         _callbackQueue = sampleBufferCallbackQueue;
         _sampleBufferDelegate = sampleBufferDelegate;
-    });
+    };
 }
 
 - (BOOL)startCaptureWithCaptureMode:(DeckLinkCaptureMode *)captureMode error:(NSError **)outError
@@ -310,11 +309,11 @@ public:
     __block BOOL result;
     __block NSError *tempOutError;
     
-    dispatch_sync(_lockQueue, ^{
+    @synchronized (self) {
         _captureModesSearchList = [NSArray arrayWithObject:captureMode];
         _captureModesSearchListIndex = 0;
         result = [self enableVideoInputInCurrentModeWithError:&tempOutError];
-    });
+    };
     
     *outError = tempOutError;
     return result;
@@ -323,15 +322,15 @@ public:
 // can't return a result or error here immediately as this is an async and indefinite search.
 - (void)startCaptureWithSearchForModeWithModes:(NSArray *)captureModeSearchList
 {
-    dispatch_sync(_lockQueue, ^{
+    @synchronized (self) {
         _captureModesSearchList = [captureModeSearchList copy];
         _captureModesSearchListIndex = 0;
         NSAssert([_captureModesSearchList count] > 0, @"search list was empty");
         [self enableVideoInputInCurrentModeWithError:nil];  // eat temporary errors
-    });
+    };
 }
 
-- (BOOL)enableVideoInputInCurrentModeWithError:(NSError **)outError
+- (BOOL)enableVideoInputInCurrentModeWithError:(NSError **)outError     // must call locked
 {
     NSAssert(_captureModesSearchList, @"no search list");
     BOOL success = NO;
@@ -399,32 +398,33 @@ public:
 
 - (void)stopCapture
 {
-    dispatch_sync(_lockQueue, ^{
+    @synchronized (self) {
         _deckLinkInput->StopStreams();
         _captureModesSearchList = nil;
         _captureModesSearchListIndex = NSNotFound;
-    });
+    };
 }
 
-- (void)retryCaptureWithNextModeAfterDelay
+- (void)retryCaptureWithNextModeAfterDelay      // must call locked
 {
-    // only one dispatch_after should be in flight at once
+    // only one delayed operation should be in flight at once
     if (!_retryDispatchAfterPending) {
         _retryDispatchAfterPending = YES;
         _deckLinkInput->StopStreams();
         
-        NSTimeInterval delay = 1.0 / 10.0;      // don't retry immediately to avoid tight polling and more coorect frames to arrive
-        dispatch_time_t dispatchTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC));
-        dispatch_after(dispatchTime, _lockQueue, ^{
-            _retryDispatchAfterPending = NO;
-            // ensure that capture hasn't been stopped or valid frames have been received in the interim
-            if (_captureModesSearchList && !_lastFrameHasValidInputSource) {
-                // move to the next item in the queue looping if necessary
-                _captureModesSearchListIndex++;
-                _captureModesSearchListIndex %= [_captureModesSearchList count];
-                [self enableVideoInputInCurrentModeWithError:nil];
+        // don't retry immediately to avoid tight polling and more correct frames to arrive
+        [NSOperationQueue addOperationWithDelay:0.1 toGlobalQueueForBlock:^{
+            @synchronized (self) {
+                _retryDispatchAfterPending = NO;
+                // ensure that capture hasn't been stopped or valid frames have been received in the interim
+                if (_captureModesSearchList && !_lastFrameHasValidInputSource) {
+                    // move to the next item in the queue looping if necessary
+                    _captureModesSearchListIndex++;
+                    _captureModesSearchListIndex %= [_captureModesSearchList count];
+                    [self enableVideoInputInCurrentModeWithError:nil];
+                }
             }
-        });
+        }];
     }
 }
 
@@ -433,13 +433,13 @@ public:
                                   detectedSignalFlags:(BMDDetectedVideoInputFormatFlags)detectedSignalFlags
 {
     DeckLinkCaptureMode *captureMode = [[DeckLinkCaptureMode alloc] initWithIDeckLinkDisplayMode:newMode];
-    dispatch_sync(_lockQueue, ^{
+    @synchronized (self) {
         // Must check and lock atomically to ensure there is no race where a client may disable and we reenable
         if (_captureModesSearchList && [_captureModesSearchList containsObject:captureMode]) {
             _captureModesSearchListIndex = 0;        // arbitrary; will begin next search from the top
             [self enableVideoInputInCurrentModeWithError:nil];
         }
-    });
+    };
 }
 
 static void pixelBufferReleaseBytesCallback(void *releaseRefCon, const void *baseAddress)
@@ -449,7 +449,7 @@ static void pixelBufferReleaseBytesCallback(void *releaseRefCon, const void *bas
 
 - (void)videoInputFrameArrived:(IDeckLinkVideoInputFrame*)videoFrame audioPacket:(IDeckLinkAudioInputPacket*)audioPacket
 {
-    dispatch_sync(_lockQueue, ^{
+    @synchronized (self) {
         _lastFrameHasValidInputSource = videoFrame && !(videoFrame->GetFlags() & bmdFrameHasNoInputSource);
         void *baseAddress = NULL;
         if (videoFrame) {
@@ -507,16 +507,16 @@ static void pixelBufferReleaseBytesCallback(void *releaseRefCon, const void *bas
                 CFRelease(pixelBuffer);
                 
                 NSAssert(_sampleBufferDelegate && _callbackQueue, @"delegate and queue must be set when capturing is enabled");
-                dispatch_async(_callbackQueue, ^{
-                    DeckLinkCaptureMode *mode = [_captureModesSearchList objectAtIndex:_captureModesSearchListIndex];
+                DeckLinkCaptureMode *mode = [_captureModesSearchList objectAtIndex:_captureModesSearchListIndex];
+                [_callbackQueue addOperationWithBlock:^{
                     [_sampleBufferDelegate captureDevice:self didOutputSampleBuffer:sampleBuffer inCaptureMode:mode];
                     CFRelease(sampleBuffer);
-                });
+                }];
             } else {
                 NSLog(@"Unable to create pixel buffer. CVPixelBufferCreateWithBytes returned %i.", result);
             }
         }
-    });
+    };
 }
 
 @end

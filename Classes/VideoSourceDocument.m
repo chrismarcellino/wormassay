@@ -14,6 +14,7 @@
 #import "VideoProcessor.h"
 #import "VideoFrame.h"
 #import "DeckLinkCaptureDevice.h"
+#import "NSOperationQueue-Utility.h"
 
 NSString *const CaptureDeviceWasConnectedOrDisconnectedNotification = @"CaptureDeviceWasConnectedOrDisconnectedNotification";
 
@@ -160,7 +161,17 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     if ((self = [super init])) {
         [self setHasUndoManager:NO];
         _bitmapMetalView = [[BitmapView alloc] init];
-        _frameArrivalQueue = dispatch_queue_create("frame-arrival-queue", NULL);
+        
+        // Create our serial queues
+        _frameArrivalQueue = [[NSOperationQueue alloc] init];
+        // this is needed by AVCaptureVideoDataOutput (and our delay utility)
+        [_frameArrivalQueue setUnderlyingQueue:dispatch_queue_create("frame-arrival-queue", DISPATCH_QUEUE_SERIAL)];
+        [_frameArrivalQueue setName:@"frame-arrival-queue"];
+        [_frameArrivalQueue setMaxConcurrentOperationCount:1];
+        
+        _frameProcessingQueue = [[NSOperationQueue alloc] init];
+        [_frameProcessingQueue setName:@"frame-processing-queue"];
+        [_frameProcessingQueue setMaxConcurrentOperationCount:1];
     }
     
     return self;
@@ -318,7 +329,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
             _captureVideoDataOutput = [[AVCaptureVideoDataOutput alloc] init];
             [_captureVideoDataOutput setVideoSettings:outputSettings];
             [_captureVideoDataOutput setAlwaysDiscardsLateVideoFrames:NO];      // to ensure the saved video doesn't miss frames
-            [_captureVideoDataOutput setSampleBufferDelegate:self queue:_frameArrivalQueue];
+            [_captureVideoDataOutput setSampleBufferDelegate:self queue:[_frameArrivalQueue underlyingQueue]];
             
             if ([_captureSession canAddInput:_captureDeviceInput] && [_captureSession canAddOutput:_captureVideoDataOutput]) {
                 [_captureSession addInput:_captureDeviceInput];
@@ -382,9 +393,9 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
         
         // Get the first frame (async)
         NSTimeInterval frameInterval = 1.0 / [videoTrack nominalFrameRate];
-        dispatch_async(_frameArrivalQueue, ^{
+        [_frameArrivalQueue addOperationWithBlock:^{
             [self getNextVideoFileFrameWithStartTime:CACurrentMediaTime() firstFrameTime:NAN frameInterval:frameInterval];
-        });
+        }];
     }
     
     NSAssert(!_processor, @"processor already exists");
@@ -397,23 +408,28 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 // Called on main thread
 - (void)close
 {
-    if (!_closeCalled) {
+    [_frameArrivalQueue addOperationWithBlock:^{
         _closeCalled = YES;
         _sendFramesToAssetWriter = NO;
-        RunLog(@"Closing %@ \"%@\".", (_avCaptureDevice || _deckLinkCaptureDevice) ? @"removed device" : @"file", [self sourceIdentifier]);
-        [[VideoProcessorController sharedInstance] removeVideoProcessor:_processor];
-        
-        if (_avCaptureDevice) {
-            [_captureSession stopRunning];
-            [_captureVideoDataOutput setSampleBufferDelegate:nil queue:NULL];
-        } else if (_deckLinkCaptureDevice) {
-            [_deckLinkCaptureDevice stopCapture];
-            [_deckLinkCaptureDevice setSampleBufferDelegate:nil queue:NULL];
-        } else {
-            [_assetReader cancelReading];
-            [_urlAsset cancelLoading];
-        }
+    }];
+    [_frameArrivalQueue waitUntilAllOperationsAreFinished];
+    
+    _closeCalled = YES;
+    _sendFramesToAssetWriter = NO;
+    RunLog(@"Closing %@ \"%@\".", (_avCaptureDevice || _deckLinkCaptureDevice) ? @"removed device" : @"file", [self sourceIdentifier]);
+    [[VideoProcessorController sharedInstance] removeVideoProcessor:_processor];
+    
+    if (_avCaptureDevice) {
+        [_captureSession stopRunning];
+        [_captureVideoDataOutput setSampleBufferDelegate:nil queue:NULL];
+    } else if (_deckLinkCaptureDevice) {
+        [_deckLinkCaptureDevice stopCapture];
+        [_deckLinkCaptureDevice setSampleBufferDelegate:nil queue:NULL];
+    } else {
+        [_assetReader cancelReading];
+        [_urlAsset cancelLoading];
     }
+    
     [super close];
 }
 
@@ -438,14 +454,12 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
             firstFrameTime = frameTime;
         }
         
-        NSTimeInterval currentTime = CACurrentMediaTime();
-        NSTimeInterval delayInSeconds = (frameTime - firstFrameTime) - (currentTime - startTime) + frameInterval;
-        dispatch_time_t dispatchTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
-        dispatch_after(dispatchTime, _frameArrivalQueue, ^{
-            [self getNextVideoFileFrameWithStartTime:startTime firstFrameTime:firstFrameTime frameInterval:frameInterval];
-        });
-        
         CFRelease(sampleBuffer);
+        
+        NSTimeInterval delay = (frameTime - firstFrameTime) - (CACurrentMediaTime() - startTime) + frameInterval;
+        [_frameArrivalQueue addOperationWithDelay:delay forBlock:^{
+            [self getNextVideoFileFrameWithStartTime:startTime firstFrameTime:firstFrameTime frameInterval:frameInterval];
+        }];
     } else {
          [self videoPlaybackDidEnd];
     }
@@ -487,7 +501,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     }
 }
 
-// this must be called on _frameArrivalQueue
+// this is called on _frameArrivalQueue
 - (void)cmSampleBufferHasArrived:(CMSampleBufferRef)sampleBuffer
 {
     if (_currentlyProcessingFrame) {
@@ -495,19 +509,20 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     } else {
         _currentlyProcessingFrame = YES;
         
-        // Get a CMSampleBuffer's Core Video image buffer for the media data
+        // Get a Core Video image buffer for the media data
         CVPixelBufferRef pixelBuffer = CVPixelBufferRetain(CMSampleBufferGetImageBuffer(sampleBuffer));
         
-        // Do processing work on another queue so the arrival queue isn't blocked and new frames can be dropped in the interim
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        // Do processing work on another (serial) queue so the arrival queue isn't blocked
+        // and new frames can be dropped in the interim
+        [_frameProcessingQueue addOperationWithBlock:^{
             [self processPixelBufferSynchronously:pixelBuffer];
             CVPixelBufferRelease(pixelBuffer);
             
             // Mark that we're done
-            dispatch_sync(_frameArrivalQueue, ^{
+            [_frameArrivalQueue addOperationWithBlock:^{
                 _currentlyProcessingFrame = NO;
-            });
-        });
+            }];
+        }];
     }
     
     // Send all frames to the asset writer if enabled
@@ -527,7 +542,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     }
 }
 
-// do NOT call on _frameArrivalQueue as this blocks. called on a background thread.
+// called on _frameProcessingQueue to avoid blocking the arrival queue
 - (void)processPixelBufferSynchronously:(CVImageBufferRef)pixelBuffer
 {
     // Get the proper frame size for this device, correcting for non-square pixels.
@@ -570,9 +585,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
                (double)squarePixelBufferSize.width, (double)squarePixelBufferSize.height,
                [self sourceIdentifier]);
         
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self adjustWindowSizing];
-        });
+        [self performSelectorOnMainThread:@selector(adjustWindowSizing) withObject:nil waitUntilDone:NO];
     }
     
     // Use CPU (Mach) time to ensure a monotonically increasing time. It can later be subtracted from the current time to determine the sample time/date.
@@ -585,9 +598,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 - (void)videoPlaybackDidEnd
 {
     RunLog(@"Video ended.");
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self close];
-    });
+    [self performSelectorOnMainThread:@selector(close) withObject:nil waitUntilDone:NO];
 }
 
 - (NSString *)displayName
@@ -605,7 +616,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 
 - (void)videoProcessor:(VideoProcessor *)vp shouldBeginRecordingToURL:(NSURL *)outputFileURL withNaturalOrientation:(PlateOrientation)orientation
 {
-    dispatch_async(_frameArrivalQueue, ^{
+    [_frameArrivalQueue addOperationWithBlock:^{
         // Create asset writers for output
         NSError *error = nil;
         _assetWriter = [[AVAssetWriter alloc] initWithURL:outputFileURL fileType:AVFileTypeMPEG4 error:&error];
@@ -635,13 +646,13 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
         if (error) {
             RunLog(@"Error recording video to disk: %@ %@", [error localizedDescription], [error localizedFailureReason]);
         }
-    });
+    }];
 }
 
 - (void)videoProcessorShouldStopRecording:(VideoProcessor *)vp completion:(void (^)(NSError *error))completion    // error will be nil upon success
 {
-    // Ensure we've stopped enqqueing frames safely
-    dispatch_async(_frameArrivalQueue, ^{
+    // Ensure we've stopped enqueing frames safely
+    [_frameArrivalQueue addOperationWithBlock:^{
         _sendFramesToAssetWriter = NO;
         
         [_assetWriter finishWritingWithCompletionHandler:^{
@@ -652,7 +663,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
             }
             completion(error);
         }];
-    });
+    }];
 }
 
 @end

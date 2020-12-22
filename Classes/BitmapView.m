@@ -13,7 +13,7 @@
 
 @interface BitmapView ()
 
-@property VideoFrame *image;
+@property VideoFrame *image;        // atomic
 
 @end
 
@@ -47,9 +47,9 @@
 - (void)renderImage:(VideoFrame *)image
 {
     [self setImage:image];
-    dispatch_async(dispatch_get_main_queue(), ^{
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         [self setNeedsDisplay:YES];
-    });
+    }];
 }
 
 @end

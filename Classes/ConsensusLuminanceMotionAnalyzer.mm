@@ -6,12 +6,13 @@
 //  Copyright 2011 Chris Marcellino. All rights reserved.
 //
 
+#import <opencv2/imgproc/types_c.h>
+#import <opencv2/imgproc/imgproc_c.h>
 #import "ConsensusLuminanceMotionAnalyzer.h"
 #import "PlateData.h"
 #import "VideoFrame.h"
 #import "CvUtilities.hpp"
-#import <opencv2/imgproc/types_c.h>
-#import <opencv2/imgproc/imgproc_c.h>
+#import "NSOperationQueue-Utility.h"
 
 static const double WellEdgeFindingInsetProportion = 0.7;
 static const double PlateMovingProportionAboveThresholdLimit = 0.06;
@@ -100,8 +101,7 @@ static const char* WellOccupancyID = "Well Occupancy";
     _pixelwiseVotes = cvCreateImage(cvGetSize([videoFrame image]), IPL_DEPTH_8U, 1);
     fastZeroImage(_pixelwiseVotes);
     
-    dispatch_queue_t criticalSection = dispatch_queue_create(NULL, NULL);
-    dispatch_apply([randomlyChosenFrames count], DISPATCH_APPLY_AUTO, ^(size_t i){
+    [NSOperationQueue addOperationsInParallelWithInstances:[randomlyChosenFrames count] onGlobalQueueForBlock:^(NSUInteger i, id criticalSection) {
         VideoFrame *pastFrame = [randomlyChosenFrames objectAtIndex:i];
         // Subtract the entire plate images channelwise
         IplImage* plateDelta = cvCreateImage(cvGetSize([videoFrame image]), IPL_DEPTH_8U, 4);
@@ -121,15 +121,15 @@ static const char* WellOccupancyID = "Well Occupancy";
         cvThreshold(deltaLuminance, deltaThresholdedImage, _deltaThresholdCutoff, 1, CV_THRESH_BINARY);
         cvReleaseImage(&deltaLuminance);
         
-        dispatch_sync(criticalSection, ^{
+        @synchronized (criticalSection) {
             // Sum the threshold subimages from the random set delta from the current frame. The luminance sum at each
             // pixel will equal the number of votes, since we set the pixels that passed the threshold to 1.
             cvAdd(_pixelwiseVotes, deltaThresholdedImage, _pixelwiseVotes);
             // Calculate the mean for plate movement/lighting change determination
             meanProportionPlateMoved += (double)cvCountNonZero(deltaThresholdedImage) / (deltaThresholdedImage->width * deltaThresholdedImage->height);
-        });
+        };
         cvReleaseImage(&deltaThresholdedImage);
-    });
+    }];;
     
     meanProportionPlateMoved /= [randomlyChosenFrames count];
     

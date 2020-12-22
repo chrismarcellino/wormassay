@@ -42,7 +42,7 @@ extern NSString *const DeckLinkCaptureDeviceWasConnectedOrDisconnectedNotificati
 - (NSArray *)allCaptureModesSortedByDescendingResolutionAndFrameRate;
 
 - (void)setSampleBufferDelegate:(id<DeckLinkCaptureDeviceSampleBufferDelegate>)sampleBufferDelegate
-                          queue:(dispatch_queue_t)sampleBufferCallbackQueue;
+                          queue:(NSOperationQueue *)sampleBufferCallbackQueue;
 
 - (BOOL)startCaptureWithCaptureMode:(DeckLinkCaptureMode *)captureMode error:(NSError **)outError;
 - (void)startCaptureWithSearchForModeWithModes:(NSArray *)captureModeSearchList;

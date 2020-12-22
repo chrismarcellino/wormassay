@@ -37,18 +37,18 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
 
 + (VideoProcessorController *)sharedInstance
 {
-    static dispatch_once_t pred = 0;
     static VideoProcessorController *sharedInstance = nil;
-    dispatch_once(&pred, ^{
-        sharedInstance = [[self alloc] init];
-    });
-    return sharedInstance;
+    @synchronized (self) {
+        if (!sharedInstance) {
+            sharedInstance = [[self alloc] init];
+        }
+        return sharedInstance;
+    }
 }
 
 - (id)init
 {
     if ((self = [super init])) {
-        _queue = dispatch_queue_create("video-processor-controller", NULL);
         _videoProcessors = [[NSMutableArray alloc] init];
         _barcodesSinceTrackingBegan = [[NSCountedSet alloc] init];
         _videoTempURLsToDestinationURLs = [[NSMutableDictionary alloc] init];
@@ -107,11 +107,11 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
     if (assayAnalyzerClass != [self currentAssayAnalyzerClass]) {
         [[NSUserDefaults standardUserDefaults] setObject:NSStringFromClass(assayAnalyzerClass) forKey:AssayAnalyzerClassKey];
         
-        dispatch_async(_queue, ^{
+        @synchronized (self) {
             for (VideoProcessor *videoProcessor in _videoProcessors) {
                 [videoProcessor setAssayAnalyzerClass:assayAnalyzerClass];
             }
-        });
+        }
     }
 }
 
@@ -129,11 +129,11 @@ static const NSTimeInterval LogTurnoverIdleInterval = 10 * 60.0;
     if (plateOrietation != [self plateOrientation]) {
         [[NSUserDefaults standardUserDefaults] setInteger:plateOrietation forKey:PlateOrientationKey];
         
-        dispatch_async(_queue, ^{
+        @synchronized (self) {
             for (VideoProcessor *videoProcessor in _videoProcessors) {
                 [videoProcessor setPlateOrientation:plateOrietation];
             }
-        });
+        }
     }
 }
 
@@ -211,53 +211,47 @@ static void createFolderIfNecessary(NSString *path)
 
 - (void)addVideoProcessor:(VideoProcessor *)videoProcessor
 {
-    dispatch_async(_queue, ^{
+    @synchronized (self) {
         [_videoProcessors addObject:videoProcessor];
         [videoProcessor setDelegate:self];
         [videoProcessor setAssayAnalyzerClass:[self currentAssayAnalyzerClass]];
         [videoProcessor setPlateOrientation:[self plateOrientation]];
         [videoProcessor setShouldScanForWells:YES];
-    });
+    }
 }
 
 - (void)removeVideoProcessor:(VideoProcessor *)videoProcessor
 {
-    dispatch_async(_queue, ^{
+    @synchronized (self) {
         [videoProcessor reportFinalResultsBeforeRemoval];
         [_videoProcessors removeObject:videoProcessor];
-    });    
+    }
 }
 
 - (BOOL)isProcessingVideo
 {
-    __block BOOL isProcessingVideo = NO;
-    dispatch_sync(_queue, ^{
-        isProcessingVideo = [_videoProcessors count] > 0;
-    });
-    return isProcessingVideo;
+    @synchronized (self) {
+        return [_videoProcessors count] > 0;
+    }
 }
 
 - (BOOL)isTracking
 {
-    __block BOOL isTracking = NO;
-    dispatch_sync(_queue, ^{
-        isTracking = _currentlyTrackingProcessor != nil;
-    });
-    return isTracking;
+    @synchronized (self) {
+        return _currentlyTrackingProcessor != nil;
+    }
 }
 
 - (BOOL)hasEncodingJobsRunning      // e.g. during the interval between stopping recording and when QuickTime finalizes the video
 {
-    __block BOOL hasEncodingJobsRunning = NO;
-    dispatch_sync(_queue, ^{
-        hasEncodingJobsRunning = [_videoTempURLsToDestinationURLs count] > 0;
-    });
-    return hasEncodingJobsRunning;
+    @synchronized (self) {
+        return [_videoTempURLsToDestinationURLs count] > 0;
+    }
 }
 
 - (void)videoProcessor:(VideoProcessor *)vp didBeginTrackingPlateAtPresentationTime:(NSTimeInterval)presentationTime
 {
-    dispatch_async(_queue, ^{
+    @synchronized (self) {
         if ([_videoProcessors containsObject:vp] && !_currentlyTrackingProcessor) {
             _currentlyTrackingProcessor = vp;
             _trackingBeginTime = presentationTime;
@@ -275,18 +269,16 @@ static void createFolderIfNecessary(NSString *path)
                 }
             }
         }
-    });
+    }
 }
 
 - (NSURL *)outputFileURLForVideoProcessor:(VideoProcessor *)vp
 {
-    __block NSURL *url = nil;
-    dispatch_sync(_queue, ^{
+    @synchronized (self) {
         NSString *filename = [NSString stringWithFormat:@"%@ %llu (%x).mp4", UnlabeledPlateLabel, _plateInRunNumber, arc4random()];
         NSString *path = [[self videoFolderPathCreatingIfNecessary:YES] stringByAppendingPathComponent:filename];
-        url = [NSURL fileURLWithPath:path];
-    });
-    return url;
+        return [NSURL fileURLWithPath:path];
+    }
 }
 
 - (void)videoProcessor:(VideoProcessor *)vp
@@ -294,7 +286,7 @@ didFinishAcquiringPlateData:(PlateData *)plateData
           successfully:(BOOL)successfully
 willStopRecordingToOutputFileURL:(NSURL *)outputFileURL     // nil if not recording
 {
-    dispatch_async(_queue, ^{
+    @synchronized (self) {
         if (_currentlyTrackingProcessor == vp) {        // may have already been removed from _videoProcessors if device was unplugged/file closed
             for (VideoProcessor *processor in _videoProcessors) {
                 [processor setShouldScanForWells:YES];
@@ -378,17 +370,23 @@ willStopRecordingToOutputFileURL:(NSURL *)outputFileURL     // nil if not record
             _currentlyTrackingProcessor = nil;
         }
         
-        // Reset log emailing timer
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(emailRecentResults) object:nil];
-            [self performSelector:@selector(emailRecentResults) withObject:nil afterDelay:LogTurnoverIdleInterval];
-        });
-    });
+        // Clear any prior log emailing timer and arm a new one on the main run loop
+        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+            if (_logEmailingTimer) {
+                [_logEmailingTimer invalidate];
+            }
+            _logEmailingTimer = [NSTimer scheduledTimerWithTimeInterval:LogTurnoverIdleInterval
+                                                                 target:self
+                                                               selector:@selector(emailRecentResults)
+                                                               userInfo:nil
+                                                                repeats:NO];
+        }];
+    }
 }
 
 - (void)videoProcessor:(VideoProcessor *)vp didCaptureBarcodeText:(NSString *)text atTime:(NSTimeInterval)presentationTime
 {
-    dispatch_async(_queue, ^{
+    @synchronized (self) {
         // If we have a barcode on a camera that isn't the tracking camera, don't rotate the image		
         if (vp != _currentlyTrackingProcessor && [_videoProcessors count] > 1) {		
             [vp setPlateOrientation:PlateOrientationTopRead];		
@@ -396,19 +394,20 @@ willStopRecordingToOutputFileURL:(NSURL *)outputFileURL     // nil if not record
         if ([_videoProcessors containsObject:vp] && presentationTime >= _trackingBeginTime) {
             [_barcodesSinceTrackingBegan addObject:text];
         }
-    });
+    }
 }
 
-- (void)emailRecentResults
+- (void)emailRecentResults      // must call on main thread
 {
-    dispatch_async(_queue, ^{
+    @synchronized (self) {
         NSString *recipients = [self notificationEmailRecipients];
         recipients = [recipients stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
         
         if ([_filesToEmail count] > 0 && recipients && [recipients length] > 0) {
             NSBundle *mainBundle = [NSBundle mainBundle];
-            NSString *subject = [NSString stringWithFormat:@"%@ email results", [mainBundle objectForInfoDictionaryKey:(id)kCFBundleNameKey]];
-            NSString *body = [NSString stringWithFormat:@"Results from the run %@ starting %@ are attached.\n\nSent by %@ version %@ \n\n",
+            NSString *subject = [NSString stringWithFormat:NSLocalizedString(@"%@ email results", @"email format strings"),
+                                                                             [mainBundle objectForInfoDictionaryKey:(id)kCFBundleNameKey]];
+            NSString *body = [NSString stringWithFormat:NSLocalizedString(@"Results from the run %@ starting %@ are attached.\n\nSent by %@ v%@ \n\n", @"email format strings"),
                               _runID,
                               _currentOutputFilenamePrefix,
                               [mainBundle objectForInfoDictionaryKey:(id)kCFBundleNameKey],
@@ -418,17 +417,16 @@ willStopRecordingToOutputFileURL:(NSURL *)outputFileURL     // nil if not record
         }
         
         [_filesToEmail removeAllObjects];
-    });
+    }
 }
 
 - (void)videoProcessorDidFinishRecordingToFileURL:(NSURL *)outputFileURL error:(NSError *)error      // error is nil upon success
 {
-    dispatch_async(_queue, ^{
+    @synchronized (self) {
         if (error) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                NSAlert *alert = [NSAlert alertWithError:error];
-                [alert runModal];
-            });
+            [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                [[NSAlert alertWithError:error] runModal];
+            }];
         }
         
         NSURL *destinationURL = [_videoTempURLsToDestinationURLs objectForKey:outputFileURL];
@@ -448,7 +446,7 @@ willStopRecordingToOutputFileURL:(NSURL *)outputFileURL     // nil if not record
             }
         }
         [_videoTempURLsToDestinationURLs removeObjectForKey:outputFileURL];
-    });
+    }
 }
 
 // Logging
@@ -462,10 +460,10 @@ willStopRecordingToOutputFileURL:(NSURL *)outputFileURL     // nil if not record
     
     [string appendString:@"\n"];        // Append a newline
     
-    dispatch_async(dispatch_get_main_queue(), ^{
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
         NSTextView *textView = [self runLogTextView];
         NSScrollView *scrollView = [self runLogScrollView];
-        BOOL wasAtBottom = ![scrollView hasVerticalScroller] || 
+        BOOL wasAtBottom = ![scrollView hasVerticalScroller] ||
         [textView frame].size.height <= [scrollView frame].size.height ||
         [[scrollView verticalScroller] floatValue] >= 1.0;
         
@@ -481,7 +479,7 @@ willStopRecordingToOutputFileURL:(NSURL *)outputFileURL     // nil if not record
         if (wasAtBottom) {
             [textView scrollRangeToVisible:NSMakeRange([textStorage length], 0)];
         }
-    });
+    }];
 }
 
 - (void)appendString:(NSString *)string toPath:(NSString *)path

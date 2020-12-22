@@ -12,7 +12,6 @@
 @class ArrayTableView;
 
 @interface VideoProcessorController : NSObject <VideoProcessorDelegate> {
-    dispatch_queue_t _queue;     // protects all state and serializes
     NSMutableArray *_videoProcessors;
     VideoProcessor *_currentlyTrackingProcessor;
     NSTimeInterval _trackingBeginTime;
@@ -25,6 +24,7 @@
     NSString *_currentOutputFilenamePrefix;
     NSString *_runID;
     NSTimeInterval _currentOutputLastWriteTime;     // in CPU time
+    NSTimer *_logEmailingTimer;
 }
 
 + (VideoProcessorController *)sharedInstance;
