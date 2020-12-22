@@ -1,3 +1,11 @@
+Version 1.6.5
+-------------
+Add Info.plist key to permit AppleEvents to work again on recent macOS versions
+(due to security improvements) so that the user is prompted when first sending an email.
+Improve AppleScript/Automation failure alert messages.
+Covert to using @synchronize and NSOperationQueue instead of libdispatch for locking and
+(a higher level abstraction for) queue work, respectively for improved maintainability.
+
 Version 1.6.3
 -------------
 Use Vision (built-in macOS library) for barcode reading, and remove zxing-cpp project.
@@ -17,7 +25,7 @@ Version 1.5.3
 -------------
 Fix mac OS 11 BigSur crash on launch due to missing NSCameraUsageDescription privacy key.
 Update built in camera detection to work with newer Apple Silicon hardware and be manufacturer dependent when API is available.
-Fix codesigning and notarization.
+Fix code-signing and notarization.
 
 Version 1.5.1
 -------------
