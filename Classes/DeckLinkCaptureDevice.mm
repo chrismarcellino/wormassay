@@ -310,7 +310,7 @@ public:
     __block NSError *tempOutError;
     
     @synchronized (self) {
-        _captureModesSearchList = [NSArray arrayWithObject:captureMode];
+        _captureModesSearchList = @[ captureMode ];
         _captureModesSearchListIndex = 0;
         result = [self enableVideoInputInCurrentModeWithError:&tempOutError];
     };
@@ -374,18 +374,16 @@ public:
             NSString *description = [NSString stringWithFormat:NSLocalizedString(@"Unable to enable Blackmagic DeckLink video output for %@ in mode %@.", nil),
                                      [self localizedName], captureMode];
             NSString *recoverySuggestion = NSLocalizedString(@"Close any applications that may be using the device and verify that the camera is set to use supported settings.", nil);
-            NSDictionary *userInfo = [NSDictionary dictionaryWithObjectsAndKeys:description, NSLocalizedDescriptionKey,
-                                      recoverySuggestion, NSLocalizedRecoverySuggestionErrorKey,
-                                      nil];
+            NSDictionary *userInfo = @{ NSLocalizedDescriptionKey : description,
+                                        NSLocalizedRecoverySuggestionErrorKey : recoverySuggestion };
             *outError = [NSError errorWithDomain:NSCocoaErrorDomain code:0 userInfo:userInfo];
         }
     }  else if (outError) {
         NSString *description = [NSString stringWithFormat:NSLocalizedString(@"Unable to obtain 422YpCbCr8 output for %@ in mode %@.", nil),
                                  [self localizedName], captureMode];
         NSString *recoverySuggestion = NSLocalizedString(@"Contact the WormAssay authors for further assistance.", nil);
-        NSDictionary *userInfo = [NSDictionary dictionaryWithObjectsAndKeys:description, NSLocalizedDescriptionKey,
-                                  recoverySuggestion, NSLocalizedRecoverySuggestionErrorKey,
-                                  nil];
+        NSDictionary *userInfo = @{ NSLocalizedDescriptionKey : description,
+                                    NSLocalizedRecoverySuggestionErrorKey : recoverySuggestion };
         *outError = [NSError errorWithDomain:NSCocoaErrorDomain code:0 userInfo:userInfo];
     }
     

@@ -26,10 +26,8 @@ static NSString *const UseBlackmagicDeckLinkDriverDefaultsKey = @"UseBlackmagicD
 - (void)applicationWillFinishLaunching:(NSNotification *)notification
 {
     // Register default user defaults
-    NSDictionary *defaults = [[NSDictionary alloc] initWithObjectsAndKeys:
-                              [NSNumber numberWithBool:YES], IgnoreBuiltInCamerasUserDefaultsKey,
-                              [NSNumber numberWithBool:YES], UseBlackmagicDeckLinkDriverDefaultsKey,
-                              nil];
+    NSDictionary *defaults = @{ IgnoreBuiltInCamerasUserDefaultsKey : @YES,
+                                UseBlackmagicDeckLinkDriverDefaultsKey : @YES };
     [[NSUserDefaults standardUserDefaults] registerDefaults:defaults];
     
     // Create our NSDocumentController subclass first

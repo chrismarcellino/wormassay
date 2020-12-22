@@ -148,12 +148,12 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 
 + (NSArray *)readableTypes
 {
-    return [NSArray arrayWithObjects:AVFCaptureDeviceFileType, BlackmagicDeckLinkCaptureDeviceFileType, @"public.movie", nil];
+    return @[ AVFCaptureDeviceFileType, BlackmagicDeckLinkCaptureDeviceFileType, @"public.movie" ];
 }
 
 + (NSArray *)writableTypes
 {
-    return [NSArray array];
+    return @[ ];
 }
 
 - (id)init
@@ -296,18 +296,14 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     // kCVPixelFormatType_422YpCbCr8 is the strictly most efficient for H.264 output and the canonical video format, but
     // RGB lets us preserve more data for some input source and allows for simpler/more accurate gamma correction
     // (and we use BGRA under the hood for OpenCV and OpenGL.)
-    NSMutableDictionary *outputSettings = [[NSMutableDictionary alloc] initWithObjectsAndKeys:
-                                           [NSNumber numberWithInt:kCVPixelFormatType_32BGRA], kCVPixelBufferPixelFormatTypeKey,
-                                           nil];
+    NSMutableDictionary *outputSettings = [@{ (id)kCVPixelBufferPixelFormatTypeKey : [NSNumber numberWithInt:kCVPixelFormatType_32BGRA] } mutableCopy];
     // Create the proper capture device/asset
     BOOL isBlackmagicDeckLinkDevice = NO;
     NSString *captureDeviceUniqueID = UniqueIDForCaptureDeviceURL(absoluteURL, &isBlackmagicDeckLinkDevice);
     if (captureDeviceUniqueID && !isBlackmagicDeckLinkDevice) {        // AVFoundation Capture devices
         // Request square pixels to avoid unnecessary software resizing when possible
-        NSDictionary *squarePixels = [NSDictionary dictionaryWithObjectsAndKeys:
-                                      [NSNumber numberWithDouble:1.0], AVVideoPixelAspectRatioHorizontalSpacingKey,
-                                      [NSNumber numberWithDouble:1.0], AVVideoPixelAspectRatioVerticalSpacingKey,
-                                      nil];
+        NSDictionary *squarePixels = @{ AVVideoPixelAspectRatioHorizontalSpacingKey : @1.0,
+                                        AVVideoPixelAspectRatioVerticalSpacingKey : @1.0 };
         [outputSettings setObject:squarePixels forKey:AVVideoPixelAspectRatioKey];
         
         if (captureDeviceUniqueID) {
@@ -623,11 +619,9 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
         if (_assetWriter) {
             RunLog(@"Began recording video to disk.");
             NSSize size = [self expectedFrameSize];
-            NSDictionary *outputSettings = [[NSDictionary alloc] initWithObjectsAndKeys:
-                                            AVVideoCodecTypeH264, AVVideoCodecKey,
-                                            [NSNumber numberWithInteger:size.width], AVVideoWidthKey,
-                                            [NSNumber numberWithInteger:size.height], AVVideoHeightKey,
-                                            nil];
+            NSDictionary *outputSettings = @{ AVVideoCodecKey : AVVideoCodecTypeH264,
+                                              AVVideoWidthKey : [NSNumber numberWithInteger:size.width],
+                                              AVVideoHeightKey : [NSNumber numberWithInteger:size.height] };
             _assetWriterInput = [[AVAssetWriterInput alloc] initWithMediaType:AVMediaTypeVideo outputSettings:outputSettings sourceFormatHint:NULL];
             [_assetWriterInput setExpectsMediaDataInRealTime:YES];
             if ([[NSUserDefaults standardUserDefaults] boolForKey:DontSetRotationMetadataOnSavedVideosKey]) {

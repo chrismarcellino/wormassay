@@ -26,7 +26,7 @@
 
 - (NSArray *)documentClassNames
 {
-    return [NSArray arrayWithObject:NSStringFromClass([VideoSourceDocument class])];
+    return @[ NSStringFromClass([VideoSourceDocument class])];
 }
 
 @end
