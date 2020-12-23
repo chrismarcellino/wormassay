@@ -140,7 +140,7 @@ static bool findWellCirclesForWellCounts(IplImage* inputImage, std::vector<int> 
 static bool findWellCirclesForWellCountsUsingImage(IplImage* image,
                                                    const std::vector<int> &wellCounts,
                                                    std::vector<Circle> *circles,
-                                                   double *score,           // reads and writes
+                                                   double *score,           // if unsuccessful, will return wells and false if we meet this score, and sets score
                                                    int expectedRadius)
 {
     __block bool success = false;
@@ -148,7 +148,7 @@ static bool findWellCirclesForWellCountsUsingImage(IplImage* image,
     // Execute searches for different plate sizes in parallel
     [NSOperationQueue addOperationsInParallelWithInstances:wellCounts.size() onGlobalQueueForBlock:^(NSUInteger i, id criticalSection) {
         std::vector<Circle> currentCircles;
-        double currentScore;
+        double currentScore = DBL_MIN;
         bool currentSuccess = findWellCirclesForWellCountUsingImage(image, wellCounts[i], currentCircles, currentScore, expectedRadius);
         
         @synchronized(criticalSection) {
