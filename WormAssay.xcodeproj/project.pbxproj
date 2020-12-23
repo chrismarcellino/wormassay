@@ -367,9 +367,9 @@
 		BEB800EA1A5E530400FCE8D2 /* WormAssayAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WormAssayAppDelegate.h; path = Classes/WormAssayAppDelegate.h; sourceTree = SOURCE_ROOT; };
 		BEB800EB1A5E530400FCE8D2 /* WormAssayAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = WormAssayAppDelegate.m; path = Classes/WormAssayAppDelegate.m; sourceTree = SOURCE_ROOT; };
 		BEE1CAD51A5E565300F77BF0 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = Classes/main.m; sourceTree = "<group>"; };
-		BEE1CAE11A5E570C00F77BF0 /* Worm.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = Worm.icns; path = Classes/Resources/Worm.icns; sourceTree = SOURCE_ROOT; };
-		BEE1CAE81A5E571F00F77BF0 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = Classes/Resources/en.lproj/Credits.rtf; sourceTree = SOURCE_ROOT; };
-		BEE1CAF31A5E573A00F77BF0 /* WormAssay-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "WormAssay-Info.plist"; path = "Classes/WormAssay-Info.plist"; sourceTree = SOURCE_ROOT; };
+		BEE1CAE11A5E570C00F77BF0 /* Worm.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = Worm.icns; path = Resources/Worm.icns; sourceTree = SOURCE_ROOT; };
+		BEE1CAE81A5E571F00F77BF0 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = Resources/en.lproj/Credits.rtf; sourceTree = SOURCE_ROOT; };
+		BEE1CAF31A5E573A00F77BF0 /* WormAssay-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "WormAssay-Info.plist"; path = "WormAssay-Info.plist"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -424,7 +424,7 @@
 				BEE1CAE11A5E570C00F77BF0 /* Worm.icns */,
 			);
 			name = Resources;
-			path = Classes/Resources;
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		21910731135E2B3100A12F1F /* Analysis */ = {
@@ -1176,6 +1176,7 @@
 		218DD54B13453FC6000B6475 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_STATIC_ANALYZER_MODE = deep;
 				CODE_SIGN_ENTITLEMENTS = WormAssay.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
@@ -1184,7 +1185,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				INFOPLIST_FILE = "Classes/WormAssay-Info.plist";
+				INFOPLIST_FILE = "WormAssay-Info.plist";
 				MARKETING_VERSION = 1.6.5;
 				PRODUCT_BUNDLE_IDENTIFIER = org.chrismarcellino.wormassay;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1194,8 +1195,6 @@
 					"-Wall",
 					"-Wextra",
 					"-Wno-unused-parameter",
-					"-Wno-overloaded-virtual",
-					"-Wno-arc-retain-cycles",
 				);
 				WRAPPER_EXTENSION = app;
 			};
@@ -1204,6 +1203,7 @@
 		218DD54C13453FC6000B6475 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_STATIC_ANALYZER_MODE = deep;
 				CODE_SIGN_ENTITLEMENTS = WormAssay.entitlements;
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
@@ -1211,7 +1211,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 94XJ98ESL8;
 				ENABLE_HARDENED_RUNTIME = YES;
-				INFOPLIST_FILE = "Classes/WormAssay-Info.plist";
+				INFOPLIST_FILE = "WormAssay-Info.plist";
 				LLVM_LTO = YES;
 				MARKETING_VERSION = 1.6.5;
 				PRODUCT_BUNDLE_IDENTIFIER = org.chrismarcellino.wormassay;
@@ -1222,8 +1222,6 @@
 					"-Wall",
 					"-Wextra",
 					"-Wno-unused-parameter",
-					"-Wno-overloaded-virtual",
-					"-Wno-arc-retain-cycles",
 				);
 				WRAPPER_EXTENSION = app;
 			};
