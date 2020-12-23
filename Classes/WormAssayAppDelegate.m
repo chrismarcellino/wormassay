@@ -162,10 +162,10 @@ static NSString *const UseBlackmagicDeckLinkDriverDefaultsKey = @"UseBlackmagicD
             [documentController openDocumentWithContentsOfURL:deviceURL
                                                       display:YES
                                             completionHandler:^(NSDocument *document, BOOL alreadyOpen, NSError *error){
-                                                if (error) {
-                                                    [[NSAlert alertWithError:error] runModal];
-                                                }
-                                            }];
+                if (error) {
+                    [[NSAlert alertWithError:error] runModal];
+                }
+            }];
         }
     }
 

@@ -404,16 +404,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 // Called on main thread
 - (void)close
 {
-    [_frameArrivalQueue addOperationWithBlock:^{
-        _closeCalled = YES;
-        _sendFramesToAssetWriter = NO;
-    }];
-    [_frameArrivalQueue waitUntilAllOperationsAreFinished];
-    
-    _closeCalled = YES;
-    _sendFramesToAssetWriter = NO;
     RunLog(@"Closing %@ \"%@\".", (_avCaptureDevice || _deckLinkCaptureDevice) ? @"removed device" : @"file", [self sourceIdentifier]);
-    [[VideoProcessorController sharedInstance] removeVideoProcessor:_processor];
     
     if (_avCaptureDevice) {
         [_captureSession stopRunning];
@@ -426,6 +417,16 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
         [_urlAsset cancelLoading];
     }
     
+    // Remove our processor
+    [[VideoProcessorController sharedInstance] removeVideoProcessor:_processor];
+    
+    // Avoid a race on closure since our delayed block may call in even after the operation queue is released
+    [_frameArrivalQueue addOperationWithBlock:^{
+        _closeCalled = YES;
+        _sendFramesToAssetWriter = NO;
+    }];
+    [_frameArrivalQueue waitUntilAllOperationsAreFinished];
+    
     [super close];
 }
 
@@ -434,7 +435,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
                             firstFrameTime:(NSTimeInterval)firstFrameTime
                              frameInterval:(NSTimeInterval)frameInterval
 {
-    if (_closeCalled) {
+    if (_closeCalled) {     // in case the delayed block calls after we are closed (which may be the last ref. to the document)
         return;
     }
     
@@ -454,7 +455,12 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
         
         NSTimeInterval delay = (frameTime - firstFrameTime) - (CACurrentMediaTime() - startTime) + frameInterval;
         [_frameArrivalQueue addOperationWithDelay:delay forBlock:^{
+            // Strongly reference this instance since we cannot cancel the block (would be a race, or could deadlock.
+            // The _closeCalled will abort this callback if the video has been closed since
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-retain-cycles"
             [self getNextVideoFileFrameWithStartTime:startTime firstFrameTime:firstFrameTime frameInterval:frameInterval];
+#pragma clang diagnostic pop
         }];
     } else {
          [self videoPlaybackDidEnd];
