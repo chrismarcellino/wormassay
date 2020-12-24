@@ -101,7 +101,7 @@ bool findWellCirclesForWellCount(IplImage* inputImage, int wellCount, std::vecto
 static bool findWellCirclesForWellCounts(IplImage* inputImage, std::vector<int> wellCounts, std::vector<Circle> &circles)
 {
     // Only report failed circle sets if they are not too noisy
-    double score = 0.5;
+    double score = 0.75;
     
     // Convert the input image to grayscale
     IplImage* grayscaleImage = cvCreateImage(cvGetSize(inputImage), IPL_DEPTH_8U, 1);
@@ -144,6 +144,7 @@ static bool findWellCirclesForWellCountsUsingImage(IplImage* image,
                                                    int expectedRadius)
 {
     __block bool success = false;
+    double minScore = *score;
     
     // Execute searches for different plate sizes in parallel
     [NSOperationQueue addOperationsInParallelWithInstances:wellCounts.size() onGlobalQueueForBlock:^(NSUInteger i, id criticalSection) {
@@ -151,11 +152,13 @@ static bool findWellCirclesForWellCountsUsingImage(IplImage* image,
         double currentScore = DBL_MIN;
         bool currentSuccess = findWellCirclesForWellCountUsingImage(image, wellCounts[i], currentCircles, currentScore, expectedRadius);
         
-        @synchronized(criticalSection) {
-            if (!success && (currentSuccess || currentScore > *score)) {
-                success = currentSuccess;
-                *score = currentScore;
-                *circles = currentCircles;
+        if (currentSuccess || currentScore >= minScore) {        // stricly an optimization to avoid the critical section in most cases
+            @synchronized(criticalSection) {
+                if (!success && (currentSuccess || currentScore > *score)) {
+                    success = currentSuccess;
+                    *score = currentScore;
+                    *circles = currentCircles;
+                }
             }
         }
     }];
@@ -198,7 +201,7 @@ static bool findWellCirclesForWellCountUsingImage(IplImage* image,
     // where the error tolerance is at least 14%.
     //
     // The minimum distance between well centers is just double the minimum radius calculated above, since wells cannot overlap.
-    double errorTolerance = 0.20;      // 20%, see above
+    double errorTolerance = 0.2;      // 20%, see above
     int maxRadius = smallerImageDimension / (2.0 * rows) * (1.0 + errorTolerance);
     int minRadius = 0.5 * largerImageDimension / (2.0 * columns) / (1.0 + errorTolerance);
     
@@ -216,7 +219,7 @@ static bool findWellCirclesForWellCountUsingImage(IplImage* image,
                                     2,      // inverse accumulator resolution ratio
                                     minRadius * 2,  // min dist between centers
                                     200,    // Canny high threshold
-                                    200,    // Accumulator threshold
+                                    (wellCount >= 96) ? 100 : 200,    // accumulator threshold (lower to inc. sensitivity for high well count plates)
                                     minRadius, // min radius
                                     maxRadius); // max radius
     CvSeq* unfilteredCircles = circles;
@@ -224,8 +227,9 @@ static bool findWellCirclesForWellCountUsingImage(IplImage* image,
     // Take the set of all circles whose centers are approximately colinear with other circles along axis aligned lines
     // in both dimensions. Discard all others.
     int colinearityThreshold = maxRadius / 2;
-    // Low well count plates require much more colinearity, as it is too easy to pick out a set of random circles from visual noise/surroundings
-    if (wellCount <= 6) {
+    // High and low well count plates require much more colinearity, as it is too easy to pick out a set of random circles
+    // from visual noise/surroundings.
+    if (wellCount <= 6 || wellCount >= 96) {
         colinearityThreshold = maxRadius / 8;
     }
     
