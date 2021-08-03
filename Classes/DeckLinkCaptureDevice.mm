@@ -307,7 +307,7 @@ public:
 - (BOOL)startCaptureWithCaptureMode:(DeckLinkCaptureMode *)captureMode error:(NSError **)outError
 {
     __block BOOL result;
-    __block NSError *tempOutError;
+    __block NSError *tempOutError = nil;
     
     @synchronized (self) {
         _captureModesSearchList = @[ captureMode ];
@@ -315,7 +315,9 @@ public:
         result = [self enableVideoInputInCurrentModeWithError:&tempOutError];
     };
     
-    *outError = tempOutError;
+    if (outError) {
+        *outError = tempOutError;
+    }
     return result;
 }
 
