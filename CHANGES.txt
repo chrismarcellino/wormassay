@@ -1,3 +1,7 @@
+Version 1.7.1
+-------------
+Disable library validation as this breaks BlackMagic library use. 
+
 Version 1.7.0
 -------------
 Fix 96 well plate detection.
