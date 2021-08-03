@@ -6,6 +6,7 @@
 //  Copyright 2011 Chris Marcellino. All rights reserved.
 //
 
+#import <sys/utsname.h>
 #import "WormAssayAppDelegate.h"
 #import "VideoSourceDocument.h"
 #import "DocumentController.h"
@@ -57,12 +58,19 @@ static NSString *const UseBlackmagicDeckLinkDriverDefaultsKey = @"UseBlackmagicD
     unsigned long long freeSpace = [[fileAttributes objectForKey:NSFileSystemFreeSize] unsignedLongLongValue];
     double percentFree = (double)freeSpace / (double)fileSystemSize * 100.0;
     
-    RunLog(@"%@ version %@ launched. Storage has %@ (%.3g%%) free space. macOS %@.",
+    struct utsname systemInfo;
+    NSString *machineName = nil;
+    if (uname(&systemInfo) == EXIT_SUCCESS) {
+        machineName = [NSString stringWithUTF8String:systemInfo.machine];
+    }
+    
+    RunLog(@"%@ version %@. Storage has %@ (%.3g%%) free space. macOS %@ running in %@.",
            [mainBundle objectForInfoDictionaryKey:(id)kCFBundleNameKey],
            [mainBundle objectForInfoDictionaryKey:(id)kCFBundleVersionKey],
            formattedDataSize(freeSpace),
            percentFree,
-           [[NSProcessInfo processInfo] operatingSystemVersionString]);
+           [[NSProcessInfo processInfo] operatingSystemVersionString],
+           machineName);
     
     if ([DeckLinkCaptureDevice isDriverInstalled]) {
         RunLog(@"Blackmagic DeckLink API version %@ installed", [DeckLinkCaptureDevice deckLinkSystemVersion]);
