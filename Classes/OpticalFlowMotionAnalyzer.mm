@@ -173,6 +173,7 @@ static const double MinimumMovementMagnitude = 0.5;
     
     CvPoint2D32f* featuresPrev = new CvPoint2D32f[featuresCur.size()];
     char *featuresPrevFound = new char[featuresCur.size()];
+    memset(featuresPrevFound, false, featuresCur.size());   // silence analyzer warning and explicitly initialize to false
     
     // Get grayscale subimages for the previous and current well
     IplImage* grayscalePrevImage = cvCreateImage(cvGetSize(&prevWellImage), IPL_DEPTH_8U, 1);
