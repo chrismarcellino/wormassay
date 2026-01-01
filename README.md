@@ -17,7 +17,7 @@ See the manuscript linked below for a detailed description of which algorithm to
 
 WormAssay's source code is distributed under the GPLv2 (or later, your choice). OpenCV 2 modules are included under its 3-clause BSD license. Building the source code (which is not required) requires the Xcode Developer Tools, which can be downloaded from the Mac App Store. To build, open the WormAssay.xcodeproj file, and choose 'Run.' Note that there is a significant performance difference (two-fold) between debug and release versions due to compiler optimization flags. 
 
-**An open-access manuscript describing the publication is available in PLoS NTDs at [doi:10.1371/journal.pntd.0001494](http://www.plosntds.org/article/info%3Adoi%2F10.1371%2Fjournal.pntd.0001494). See a [video demonstrating WormAssay in use](http://vimeo.com/34962651) at the Sandler Center for Drug Discovery.**
+**An open-access manuscript describing the publication is available in PLoS NTDs at [doi:10.1371/journal.pntd.0001494](https://doi.org/10.1371/journal.pntd.0001494). See a [video demonstrating WormAssay in use](http://vimeo.com/34962651) at the Sandler Center for Drug Discovery.**
 
 The [change log](https://github.com/chrismarcellino/wormassay/blob/master/CHANGES.txt) can be viewed in the source section.
 
