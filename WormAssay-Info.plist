@@ -31,7 +31,7 @@
 	<key>NSCameraUsageDescription</key>
 	<string>WormAssay needs to access cameras in order to analyze and record specimen plates and barcodes.</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2011-2021 Chris Marcellino</string>
+	<string>Copyright © 2011-2026 Chris Marcellino</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>

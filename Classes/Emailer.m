@@ -53,7 +53,7 @@
         
         NSAlert *alert = [[NSAlert alloc] init];
         [alert setMessageText:NSLocalizedString(@"Unable to send email", nil)];
-        [alert setInformativeText:[NSString stringWithFormat:NSLocalizedString(@"Error running AppleScript to send email: %@\n\nCheck the security settings in System Preferences > Security & Privacy > Privacy > Automation.", @"alert format string"),
+        [alert setInformativeText:[NSString stringWithFormat:NSLocalizedString(@"Error running AppleScript to send email: %@\n\nCheck the security settings in System Preferences > Privacy & Security > Privacy > Automation.", @"alert format string"),
                                    errorText]];
         [alert addButtonWithTitle:NSLocalizedString(@"OK", nil)];
         [alert runModal];
