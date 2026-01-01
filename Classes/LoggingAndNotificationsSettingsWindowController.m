@@ -41,7 +41,10 @@
 
 - (IBAction)openMail:(id)sender
 {
-    [[NSWorkspace sharedWorkspace] launchApplication:@"Mail"];
+    NSURL *url = [[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:@"com.apple.mail"];
+    if (url) {
+        [[NSWorkspace sharedWorkspace] openURL:url];
+    }
 }
 
 - (IBAction)testEmailNotifications:(id)sender

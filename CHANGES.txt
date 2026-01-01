@@ -1,3 +1,9 @@
+Version 1.7.2
+-------------
+Update DeckLink SDK to 15.3. This requires Desktop Video version 14.3 or newer.
+Update minimum macOS version to 14 Sonoma.
+Exclude continutiy cameras (i.e. iPhone) when build-in cameras are disabled.
+
 Version 1.7.1
 -------------
 Disable library validation as this breaks BlackMagic library use. 
@@ -27,7 +33,12 @@ Remove unused framework dependencies, deprecated build settings and update XIB f
 
 Version 1.6.0
 -------------
-Update OpenCV modules used to final 2.x version (2.4.13.6).
+Update OpenCV modules used to final 2.x version (2.4.13.6). This is the final version that we will ever upgrade to
+to allow for forward and backwards reproducibility of the analyzers. Thus, just the pertinent components of OpenCV
+have been copied into this project to fix the algorithim in time. (Changes to the heuristical methods of later OpenCV
+revisions add minor variation which reduces reproducibility. With a sufficient powerful comptuer that can process all
+frames in real time, there should be essentially complete reproducibility or a close approximation if some frames must
+be dropped to keep up in real time.)
 Update zxing-cpp to 1.1.1.
 Remove unnecessary OpenGL blitting code.
 

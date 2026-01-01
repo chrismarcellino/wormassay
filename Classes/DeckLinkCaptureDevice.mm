@@ -442,79 +442,65 @@ public:
     };
 }
 
-static void pixelBufferReleaseBytesCallback(void *releaseRefCon, const void *baseAddress)
-{
-    ((IDeckLinkVideoInputFrame*)releaseRefCon)->Release();
-}
-
 - (void)videoInputFrameArrived:(IDeckLinkVideoInputFrame*)videoFrame audioPacket:(IDeckLinkAudioInputPacket*)audioPacket
 {
     @synchronized (self) {
         _lastFrameHasValidInputSource = videoFrame && !(videoFrame->GetFlags() & bmdFrameHasNoInputSource);
-        void *baseAddress = NULL;
+        CVPixelBufferRef pixelBuffer = NULL;
+        
         if (videoFrame) {
-            videoFrame->GetBytes(&baseAddress);
+            // Access the CVPixelBuffer directly to simplify memory management. This requires Desktop Video 14.3 or newer.
+            IDeckLinkMacVideoBuffer* videoBuffer = NULL;
+            HRESULT result = videoFrame->QueryInterface(IID_IDeckLinkMacVideoBuffer, (void**)&videoBuffer);
+            if (result == S_OK && videoBuffer) {
+                result = videoBuffer->CreateCVPixelBufferRef((void**)&pixelBuffer);
+                if (result != S_OK || !pixelBuffer) {
+                    NSLog(@"Unable to create CVPixelBuffer from IDeckLinkMacVideoBuffer (error %i).", result);
+                }
+                videoBuffer->Release();
+            } else {
+                NSLog(@"Unable to create IDeckLinkMacVideoBuffer (error %i).", result);
+            }
         }
         
         if (_captureModesSearchList && !_lastFrameHasValidInputSource) {
             [self retryCaptureWithNextModeAfterDelay];
-        } else if (_captureModesSearchList && baseAddress) {
-            CVPixelBufferRef pixelBuffer = NULL;
-            // ensure our two video code constant FOURCC enum types are equivalent
-#if !(kCMPixelFormat_422YpCbCr8 == bmdFormat8BitYUV && \
-    kCMPixelFormat_422YpCbCr10 == bmdFormat10BitYUV && \
-    kCMPixelFormat_32BGRA == bmdFormat8BitBGRA && \
-    kCMPixelFormat_32ARGB == bmdFormat8BitARGB)
-#error sanity check of useful FOURCC codes failed
-#endif
-            CVReturn result = CVPixelBufferCreateWithBytes(NULL,
-                                                           videoFrame->GetWidth(),
-                                                           videoFrame->GetHeight(),
-                                                           videoFrame->GetPixelFormat(),
-                                                           baseAddress,
-                                                           videoFrame->GetRowBytes(),
-                                                           pixelBufferReleaseBytesCallback,
-                                                           videoFrame,
-                                                           NULL,
-                                                           &pixelBuffer);
-            if (pixelBuffer) {
-                videoFrame->AddRef();           // released by pixelBufferReleaseBytesCallback() above owned by the CVPixelBuffer
-                
-                // Get timestamps
-                int32_t timescale = 60000;    // good numerator for 24, 29.97, 30 and 60 fps
-                BMDTimeValue frameTime;
-                BMDTimeValue frameDuration;
-                videoFrame->GetStreamTime(&frameTime, &frameDuration, timescale);
-                
-                CMTime presentationTimeStamp = CMTimeMake(frameTime, timescale);
-                CMTime duration = CMTimeMake(frameDuration, timescale);
-                CMSampleTimingInfo sampleTiming = { duration, presentationTimeStamp, kCMTimeInvalid };
-                
-                // Create the format description
-                CMVideoFormatDescriptionRef formatDescription = NULL;
-                CMVideoFormatDescriptionCreateForImageBuffer(NULL, pixelBuffer, &formatDescription);
-                
-                CMSampleBufferRef sampleBuffer = NULL;
-                CMSampleBufferCreateForImageBuffer(NULL,
-                                                   pixelBuffer,
-                                                   YES,
-                                                   NULL,
-                                                   NULL,
-                                                   formatDescription,
-                                                   &sampleTiming,
-                                                   &sampleBuffer);
-                CFRelease(formatDescription);
-                CFRelease(pixelBuffer);
-                
-                NSAssert(_sampleBufferDelegate && _callbackQueue, @"delegate and queue must be set when capturing is enabled");
-                DeckLinkCaptureMode *mode = [_captureModesSearchList objectAtIndex:_captureModesSearchListIndex];
-                [_callbackQueue addOperationWithBlock:^{
-                    [_sampleBufferDelegate captureDevice:self didOutputSampleBuffer:sampleBuffer inCaptureMode:mode];
-                    CFRelease(sampleBuffer);
-                }];
-            } else {
-                NSLog(@"Unable to create pixel buffer. CVPixelBufferCreateWithBytes returned %i.", result);
-            }
+        } else if (_captureModesSearchList && pixelBuffer) {
+            // Get timestamps
+            int32_t timescale = 60000;    // good numerator for 24, 29.97, 30 and 60 fps
+            BMDTimeValue frameTime;
+            BMDTimeValue frameDuration;
+            videoFrame->GetStreamTime(&frameTime, &frameDuration, timescale);
+            
+            CMTime presentationTimeStamp = CMTimeMake(frameTime, timescale);
+            CMTime duration = CMTimeMake(frameDuration, timescale);
+            CMSampleTimingInfo sampleTiming = { duration, presentationTimeStamp, kCMTimeInvalid };
+            
+            // Create the format description
+            CMVideoFormatDescriptionRef formatDescription = NULL;
+            CMVideoFormatDescriptionCreateForImageBuffer(NULL, pixelBuffer, &formatDescription);
+            
+            CMSampleBufferRef sampleBuffer = NULL;
+            CMSampleBufferCreateForImageBuffer(NULL,
+                                               pixelBuffer,
+                                               YES,
+                                               NULL,
+                                               NULL,
+                                               formatDescription,
+                                               &sampleTiming,
+                                               &sampleBuffer);
+            CFRelease(formatDescription);
+            
+            NSAssert(_sampleBufferDelegate && _callbackQueue, @"delegate and queue must be set when capturing is enabled");
+            DeckLinkCaptureMode *mode = [_captureModesSearchList objectAtIndex:_captureModesSearchListIndex];
+            [_callbackQueue addOperationWithBlock:^{
+                [_sampleBufferDelegate captureDevice:self didOutputSampleBuffer:sampleBuffer inCaptureMode:mode];
+                CFRelease(sampleBuffer);
+            }];
+        }
+        
+        if (pixelBuffer) {
+            CFRelease(pixelBuffer);
         }
     };
 }

@@ -261,8 +261,8 @@ static NSString *const UseBlackmagicDeckLinkDriverDefaultsKey = @"UseBlackmagicD
 
 - (IBAction)openRunOutputFolder:(id)sender
 {
-    NSString *folder = [[VideoProcessorController sharedInstance] runOutputFolderPath];
-    [[NSWorkspace sharedWorkspace] openFile:folder];
+    NSString *path = [[VideoProcessorController sharedInstance] runOutputFolderPath];
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:path]];
 }
 
 - (IBAction)showLoggingAndNotificationSettings:(id)sender

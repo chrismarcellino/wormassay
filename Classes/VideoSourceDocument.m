@@ -64,22 +64,6 @@ NSString *UniqueIDForCaptureDeviceURL(NSURL *url, BOOL *isBlackmagicDeckLinkDevi
     return uniqueID;
 }
 
-BOOL DeviceIsBuiltInCamera(AVCaptureDevice *device)
-{
-    if (@available(macOS 10.15, *)) {
-        NSString *const builtInString = @"BuiltIn";
-        // Sanity check that const string definition matches its symbol name so we can catch all current and
-        // future ...BuiltIn... types without relying on Apple specifically (and not unintentionally exclude non-built-in
-        // Apple cameras such as the iSight IEEE1394 camera which can be used for barcode reading etc. 
-        NSCAssert([AVCaptureDeviceTypeBuiltInWideAngleCamera containsString:builtInString],
-                  @"AVCaptureDeviceTypeBuiltIn... strings have been changed to not have \"BuiltIn\" in them and this comparison should be updated.");
-        
-        return [[device deviceType] containsString:builtInString];
-    } else {
-        return [[device manufacturer] isEqual:@"Apple Inc."];
-    }
-}
-
 BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 {
     NSString *modelID = [device modelID];
@@ -129,17 +113,26 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     }
     
     // Iterate through current capture devices
-    for (AVCaptureDevice *device in [AVCaptureDevice devices]) {
-        if ([device hasMediaType:AVMediaTypeVideo] || [device hasMediaType:AVMediaTypeMuxed]) {
-            BOOL isADeckLinkDevice = [deckLinkNames containsObject:[device localizedName]] ||
-            [deckLinkNames containsObject:[device modelID]];
-            
-            // See if we need to ignore this devices
-            if (!isADeckLinkDevice && (!ignoreBuiltInCameras || !DeviceIsBuiltInCamera(device))) {
-                // Construct the URL for the capture device
-                NSURL *url = URLForAVCaptureDevice(device);
-                [urls addObject:url];
-            }
+    NSMutableArray *deviceTypes = [NSMutableArray arrayWithObject:AVCaptureDeviceTypeExternal];
+    if (!ignoreBuiltInCameras) {
+        [deviceTypes addObject:AVCaptureDeviceTypeBuiltInWideAngleCamera];
+        [deviceTypes addObject:AVCaptureDeviceTypeDeskViewCamera];
+        [deviceTypes addObject:AVCaptureDeviceTypeContinuityCamera];
+    }
+        
+    AVCaptureDeviceDiscoverySession *session = [AVCaptureDeviceDiscoverySession discoverySessionWithDeviceTypes:deviceTypes
+                                                                                                      mediaType:AVMediaTypeVideo
+                                                                                                       position:AVCaptureDevicePositionUnspecified];
+    for (AVCaptureDevice *device in [session devices]) {
+        BOOL isADeckLinkDevice = [deckLinkNames containsObject:[device localizedName]] || [deckLinkNames containsObject:[device modelID]];
+        // Even if we exclude continuity devices above, earlier MacOS versions (based on linked-on version) will still
+        // return them as AVCaptureDeviceTypeExternal devices so cull them if hiding built-in devices.
+        BOOL isContinuityDevice = [[device modelID] hasPrefix:@"iPhone"];
+        
+        if (!isADeckLinkDevice && (!ignoreBuiltInCameras || !isContinuityDevice)) {
+            // Construct the URL for the capture device
+            NSURL *url = URLForAVCaptureDevice(device);
+            [urls addObject:url];
         }
     }
     
@@ -552,7 +545,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     NSSize bufferSize = NSMakeSize(CVPixelBufferGetWidth(pixelBuffer), CVPixelBufferGetHeight(pixelBuffer));
     NSSize squarePixelBufferSize = bufferSize;
     
-    CFDictionaryRef aspectRatioDict = CVBufferGetAttachment(pixelBuffer, kCVImageBufferPixelAspectRatioKey, NULL);
+    CFDictionaryRef aspectRatioDict = CVBufferCopyAttachment(pixelBuffer, kCVImageBufferPixelAspectRatioKey, NULL);
     if (aspectRatioDict) {
         CFNumberRef horizontalPixelNumber = CFDictionaryGetValue(aspectRatioDict, kCVImageBufferPixelAspectRatioHorizontalSpacingKey);
         CFNumberRef verticalPixelNumber = CFDictionaryGetValue(aspectRatioDict, kCVImageBufferPixelAspectRatioVerticalSpacingKey);
@@ -571,6 +564,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
                 }
             }
         }
+        CFRelease(aspectRatioDict);
     }
     
     // Arbitrarily limit UVC devices to 640x480 for maximum compatability. These cameras (webcams) should only be used for barcoding.
