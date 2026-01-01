@@ -1,5 +1,8 @@
-WormAssay, Chris Marcellino MD, UCSF Center for Discovery and Innovation in Parasitic Diseases, UCSF QB3
-Copyright (C) 2011-2021 Chris Marcellino
+WormAssay
+Chris Marcellino MD
+UCSF Center for Discovery and Innovation in Parasitic Diseases, UCSF QB3
+Mayo Clinic, Department of Anesthesiology and Perioperative Medicine
+Copyright (C) 2011-2026 Chris Marcellino
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
