@@ -32,7 +32,7 @@ UCSF Center for Discovery and Innovation in Parasitic Diseases, UCSF QB3
 
 
 ## Links:
-[Manuscript at PLoS NTDs](http://www.plosntds.org/article/info%3Adoi%2F10.1371%2Fjournal.pntd.0001494)
+[Manuscript at PLoS NTDs](https://doi.org/10.1371/journal.pntd.0001494)
 
 [California Institute for Quantitative Biosciences](http://qb3.org/)
 
