@@ -11,9 +11,29 @@
 
 @implementation Emailer
 
-+ (void)sendMailMessageToRecipients:(NSString *)recipients subject:(NSString *)subject body:(NSString *)body attachmentPaths:(NSArray *)attachmentPaths
++ (void)sendMailMessageToRecipients:(NSString *)recipientsString
+                            subject:(NSString *)subject
+                               body:(NSString *)body
+                    attachmentPaths:(NSArray *)attachmentPaths
 {
     NSAssert([NSThread isMainThread], @"must call on main thread");
+    
+    // Divide the email addresses up into separate strings
+    NSMutableCharacterSet *characterSet = [NSMutableCharacterSet whitespaceAndNewlineCharacterSet];
+    [characterSet addCharactersInString:@",;:"];
+    NSArray *emailAddresses = [recipientsString componentsSeparatedByCharactersInSet:characterSet];
+    NSPredicate *hasAtSymbol = [NSPredicate predicateWithFormat:@"SELF contains[c] '@'"];
+    emailAddresses = [emailAddresses filteredArrayUsingPredicate:hasAtSymbol];
+    
+    // Convert the email address array into an Apple Script format list
+    NSMutableArray *quotedEmailAddresses = [NSMutableArray array];
+    for (NSString *emailAddress in emailAddresses) {
+        NSString *quotedEmailAddress = [NSString stringWithFormat:@"\"\%@\"", emailAddress];
+        [quotedEmailAddresses addObject:quotedEmailAddress];
+    }
+    NSString *emailAddressesList = [quotedEmailAddresses componentsJoinedByString:@", "];
+    emailAddressesList = [@"{" stringByAppendingString:emailAddressesList];
+    emailAddressesList = [emailAddressesList stringByAppendingString:@"}"];
     
     // Create the attachment commands
     NSMutableString *attachmentCommands = [NSMutableString string];
@@ -25,13 +45,17 @@
                         // Get the current visibility of Mail
                         "tell application \"System Events\" \n"
                         "copy (name of processes) contains \"Mail\" and visible of process \"Mail\" to mailWasVisible \n"
-                        "end tell \n"                        
+                        "end tell \n"
                         // Draft the message and add the attachments
                         "tell application \"Mail\" \n"
                         "set newMessage to make new outgoing message with properties {subject:\"%@\", content:\"%@\"} \n"
                         "tell newMessage \n"
-                        "make new to recipient at end of to recipients with properties {address:\"%@\"} \n"
+                        "repeat with anEmailAddress in %@ \n"
+                        "    make new recipient at end of to recipients with properties {address:anEmailAddress} \n"
+                        "end repeat \n"
+                        // Add attachment commands
                         "%@"
+                        // Send the message
                         "set visible to true \n"
                         "end tell \n"
                         "send newMessage \n"
@@ -40,7 +64,7 @@
                         "if not mailWasVisible then tell application \"System Events\" \n"
                         "set visible of process \"Mail\" to false \n"
                         "end tell \n",
-                        subject, body, recipients, attachmentCommands];
+                        subject, body, emailAddressesList, attachmentCommands];
     
     NSAppleScript *script = [[NSAppleScript alloc] initWithSource:source];
     NSDictionary *errorDict = nil;

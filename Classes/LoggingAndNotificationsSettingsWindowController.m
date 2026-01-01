@@ -50,9 +50,16 @@
 - (IBAction)testEmailNotifications:(id)sender
 {
     NSString *recipients = [[VideoProcessorController sharedInstance] notificationEmailRecipients];
-    NSString *body = [NSString stringWithFormat:NSLocalizedString(@"This is a test email message sent by %@.", nil),
-                      [[NSBundle mainBundle] objectForInfoDictionaryKey:(id)kCFBundleNameKey]];
-    [Emailer sendMailMessageToRecipients:recipients subject:@"Test message" body:body attachmentPaths:nil];
+    if (recipients && [[recipients stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] length] > 0) {
+        NSString *body = [NSString stringWithFormat:NSLocalizedString(@"This is a test email message sent by %@.", nil),
+                          [[NSBundle mainBundle] objectForInfoDictionaryKey:(id)kCFBundleNameKey]];
+        [Emailer sendMailMessageToRecipients:recipients subject:@"Test message" body:body attachmentPaths:nil];
+    } else {
+        NSAlert *alert = [[NSAlert alloc] init];
+        [alert setMessageText:NSLocalizedString(@"Invalid email address", nil)];
+        [alert setInformativeText:NSLocalizedString(@"One or more email addresses must be provided.", nil)];
+        [alert runModal];
+    }
 }
 
 - (id)videoProcessorController      // for binding to by the nib's controls

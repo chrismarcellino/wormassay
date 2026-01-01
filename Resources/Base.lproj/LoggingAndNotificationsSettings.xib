@@ -15,17 +15,17 @@
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <window title="Logging &amp; Notifications" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="LoggingAndNotificationsSettings" animationBehavior="default" id="1" customClass="NSPanel">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" resizable="YES"/>
-            <rect key="contentRect" x="196" y="240" width="514" height="225"/>
+            <rect key="contentRect" x="196" y="240" width="600" height="225"/>
             <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1410"/>
-            <value key="minSize" type="size" width="514" height="202"/>
+            <value key="minSize" type="size" width="600" height="225"/>
             <view key="contentView" id="2">
-                <rect key="frame" x="0.0" y="0.0" width="514" height="225"/>
+                <rect key="frame" x="0.0" y="0.0" width="600" height="225"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3">
-                        <rect key="frame" x="20" y="158" width="372" height="22"/>
+                        <rect key="frame" x="20" y="158" width="458" height="22"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" enabled="NO" allowsUndo="NO" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" usesSingleLineMode="YES" id="4">
+                        <textFieldCell key="cell" lineBreakMode="truncatingMiddle" selectable="YES" enabled="NO" allowsUndo="NO" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" usesSingleLineMode="YES" id="4">
                             <font key="font" metaFont="system"/>
                             <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -35,7 +35,7 @@
                         </connections>
                     </textField>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5">
-                        <rect key="frame" x="400" y="152" width="104" height="32"/>
+                        <rect key="frame" x="486" y="152" width="104" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="push" title="Browse…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="6">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -46,7 +46,7 @@
                         </connections>
                     </button>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="25">
-                        <rect key="frame" x="400" y="13" width="104" height="32"/>
+                        <rect key="frame" x="486" y="13" width="104" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="push" title="Test" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="26">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -66,7 +66,7 @@
                         </textFieldCell>
                     </textField>
                     <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="29">
-                        <rect key="frame" x="20" y="19" width="372" height="39"/>
+                        <rect key="frame" x="20" y="19" width="458" height="39"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <textFieldCell key="cell" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="30">
                             <font key="font" metaFont="system"/>
@@ -91,7 +91,7 @@
                         </textFieldCell>
                     </textField>
                     <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="33">
-                        <rect key="frame" x="17" y="80" width="381" height="13"/>
+                        <rect key="frame" x="17" y="80" width="467" height="13"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Enter one or more email addresses to send assay results and notifications to." id="34">
                             <font key="font" metaFont="system" size="10"/>
@@ -100,7 +100,7 @@
                         </textFieldCell>
                     </textField>
                     <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="35">
-                        <rect key="frame" x="17" y="66" width="381" height="13"/>
+                        <rect key="frame" x="17" y="66" width="467" height="13"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Messages will be sent using the account that is set up in Apple Mail. " id="36">
                             <font key="font" metaFont="system" size="10"/>
@@ -109,7 +109,7 @@
                         </textFieldCell>
                     </textField>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="37">
-                        <rect key="frame" x="400" y="45" width="104" height="32"/>
+                        <rect key="frame" x="486" y="45" width="104" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="push" title="Open Mail" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="38">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -142,7 +142,7 @@
             <connections>
                 <outlet property="delegate" destination="-2" id="57"/>
             </connections>
-            <point key="canvasLocation" x="260" y="409.5"/>
+            <point key="canvasLocation" x="303" y="409.5"/>
         </window>
         <userDefaultsController representsSharedInstance="YES" id="60"/>
     </objects>
