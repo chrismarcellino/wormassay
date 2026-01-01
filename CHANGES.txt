@@ -1,4 +1,4 @@
-Version 1.7.2
+Version 1.7.3
 -------------
 Update DeckLink SDK to 15.3. This requires Desktop Video version 14.3 or newer.
 Update minimum macOS version to 14 Sonoma.
