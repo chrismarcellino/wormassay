@@ -3,6 +3,8 @@ Version 1.7.2
 Update DeckLink SDK to 15.3. This requires Desktop Video version 14.3 or newer.
 Update minimum macOS version to 14 Sonoma.
 Exclude continutiy cameras (i.e. iPhone) when build-in cameras are disabled.
+Disable sandbox to allow Apple Events to function. Change default output storage to "Movies" folder to streamline
+permission access. 
 
 Version 1.7.1
 -------------
