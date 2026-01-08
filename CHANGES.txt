@@ -1,3 +1,7 @@
+Version 1.7.4
+_____________
+Improve DeckLink support and avoid opening same DeckLink camera twice. 
+
 Version 1.7.3
 -------------
 Update DeckLink SDK to 15.3. This requires Desktop Video version 14.3 or newer.

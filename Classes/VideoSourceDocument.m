@@ -24,7 +24,9 @@ NSString *const AVFCaptureDeviceFileType = @"dyn.avfcapturedevice";
 NSString *const BlackmagicDeckLinkCaptureDeviceScheme = @"blackmagicdecklink";
 NSString *const BlackmagicDeckLinkCaptureDeviceFileType = @"dyn.blackmagicdecklink";
 
-static NSString *const DontSetRotationMetadataOnSavedVideosKey = @"DontSetRotationMetadataOnSavedVideos";
+NSString *const DontSetRotationMetadataOnSavedVideosKey = @"DontSetRotationMetadataOnSavedVideos";
+
+NSString *const DeckLinkDevicesModelID = @"DeckLink";       // on recent versions of Desktop Video (unknown when this changed
 
 
 NSURL *URLForAVCaptureDevice(AVCaptureDevice *device)
@@ -100,15 +102,10 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
 {
     NSMutableArray *urls = [NSMutableArray array];
     
-    NSMutableArray *deckLinkNames = [NSMutableArray array];
     if (useDeckLink) {
         for (DeckLinkCaptureDevice *device in [DeckLinkCaptureDevice captureDevices]) {
             NSURL *url = URLForBlackmagicDeckLinkDevice(device);
             [urls addObject:url];
-            
-            // Store the display names to do a best-effort attempt to supress access from AVF
-            [deckLinkNames addObject:[device localizedName]];
-            [deckLinkNames addObject:[device modelName]];
         }
     }
     
@@ -124,7 +121,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
                                                                                                       mediaType:AVMediaTypeVideo
                                                                                                        position:AVCaptureDevicePositionUnspecified];
     for (AVCaptureDevice *device in [session devices]) {
-        BOOL isADeckLinkDevice = [deckLinkNames containsObject:[device localizedName]] || [deckLinkNames containsObject:[device modelID]];
+        BOOL isADeckLinkDevice = [[device modelID] isEqual:DeckLinkDevicesModelID];
         // Even if we exclude continuity devices above, earlier MacOS versions (based on linked-on version) will still
         // return them as AVCaptureDeviceTypeExternal devices so cull them if hiding built-in devices.
         BOOL isContinuityDevice = [[device modelID] hasPrefix:@"iPhone"];
@@ -287,7 +284,7 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     NSString *fileSourceDisplayName = nil;
     
     // kCVPixelFormatType_422YpCbCr8 is the strictly most efficient for H.264 output and the canonical video format, but
-    // RGB lets us preserve more data for some input source and allows for simpler/more accurate gamma correction
+    // RGB lets us preserve more data for some input sources and allows for simpler/more accurate gamma correction
     // (and we use BGRA under the hood for OpenCV and OpenGL.)
     NSMutableDictionary *outputSettings = [@{ (id)kCVPixelBufferPixelFormatTypeKey : [NSNumber numberWithInt:kCVPixelFormatType_32BGRA] } mutableCopy];
     // Create the proper capture device/asset
