@@ -611,18 +611,7 @@ public:
 
         Mat srcStripe = src.rowRange(row0, row1);
         Mat dstStripe = dst.rowRange(row0, row1);
-
-
-#if defined HAVE_TEGRA_OPTIMIZATION
-        //Iterative separable filters are converted to single iteration filters
-        //But anyway check that we really get 1 iteration prior to processing
-        if( countNonZero(kernel) == kernel.rows*kernel.cols && iterations == 1 &&
-            src.depth() == CV_8U && ( op == MORPH_ERODE || op == MORPH_DILATE ) &&
-            tegra::morphology(srcStripe, dstStripe, op, kernel, anchor,
-                              rowBorderType, columnBorderType, borderValue) )
-            return;
-#endif
-
+        
         Ptr<FilterEngine> f = createMorphologyFilter(op, src.type(), kernel, anchor,
                                                      rowBorderType, columnBorderType, borderValue );
 
@@ -684,13 +673,6 @@ static void morphOp( int op, InputArray _src, OutputArray _dst,
     }
 
     int nStripes = 1;
-#if defined HAVE_TEGRA_OPTIMIZATION
-    if (src.data != dst.data && iterations == 1 &&  //NOTE: threads are not used for inplace processing
-        (borderType & BORDER_ISOLATED) == 0 && //TODO: check border types
-        src.rows >= 64 ) //NOTE: just heuristics
-        nStripes = 4;
-#endif
-
     parallel_for_(Range(0, nStripes),
                   MorphologyRunner(src, dst, nStripes, iterations, op, kernel, anchor, borderType, borderType, borderValue));
 

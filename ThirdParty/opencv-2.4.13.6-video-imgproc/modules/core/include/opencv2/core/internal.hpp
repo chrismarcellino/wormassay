@@ -65,16 +65,6 @@
 #define __END__ __CV_END__
 #define EXIT __CV_EXIT__
 
-#if defined(__ARM_NEON__) || defined(__ARM_NEON)
-#  include <arm_neon.h>
-#  define CV_NEON 1
-#  define CPU_HAS_NEON_FEATURE (true)
-#endif
-
-#ifndef CV_NEON
-#  define CV_NEON 0
-#endif
-
 #ifdef HAVE_TBB
 #  include "tbb/tbb_stddef.h"
 #  if TBB_VERSION_MAJOR*100 + TBB_VERSION_MINOR >= 202

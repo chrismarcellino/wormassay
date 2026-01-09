@@ -253,10 +253,6 @@ enum {
 *                             Common macros and inline functions                         *
 \****************************************************************************************/
 
-#ifdef HAVE_TEGRA_OPTIMIZATION
-#  include "tegra_round.hpp"
-#endif
-
 #define CV_PI   3.1415926535897932384626433832795
 #define CV_LOG2 0.69314718055994530941723212145818
 

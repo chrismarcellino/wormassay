@@ -1,6 +1,8 @@
 Version 1.7.5
 _____________
-Remove non-NEON SIMD code and unecessary OpenCV snapshot files. (No functional changes.)
+Remove SIMD code and unecessary OpenCV snapshot files as these result is very different code paths between platforms
+and no performance gain in this project, to ensure reproducibility. Much of this is optimized better by complier.
+(No functional changes.)
 
 Version 1.7.4
 _____________

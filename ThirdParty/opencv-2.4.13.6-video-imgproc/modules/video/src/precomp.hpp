@@ -51,8 +51,4 @@
 
 #include <list>
 
-#ifdef HAVE_TEGRA_OPTIMIZATION
-#include "opencv2/video/video_tegra.hpp"
-#endif
-
 #endif
