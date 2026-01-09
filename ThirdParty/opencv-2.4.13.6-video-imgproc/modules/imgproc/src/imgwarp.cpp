@@ -47,8 +47,6 @@
 // */
 
 #include "precomp.hpp"
-#include "avx/imgwarp_avx.hpp"
-#include "avx2/imgwarp_avx2.hpp"
 #include <iostream>
 #include <vector>
 

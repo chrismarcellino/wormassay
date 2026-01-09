@@ -87,23 +87,6 @@ class Mat;
 class SparseMat;
 typedef Mat MatND;
 
-namespace ogl {
-    class Buffer;
-    class Texture2D;
-    class Arrays;
-}
-
-// < Deprecated
-class GlBuffer;
-class GlTexture;
-class GlArrays;
-class GlCamera;
-// >
-
-namespace gpu {
-    class GpuMat;
-}
-
 class CV_EXPORTS MatExpr;
 class CV_EXPORTS MatOp_Base;
 class CV_EXPORTS MatArg;
@@ -176,7 +159,7 @@ public:
 
   \param exc the exception raisen.
  */
-CV_EXPORTS void error( const Exception& exc )  __attribute__((analyzer_noreturn));
+CV_EXPORTS [[noreturn]] void error( const Exception& exc )  __attribute__((analyzer_noreturn));
 
 //! Sets/resets the break-on-error mode.
 
@@ -1353,8 +1336,6 @@ public:
         EXPR              = 6 << KIND_SHIFT,
         OPENGL_BUFFER     = 7 << KIND_SHIFT,
         OPENGL_TEXTURE    = 8 << KIND_SHIFT,
-        GPU_MAT           = 9 << KIND_SHIFT,
-        OCL_MAT           =10 << KIND_SHIFT
     };
     _InputArray();
 
@@ -1369,24 +1350,10 @@ public:
     template<typename _Tp, int m, int n> _InputArray(const Matx<_Tp, m, n>& matx);
     _InputArray(const Scalar& s);
     _InputArray(const double& val);
-    // < Deprecated
-    _InputArray(const GlBuffer& buf);
-    _InputArray(const GlTexture& tex);
-    // >
-    _InputArray(const gpu::GpuMat& d_mat);
-    _InputArray(const ogl::Buffer& buf);
-    _InputArray(const ogl::Texture2D& tex);
 
     virtual Mat getMat(int i=-1) const;
     virtual void getMatVector(vector<Mat>& mv) const;
-    // < Deprecated
-    virtual GlBuffer getGlBuffer() const;
-    virtual GlTexture getGlTexture() const;
-    // >
-    virtual gpu::GpuMat getGpuMat() const;
-    /*virtual*/ ogl::Buffer getOGlBuffer() const;
-    /*virtual*/ ogl::Texture2D getOGlTexture2D() const;
-
+    
     virtual int kind() const;
     virtual Size size(int i=-1) const;
     virtual size_t total(int i=-1) const;
@@ -1436,9 +1403,6 @@ public:
     template<typename _Tp> _OutputArray(Mat_<_Tp>& m);
     template<typename _Tp, int m, int n> _OutputArray(Matx<_Tp, m, n>& matx);
     template<typename _Tp> _OutputArray(_Tp* vec, int n);
-    _OutputArray(gpu::GpuMat& d_mat);
-    _OutputArray(ogl::Buffer& buf);
-    _OutputArray(ogl::Texture2D& tex);
 
     _OutputArray(const Mat& m);
     template<typename _Tp> _OutputArray(const vector<_Tp>& vec);
@@ -1448,17 +1412,11 @@ public:
     template<typename _Tp> _OutputArray(const Mat_<_Tp>& m);
     template<typename _Tp, int m, int n> _OutputArray(const Matx<_Tp, m, n>& matx);
     template<typename _Tp> _OutputArray(const _Tp* vec, int n);
-    _OutputArray(const gpu::GpuMat& d_mat);
-    _OutputArray(const ogl::Buffer& buf);
-    _OutputArray(const ogl::Texture2D& tex);
 
     virtual bool fixedSize() const;
     virtual bool fixedType() const;
     virtual bool needed() const;
     virtual Mat& getMatRef(int i=-1) const;
-    /*virtual*/ gpu::GpuMat& getGpuMatRef() const;
-    /*virtual*/ ogl::Buffer& getOGlBufferRef() const;
-    /*virtual*/ ogl::Texture2D& getOGlTexture2DRef() const;
     virtual void create(Size sz, int type, int i=-1, bool allowTransposed=false, int fixedDepthMask=0) const;
     virtual void create(int rows, int cols, int type, int i=-1, bool allowTransposed=false, int fixedDepthMask=0) const;
     virtual void create(int dims, const int* size, int type, int i=-1, bool allowTransposed=false, int fixedDepthMask=0) const;
@@ -1755,9 +1713,6 @@ public:
     template<typename _Tp> explicit Mat(const Point3_<_Tp>& pt, bool copyData=true);
     //! builds matrix from comma initializer
     template<typename _Tp> explicit Mat(const MatCommaInitializer_<_Tp>& commaInitializer);
-
-    //! download data from GpuMat
-    explicit Mat(const gpu::GpuMat& m);
 
     //! destructor - calls release()
     ~Mat();
