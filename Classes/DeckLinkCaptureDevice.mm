@@ -341,6 +341,9 @@ public:
     // Reset the counter if we've wrapped around. Don't just use a modulo so we start from 0 in case the length has changed.
     if (_captureModesCurrentIndex >= [_captureModes count]) {
         _captureModesCurrentIndex = 0;
+        // No need to reset this to YES again as the determined supported display modes are fixed for the interface.
+        // This basically means that after one attempt to use a "supported" video mode, we resort to trying to stream each
+        // mode in order, which is fine since they are sorted by quality in the event that more than one could be opened (unlikely.)
         _attemptUnsupportedDisplayMode = YES;
     }
     DeckLinkCaptureMode *captureMode = [_captureModes objectAtIndex:_captureModesCurrentIndex];
@@ -378,9 +381,8 @@ public:
         }
     }
     
-    // If we failed outright, try again momentarily. If this async stream starting doesn't generate frames,
-    // this will also be called by the frame handler.
-    
+    // If we failed outright, try again momentarily. If this async stream starting doesn't generate frames, this will also
+    // be called by the frame handler, so in either case we will keep on searching until we succeed in getting data.
     if (!success) {
         [self retryCaptureWithNextModeAfterDelay];
     }
