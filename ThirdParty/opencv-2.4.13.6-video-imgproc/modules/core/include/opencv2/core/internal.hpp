@@ -65,57 +65,10 @@
 #define __END__ __CV_END__
 #define EXIT __CV_EXIT__
 
-#ifdef HAVE_TBB
-#  include "tbb/tbb_stddef.h"
-#  if TBB_VERSION_MAJOR*100 + TBB_VERSION_MINOR >= 202
-#    include "tbb/tbb.h"
-#    include "tbb/task.h"
-#    undef min
-#    undef max
-#  else
-#    undef HAVE_TBB
-#  endif
-#endif
-
-#ifdef HAVE_EIGEN
-#  if defined __GNUC__ && defined __APPLE__
-#    pragma GCC diagnostic ignored "-Wshadow"
-#  endif
-#  include <Eigen/Core>
-#  include "opencv2/core/eigen.hpp"
-#endif
-
 #ifdef __cplusplus
 
 namespace cv
 {
-#ifdef HAVE_TBB
-
-    typedef tbb::blocked_range<int> BlockedRange;
-
-    template<typename Body> static inline
-    void parallel_for( const BlockedRange& range, const Body& body )
-    {
-        tbb::parallel_for(range, body);
-    }
-
-    template<typename Iterator, typename Body> static inline
-    void parallel_do( Iterator first, Iterator last, const Body& body )
-    {
-        tbb::parallel_do(first, last, body);
-    }
-
-    typedef tbb::split Split;
-
-    template<typename Body> static inline
-    void parallel_reduce( const BlockedRange& range, Body& body )
-    {
-        tbb::parallel_reduce(range, body);
-    }
-
-    typedef tbb::concurrent_vector<Rect> ConcurrentRectVector;
-    typedef tbb::concurrent_vector<double> ConcurrentDoubleVector;
-#else
     class BlockedRange
     {
     public:
@@ -151,7 +104,6 @@ namespace cv
     {
         body(range);
     }
-#endif
 
     // Returns a static string if there is a parallel framework,
     // NULL otherwise.
