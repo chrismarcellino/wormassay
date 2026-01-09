@@ -3199,7 +3199,7 @@ template<> void Ptr<CvMemStorage>::delete_obj()
 { cvReleaseMemStorage(&obj); }
 
 template<> void Ptr<CvFileStorage>::delete_obj()
-{ cvReleaseFileStorage(&obj); }
+{ /* cvReleaseFileStorage(&obj); */ }
 
 }
 

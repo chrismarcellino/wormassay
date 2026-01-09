@@ -57,7 +57,6 @@
 		21A328892578578600E5B80E /* convert.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21A328062578578600E5B80E /* convert.cpp */; };
 		21A3288A2578578600E5B80E /* tables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21A328072578578600E5B80E /* tables.cpp */; };
 		21A3288B2578578600E5B80E /* mathfuncs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21A328082578578600E5B80E /* mathfuncs.cpp */; };
-		21A3288C2578578600E5B80E /* persistence.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21A328092578578600E5B80E /* persistence.cpp */; };
 		21A3288D2578578600E5B80E /* lapack.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21A3280A2578578600E5B80E /* lapack.cpp */; };
 		21A3288E2578578600E5B80E /* out.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21A3280B2578578600E5B80E /* out.cpp */; };
 		21A3288F2578578600E5B80E /* drawing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21A3280C2578578600E5B80E /* drawing.cpp */; };
@@ -243,7 +242,6 @@
 		21A328062578578600E5B80E /* convert.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = convert.cpp; sourceTree = "<group>"; };
 		21A328072578578600E5B80E /* tables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tables.cpp; sourceTree = "<group>"; };
 		21A328082578578600E5B80E /* mathfuncs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mathfuncs.cpp; sourceTree = "<group>"; };
-		21A328092578578600E5B80E /* persistence.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = persistence.cpp; sourceTree = "<group>"; };
 		21A3280A2578578600E5B80E /* lapack.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = lapack.cpp; sourceTree = "<group>"; };
 		21A3280B2578578600E5B80E /* out.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = out.cpp; sourceTree = "<group>"; };
 		21A3280C2578578600E5B80E /* drawing.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drawing.cpp; sourceTree = "<group>"; };
@@ -592,7 +590,6 @@
 				21A328062578578600E5B80E /* convert.cpp */,
 				21A328072578578600E5B80E /* tables.cpp */,
 				21A328082578578600E5B80E /* mathfuncs.cpp */,
-				21A328092578578600E5B80E /* persistence.cpp */,
 				21A3280A2578578600E5B80E /* lapack.cpp */,
 				21A3280B2578578600E5B80E /* out.cpp */,
 				21A3280C2578578600E5B80E /* drawing.cpp */,
@@ -1106,7 +1103,6 @@
 				21A328872578578600E5B80E /* parallel.cpp in Sources */,
 				21A328912578578600E5B80E /* arithm.cpp in Sources */,
 				21A328C62578578600E5B80E /* histogram.cpp in Sources */,
-				21A3288C2578578600E5B80E /* persistence.cpp in Sources */,
 				21A3289A2578578600E5B80E /* glob.cpp in Sources */,
 				21A328BB2578578600E5B80E /* phasecorr.cpp in Sources */,
 				21A328B72578578600E5B80E /* undistort.cpp in Sources */,
@@ -1259,6 +1255,7 @@
 		21E7790712D322A9006C1554 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_WARN_COMMA = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					HAVE_ALLOCA,
 					HAVE_ALLOCA_H,
@@ -1266,7 +1263,7 @@
 					HAVE_UNISTD_H,
 					CVAPI_EXPORTS,
 				);
-				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
+				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
 				PRODUCT_NAME = OpenCV;
 				SKIP_INSTALL = YES;
 			};
@@ -1275,6 +1272,7 @@
 		21E7790812D322A9006C1554 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_WARN_COMMA = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					HAVE_ALLOCA,
 					HAVE_ALLOCA_H,
@@ -1282,7 +1280,7 @@
 					HAVE_UNISTD_H,
 					CVAPI_EXPORTS,
 				);
-				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
+				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
 				PRODUCT_NAME = OpenCV;
 				SKIP_INSTALL = YES;
 			};
