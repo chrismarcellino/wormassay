@@ -44,7 +44,6 @@
 #define __OPENCV_CORE_HPP__
 
 #include "opencv2/core/types_c.h"
-#include "opencv2/core/version.hpp"
 
 #ifdef __cplusplus
 
@@ -105,7 +104,6 @@ CV_EXPORTS WString toUtf16(const string& str);
 #endif
 
 CV_EXPORTS string format( const char* fmt, ... );
-CV_EXPORTS string tempfile( const char* suffix CV_DEFAULT(0));
 
 // matrix decomposition types
 enum { DECOMP_LU=0, DECOMP_SVD=1, DECOMP_EIG=2, DECOMP_CHOLESKY=3, DECOMP_QR=4, DECOMP_NORMAL=16 };
@@ -210,71 +208,6 @@ CV_EXPORTS ErrorCallback redirectError( ErrorCallback errCallback,
 
 CV_EXPORTS void glob(String pattern, std::vector<String>& result, bool recursive = false);
 
-CV_EXPORTS_W void setNumThreads(int nthreads);
-CV_EXPORTS_W int getNumThreads();
-CV_EXPORTS_W int getThreadNum();
-
-CV_EXPORTS_W const string& getBuildInformation();
-
-//! Returns the number of ticks.
-
-/*!
-  The function returns the number of ticks since the certain event (e.g. when the machine was turned on).
-  It can be used to initialize cv::RNG or to measure a function execution time by reading the tick count
-  before and after the function call. The granularity of ticks depends on the hardware and OS used. Use
-  cv::getTickFrequency() to convert ticks to seconds.
-*/
-CV_EXPORTS_W int64 getTickCount();
-
-/*!
-  Returns the number of ticks per seconds.
-
-  The function returns the number of ticks (as returned by cv::getTickCount()) per second.
-  The following code computes the execution time in milliseconds:
-
-  \code
-  double exec_time = (double)getTickCount();
-  // do something ...
-  exec_time = ((double)getTickCount() - exec_time)*1000./getTickFrequency();
-  \endcode
-*/
-CV_EXPORTS_W double getTickFrequency();
-
-/*!
-  Returns the number of CPU ticks.
-
-  On platforms where the feature is available, the function returns the number of CPU ticks
-  since the certain event (normally, the system power-on moment). Using this function
-  one can accurately measure the execution time of very small code fragments,
-  for which cv::getTickCount() granularity is not enough.
-*/
-CV_EXPORTS_W int64 getCPUTickCount();
-
-/*!
-  Returns SSE etc. support status
-
-  The function returns true if certain hardware features are available.
-  Currently, the following features are recognized:
-  - CV_CPU_MMX - MMX
-  - CV_CPU_SSE - SSE
-  - CV_CPU_SSE2 - SSE 2
-  - CV_CPU_SSE3 - SSE 3
-  - CV_CPU_SSSE3 - SSSE 3
-  - CV_CPU_SSE4_1 - SSE 4.1
-  - CV_CPU_SSE4_2 - SSE 4.2
-  - CV_CPU_POPCNT - POPCOUNT
-  - CV_CPU_AVX - AVX
-  - CV_CPU_AVX2 - AVX2
-
-  \note {Note that the function output is not static. Once you called cv::useOptimized(false),
-  most of the hardware acceleration is disabled and thus the function will returns false,
-  until you call cv::useOptimized(true)}
-*/
-CV_EXPORTS_W bool checkHardwareSupport(int feature);
-
-//! returns the number of CPUs (including hyper-threading)
-CV_EXPORTS_W int getNumberOfCPUs();
-
 /*!
   Allocates memory buffer
 
@@ -326,24 +259,6 @@ static inline size_t alignSize(size_t sz, int n)
     assert((n & (n - 1)) == 0); // n is a power of 2
     return (sz + n-1) & -n;
 }
-
-/*!
-  Turns on/off available optimization
-
-  The function turns on or off the optimized code in OpenCV. Some optimization can not be enabled
-  or disabled, but, for example, most of SSE code in OpenCV can be temporarily turned on or off this way.
-
-  \note{Since optimization may imply using special data structures, it may be unsafe
-  to call this function anywhere in the code. Instead, call it somewhere at the top level.}
-*/
-CV_EXPORTS_W void setUseOptimized(bool onoff);
-
-/*!
-  Returns the current optimization status
-
-  The function returns the current optimization status, which is controlled by cv::setUseOptimized().
-*/
-CV_EXPORTS_W bool useOptimized();
 
 /*!
   The STL-compilant memory Allocator based on cv::fastMalloc() and cv::fastFree()

@@ -44,7 +44,7 @@
 // of the class design are:
 //    1. All the data has explicit ownership to avoid memory leaks
 //    2. No hidden allocations or copies for performance.
-//    3. Easy access to OpenCV methods (which will access IPP if available)
+//    3. Easy access to OpenCV methods (which will access IPP if available) [removed from this version]
 //    4. Can easily treat external data as an image
 //    5. Easy to create images which are subsets of other images
 //    6. Fast pixel access which can take advantage of number of channels

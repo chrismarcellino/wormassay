@@ -62,10 +62,6 @@ static void calcSharrDeriv(const cv::Mat& src, cv::Mat& dst)
     AutoBuffer<deriv_type> _tempBuf(delta*2 + 64);
     deriv_type *trow0 = alignPtr(_tempBuf + cn, 16), *trow1 = alignPtr(trow0 + delta, 16);
 
-#if CV_SSE2
-    __m128i z = _mm_setzero_si128(), c3 = _mm_set1_epi16(3), c10 = _mm_set1_epi16(10);
-#endif
-
     for( y = 0; y < rows; y++ )
     {
         const uchar* srow0 = src.ptr<uchar>(y > 0 ? y-1 : rows > 1 ? 1 : 0);
@@ -75,18 +71,6 @@ static void calcSharrDeriv(const cv::Mat& src, cv::Mat& dst)
 
         // do vertical convolution
         x = 0;
-#if CV_SSE2
-        for( ; x <= colsn - 8; x += 8 )
-        {
-            __m128i s0 = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(srow0 + x)), z);
-            __m128i s1 = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(srow1 + x)), z);
-            __m128i s2 = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(srow2 + x)), z);
-            __m128i t0 = _mm_add_epi16(_mm_mullo_epi16(_mm_add_epi16(s0, s2), c3), _mm_mullo_epi16(s1, c10));
-            __m128i t1 = _mm_sub_epi16(s2, s0);
-            _mm_store_si128((__m128i*)(trow0 + x), t0);
-            _mm_store_si128((__m128i*)(trow1 + x), t1);
-        }
-#endif
 
 #if CV_NEON
 
@@ -129,24 +113,6 @@ static void calcSharrDeriv(const cv::Mat& src, cv::Mat& dst)
 
         // do horizontal convolution, interleave the results and store them to dst
         x = 0;
-#if CV_SSE2
-        for( ; x <= colsn - 8; x += 8 )
-        {
-            __m128i s0 = _mm_loadu_si128((const __m128i*)(trow0 + x - cn));
-            __m128i s1 = _mm_loadu_si128((const __m128i*)(trow0 + x + cn));
-            __m128i s2 = _mm_loadu_si128((const __m128i*)(trow1 + x - cn));
-            __m128i s3 = _mm_load_si128((const __m128i*)(trow1 + x));
-            __m128i s4 = _mm_loadu_si128((const __m128i*)(trow1 + x + cn));
-
-            __m128i t0 = _mm_sub_epi16(s1, s0);
-            __m128i t1 = _mm_add_epi16(_mm_mullo_epi16(_mm_add_epi16(s2, s4), c3), _mm_mullo_epi16(s3, c10));
-            __m128i t2 = _mm_unpacklo_epi16(t0, t1);
-            t0 = _mm_unpackhi_epi16(t0, t1);
-            // this can probably be replaced with aligned stores if we aligned dst properly.
-            _mm_storeu_si128((__m128i*)(drow + x*2), t2);
-            _mm_storeu_si128((__m128i*)(drow + x*2 + 8), t0);
-        }
-#endif
 
 #if CV_NEON
         for( ; x <= colsn - 8; x += 8 )
@@ -270,15 +236,6 @@ void cv::detail::LKTrackerInvoker::operator()(const Range& range) const
         int stepJ = (int)(J.step/J.elemSize1());
         float A11 = 0, A12 = 0, A22 = 0;
 
-#if CV_SSE2
-        __m128i qw0 = _mm_set1_epi32(iw00 + (iw01 << 16));
-        __m128i qw1 = _mm_set1_epi32(iw10 + (iw11 << 16));
-        __m128i z = _mm_setzero_si128();
-        __m128i qdelta_d = _mm_set1_epi32(1 << (W_BITS1-1));
-        __m128i qdelta = _mm_set1_epi32(1 << (W_BITS1-5-1));
-        __m128 qA11 = _mm_setzero_ps(), qA12 = _mm_setzero_ps(), qA22 = _mm_setzero_ps();
-#endif
-
 #if CV_NEON
 
         int CV_DECL_ALIGNED(16) nA11[] = {0, 0, 0, 0}, nA12[] = {0, 0, 0, 0}, nA22[] = {0, 0, 0, 0};
@@ -305,47 +262,6 @@ void cv::detail::LKTrackerInvoker::operator()(const Range& range) const
             deriv_type* dIptr = (deriv_type*)(derivIWinBuf.data + y*derivIWinBuf.step);
 
             x = 0;
-
-#if CV_SSE2
-            for( ; x <= winSize.width*cn - 4; x += 4, dsrc += 4*2, dIptr += 4*2 )
-            {
-                __m128i v00, v01, v10, v11, t0, t1;
-
-                v00 = _mm_unpacklo_epi8(_mm_cvtsi32_si128(*(const int*)(src + x)), z);
-                v01 = _mm_unpacklo_epi8(_mm_cvtsi32_si128(*(const int*)(src + x + cn)), z);
-                v10 = _mm_unpacklo_epi8(_mm_cvtsi32_si128(*(const int*)(src + x + stepI)), z);
-                v11 = _mm_unpacklo_epi8(_mm_cvtsi32_si128(*(const int*)(src + x + stepI + cn)), z);
-
-                t0 = _mm_add_epi32(_mm_madd_epi16(_mm_unpacklo_epi16(v00, v01), qw0),
-                                   _mm_madd_epi16(_mm_unpacklo_epi16(v10, v11), qw1));
-                t0 = _mm_srai_epi32(_mm_add_epi32(t0, qdelta), W_BITS1-5);
-                _mm_storel_epi64((__m128i*)(Iptr + x), _mm_packs_epi32(t0,t0));
-
-                v00 = _mm_loadu_si128((const __m128i*)(dsrc));
-                v01 = _mm_loadu_si128((const __m128i*)(dsrc + cn2));
-                v10 = _mm_loadu_si128((const __m128i*)(dsrc + dstep));
-                v11 = _mm_loadu_si128((const __m128i*)(dsrc + dstep + cn2));
-
-                t0 = _mm_add_epi32(_mm_madd_epi16(_mm_unpacklo_epi16(v00, v01), qw0),
-                                   _mm_madd_epi16(_mm_unpacklo_epi16(v10, v11), qw1));
-                t1 = _mm_add_epi32(_mm_madd_epi16(_mm_unpackhi_epi16(v00, v01), qw0),
-                                   _mm_madd_epi16(_mm_unpackhi_epi16(v10, v11), qw1));
-                t0 = _mm_srai_epi32(_mm_add_epi32(t0, qdelta_d), W_BITS1);
-                t1 = _mm_srai_epi32(_mm_add_epi32(t1, qdelta_d), W_BITS1);
-                v00 = _mm_packs_epi32(t0, t1); // Ix0 Iy0 Ix1 Iy1 ...
-
-                _mm_storeu_si128((__m128i*)dIptr, v00);
-                t0 = _mm_srai_epi32(v00, 16); // Iy0 Iy1 Iy2 Iy3
-                t1 = _mm_srai_epi32(_mm_slli_epi32(v00, 16), 16); // Ix0 Ix1 Ix2 Ix3
-
-                __m128 fy = _mm_cvtepi32_ps(t0);
-                __m128 fx = _mm_cvtepi32_ps(t1);
-
-                qA22 = _mm_add_ps(qA22, _mm_mul_ps(fy, fy));
-                qA12 = _mm_add_ps(qA12, _mm_mul_ps(fx, fy));
-                qA11 = _mm_add_ps(qA11, _mm_mul_ps(fx, fx));
-            }
-#endif
 
 #if CV_NEON
 
@@ -452,16 +368,6 @@ void cv::detail::LKTrackerInvoker::operator()(const Range& range) const
             }
         }
 
-#if CV_SSE2
-        float CV_DECL_ALIGNED(16) A11buf[4], A12buf[4], A22buf[4];
-        _mm_store_ps(A11buf, qA11);
-        _mm_store_ps(A12buf, qA12);
-        _mm_store_ps(A22buf, qA22);
-        A11 += A11buf[0] + A11buf[1] + A11buf[2] + A11buf[3];
-        A12 += A12buf[0] + A12buf[1] + A12buf[2] + A12buf[3];
-        A22 += A22buf[0] + A22buf[1] + A22buf[2] + A22buf[3];
-#endif
-
 #if CV_NEON
         A11 += (float)(nA11[0] + nA11[1] + nA11[2] + nA11[3]);
         A12 += (float)(nA12[0] + nA12[1] + nA12[2] + nA12[3]);
@@ -511,11 +417,6 @@ void cv::detail::LKTrackerInvoker::operator()(const Range& range) const
             iw10 = cvRound((1.f - a)*b*(1 << W_BITS));
             iw11 = (1 << W_BITS) - iw00 - iw01 - iw10;
             float b1 = 0, b2 = 0;
-#if CV_SSE2
-            qw0 = _mm_set1_epi32(iw00 + (iw01 << 16));
-            qw1 = _mm_set1_epi32(iw10 + (iw11 << 16));
-            __m128 qb0 = _mm_setzero_ps(), qb1 = _mm_setzero_ps();
-#endif
 
 #if CV_NEON
 
@@ -536,43 +437,7 @@ void cv::detail::LKTrackerInvoker::operator()(const Range& range) const
 
                 x = 0;
 
-#if CV_SSE2
-                for( ; x <= winSize.width*cn - 8; x += 8, dIptr += 8*2 )
-                {
-                    __m128i diff0 = _mm_loadu_si128((const __m128i*)(Iptr + x)), diff1;
-                    __m128i v00 = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(Jptr + x)), z);
-                    __m128i v01 = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(Jptr + x + cn)), z);
-                    __m128i v10 = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(Jptr + x + stepJ)), z);
-                    __m128i v11 = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(Jptr + x + stepJ + cn)), z);
-
-                    __m128i t0 = _mm_add_epi32(_mm_madd_epi16(_mm_unpacklo_epi16(v00, v01), qw0),
-                                               _mm_madd_epi16(_mm_unpacklo_epi16(v10, v11), qw1));
-                    __m128i t1 = _mm_add_epi32(_mm_madd_epi16(_mm_unpackhi_epi16(v00, v01), qw0),
-                                               _mm_madd_epi16(_mm_unpackhi_epi16(v10, v11), qw1));
-                    t0 = _mm_srai_epi32(_mm_add_epi32(t0, qdelta), W_BITS1-5);
-                    t1 = _mm_srai_epi32(_mm_add_epi32(t1, qdelta), W_BITS1-5);
-                    diff0 = _mm_subs_epi16(_mm_packs_epi32(t0, t1), diff0);
-                    diff1 = _mm_unpackhi_epi16(diff0, diff0);
-                    diff0 = _mm_unpacklo_epi16(diff0, diff0); // It0 It0 It1 It1 ...
-                    v00 = _mm_loadu_si128((const __m128i*)(dIptr)); // Ix0 Iy0 Ix1 Iy1 ...
-                    v01 = _mm_loadu_si128((const __m128i*)(dIptr + 8));
-                    v10 = _mm_mullo_epi16(v00, diff0);
-                    v11 = _mm_mulhi_epi16(v00, diff0);
-                    v00 = _mm_unpacklo_epi16(v10, v11);
-                    v10 = _mm_unpackhi_epi16(v10, v11);
-                    qb0 = _mm_add_ps(qb0, _mm_cvtepi32_ps(v00));
-                    qb1 = _mm_add_ps(qb1, _mm_cvtepi32_ps(v10));
-                    v10 = _mm_mullo_epi16(v01, diff1);
-                    v11 = _mm_mulhi_epi16(v01, diff1);
-                    v00 = _mm_unpacklo_epi16(v10, v11);
-                    v10 = _mm_unpackhi_epi16(v10, v11);
-                    qb0 = _mm_add_ps(qb0, _mm_cvtepi32_ps(v00));
-                    qb1 = _mm_add_ps(qb1, _mm_cvtepi32_ps(v10));
-                }
-#endif
-
 #if CV_NEON
-
                 for( ; x <= winSize.width*cn - 8; x += 8, dIptr += 8*2 )
                 {
 
@@ -654,13 +519,6 @@ void cv::detail::LKTrackerInvoker::operator()(const Range& range) const
                     b2 += (float)(diff*dIptr[1]);
                 }
             }
-
-#if CV_SSE2
-            float CV_DECL_ALIGNED(16) bbuf[4];
-            _mm_store_ps(bbuf, _mm_add_ps(qb0, qb1));
-            b1 += bbuf[0] + bbuf[2];
-            b2 += bbuf[1] + bbuf[3];
-#endif
 
 #if CV_NEON
 

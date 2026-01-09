@@ -42,104 +42,6 @@
 
 #include "precomp.hpp"
 
-#ifdef _MSC_VER
-# if _MSC_VER >= 1700
-#  pragma warning(disable:4447) // Disable warning 'main' signature found without threading model
-# endif
-#endif
-
-#if defined WIN32 || defined _WIN32 || defined WINCE
-#ifndef _WIN32_WINNT           // This is needed for the declaration of TryEnterCriticalSection in winbase.h with Visual Studio 2005 (and older?)
-  #define _WIN32_WINNT 0x0400  // http://msdn.microsoft.com/en-us/library/ms686857(VS.85).aspx
-#endif
-#include <windows.h>
-#if (_WIN32_WINNT >= 0x0602)
-  #include <synchapi.h>
-#endif
-#undef small
-#undef min
-#undef max
-#undef abs
-#include <tchar.h>
-#if defined _MSC_VER
-  #if _MSC_VER >= 1400
-    #include <intrin.h>
-  #elif defined _M_IX86
-    static void __cpuid(int* cpuid_data, int)
-    {
-        __asm
-        {
-            push ebx
-            push edi
-            mov edi, cpuid_data
-            mov eax, 1
-            cpuid
-            mov [edi], eax
-            mov [edi + 4], ebx
-            mov [edi + 8], ecx
-            mov [edi + 12], edx
-            pop edi
-            pop ebx
-        }
-    }
-  #endif
-#endif
-
-#ifdef HAVE_WINRT
-#include <wrl/client.h>
-#ifndef __cplusplus_winrt
-#include <windows.storage.h>
-#pragma comment(lib, "runtimeobject.lib")
-#endif
-
-std::wstring GetTempPathWinRT()
-{
-#ifdef __cplusplus_winrt
-    return std::wstring(Windows::Storage::ApplicationData::Current->TemporaryFolder->Path->Data());
-#else
-    Microsoft::WRL::ComPtr<ABI::Windows::Storage::IApplicationDataStatics> appdataFactory;
-    Microsoft::WRL::ComPtr<ABI::Windows::Storage::IApplicationData> appdataRef;
-    Microsoft::WRL::ComPtr<ABI::Windows::Storage::IStorageFolder> storagefolderRef;
-    Microsoft::WRL::ComPtr<ABI::Windows::Storage::IStorageItem> storageitemRef;
-    HSTRING str;
-    HSTRING_HEADER hstrHead;
-    std::wstring wstr;
-    if (FAILED(WindowsCreateStringReference(RuntimeClass_Windows_Storage_ApplicationData,
-                                            (UINT32)wcslen(RuntimeClass_Windows_Storage_ApplicationData), &hstrHead, &str)))
-        return wstr;
-    if (FAILED(RoGetActivationFactory(str, IID_PPV_ARGS(appdataFactory.ReleaseAndGetAddressOf()))))
-        return wstr;
-    if (FAILED(appdataFactory->get_Current(appdataRef.ReleaseAndGetAddressOf())))
-        return wstr;
-    if (FAILED(appdataRef->get_TemporaryFolder(storagefolderRef.ReleaseAndGetAddressOf())))
-        return wstr;
-    if (FAILED(storagefolderRef.As(&storageitemRef)))
-        return wstr;
-    str = NULL;
-    if (FAILED(storageitemRef->get_Path(&str)))
-        return wstr;
-    wstr = WindowsGetStringRawBuffer(str, NULL);
-    WindowsDeleteString(str);
-    return wstr;
-#endif
-}
-
-std::wstring GetTempFileNameWinRT(std::wstring prefix)
-{
-    wchar_t guidStr[40];
-    GUID g;
-    CoCreateGuid(&g);
-    wchar_t* mask = L"%08x_%04x_%04x_%02x%02x_%02x%02x%02x%02x%02x%02x";
-    swprintf(&guidStr[0], sizeof(guidStr)/sizeof(wchar_t), mask,
-             g.Data1, g.Data2, g.Data3, UINT(g.Data4[0]), UINT(g.Data4[1]),
-             UINT(g.Data4[2]), UINT(g.Data4[3]), UINT(g.Data4[4]),
-             UINT(g.Data4[5]), UINT(g.Data4[6]), UINT(g.Data4[7]));
-
-    return prefix + std::wstring(guidStr);
-}
-
-#endif
-#else
 #include <pthread.h>
 #include <sys/time.h>
 #include <time.h>
@@ -147,8 +49,6 @@ std::wstring GetTempFileNameWinRT(std::wstring prefix)
 #if defined __MACH__ && defined __APPLE__
 #include <mach/mach.h>
 #include <mach/mach_time.h>
-#endif
-
 #endif
 
 #ifdef _OPENMP
@@ -196,254 +96,6 @@ void Exception::formatMessage()
         msg = format("%s:%d: error: (%d) %s\n", file.c_str(), line, code, err.c_str());
 }
 
-struct HWFeatures
-{
-    enum { MAX_FEATURE = CV_HARDWARE_MAX_FEATURE };
-
-    HWFeatures(void)
-     {
-        memset( have, 0, sizeof(have) );
-        x86_family = 0;
-    }
-
-    static HWFeatures initialize(void)
-    {
-        HWFeatures f;
-        int cpuid_data[4] = { 0, 0, 0, 0 };
-
-    #if defined _MSC_VER && (defined _M_IX86 || defined _M_X64)
-        __cpuid(cpuid_data, 1);
-    #elif defined __GNUC__ && (defined __i386__ || defined __x86_64__)
-        #ifdef __x86_64__
-        asm __volatile__
-        (
-         "movl $1, %%eax\n\t"
-         "cpuid\n\t"
-         :[eax]"=a"(cpuid_data[0]),[ebx]"=b"(cpuid_data[1]),[ecx]"=c"(cpuid_data[2]),[edx]"=d"(cpuid_data[3])
-         :
-         : "cc"
-        );
-        #else
-        asm volatile
-        (
-         "pushl %%ebx\n\t"
-         "movl $1,%%eax\n\t"
-         "cpuid\n\t"
-         "popl %%ebx\n\t"
-         : "=a"(cpuid_data[0]), "=c"(cpuid_data[2]), "=d"(cpuid_data[3])
-         :
-         : "cc"
-        );
-        #endif
-    #endif
-
-        f.x86_family = (cpuid_data[0] >> 8) & 15;
-        if( f.x86_family >= 6 )
-        {
-            f.have[CV_CPU_MMX]    = (cpuid_data[3] & (1 << 23)) != 0;
-            f.have[CV_CPU_SSE]    = (cpuid_data[3] & (1<<25)) != 0;
-            f.have[CV_CPU_SSE2]   = (cpuid_data[3] & (1<<26)) != 0;
-            f.have[CV_CPU_SSE3]   = (cpuid_data[2] & (1<<0)) != 0;
-            f.have[CV_CPU_SSSE3]  = (cpuid_data[2] & (1<<9)) != 0;
-            f.have[CV_CPU_SSE4_1] = (cpuid_data[2] & (1<<19)) != 0;
-            f.have[CV_CPU_SSE4_2] = (cpuid_data[2] & (1<<20)) != 0;
-            f.have[CV_CPU_POPCNT] = (cpuid_data[2] & (1<<23)) != 0;
-            f.have[CV_CPU_AVX]    = (((cpuid_data[2] & (1<<28)) != 0)&&((cpuid_data[2] & (1<<27)) != 0));//OS uses XSAVE_XRSTORE and CPU support AVX
-        }
-
-    #if defined _MSC_VER && (defined _M_IX86 || defined _M_X64)
-        __cpuidex(cpuid_data, 7, 0);
-    #elif defined __GNUC__ && (defined __i386__ || defined __x86_64__)
-        #ifdef __x86_64__
-        asm __volatile__
-        (
-         "movl $7, %%eax\n\t"
-         "movl $0, %%ecx\n\t"
-         "cpuid\n\t"
-         :[eax]"=a"(cpuid_data[0]),[ebx]"=b"(cpuid_data[1]),[ecx]"=c"(cpuid_data[2]),[edx]"=d"(cpuid_data[3])
-         :
-         : "cc"
-        );
-        #else
-        // We need to preserve ebx since we are compiling PIC code.
-        // This means we cannot use "=b" for the 2nd output register.
-        asm volatile
-        (
-         "pushl %%ebx\n\t"
-         "movl $7,%%eax\n\t"
-         "movl $0,%%ecx\n\t"
-         "cpuid\n\t"
-         "movl %%ebx,%1\n\t"
-         "popl %%ebx\n\t"
-         : "=a"(cpuid_data[0]), "=r"(cpuid_data[1]), "=c"(cpuid_data[2]), "=d"(cpuid_data[3])
-         :
-         : "cc"
-        );
-        #endif
-    #endif
-
-        if( f.x86_family >= 6 )
-        {
-            f.have[CV_CPU_AVX2] = (cpuid_data[1] & (1<<5)) != 0;
-        }
-
-        return f;
-    }
-
-    int x86_family;
-    bool have[MAX_FEATURE+1];
-};
-
-static HWFeatures  featuresEnabled = HWFeatures::initialize(), featuresDisabled = HWFeatures();
-static HWFeatures* currentFeatures = &featuresEnabled;
-
-bool checkHardwareSupport(int feature)
-{
-    CV_DbgAssert( 0 <= feature && feature <= CV_HARDWARE_MAX_FEATURE );
-    return currentFeatures->have[feature];
-}
-
-
-volatile bool useOptimizedFlag = true;
-#ifdef HAVE_IPP
-struct IPPInitializer
-{
-    IPPInitializer(void) { ippStaticInit(); }
-};
-
-IPPInitializer ippInitializer;
-#endif
-
-volatile bool USE_SSE2 = featuresEnabled.have[CV_CPU_SSE2];
-volatile bool USE_SSE4_2 = featuresEnabled.have[CV_CPU_SSE4_2];
-volatile bool USE_AVX = featuresEnabled.have[CV_CPU_AVX];
-
-void setUseOptimized( bool flag )
-{
-    useOptimizedFlag = flag;
-    currentFeatures = flag ? &featuresEnabled : &featuresDisabled;
-    USE_SSE2 = currentFeatures->have[CV_CPU_SSE2];
-}
-
-bool useOptimized(void)
-{
-    return useOptimizedFlag;
-}
-
-int64 getTickCount(void)
-{
-#if defined WIN32 || defined _WIN32 || defined WINCE
-    LARGE_INTEGER counter;
-    QueryPerformanceCounter( &counter );
-    return (int64)counter.QuadPart;
-#elif defined __linux || defined __linux__
-    struct timespec tp;
-    clock_gettime(CLOCK_MONOTONIC, &tp);
-    return (int64)tp.tv_sec*1000000000 + tp.tv_nsec;
-#elif defined __MACH__ && defined __APPLE__
-    return (int64)mach_absolute_time();
-#else
-    struct timeval tv;
-    struct timezone tz;
-    gettimeofday( &tv, &tz );
-    return (int64)tv.tv_sec*1000000 + tv.tv_usec;
-#endif
-}
-
-double getTickFrequency(void)
-{
-#if defined WIN32 || defined _WIN32 || defined WINCE
-    LARGE_INTEGER freq;
-    QueryPerformanceFrequency(&freq);
-    return (double)freq.QuadPart;
-#elif defined __linux || defined __linux__
-    return 1e9;
-#elif defined __MACH__ && defined __APPLE__
-    static double freq = 0;
-    if( freq == 0 )
-    {
-        mach_timebase_info_data_t sTimebaseInfo;
-        mach_timebase_info(&sTimebaseInfo);
-        freq = sTimebaseInfo.denom*1e9/sTimebaseInfo.numer;
-    }
-    return freq;
-#else
-    return 1e6;
-#endif
-}
-
-#if defined __GNUC__ && (defined __i386__ || defined __x86_64__ || defined __ppc__)
-#if defined(__i386__)
-
-int64 getCPUTickCount(void)
-{
-    int64 x;
-    __asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
-    return x;
-}
-#elif defined(__x86_64__)
-
-int64 getCPUTickCount(void)
-{
-    unsigned hi, lo;
-    __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
-    return (int64)lo | ((int64)hi << 32);
-}
-
-#elif defined(__ppc__)
-
-int64 getCPUTickCount(void)
-{
-    int64 result = 0;
-    unsigned upper, lower, tmp;
-    __asm__ volatile(
-                     "0:                  \n"
-                     "\tmftbu   %0           \n"
-                     "\tmftb    %1           \n"
-                     "\tmftbu   %2           \n"
-                     "\tcmpw    %2,%0        \n"
-                     "\tbne     0b         \n"
-                     : "=r"(upper),"=r"(lower),"=r"(tmp)
-                     );
-    return lower | ((int64)upper << 32);
-}
-
-#else
-
-#error "RDTSC not defined"
-
-#endif
-
-#elif defined _MSC_VER && defined WIN32 && defined _M_IX86
-
-int64 getCPUTickCount(void)
-{
-    __asm _emit 0x0f;
-    __asm _emit 0x31;
-}
-
-#else
-
-#ifdef HAVE_IPP
-int64 getCPUTickCount(void)
-{
-    return ippGetCpuClocks();
-}
-#else
-int64 getCPUTickCount(void)
-{
-    return getTickCount();
-}
-#endif
-
-#endif
-
-const std::string& getBuildInformation()
-{
-    static std::string build_info = "";
-    return build_info;
-}
-
 string format( const char* fmt, ... )
 {
     char buf[1 << 16];
@@ -451,86 +103,6 @@ string format( const char* fmt, ... )
     va_start( args, fmt );
     vsprintf( buf, fmt, args );
     return string(buf);
-}
-
-string tempfile( const char* suffix )
-{
-    string fname;
-#ifndef HAVE_WINRT
-    const char *temp_dir = getenv("OPENCV_TEMP_PATH");
-#endif
-
-#if defined WIN32 || defined _WIN32
-#ifdef HAVE_WINRT
-    RoInitialize(RO_INIT_MULTITHREADED);
-    std::wstring temp_dir = L"";
-    const wchar_t* opencv_temp_dir = GetTempPathWinRT().c_str();
-    if (opencv_temp_dir)
-        temp_dir = std::wstring(opencv_temp_dir);
-
-    std::wstring temp_file;
-    temp_file = GetTempFileNameWinRT(L"ocv");
-    if (temp_file.empty())
-        return string();
-
-    temp_file = temp_dir + std::wstring(L"\\") + temp_file;
-    DeleteFileW(temp_file.c_str());
-
-    char aname[MAX_PATH];
-    size_t copied = wcstombs(aname, temp_file.c_str(), MAX_PATH);
-    CV_Assert((copied != MAX_PATH) && (copied != (size_t)-1));
-    fname = string(aname);
-    RoUninitialize();
-#else
-    char temp_dir2[MAX_PATH] = { 0 };
-    char temp_file[MAX_PATH] = { 0 };
-
-    if (temp_dir == 0 || temp_dir[0] == 0)
-    {
-        ::GetTempPathA(sizeof(temp_dir2), temp_dir2);
-        temp_dir = temp_dir2;
-    }
-    if(0 == ::GetTempFileNameA(temp_dir, "ocv", 0, temp_file))
-        return string();
-
-    DeleteFileA(temp_file);
-
-    fname = temp_file;
-#endif
-# else
-#  ifdef ANDROID
-    //char defaultTemplate[] = "/mnt/sdcard/__opencv_temp.XXXXXX";
-    char defaultTemplate[] = "/data/local/tmp/__opencv_temp.XXXXXX";
-#  else
-    char defaultTemplate[] = "/tmp/__opencv_temp.XXXXXX";
-#  endif
-
-    if (temp_dir == 0 || temp_dir[0] == 0)
-        fname = defaultTemplate;
-    else
-    {
-        fname = temp_dir;
-        char ech = fname[fname.size() - 1];
-        if(ech != '/' && ech != '\\')
-            fname += "/";
-        fname += "__opencv_temp.XXXXXX";
-    }
-
-    const int fd = mkstemp((char*)fname.c_str());
-    if (fd == -1) return string();
-
-    close(fd);
-    remove(fname.c_str());
-# endif
-
-    if (suffix)
-    {
-        if (suffix[0] != '.')
-            return fname + "." + suffix;
-        else
-            return fname + suffix;
-    }
-    return fname;
 }
 
 static CvErrorCallback customErrorCallback = 0;
@@ -587,29 +159,6 @@ redirectError( CvErrorCallback errCallback, void* userdata, void** prevUserdata)
     return prevCallback;
 }
 
-}
-
-CV_IMPL int cvCheckHardwareSupport(int feature)
-{
-    CV_DbgAssert( 0 <= feature && feature <= CV_HARDWARE_MAX_FEATURE );
-    return cv::currentFeatures->have[feature];
-}
-
-CV_IMPL int cvUseOptimized( int flag )
-{
-    int prevMode = cv::useOptimizedFlag;
-    cv::setUseOptimized( flag != 0 );
-    return prevMode;
-}
-
-CV_IMPL int64  cvGetTickCount(void)
-{
-    return cv::getTickCount();
-}
-
-CV_IMPL double cvGetTickFrequency(void)
-{
-    return cv::getTickFrequency()*1e-6;
 }
 
 CV_IMPL CvErrorCallback
@@ -745,8 +294,6 @@ cvErrorFromIppStatus( int status )
     }
 }
 
-static CvModuleInfo cxcore_info = { 0, "cxcore", CV_VERSION, 0 };
-
 CvModuleInfo* CvModule::first = 0, *CvModule::last = 0;
 
 CvModule::CvModule( CvModuleInfo* _info )
@@ -805,8 +352,6 @@ cvRegisterModule( const CvModuleInfo* module )
 
     return 0;
 }
-
-CvModule cxcore_module( &cxcore_info );
 
 CV_IMPL void
 cvGetModuleInfo( const char* name, const char **version, const char **plugin_list )
@@ -868,41 +413,7 @@ cvGetModuleInfo( const char* name, const char **version, const char **plugin_lis
 namespace cv
 {
 
-#if defined WIN32 || defined _WIN32 || defined WINCE
-
-struct Mutex::Impl
-{
-    Impl()
-    {
-#if (_WIN32_WINNT >= 0x0600)
-        ::InitializeCriticalSectionEx(&cs, 1000, 0);
-#else
-        ::InitializeCriticalSection(&cs);
-#endif
-        refcount = 1;
-    }
-    ~Impl() { DeleteCriticalSection(&cs); }
-
-    void lock() { EnterCriticalSection(&cs); }
-    bool trylock() { return TryEnterCriticalSection(&cs) != 0; }
-    void unlock() { LeaveCriticalSection(&cs); }
-
-    CRITICAL_SECTION cs;
-    int refcount;
-};
-
-#ifndef __GNUC__
-int _interlockedExchangeAdd(int* addr, int delta)
-{
-#if defined _MSC_VER && _MSC_VER >= 1500
-    return (int)_InterlockedExchangeAdd((long volatile*)addr, delta);
-#else
-    return (int)InterlockedExchangeAdd((long volatile*)addr, delta);
-#endif
-}
-#endif // __GNUC__
-
-#elif defined __APPLE__
+#if defined __APPLE__
 
 #if defined(__clang__)
 #pragma clang diagnostic push
@@ -1018,84 +529,6 @@ public:
     inline static TLSStorage* get();
 };
 
-#ifdef WIN32
-#ifdef _MSC_VER
-#pragma warning(disable:4505) // unreferenced local function has been removed
-#endif
-
-#ifdef HAVE_WINRT
-    // using C++11 thread attribute for local thread data
-    static __declspec( thread ) TLSStorage* g_tlsdata = NULL;
-
-    static void deleteThreadData()
-    {
-        if (g_tlsdata)
-        {
-            delete g_tlsdata;
-            g_tlsdata = NULL;
-        }
-    }
-
-    inline TLSStorage* TLSStorage::get()
-    {
-        if (!g_tlsdata)
-        {
-            g_tlsdata = new TLSStorage;
-        }
-        return g_tlsdata;
-    }
-#else
-#ifdef WINCE
-#   define TLS_OUT_OF_INDEXES ((DWORD)0xFFFFFFFF)
-#endif
-    static DWORD tlsKey = TLS_OUT_OF_INDEXES;
-
-    static void deleteThreadData()
-    {
-        if(tlsKey != TLS_OUT_OF_INDEXES)
-        {
-            delete (TLSStorage*)TlsGetValue(tlsKey);
-            TlsSetValue(tlsKey, NULL);
-        }
-    }
-
-    inline TLSStorage* TLSStorage::get()
-    {
-        if (tlsKey == TLS_OUT_OF_INDEXES)
-        {
-            tlsKey = TlsAlloc();
-            CV_Assert(tlsKey != TLS_OUT_OF_INDEXES);
-        }
-        TLSStorage* d = (TLSStorage*)TlsGetValue(tlsKey);
-        if (!d)
-        {
-            d = new TLSStorage;
-            TlsSetValue(tlsKey, d);
-        }
-        return d;
-    }
-#endif //HAVE_WINRT
-
-#if defined CVAPI_EXPORTS && defined WIN32 && !defined WINCE
-#ifdef HAVE_WINRT
-    #pragma warning(disable:4447) // Disable warning 'main' signature found without threading model
-#endif
-
-BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID);
-
-BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID)
-{
-    if (fdwReason == DLL_THREAD_DETACH || fdwReason == DLL_PROCESS_DETACH)
-    {
-        cv::deleteThreadAllocData();
-        cv::deleteThreadRNGData();
-        cv::deleteThreadData();
-    }
-    return TRUE;
-}
-#endif
-
-#else
     static pthread_key_t tlsKey = 0;
     static pthread_once_t tlsKeyOnce = PTHREAD_ONCE_INIT;
 
@@ -1121,7 +554,6 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID)
         }
         return d;
     }
-#endif
 
 class TLSContainerStorage
 {

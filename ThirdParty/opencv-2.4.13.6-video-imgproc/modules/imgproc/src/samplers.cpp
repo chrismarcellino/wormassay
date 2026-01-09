@@ -521,12 +521,6 @@ typedef CvStatus (CV_STDCALL *CvGetRectSubPixFunc)( const void* src, int src_ste
                                                     int dst_step, CvSize win_size,
                                                     CvPoint2D32f center );
 
-typedef CvStatus (CV_STDCALL *CvIPPGetRectSubPixFunc)( const void* src, int src_step,
-                                                       CvSize src_size, void* dst,
-                                                       int dst_step, CvSize win_size,
-                                                       CvPoint2D32f center,
-                                                       CvPoint* minpt, CvPoint* maxpt );
-
 CV_IMPL void
 cvGetRectSubPix( const void* srcarr, void* dstarr, CvPoint2D32f center )
 {
@@ -562,21 +556,6 @@ cvGetRectSubPix( const void* srcarr, void* dstarr, CvPoint2D32f center )
     src_step = src->step ? src->step : CV_STUB_STEP;
     dst_step = dst->step ? dst->step : CV_STUB_STEP;
 
-    //if( dst_size.width > src_size.width || dst_size.height > src_size.height )
-    //    CV_ERROR( CV_StsBadSize, "destination ROI must be smaller than source ROI" );
-#if defined (HAVE_IPP) && (IPP_VERSION_MAJOR >= 7)
-    CvPoint minpt, maxpt;
-    int srctype = CV_MAT_TYPE(src->type), dsttype = CV_MAT_TYPE(dst->type);
-    CvIPPGetRectSubPixFunc ippfunc =
-        srctype == CV_8UC1 && dsttype == CV_8UC1 ? (CvIPPGetRectSubPixFunc)ippiCopySubpixIntersect_8u_C1R :
-        srctype == CV_8UC1 && dsttype == CV_32FC1 ? (CvIPPGetRectSubPixFunc)ippiCopySubpixIntersect_8u32f_C1R :
-        srctype == CV_32FC1 && dsttype == CV_32FC1 ? (CvIPPGetRectSubPixFunc)ippiCopySubpixIntersect_32f_C1R : 0;
-
-    if( ippfunc && ippfunc(src->data.ptr, src->step, src_size, dst->data.ptr,
-                           dst->step, dst_size, center, &minpt, &maxpt) >= 0 )
-        return;
-#endif
-
     if( CV_ARE_DEPTHS_EQ( src, dst ))
     {
         func = (CvGetRectSubPixFunc)(gr_tab[cn != 1].fn_2d[CV_MAT_DEPTH(src->type)]);
@@ -592,8 +571,8 @@ cvGetRectSubPix( const void* srcarr, void* dstarr, CvPoint2D32f center )
     if( !func )
         CV_Error( CV_StsUnsupportedFormat, "" );
 
-    IPPI_CALL( func( src->data.ptr, src_step, src_size,
-                     dst->data.ptr, dst_step, dst_size, center ));
+    func( src->data.ptr, src_step, src_size,
+         dst->data.ptr, dst_step, dst_size, center );
 }
 
 
@@ -883,8 +862,8 @@ cvGetQuadrangleSubPix( const void* srcarr, void* dstarr, const CvMat* mat )
     if( !func )
         CV_Error( CV_StsUnsupportedFormat, "" );
 
-    IPPI_CALL( func( src->data.ptr, src->step, src_size,
-                     dst->data.ptr, dst->step, dst_size, m ));
+    func( src->data.ptr, src->step, src_size,
+         dst->data.ptr, dst->step, dst_size, m );
 }
 
 

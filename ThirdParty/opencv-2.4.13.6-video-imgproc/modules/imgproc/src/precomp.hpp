@@ -54,12 +54,6 @@
 #include <limits.h>
 #include <float.h>
 
-#ifdef HAVE_TEGRA_OPTIMIZATION
-#include "opencv2/imgproc/imgproc_tegra.hpp"
-#else
-#define GET_OPTIMIZED(func) (func)
-#endif
-
 /* helper tables */
 extern const uchar icvSaturate8u_cv[];
 #define CV_FAST_CAST_8U(t)  (assert(-256 <= (t) && (t) <= 512), icvSaturate8u_cv[(t)+256])

@@ -395,141 +395,6 @@ template<typename T> struct VBLAS
     int givensx(T*, T*, int, T, T, T*, T*) const { return 0; }
 };
 
-#if CV_SSE2
-template<> inline int VBLAS<float>::dot(const float* a, const float* b, int n, float* result) const
-{
-    if( n < 8 )
-        return 0;
-    int k = 0;
-    __m128 s0 = _mm_setzero_ps(), s1 = _mm_setzero_ps();
-    for( ; k <= n - 8; k += 8 )
-    {
-        __m128 a0 = _mm_load_ps(a + k), a1 = _mm_load_ps(a + k + 4);
-        __m128 b0 = _mm_load_ps(b + k), b1 = _mm_load_ps(b + k + 4);
-
-        s0 = _mm_add_ps(s0, _mm_mul_ps(a0, b0));
-        s1 = _mm_add_ps(s1, _mm_mul_ps(a1, b1));
-    }
-    s0 = _mm_add_ps(s0, s1);
-    float sbuf[4];
-    _mm_storeu_ps(sbuf, s0);
-    *result = sbuf[0] + sbuf[1] + sbuf[2] + sbuf[3];
-    return k;
-}
-
-
-template<> inline int VBLAS<float>::givens(float* a, float* b, int n, float c, float s) const
-{
-    if( n < 4 )
-        return 0;
-    int k = 0;
-    __m128 c4 = _mm_set1_ps(c), s4 = _mm_set1_ps(s);
-    for( ; k <= n - 4; k += 4 )
-    {
-        __m128 a0 = _mm_load_ps(a + k);
-        __m128 b0 = _mm_load_ps(b + k);
-        __m128 t0 = _mm_add_ps(_mm_mul_ps(a0, c4), _mm_mul_ps(b0, s4));
-        __m128 t1 = _mm_sub_ps(_mm_mul_ps(b0, c4), _mm_mul_ps(a0, s4));
-        _mm_store_ps(a + k, t0);
-        _mm_store_ps(b + k, t1);
-    }
-    return k;
-}
-
-
-template<> inline int VBLAS<float>::givensx(float* a, float* b, int n, float c, float s,
-                                             float* anorm, float* bnorm) const
-{
-    if( n < 4 )
-        return 0;
-    int k = 0;
-    __m128 c4 = _mm_set1_ps(c), s4 = _mm_set1_ps(s);
-    __m128 sa = _mm_setzero_ps(), sb = _mm_setzero_ps();
-    for( ; k <= n - 4; k += 4 )
-    {
-        __m128 a0 = _mm_load_ps(a + k);
-        __m128 b0 = _mm_load_ps(b + k);
-        __m128 t0 = _mm_add_ps(_mm_mul_ps(a0, c4), _mm_mul_ps(b0, s4));
-        __m128 t1 = _mm_sub_ps(_mm_mul_ps(b0, c4), _mm_mul_ps(a0, s4));
-        _mm_store_ps(a + k, t0);
-        _mm_store_ps(b + k, t1);
-        sa = _mm_add_ps(sa, _mm_mul_ps(t0, t0));
-        sb = _mm_add_ps(sb, _mm_mul_ps(t1, t1));
-    }
-    float abuf[4], bbuf[4];
-    _mm_storeu_ps(abuf, sa);
-    _mm_storeu_ps(bbuf, sb);
-    *anorm = abuf[0] + abuf[1] + abuf[2] + abuf[3];
-    *bnorm = bbuf[0] + bbuf[1] + bbuf[2] + bbuf[3];
-    return k;
-}
-
-
-template<> inline int VBLAS<double>::dot(const double* a, const double* b, int n, double* result) const
-{
-    if( n < 4 )
-        return 0;
-    int k = 0;
-    __m128d s0 = _mm_setzero_pd(), s1 = _mm_setzero_pd();
-    for( ; k <= n - 4; k += 4 )
-    {
-        __m128d a0 = _mm_load_pd(a + k), a1 = _mm_load_pd(a + k + 2);
-        __m128d b0 = _mm_load_pd(b + k), b1 = _mm_load_pd(b + k + 2);
-
-        s0 = _mm_add_pd(s0, _mm_mul_pd(a0, b0));
-        s1 = _mm_add_pd(s1, _mm_mul_pd(a1, b1));
-    }
-    s0 = _mm_add_pd(s0, s1);
-    double sbuf[2];
-    _mm_storeu_pd(sbuf, s0);
-    *result = sbuf[0] + sbuf[1];
-    return k;
-}
-
-
-template<> inline int VBLAS<double>::givens(double* a, double* b, int n, double c, double s) const
-{
-    int k = 0;
-    __m128d c2 = _mm_set1_pd(c), s2 = _mm_set1_pd(s);
-    for( ; k <= n - 2; k += 2 )
-    {
-        __m128d a0 = _mm_load_pd(a + k);
-        __m128d b0 = _mm_load_pd(b + k);
-        __m128d t0 = _mm_add_pd(_mm_mul_pd(a0, c2), _mm_mul_pd(b0, s2));
-        __m128d t1 = _mm_sub_pd(_mm_mul_pd(b0, c2), _mm_mul_pd(a0, s2));
-        _mm_store_pd(a + k, t0);
-        _mm_store_pd(b + k, t1);
-    }
-    return k;
-}
-
-
-template<> inline int VBLAS<double>::givensx(double* a, double* b, int n, double c, double s,
-                                              double* anorm, double* bnorm) const
-{
-    int k = 0;
-    __m128d c2 = _mm_set1_pd(c), s2 = _mm_set1_pd(s);
-    __m128d sa = _mm_setzero_pd(), sb = _mm_setzero_pd();
-    for( ; k <= n - 2; k += 2 )
-    {
-        __m128d a0 = _mm_load_pd(a + k);
-        __m128d b0 = _mm_load_pd(b + k);
-        __m128d t0 = _mm_add_pd(_mm_mul_pd(a0, c2), _mm_mul_pd(b0, s2));
-        __m128d t1 = _mm_sub_pd(_mm_mul_pd(b0, c2), _mm_mul_pd(a0, s2));
-        _mm_store_pd(a + k, t0);
-        _mm_store_pd(b + k, t1);
-        sa = _mm_add_pd(sa, _mm_mul_pd(t0, t0));
-        sb = _mm_add_pd(sb, _mm_mul_pd(t1, t1));
-    }
-    double abuf[2], bbuf[2];
-    _mm_storeu_pd(abuf, sa);
-    _mm_storeu_pd(bbuf, sb);
-    *anorm = abuf[0] + abuf[1];
-    *bnorm = bbuf[0] + bbuf[1];
-    return k;
-}
-#endif
-
 template<typename _Tp> void
 JacobiSVDImpl_(_Tp* At, size_t astep, _Tp* _W, _Tp* Vt, size_t vstep,
                int m, int n, int n1, double minval, _Tp eps)
@@ -1001,24 +866,6 @@ double cv::invert( InputArray _src, OutputArray _dst, int method )
                     result = true;
                     d = 1./d;
 
-                    #if CV_SSE2
-                        if(USE_SSE2)
-                        {
-                            __m128 zero = _mm_setzero_ps();
-                            __m128 t0 = _mm_loadl_pi(zero, (const __m64*)srcdata); //t0 = sf(0,0) sf(0,1)
-                            __m128 t1 = _mm_loadh_pi(zero, (const __m64*)(srcdata+srcstep)); //t1 = sf(1,0) sf(1,1)
-                            __m128 s0 = _mm_or_ps(t0, t1);
-                            __m128 det =_mm_set1_ps((float)d);
-                            s0 =  _mm_mul_ps(s0, det);
-                            static const uchar CV_DECL_ALIGNED(16) inv[16] = {0,0,0,0,0,0,0,0x80,0,0,0,0x80,0,0,0,0};
-                            __m128 pattern = _mm_load_ps((const float*)inv);
-                            s0 = _mm_xor_ps(s0, pattern);//==-1*s0
-                            s0 = _mm_shuffle_ps(s0, s0, _MM_SHUFFLE(0,2,1,3));
-                            _mm_storel_pi((__m64*)dstdata, s0);
-                            _mm_storeh_pi((__m64*)((float*)(dstdata+dststep)), s0);
-                        }
-                        else
-                    #endif
                         {
                         double t0, t1;
                         t0 = Sf(0,0)*d;
@@ -1040,28 +887,6 @@ double cv::invert( InputArray _src, OutputArray _dst, int method )
                 {
                     result = true;
                     d = 1./d;
-                    #if CV_SSE2
-                        if(USE_SSE2)
-                        {
-                            __m128d s0 = _mm_loadu_pd((const double*)srcdata); //s0 = sf(0,0) sf(0,1)
-                            __m128d s1 = _mm_loadu_pd ((const double*)(srcdata+srcstep));//s1 = sf(1,0) sf(1,1)
-                            __m128d sm = _mm_unpacklo_pd(s0, _mm_load_sd((const double*)(srcdata+srcstep)+1)); //sm = sf(0,0) sf(1,1) - main diagonal
-                            __m128d ss = _mm_shuffle_pd(s0, s1, _MM_SHUFFLE2(0,1)); //ss = sf(0,1) sf(1,0) - secondary diagonal
-                            __m128d det = _mm_load1_pd((const double*)&d);
-                            sm =  _mm_mul_pd(sm, det);
-
-                            static const uchar CV_DECL_ALIGNED(16) inv[8] = {0,0,0,0,0,0,0,0x80};
-                            __m128d pattern = _mm_load1_pd((double*)inv);
-                            ss = _mm_mul_pd(ss, det);
-                            ss = _mm_xor_pd(ss, pattern);//==-1*ss
-
-                            s0 = _mm_shuffle_pd(sm, ss, _MM_SHUFFLE2(0,1));
-                            s1 = _mm_shuffle_pd(ss, sm, _MM_SHUFFLE2(0,1));
-                            _mm_storeu_pd((double*)dstdata, s0);
-                            _mm_storeu_pd((double*)(dstdata+dststep), s1);
-                        }
-                        else
-                    #endif
                         {
                             double t0, t1;
                             t0 = Sd(0,0)*d;

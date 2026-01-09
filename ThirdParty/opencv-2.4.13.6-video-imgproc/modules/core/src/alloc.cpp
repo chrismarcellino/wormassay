@@ -55,10 +55,6 @@ static void* OutOfMemoryError(size_t size)
 
 #if CV_USE_SYSTEM_MALLOC
 
-#if defined WIN32 || defined _WIN32
-void deleteThreadAllocData() {}
-#endif
-
 void* fastMalloc( size_t size )
 {
     uchar* udata = (uchar*)malloc(size + sizeof(void*) + CV_MALLOC_ALIGN);
@@ -93,20 +89,11 @@ void fastFree(void* ptr)
 
 #define STAT(stmt)
 
-#ifdef WIN32
-#if (_WIN32_WINNT >= 0x0602)
-#include <synchapi.h>
-#endif
-
 struct CriticalSection
 {
     CriticalSection()
     {
-#if (_WIN32_WINNT >= 0x0600)
-        InitializeCriticalSectionEx(&cs, 1000, 0);
-#else
         InitializeCriticalSection(&cs);
-#endif
     }
     ~CriticalSection() { DeleteCriticalSection(&cs); }
     void lock() { EnterCriticalSection(&cs); }
@@ -126,7 +113,6 @@ void SystemFree(void* ptr, size_t)
 {
     free(ptr);
 }
-#else //WIN32
 
 #include <sys/mman.h>
 
@@ -155,7 +141,6 @@ void SystemFree(void* ptr, size_t size)
 {
     munmap(ptr, size);
 }
-#endif //WIN32
 
 struct AutoLock
 {
@@ -399,26 +384,6 @@ struct ThreadData
 
     Block* bins[MAX_BIN+1][3];
 
-#ifdef WIN32
-#ifdef WINCE
-#   define TLS_OUT_OF_INDEXES ((DWORD)0xFFFFFFFF)
-#endif //WINCE
-
-    static DWORD tlsKey;
-    static ThreadData* get()
-    {
-        ThreadData* data;
-        if( tlsKey == TLS_OUT_OF_INDEXES )
-            tlsKey = TlsAlloc();
-        data = (ThreadData*)TlsGetValue(tlsKey);
-        if( !data )
-        {
-            data = new ThreadData;
-            TlsSetValue(tlsKey, data);
-        }
-        return data;
-    }
-#else //WIN32
     static void deleteData(void* data)
     {
         delete (ThreadData*)data;
@@ -438,21 +403,9 @@ struct ThreadData
         }
         return data;
     }
-#endif //WIN32
 };
 
-#ifdef WIN32
-DWORD ThreadData::tlsKey = TLS_OUT_OF_INDEXES;
-
-void deleteThreadAllocData()
-{
-    if( ThreadData::tlsKey != TLS_OUT_OF_INDEXES )
-        delete (ThreadData*)TlsGetValue( ThreadData::tlsKey );
-}
-
-#else //WIN32
 pthread_key_t ThreadData::tlsKey = 0;
-#endif //WIN32
 
 #if 0
 static void checkList(ThreadData* tls, int idx)
@@ -692,11 +645,6 @@ void fastFree( void* ptr )
 
 #endif //CV_USE_SYSTEM_MALLOC
 
-}
-
-CV_IMPL void cvSetMemoryManager( CvAllocFunc, CvFreeFunc, void * )
-{
-    CV_Error( -1, "Custom memory allocator is not supported" );
 }
 
 CV_IMPL void* cvAlloc( size_t size )

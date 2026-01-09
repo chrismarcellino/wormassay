@@ -1,3 +1,7 @@
+Version 1.7.5
+_____________
+Remove non-NEON SIMD code and unecessary OpenCV snapshot files. (No functional changes.)
+
 Version 1.7.4
 _____________
 Improve BlackMagic DeckLink support with interlaced cameras.

@@ -181,9 +181,9 @@ cvFindCornerSubPix( const void* srcarr, CvPoint2D32f* corners,
             CvPoint2D32f cI2;
             double a, b, c, bb1, bb2;
 
-            IPPI_CALL( icvGetRectSubPix_8u32f_C1R( (uchar*)src->data.ptr, src->step, size,
-                                        src_buffer, (win_w + 2) * sizeof( src_buffer[0] ),
-                                        cvSize( win_w + 2, win_h + 2 ), cI ));
+            icvGetRectSubPix_8u32f_C1R( (uchar*)src->data.ptr, src->step, size,
+                                       src_buffer, (win_w + 2) * sizeof( src_buffer[0] ),
+                                       cvSize( win_w + 2, win_h + 2 ), cI );
 
             /* calc derivatives */
             icvSepConvSmall3_32f( src_buffer+src_buf_size.width, src_buf_size.width * sizeof(src_buffer[0]),

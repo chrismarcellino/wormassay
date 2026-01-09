@@ -64,7 +64,7 @@
     #endif
   #elif __GNUC__*10 + __GNUC_MINOR__ >= 42
 
-    #if !(defined WIN32 || defined _WIN32) && (defined __i486__ || defined __i586__ || \
+    #if !(defined __i486__ || defined __i586__ || \
         defined __i686__ || defined __MMX__ || defined __SSE__  || defined __ppc__) || \
         defined _STLPORT_MAJOR || defined _LIBCPP_VERSION || \
         defined __EMSCRIPTEN__
@@ -83,10 +83,6 @@
       #define CV_XADD __exchange_and_add
     #endif
   #endif
-
-#elif defined WIN32 || defined _WIN32 || defined WINCE
-  namespace cv { CV_EXPORTS int _interlockedExchangeAdd(int* addr, int delta); }
-  #define CV_XADD cv::_interlockedExchangeAdd
 
 #else
   static inline int CV_XADD(int* addr, int delta)

@@ -198,8 +198,8 @@ static SplitFunc getSplitFunc(int depth)
 {
     static SplitFunc splitTab[] =
     {
-        (SplitFunc)GET_OPTIMIZED(split8u), (SplitFunc)GET_OPTIMIZED(split8u), (SplitFunc)GET_OPTIMIZED(split16u), (SplitFunc)GET_OPTIMIZED(split16u),
-        (SplitFunc)GET_OPTIMIZED(split32s), (SplitFunc)GET_OPTIMIZED(split32s), (SplitFunc)GET_OPTIMIZED(split64s), 0
+        (SplitFunc)(split8u), (SplitFunc)(split8u), (SplitFunc)(split16u), (SplitFunc)(split16u),
+        (SplitFunc)(split32s), (SplitFunc)(split32s), (SplitFunc)(split64s), 0
     };
 
     return splitTab[depth];
@@ -209,8 +209,8 @@ static MergeFunc getMergeFunc(int depth)
 {
     static MergeFunc mergeTab[] =
     {
-        (MergeFunc)GET_OPTIMIZED(merge8u), (MergeFunc)GET_OPTIMIZED(merge8u), (MergeFunc)GET_OPTIMIZED(merge16u), (MergeFunc)GET_OPTIMIZED(merge16u),
-        (MergeFunc)GET_OPTIMIZED(merge32s), (MergeFunc)GET_OPTIMIZED(merge32s), (MergeFunc)GET_OPTIMIZED(merge64s), 0
+        (MergeFunc)(merge8u), (MergeFunc)(merge8u), (MergeFunc)(merge16u), (MergeFunc)(merge16u),
+        (MergeFunc)(merge32s), (MergeFunc)(merge32s), (MergeFunc)(merge64s), 0
     };
 
     return mergeTab[depth];
@@ -655,29 +655,7 @@ cvtScale_<short, short, float>( const short* src, size_t sstep,
 
     for( ; size.height--; src += sstep, dst += dstep )
     {
-        int x = 0;
-        #if CV_SSE2
-            if(USE_SSE2)
-            {
-                __m128 scale128 = _mm_set1_ps (scale);
-                __m128 shift128 = _mm_set1_ps (shift);
-                for(; x <= size.width - 8; x += 8 )
-                {
-                    __m128i r0 = _mm_loadl_epi64((const __m128i*)(src + x));
-                    __m128i r1 = _mm_loadl_epi64((const __m128i*)(src + x + 4));
-                    __m128 rf0 =_mm_cvtepi32_ps(_mm_srai_epi32(_mm_unpacklo_epi16(r0, r0), 16));
-                    __m128 rf1 =_mm_cvtepi32_ps(_mm_srai_epi32(_mm_unpacklo_epi16(r1, r1), 16));
-                    rf0 = _mm_add_ps(_mm_mul_ps(rf0, scale128), shift128);
-                    rf1 = _mm_add_ps(_mm_mul_ps(rf1, scale128), shift128);
-                    r0 = _mm_cvtps_epi32(rf0);
-                    r1 = _mm_cvtps_epi32(rf1);
-                    r0 = _mm_packs_epi32(r0, r1);
-                    _mm_storeu_si128((__m128i*)(dst + x), r0);
-                }
-            }
-        #endif
-
-        for(; x < size.width; x++ )
+        for(int x = 0; x < size.width; x++ )
             dst[x] = saturate_cast<short>(src[x]*scale + shift);
     }
 }
@@ -692,49 +670,7 @@ cvtScale_<short, int, float>( const short* src, size_t sstep,
 
     for( ; size.height--; src += sstep, dst += dstep )
     {
-        int x = 0;
-
-         #if CV_SSE2
-            if(USE_SSE2)//~5X
-            {
-                __m128 scale128 = _mm_set1_ps (scale);
-                __m128 shift128 = _mm_set1_ps (shift);
-                for(; x <= size.width - 8; x += 8 )
-                {
-                    __m128i r0 = _mm_loadl_epi64((const __m128i*)(src + x));
-                    __m128i r1 = _mm_loadl_epi64((const __m128i*)(src + x + 4));
-                    __m128 rf0 =_mm_cvtepi32_ps(_mm_srai_epi32(_mm_unpacklo_epi16(r0, r0), 16));
-                    __m128 rf1 =_mm_cvtepi32_ps(_mm_srai_epi32(_mm_unpacklo_epi16(r1, r1), 16));
-                    rf0 = _mm_add_ps(_mm_mul_ps(rf0, scale128), shift128);
-                    rf1 = _mm_add_ps(_mm_mul_ps(rf1, scale128), shift128);
-                    r0 = _mm_cvtps_epi32(rf0);
-                    r1 = _mm_cvtps_epi32(rf1);
-
-                    _mm_storeu_si128((__m128i*)(dst + x), r0);
-                    _mm_storeu_si128((__m128i*)(dst + x + 4), r1);
-                }
-            }
-        #endif
-
-        //We will wait Haswell
-        /*
-        #if CV_AVX
-            if(USE_AVX)//2X - bad variant
-            {
-                ////TODO:AVX implementation (optimization?) required
-                __m256 scale256 = _mm256_set1_ps (scale);
-                __m256 shift256 = _mm256_set1_ps (shift);
-                for(; x <= size.width - 8; x += 8 )
-                {
-                    __m256i buf = _mm256_set_epi32((int)(*(src+x+7)),(int)(*(src+x+6)),(int)(*(src+x+5)),(int)(*(src+x+4)),(int)(*(src+x+3)),(int)(*(src+x+2)),(int)(*(src+x+1)),(int)(*(src+x)));
-                    __m256 r0 = _mm256_add_ps( _mm256_mul_ps(_mm256_cvtepi32_ps (buf), scale256), shift256);
-                    __m256i res = _mm256_cvtps_epi32(r0);
-                    _mm256_storeu_si256 ((__m256i*)(dst+x), res);
-                }
-            }
-        #endif*/
-
-        for(; x < size.width; x++ )
+        for(int x = 0; x < size.width; x++ )
             dst[x] = saturate_cast<int>(src[x]*scale + shift);
     }
 }
@@ -776,23 +712,7 @@ cvt_<float, short>( const float* src, size_t sstep,
 
     for( ; size.height--; src += sstep, dst += dstep )
     {
-        int x = 0;
-        #if   CV_SSE2
-        if(USE_SSE2){
-              for( ; x <= size.width - 8; x += 8 )
-            {
-                __m128 src128 = _mm_loadu_ps (src + x);
-                __m128i src_int128 = _mm_cvtps_epi32 (src128);
-
-                src128 = _mm_loadu_ps (src + x + 4);
-                __m128i src1_int128 = _mm_cvtps_epi32 (src128);
-
-                src1_int128 = _mm_packs_epi32(src_int128, src1_int128);
-                _mm_storeu_si128((__m128i*)(dst + x),src1_int128);
-            }
-        }
-        #endif
-        for( ; x < size.width; x++ )
+        for(int x = 0; x < size.width; x++ )
             dst[x] = saturate_cast<short>(src[x]);
     }
 
@@ -973,38 +893,38 @@ BinaryFunc getConvertFunc(int sdepth, int ddepth)
     static BinaryFunc cvtTab[][8] =
     {
         {
-            (BinaryFunc)(cvt8u), (BinaryFunc)GET_OPTIMIZED(cvt8s8u), (BinaryFunc)GET_OPTIMIZED(cvt16u8u),
-            (BinaryFunc)GET_OPTIMIZED(cvt16s8u), (BinaryFunc)GET_OPTIMIZED(cvt32s8u), (BinaryFunc)GET_OPTIMIZED(cvt32f8u),
-            (BinaryFunc)GET_OPTIMIZED(cvt64f8u), 0
+            (BinaryFunc)(cvt8u), (BinaryFunc)(cvt8s8u), (BinaryFunc)(cvt16u8u),
+            (BinaryFunc)(cvt16s8u), (BinaryFunc)(cvt32s8u), (BinaryFunc)(cvt32f8u),
+            (BinaryFunc)(cvt64f8u), 0
         },
         {
-            (BinaryFunc)GET_OPTIMIZED(cvt8u8s), (BinaryFunc)cvt8u, (BinaryFunc)GET_OPTIMIZED(cvt16u8s),
-            (BinaryFunc)GET_OPTIMIZED(cvt16s8s), (BinaryFunc)GET_OPTIMIZED(cvt32s8s), (BinaryFunc)GET_OPTIMIZED(cvt32f8s),
-            (BinaryFunc)GET_OPTIMIZED(cvt64f8s), 0
+            (BinaryFunc)(cvt8u8s), (BinaryFunc)cvt8u, (BinaryFunc)(cvt16u8s),
+            (BinaryFunc)(cvt16s8s), (BinaryFunc)(cvt32s8s), (BinaryFunc)(cvt32f8s),
+            (BinaryFunc)(cvt64f8s), 0
         },
         {
-            (BinaryFunc)GET_OPTIMIZED(cvt8u16u), (BinaryFunc)GET_OPTIMIZED(cvt8s16u), (BinaryFunc)cvt16u,
-            (BinaryFunc)GET_OPTIMIZED(cvt16s16u), (BinaryFunc)GET_OPTIMIZED(cvt32s16u), (BinaryFunc)GET_OPTIMIZED(cvt32f16u),
-            (BinaryFunc)GET_OPTIMIZED(cvt64f16u), 0
+            (BinaryFunc)(cvt8u16u), (BinaryFunc)(cvt8s16u), (BinaryFunc)cvt16u,
+            (BinaryFunc)(cvt16s16u), (BinaryFunc)(cvt32s16u), (BinaryFunc)(cvt32f16u),
+            (BinaryFunc)(cvt64f16u), 0
         },
         {
-            (BinaryFunc)GET_OPTIMIZED(cvt8u16s), (BinaryFunc)GET_OPTIMIZED(cvt8s16s), (BinaryFunc)GET_OPTIMIZED(cvt16u16s),
-            (BinaryFunc)cvt16u, (BinaryFunc)GET_OPTIMIZED(cvt32s16s), (BinaryFunc)GET_OPTIMIZED(cvt32f16s),
-            (BinaryFunc)GET_OPTIMIZED(cvt64f16s), 0
+            (BinaryFunc)(cvt8u16s), (BinaryFunc)(cvt8s16s), (BinaryFunc)(cvt16u16s),
+            (BinaryFunc)cvt16u, (BinaryFunc)(cvt32s16s), (BinaryFunc)(cvt32f16s),
+            (BinaryFunc)(cvt64f16s), 0
         },
         {
-            (BinaryFunc)GET_OPTIMIZED(cvt8u32s), (BinaryFunc)GET_OPTIMIZED(cvt8s32s), (BinaryFunc)GET_OPTIMIZED(cvt16u32s),
-            (BinaryFunc)GET_OPTIMIZED(cvt16s32s), (BinaryFunc)cvt32s, (BinaryFunc)GET_OPTIMIZED(cvt32f32s),
-            (BinaryFunc)GET_OPTIMIZED(cvt64f32s), 0
+            (BinaryFunc)(cvt8u32s), (BinaryFunc)(cvt8s32s), (BinaryFunc)(cvt16u32s),
+            (BinaryFunc)(cvt16s32s), (BinaryFunc)cvt32s, (BinaryFunc)(cvt32f32s),
+            (BinaryFunc)(cvt64f32s), 0
         },
         {
-            (BinaryFunc)GET_OPTIMIZED(cvt8u32f), (BinaryFunc)GET_OPTIMIZED(cvt8s32f), (BinaryFunc)GET_OPTIMIZED(cvt16u32f),
-            (BinaryFunc)GET_OPTIMIZED(cvt16s32f), (BinaryFunc)GET_OPTIMIZED(cvt32s32f), (BinaryFunc)cvt32s,
-            (BinaryFunc)GET_OPTIMIZED(cvt64f32f), 0
+            (BinaryFunc)(cvt8u32f), (BinaryFunc)(cvt8s32f), (BinaryFunc)(cvt16u32f),
+            (BinaryFunc)(cvt16s32f), (BinaryFunc)(cvt32s32f), (BinaryFunc)cvt32s,
+            (BinaryFunc)(cvt64f32f), 0
         },
         {
-            (BinaryFunc)GET_OPTIMIZED(cvt8u64f), (BinaryFunc)GET_OPTIMIZED(cvt8s64f), (BinaryFunc)GET_OPTIMIZED(cvt16u64f),
-            (BinaryFunc)GET_OPTIMIZED(cvt16s64f), (BinaryFunc)GET_OPTIMIZED(cvt32s64f), (BinaryFunc)GET_OPTIMIZED(cvt32f64f),
+            (BinaryFunc)(cvt8u64f), (BinaryFunc)(cvt8s64f), (BinaryFunc)(cvt16u64f),
+            (BinaryFunc)(cvt16s64f), (BinaryFunc)(cvt32s64f), (BinaryFunc)(cvt32f64f),
             (BinaryFunc)(cvt64s), 0
         },
         {
@@ -1020,33 +940,33 @@ BinaryFunc getConvertScaleFunc(int sdepth, int ddepth)
     static BinaryFunc cvtScaleTab[][8] =
     {
         {
-            (BinaryFunc)GET_OPTIMIZED(cvtScale8u), (BinaryFunc)GET_OPTIMIZED(cvtScale8s8u), (BinaryFunc)GET_OPTIMIZED(cvtScale16u8u),
-            (BinaryFunc)GET_OPTIMIZED(cvtScale16s8u), (BinaryFunc)GET_OPTIMIZED(cvtScale32s8u), (BinaryFunc)GET_OPTIMIZED(cvtScale32f8u),
+            (BinaryFunc)(cvtScale8u), (BinaryFunc)(cvtScale8s8u), (BinaryFunc)(cvtScale16u8u),
+            (BinaryFunc)(cvtScale16s8u), (BinaryFunc)(cvtScale32s8u), (BinaryFunc)(cvtScale32f8u),
             (BinaryFunc)cvtScale64f8u, 0
         },
         {
-            (BinaryFunc)GET_OPTIMIZED(cvtScale8u8s), (BinaryFunc)GET_OPTIMIZED(cvtScale8s), (BinaryFunc)GET_OPTIMIZED(cvtScale16u8s),
-            (BinaryFunc)GET_OPTIMIZED(cvtScale16s8s), (BinaryFunc)GET_OPTIMIZED(cvtScale32s8s), (BinaryFunc)GET_OPTIMIZED(cvtScale32f8s),
+            (BinaryFunc)(cvtScale8u8s), (BinaryFunc)(cvtScale8s), (BinaryFunc)(cvtScale16u8s),
+            (BinaryFunc)(cvtScale16s8s), (BinaryFunc)(cvtScale32s8s), (BinaryFunc)(cvtScale32f8s),
             (BinaryFunc)cvtScale64f8s, 0
         },
         {
-            (BinaryFunc)GET_OPTIMIZED(cvtScale8u16u), (BinaryFunc)GET_OPTIMIZED(cvtScale8s16u), (BinaryFunc)GET_OPTIMIZED(cvtScale16u),
-            (BinaryFunc)GET_OPTIMIZED(cvtScale16s16u), (BinaryFunc)GET_OPTIMIZED(cvtScale32s16u), (BinaryFunc)GET_OPTIMIZED(cvtScale32f16u),
+            (BinaryFunc)(cvtScale8u16u), (BinaryFunc)(cvtScale8s16u), (BinaryFunc)(cvtScale16u),
+            (BinaryFunc)(cvtScale16s16u), (BinaryFunc)(cvtScale32s16u), (BinaryFunc)(cvtScale32f16u),
             (BinaryFunc)cvtScale64f16u, 0
         },
         {
-            (BinaryFunc)GET_OPTIMIZED(cvtScale8u16s), (BinaryFunc)GET_OPTIMIZED(cvtScale8s16s), (BinaryFunc)GET_OPTIMIZED(cvtScale16u16s),
-            (BinaryFunc)GET_OPTIMIZED(cvtScale16s), (BinaryFunc)GET_OPTIMIZED(cvtScale32s16s), (BinaryFunc)GET_OPTIMIZED(cvtScale32f16s),
+            (BinaryFunc)(cvtScale8u16s), (BinaryFunc)(cvtScale8s16s), (BinaryFunc)(cvtScale16u16s),
+            (BinaryFunc)(cvtScale16s), (BinaryFunc)(cvtScale32s16s), (BinaryFunc)(cvtScale32f16s),
             (BinaryFunc)cvtScale64f16s, 0
         },
         {
-            (BinaryFunc)GET_OPTIMIZED(cvtScale8u32s), (BinaryFunc)GET_OPTIMIZED(cvtScale8s32s), (BinaryFunc)GET_OPTIMIZED(cvtScale16u32s),
-            (BinaryFunc)GET_OPTIMIZED(cvtScale16s32s), (BinaryFunc)GET_OPTIMIZED(cvtScale32s), (BinaryFunc)GET_OPTIMIZED(cvtScale32f32s),
+            (BinaryFunc)(cvtScale8u32s), (BinaryFunc)(cvtScale8s32s), (BinaryFunc)(cvtScale16u32s),
+            (BinaryFunc)(cvtScale16s32s), (BinaryFunc)(cvtScale32s), (BinaryFunc)(cvtScale32f32s),
             (BinaryFunc)cvtScale64f32s, 0
         },
         {
-            (BinaryFunc)GET_OPTIMIZED(cvtScale8u32f), (BinaryFunc)GET_OPTIMIZED(cvtScale8s32f), (BinaryFunc)GET_OPTIMIZED(cvtScale16u32f),
-            (BinaryFunc)GET_OPTIMIZED(cvtScale16s32f), (BinaryFunc)GET_OPTIMIZED(cvtScale32s32f), (BinaryFunc)GET_OPTIMIZED(cvtScale32f),
+            (BinaryFunc)(cvtScale8u32f), (BinaryFunc)(cvtScale8s32f), (BinaryFunc)(cvtScale16u32f),
+            (BinaryFunc)(cvtScale16s32f), (BinaryFunc)(cvtScale32s32f), (BinaryFunc)(cvtScale32f),
             (BinaryFunc)cvtScale64f32f, 0
         },
         {

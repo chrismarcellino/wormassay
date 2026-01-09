@@ -1481,9 +1481,6 @@ CVAPI(int) cvKMeans2( const CvArr* samples, int cluster_count, CvArr* labels,
 /* Add the function pointers table with associated information to the IPP primitives list */
 CVAPI(int)  cvRegisterModule( const CvModuleInfo* module_info );
 
-/* Loads optimized functions from IPP, MKL etc. or switches back to pure C code */
-CVAPI(int)  cvUseOptimized( int on_off );
-
 /* Retrieves information about the registered modules and loaded optimized plugins */
 CVAPI(void)  cvGetModuleInfo( const char* module_name,
                               const char** version,
@@ -1491,13 +1488,6 @@ CVAPI(void)  cvGetModuleInfo( const char* module_name,
 
 typedef void* (CV_CDECL *CvAllocFunc)(size_t size, void* userdata);
 typedef int (CV_CDECL *CvFreeFunc)(void* pptr, void* userdata);
-
-/* Set user-defined memory managment functions (substitutors for malloc and free) that
-   will be called by cvAlloc, cvFree and higher-level functions (e.g. cvCreateImage) */
-CVAPI(void) cvSetMemoryManager( CvAllocFunc alloc_func CV_DEFAULT(NULL),
-                               CvFreeFunc free_func CV_DEFAULT(NULL),
-                               void* userdata CV_DEFAULT(NULL));
-
 
 typedef IplImage* (CV_STDCALL* Cv_iplCreateImageHeader)
                             (int,int,int,char*,char*,int,int,int,int,int,
@@ -1693,31 +1683,6 @@ CVAPI(void*) cvLoad( const char* filename,
    uses internal clock counter on x86 */
 CVAPI(int64)  cvGetTickCount( void );
 CVAPI(double) cvGetTickFrequency( void );
-
-/*********************************** CPU capabilities ***********************************/
-
-#define CV_CPU_NONE    0
-#define CV_CPU_MMX     1
-#define CV_CPU_SSE     2
-#define CV_CPU_SSE2    3
-#define CV_CPU_SSE3    4
-#define CV_CPU_SSSE3   5
-#define CV_CPU_SSE4_1  6
-#define CV_CPU_SSE4_2  7
-#define CV_CPU_POPCNT  8
-#define CV_CPU_AVX    10
-#define CV_CPU_AVX2   11
-#define CV_HARDWARE_MAX_FEATURE 255
-
-CVAPI(int) cvCheckHardwareSupport(int feature);
-
-/*********************************** Multi-Threading ************************************/
-
-/* retrieve/set the number of threads used in OpenMP implementations */
-CVAPI(int)  cvGetNumThreads( void );
-CVAPI(void) cvSetNumThreads( int threads CV_DEFAULT(0) );
-/* get index of the thread being executed */
-CVAPI(int)  cvGetThreadNum( void );
 
 
 /********************************** Error Handling **************************************/

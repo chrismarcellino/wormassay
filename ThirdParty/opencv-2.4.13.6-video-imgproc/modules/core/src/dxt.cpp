@@ -50,13 +50,6 @@ namespace cv
 # pragma warning(disable: 4748)
 #endif
 
-#if defined HAVE_IPP && IPP_VERSION_MAJOR*100 + IPP_VERSION_MINOR >= 701
-#define USE_IPP_DFT 1
-#else
-#undef USE_IPP_DFT
-#endif
-
-
 /****************************************************************************************\
                                Discrete Fourier Transform
 \****************************************************************************************/
@@ -374,148 +367,6 @@ template<typename T> struct DFT_VecR4
     int operator()(Complex<T>*, int, int, int&, const Complex<T>*) const { return 1; }
 };
 
-#if CV_SSE3
-
-// optimized radix-4 transform
-template<> struct DFT_VecR4<float>
-{
-    int operator()(Complex<float>* dst, int N, int n0, int& _dw0, const Complex<float>* wave) const
-    {
-        int n = 1, i, j, nx, dw, dw0 = _dw0;
-        __m128 z = _mm_setzero_ps(), x02=z, x13=z, w01=z, w23=z, y01, y23, t0, t1;
-        Cv32suf t; t.i = 0x80000000;
-        __m128 neg0_mask = _mm_load_ss(&t.f);
-        __m128 neg3_mask = _mm_shuffle_ps(neg0_mask, neg0_mask, _MM_SHUFFLE(0,1,2,3));
-
-        for( ; n*4 <= N; )
-        {
-            nx = n;
-            n *= 4;
-            dw0 /= 4;
-
-            for( i = 0; i < n0; i += n )
-            {
-                Complexf *v0, *v1;
-
-                v0 = dst + i;
-                v1 = v0 + nx*2;
-
-                x02 = _mm_loadl_pi(x02, (const __m64*)&v0[0]);
-                x13 = _mm_loadl_pi(x13, (const __m64*)&v0[nx]);
-                x02 = _mm_loadh_pi(x02, (const __m64*)&v1[0]);
-                x13 = _mm_loadh_pi(x13, (const __m64*)&v1[nx]);
-
-                y01 = _mm_add_ps(x02, x13);
-                y23 = _mm_sub_ps(x02, x13);
-                t1 = _mm_xor_ps(_mm_shuffle_ps(y01, y23, _MM_SHUFFLE(2,3,3,2)), neg3_mask);
-                t0 = _mm_movelh_ps(y01, y23);
-                y01 = _mm_add_ps(t0, t1);
-                y23 = _mm_sub_ps(t0, t1);
-
-                _mm_storel_pi((__m64*)&v0[0], y01);
-                _mm_storeh_pi((__m64*)&v0[nx], y01);
-                _mm_storel_pi((__m64*)&v1[0], y23);
-                _mm_storeh_pi((__m64*)&v1[nx], y23);
-
-                for( j = 1, dw = dw0; j < nx; j++, dw += dw0 )
-                {
-                    v0 = dst + i + j;
-                    v1 = v0 + nx*2;
-
-                    x13 = _mm_loadl_pi(x13, (const __m64*)&v0[nx]);
-                    w23 = _mm_loadl_pi(w23, (const __m64*)&wave[dw*2]);
-                    x13 = _mm_loadh_pi(x13, (const __m64*)&v1[nx]); // x1, x3 = r1 i1 r3 i3
-                    w23 = _mm_loadh_pi(w23, (const __m64*)&wave[dw*3]); // w2, w3 = wr2 wi2 wr3 wi3
-
-                    t0 = _mm_mul_ps(_mm_moveldup_ps(x13), w23);
-                    t1 = _mm_mul_ps(_mm_movehdup_ps(x13), _mm_shuffle_ps(w23, w23, _MM_SHUFFLE(2,3,0,1)));
-                    x13 = _mm_addsub_ps(t0, t1);
-                    // re(x1*w2), im(x1*w2), re(x3*w3), im(x3*w3)
-                    x02 = _mm_loadl_pi(x02, (const __m64*)&v1[0]); // x2 = r2 i2
-                    w01 = _mm_loadl_pi(w01, (const __m64*)&wave[dw]); // w1 = wr1 wi1
-                    x02 = _mm_shuffle_ps(x02, x02, _MM_SHUFFLE(0,0,1,1));
-                    w01 = _mm_shuffle_ps(w01, w01, _MM_SHUFFLE(1,0,0,1));
-                    x02 = _mm_mul_ps(x02, w01);
-                    x02 = _mm_addsub_ps(x02, _mm_movelh_ps(x02, x02));
-                    // re(x0) im(x0) re(x2*w1), im(x2*w1)
-                    x02 = _mm_loadl_pi(x02, (const __m64*)&v0[0]);
-
-                    y01 = _mm_add_ps(x02, x13);
-                    y23 = _mm_sub_ps(x02, x13);
-                    t1 = _mm_xor_ps(_mm_shuffle_ps(y01, y23, _MM_SHUFFLE(2,3,3,2)), neg3_mask);
-                    t0 = _mm_movelh_ps(y01, y23);
-                    y01 = _mm_add_ps(t0, t1);
-                    y23 = _mm_sub_ps(t0, t1);
-
-                    _mm_storel_pi((__m64*)&v0[0], y01);
-                    _mm_storeh_pi((__m64*)&v0[nx], y01);
-                    _mm_storel_pi((__m64*)&v1[0], y23);
-                    _mm_storeh_pi((__m64*)&v1[nx], y23);
-                }
-            }
-        }
-
-        _dw0 = dw0;
-        return n;
-    }
-};
-
-#endif
-
-#ifdef USE_IPP_DFT
-static void ippsDFTFwd_CToC( const Complex<float>* src, Complex<float>* dst,
-                             const void* spec, uchar* buf)
-{
-    ippsDFTFwd_CToC_32fc( (const Ipp32fc*)src, (Ipp32fc*)dst,
-                          (const IppsDFTSpec_C_32fc*)spec, buf);
-}
-
-static void ippsDFTFwd_CToC( const Complex<double>* src, Complex<double>* dst,
-                             const void* spec, uchar* buf)
-{
-    ippsDFTFwd_CToC_64fc( (const Ipp64fc*)src, (Ipp64fc*)dst,
-                          (const IppsDFTSpec_C_64fc*)spec, buf);
-}
-
-static void ippsDFTInv_CToC( const Complex<float>* src, Complex<float>* dst,
-                             const void* spec, uchar* buf)
-{
-    ippsDFTInv_CToC_32fc( (const Ipp32fc*)src, (Ipp32fc*)dst,
-                          (const IppsDFTSpec_C_32fc*)spec, buf);
-}
-
-static void ippsDFTInv_CToC( const Complex<double>* src, Complex<double>* dst,
-                             const void* spec, uchar* buf)
-{
-    ippsDFTInv_CToC_64fc( (const Ipp64fc*)src, (Ipp64fc*)dst,
-                          (const IppsDFTSpec_C_64fc*)spec, buf);
-}
-
-static void ippsDFTFwd_RToPack( const float* src, float* dst,
-                                const void* spec, uchar* buf)
-{
-    ippsDFTFwd_RToPack_32f( src, dst, (const IppsDFTSpec_R_32f*)spec, buf);
-}
-
-static void ippsDFTFwd_RToPack( const double* src, double* dst,
-                                const void* spec, uchar* buf)
-{
-    ippsDFTFwd_RToPack_64f( src, dst, (const IppsDFTSpec_R_64f*)spec, buf);
-}
-
-static void ippsDFTInv_PackToR( const float* src, float* dst,
-                                const void* spec, uchar* buf)
-{
-    ippsDFTInv_PackToR_32f( src, dst, (const IppsDFTSpec_R_32f*)spec, buf);
-}
-
-static void ippsDFTInv_PackToR( const double* src, double* dst,
-                                const void* spec, uchar* buf)
-{
-    ippsDFTInv_PackToR_64f( src, dst, (const IppsDFTSpec_R_64f*)spec, buf);
-}
-#endif
-
 enum { DFT_NO_PERMUTE=256, DFT_COMPLEX_INPUT_OR_OUTPUT=512 };
 
 // mixed-radix complex discrete Fourier transform: double-precision version
@@ -524,9 +375,6 @@ DFT( const Complex<T>* src, Complex<T>* dst, int n,
      int nf, const int* factors, const int* itab,
      const Complex<T>* wave, int tab_size,
      const void*
-#ifdef USE_IPP_DFT
-     spec
-#endif
      , Complex<T>* buf,
      int flags, double _scale )
 {
@@ -543,17 +391,6 @@ DFT( const Complex<T>* src, Complex<T>* dst, int n,
     Complex<T> t;
     T scale = (T)_scale;
     int tab_step;
-
-#ifdef USE_IPP_DFT
-    if( spec )
-    {
-        if( !inv )
-            ippsDFTFwd_CToC( src, dst, spec, (uchar*)buf );
-        else
-            ippsDFTInv_CToC( src, dst, spec, (uchar*)buf );
-        return;
-    }
-#endif
 
     tab_step = tab_size == n ? 1 : tab_size == n*2 ? 2 : tab_size/n;
 
@@ -649,12 +486,6 @@ DFT( const Complex<T>* src, Complex<T>* dst, int n,
     // 1. power-2 transforms
     if( (factors[0] & 1) == 0 )
     {
-        if( factors[0] >= 4 && checkHardwareSupport(CV_CPU_SSE3))
-        {
-            DFT_VecR4<T> vr4;
-            n = vr4(dst, factors[0], n0, dw0, wave);
-        }
-
         // radix-4 transform
         for( ; n*4 <= factors[0]; )
         {
@@ -964,9 +795,6 @@ DFT( const Complex<T>* src, Complex<T>* dst, int n,
 template<typename T> static void
 RealDFT( const T* src, T* dst, int n, int nf, int* factors, const int* itab,
          const Complex<T>* wave, int tab_size, const void*
-#ifdef USE_IPP_DFT
-         spec
-#endif
          ,
          Complex<T>* buf, int flags, double _scale )
 {
@@ -974,21 +802,7 @@ RealDFT( const T* src, T* dst, int n, int nf, int* factors, const int* itab,
     T scale = (T)_scale;
     int j, n2 = n >> 1;
     dst += complex_output;
-
-#ifdef USE_IPP_DFT
-    if( spec )
-    {
-        ippsDFTFwd_RToPack( src, dst, spec, (uchar*)buf );
-        if( complex_output )
-        {
-            dst[-1] = dst[0];
-            dst[0] = 0;
-            if( (n & 1) == 0 )
-                dst[n] = 0;
-        }
-        return;
-    }
-#endif
+    
     assert( tab_size == n );
 
     if( n == 1 )
@@ -1087,9 +901,6 @@ template<typename T> static void
 CCSIDFT( const T* src, T* dst, int n, int nf, int* factors, const int* itab,
          const Complex<T>* wave, int tab_size,
          const void*
-#ifdef USE_IPP_DFT
-         spec
-#endif
          , Complex<T>* buf,
          int flags, double _scale )
 {
@@ -1108,13 +919,6 @@ CCSIDFT( const T* src, T* dst, int n, int nf, int* factors, const int* itab,
         ((T*)src)[1] = src[0];
         src++;
     }
-#ifdef USE_IPP_DFT
-    if( spec )
-    {
-        ippsDFTInv_PackToR( src, dst, spec, (uchar*)buf );
-        goto finalize;
-    }
-#endif
     if( n == 1 )
     {
         dst[0] = (T)(src[0]*scale);
@@ -1235,10 +1039,7 @@ CCSIDFT( const T* src, T* dst, int n, int nf, int* factors, const int* itab,
             dst[j+1] = t1;
         }
     }
-
-#ifdef USE_IPP_DFT
-finalize:
-#endif
+    
     if( complex_input )
         ((T*)src)[0] = (T)save_s1;
 }
@@ -1469,11 +1270,6 @@ static void CCSIDFT_64f( const double* src, double* dst, int n, int nf, int* fac
 
 }
 
-#ifdef USE_IPP_DFT
-typedef IppStatus (CV_STDCALL* IppDFTGetSizeFunc)(int, int, IppHintAlgorithm, int*, int*, int*);
-typedef IppStatus (CV_STDCALL* IppDFTInitFunc)(int, int, IppHintAlgorithm, void*, uchar*);
-#endif
-
 namespace cv
 {
 static void complementComplexOutput(Mat& dst, int len, int dft_dims)
@@ -1538,10 +1334,6 @@ void cv::dft( InputArray _src0, OutputArray _dst, int flags, int nonzero_rows )
     int elem_size = (int)src.elemSize1(), complex_elem_size = elem_size*2;
     int factors[34];
     bool inplace_transform = false;
-#ifdef USE_IPP_DFT
-    AutoBuffer<uchar> ippbuf;
-    int ipp_norm_flag = !(flags & DFT_SCALE) ? 8 : inv ? 2 : 1;
-#endif
 
     CV_Assert( type == CV_32FC1 || type == CV_32FC2 || type == CV_64FC1 || type == CV_64FC2 );
 
@@ -1598,51 +1390,6 @@ void cv::dft( InputArray _src0, OutputArray _dst, int flags, int nonzero_rows )
         }
 
         spec = 0;
-#ifdef USE_IPP_DFT
-        if( len*count >= 64 ) // use IPP DFT if available
-        {
-            int specsize=0, initsize=0, worksize=0;
-            IppDFTGetSizeFunc getSizeFunc = 0;
-            IppDFTInitFunc initFunc = 0;
-
-            if( real_transform && stage == 0 )
-            {
-                if( depth == CV_32F )
-                {
-                    getSizeFunc = ippsDFTGetSize_R_32f;
-                    initFunc = (IppDFTInitFunc)ippsDFTInit_R_32f;
-                }
-                else
-                {
-                    getSizeFunc = ippsDFTGetSize_R_64f;
-                    initFunc = (IppDFTInitFunc)ippsDFTInit_R_64f;
-                }
-            }
-            else
-            {
-                if( depth == CV_32F )
-                {
-                    getSizeFunc = ippsDFTGetSize_C_32fc;
-                    initFunc = (IppDFTInitFunc)ippsDFTInit_C_32fc;
-                }
-                else
-                {
-                    getSizeFunc = ippsDFTGetSize_C_64fc;
-                    initFunc = (IppDFTInitFunc)ippsDFTInit_C_64fc;
-                }
-            }
-            if( getSizeFunc(len, ipp_norm_flag, ippAlgHintNone, &specsize, &initsize, &worksize) >= 0 )
-            {
-                ippbuf.allocate(specsize + initsize + 64);
-                spec = alignPtr(&ippbuf[0], 32);
-                uchar* initbuf = alignPtr((uchar*)spec + specsize, 32);
-                if( initFunc(len, ipp_norm_flag, ippAlgHintNone, spec, initbuf) < 0 )
-                    spec = 0;
-                sz += worksize;
-            }
-        }
-        else
-#endif
         {
             if( len != prev_len )
                 nf = DFTFactorize( len, factors );
@@ -2357,27 +2104,6 @@ void cv::dct( InputArray _src0, OutputArray _dst, int flags )
 
             spec = 0;
             inplace_transform = 1;
-            /*if( len*count >= 64 && DFTInitAlloc_R_32f_p )
-            {
-                int ipp_sz = 0;
-                if( depth == CV_32F )
-                {
-                    if( spec_dft )
-                        IPPI_CALL( DFTFree_R_32f_p( spec_dft ));
-                    IPPI_CALL( DFTInitAlloc_R_32f_p( &spec_dft, len, 8, cvAlgHintNone ));
-                    IPPI_CALL( DFTGetBufSize_R_32f_p( spec_dft, &ipp_sz ));
-                }
-                else
-                {
-                    if( spec_dft )
-                        IPPI_CALL( DFTFree_R_64f_p( spec_dft ));
-                    IPPI_CALL( DFTInitAlloc_R_64f_p( &spec_dft, len, 8, cvAlgHintNone ));
-                    IPPI_CALL( DFTGetBufSize_R_64f_p( spec_dft, &ipp_sz ));
-                }
-                spec = spec_dft;
-                sz += ipp_sz;
-            }
-            else*/
             {
                 sz += len*(complex_elem_size + sizeof(int)) + complex_elem_size;
 

@@ -757,14 +757,14 @@ cvContourArea( const void *array, CvSlice slice, int oriented )
 
     if( cvSliceLength( slice, contour ) == contour->total )
     {
-        IPPI_CALL( icvContourArea( contour, &area ));
+        icvContourArea( contour, &area );
     }
     else
     {
         if( CV_SEQ_ELTYPE( contour ) != CV_32SC2 )
             CV_Error( CV_StsUnsupportedFormat,
             "Only curves with integer coordinates are supported in case of contour slice" );
-        IPPI_CALL( icvContourSecArea( contour, slice, &area ));
+        icvContourSecArea( contour, slice, &area );
     }
 
     return oriented ? area : fabs(area);
@@ -1071,51 +1071,6 @@ cvBoundingRect( CvArr* array, int update )
         cvStartReadSeq( ptseq, &reader, 0 );
         CvPoint pt;
         CV_READ_SEQ_ELEM( pt, reader );
-    #if CV_SSE4_2
-        if(cv::checkHardwareSupport(CV_CPU_SSE4_2))
-        {
-            if( !is_float )
-            {
-                __m128i minval, maxval;
-                minval = maxval = _mm_loadl_epi64((const __m128i*)(&pt)); //min[0]=pt.x, min[1]=pt.y
-
-                for( i = 1; i < ptseq->total; i++)
-                {
-                    __m128i ptXY = _mm_loadl_epi64((const __m128i*)(reader.ptr));
-                    CV_NEXT_SEQ_ELEM(sizeof(pt), reader);
-                    minval = _mm_min_epi32(ptXY, minval);
-                    maxval = _mm_max_epi32(ptXY, maxval);
-                }
-                xmin = _mm_cvtsi128_si32(minval);
-                ymin = _mm_cvtsi128_si32(_mm_srli_si128(minval, 4));
-                xmax = _mm_cvtsi128_si32(maxval);
-                ymax = _mm_cvtsi128_si32(_mm_srli_si128(maxval, 4));
-            }
-            else
-            {
-                __m128 minvalf, maxvalf, z = _mm_setzero_ps(), ptXY = _mm_setzero_ps();
-                minvalf = maxvalf = _mm_loadl_pi(z, (const __m64*)(&pt));
-
-                for( i = 1; i < ptseq->total; i++ )
-                {
-                    ptXY = _mm_loadl_pi(ptXY, (const __m64*)reader.ptr);
-                    CV_NEXT_SEQ_ELEM(sizeof(pt), reader);
-
-                    minvalf = _mm_min_ps(minvalf, ptXY);
-                    maxvalf = _mm_max_ps(maxvalf, ptXY);
-                }
-
-                float xyminf[2], xymaxf[2];
-                _mm_storel_pi((__m64*)xyminf, minvalf);
-                _mm_storel_pi((__m64*)xymaxf, maxvalf);
-                xmin = cvFloor(xyminf[0]);
-                ymin = cvFloor(xyminf[1]);
-                xmax = cvFloor(xymaxf[0]);
-                ymax = cvFloor(xymaxf[1]);
-            }
-        }
-        else
-    #endif
         {
             if( !is_float )
             {

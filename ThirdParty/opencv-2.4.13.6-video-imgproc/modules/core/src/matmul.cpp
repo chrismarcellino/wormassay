@@ -42,10 +42,6 @@
 
 #include "precomp.hpp"
 
-#ifdef HAVE_IPP
-#include "ippversion.h"
-#endif
-
 namespace cv
 {
 
@@ -1347,213 +1343,15 @@ transform_( const T* src, T* dst, const WT* m, int len, int scn, int dcn )
     }
 }
 
-#if CV_SSE2
-
-static inline void
-load3x3Matrix( const float* m, __m128& m0, __m128& m1, __m128& m2, __m128& m3 )
-{
-    m0 = _mm_setr_ps(m[0], m[4], m[8], 0);
-    m1 = _mm_setr_ps(m[1], m[5], m[9], 0);
-    m2 = _mm_setr_ps(m[2], m[6], m[10], 0);
-    m3 = _mm_setr_ps(m[3], m[7], m[11], 0);
-}
-
-static inline void
-load4x4Matrix( const float* m, __m128& m0, __m128& m1, __m128& m2, __m128& m3, __m128& m4 )
-{
-    m0 = _mm_setr_ps(m[0], m[5], m[10], m[15]);
-    m1 = _mm_setr_ps(m[1], m[6], m[11], m[16]);
-    m2 = _mm_setr_ps(m[2], m[7], m[12], m[17]);
-    m3 = _mm_setr_ps(m[3], m[8], m[13], m[18]);
-    m4 = _mm_setr_ps(m[4], m[9], m[14], m[19]);
-}
-
-#endif
-
 static void
 transform_8u( const uchar* src, uchar* dst, const float* m, int len, int scn, int dcn )
 {
-#if CV_SSE2
-    const int BITS = 10, SCALE = 1 << BITS;
-    const float MAX_M = (float)(1 << (15 - BITS));
-
-    if( USE_SSE2 && scn == 3 && dcn == 3 &&
-        std::abs(m[0]) < MAX_M && std::abs(m[1]) < MAX_M && std::abs(m[2]) < MAX_M && std::abs(m[3]) < MAX_M*256 &&
-        std::abs(m[4]) < MAX_M && std::abs(m[5]) < MAX_M && std::abs(m[6]) < MAX_M && std::abs(m[7]) < MAX_M*256 &&
-        std::abs(m[8]) < MAX_M && std::abs(m[9]) < MAX_M && std::abs(m[10]) < MAX_M && std::abs(m[11]) < MAX_M*256 )
-    {
-        // faster fixed-point transformation
-        short m00 = saturate_cast<short>(m[0]*SCALE), m01 = saturate_cast<short>(m[1]*SCALE),
-            m02 = saturate_cast<short>(m[2]*SCALE), m10 = saturate_cast<short>(m[4]*SCALE),
-            m11 = saturate_cast<short>(m[5]*SCALE), m12 = saturate_cast<short>(m[6]*SCALE),
-            m20 = saturate_cast<short>(m[8]*SCALE), m21 = saturate_cast<short>(m[9]*SCALE),
-            m22 = saturate_cast<short>(m[10]*SCALE);
-        int m03 = saturate_cast<int>((m[3]+0.5f)*SCALE), m13 = saturate_cast<int>((m[7]+0.5f)*SCALE ),
-            m23 = saturate_cast<int>((m[11]+0.5f)*SCALE);
-
-        __m128i m0 = _mm_setr_epi16(0, m00, m01, m02, m00, m01, m02, 0);
-        __m128i m1 = _mm_setr_epi16(0, m10, m11, m12, m10, m11, m12, 0);
-        __m128i m2 = _mm_setr_epi16(0, m20, m21, m22, m20, m21, m22, 0);
-        __m128i m3 = _mm_setr_epi32(m03, m13, m23, 0);
-        int x = 0;
-
-        for( ; x <= (len - 8)*3; x += 8*3 )
-        {
-            __m128i z = _mm_setzero_si128(), t0, t1, t2, r0, r1;
-            __m128i v0 = _mm_loadl_epi64((const __m128i*)(src + x));
-            __m128i v1 = _mm_loadl_epi64((const __m128i*)(src + x + 8));
-            __m128i v2 = _mm_loadl_epi64((const __m128i*)(src + x + 16)), v3;
-            v0 = _mm_unpacklo_epi8(v0, z); // b0 g0 r0 b1 g1 r1 b2 g2
-            v1 = _mm_unpacklo_epi8(v1, z); // r2 b3 g3 r3 b4 g4 r4 b5
-            v2 = _mm_unpacklo_epi8(v2, z); // g5 r5 b6 g6 r6 b7 g7 r7
-
-            v3 = _mm_srli_si128(v2, 2); // ? b6 g6 r6 b7 g7 r7 0
-            v2 = _mm_or_si128(_mm_slli_si128(v2, 10), _mm_srli_si128(v1, 6)); // ? b4 g4 r4 b5 g5 r5 ?
-            v1 = _mm_or_si128(_mm_slli_si128(v1, 6), _mm_srli_si128(v0, 10)); // ? b2 g2 r2 b3 g3 r3 ?
-            v0 = _mm_slli_si128(v0, 2); // 0 b0 g0 r0 b1 g1 r1 ?
-
-            // process pixels 0 & 1
-            t0 = _mm_madd_epi16(v0, m0); // a0 b0 a1 b1
-            t1 = _mm_madd_epi16(v0, m1); // c0 d0 c1 d1
-            t2 = _mm_madd_epi16(v0, m2); // e0 f0 e1 f1
-            v0 = _mm_unpacklo_epi32(t0, t1); // a0 c0 b0 d0
-            t0 = _mm_unpackhi_epi32(t0, t1); // a1 b1 c1 d1
-            t1 = _mm_unpacklo_epi32(t2, z);  // e0 0 f0 0
-            t2 = _mm_unpackhi_epi32(t2, z);  // e1 0 f1 0
-            r0 = _mm_add_epi32(_mm_add_epi32(_mm_unpacklo_epi64(v0, t1), _mm_unpackhi_epi64(v0,t1)), m3); // B0 G0 R0 0
-            r1 = _mm_add_epi32(_mm_add_epi32(_mm_unpacklo_epi64(t0, t2), _mm_unpackhi_epi64(t0,t2)), m3); // B1 G1 R1 0
-            r0 = _mm_srai_epi32(r0, BITS);
-            r1 = _mm_srai_epi32(r1, BITS);
-            v0 = _mm_packus_epi16(_mm_packs_epi32(_mm_slli_si128(r0, 4), r1), z); // 0 B0 G0 R0 B1 G1 R1 0
-
-            // process pixels 2 & 3
-            t0 = _mm_madd_epi16(v1, m0); // a0 b0 a1 b1
-            t1 = _mm_madd_epi16(v1, m1); // c0 d0 c1 d1
-            t2 = _mm_madd_epi16(v1, m2); // e0 f0 e1 f1
-            v1 = _mm_unpacklo_epi32(t0, t1); // a0 c0 b0 d0
-            t0 = _mm_unpackhi_epi32(t0, t1); // a1 b1 c1 d1
-            t1 = _mm_unpacklo_epi32(t2, z);  // e0 0 f0 0
-            t2 = _mm_unpackhi_epi32(t2, z);  // e1 0 f1 0
-            r0 = _mm_add_epi32(_mm_add_epi32(_mm_unpacklo_epi64(v1, t1), _mm_unpackhi_epi64(v1,t1)), m3); // B2 G2 R2 0
-            r1 = _mm_add_epi32(_mm_add_epi32(_mm_unpacklo_epi64(t0, t2), _mm_unpackhi_epi64(t0,t2)), m3); // B3 G3 R3 0
-            r0 = _mm_srai_epi32(r0, BITS);
-            r1 = _mm_srai_epi32(r1, BITS);
-            v1 = _mm_packus_epi16(_mm_packs_epi32(_mm_slli_si128(r0, 4), r1), z); // 0 B2 G2 R2 B3 G3 R3 0
-
-            // process pixels 4 & 5
-            t0 = _mm_madd_epi16(v2, m0); // a0 b0 a1 b1
-            t1 = _mm_madd_epi16(v2, m1); // c0 d0 c1 d1
-            t2 = _mm_madd_epi16(v2, m2); // e0 f0 e1 f1
-            v2 = _mm_unpacklo_epi32(t0, t1); // a0 c0 b0 d0
-            t0 = _mm_unpackhi_epi32(t0, t1); // a1 b1 c1 d1
-            t1 = _mm_unpacklo_epi32(t2, z);  // e0 0 f0 0
-            t2 = _mm_unpackhi_epi32(t2, z);  // e1 0 f1 0
-            r0 = _mm_add_epi32(_mm_add_epi32(_mm_unpacklo_epi64(v2, t1), _mm_unpackhi_epi64(v2,t1)), m3); // B4 G4 R4 0
-            r1 = _mm_add_epi32(_mm_add_epi32(_mm_unpacklo_epi64(t0, t2), _mm_unpackhi_epi64(t0,t2)), m3); // B5 G5 R5 0
-            r0 = _mm_srai_epi32(r0, BITS);
-            r1 = _mm_srai_epi32(r1, BITS);
-            v2 = _mm_packus_epi16(_mm_packs_epi32(_mm_slli_si128(r0, 4), r1), z); // 0 B4 G4 R4 B5 G5 R5 0
-
-            // process pixels 6 & 7
-            t0 = _mm_madd_epi16(v3, m0); // a0 b0 a1 b1
-            t1 = _mm_madd_epi16(v3, m1); // c0 d0 c1 d1
-            t2 = _mm_madd_epi16(v3, m2); // e0 f0 e1 f1
-            v3 = _mm_unpacklo_epi32(t0, t1); // a0 c0 b0 d0
-            t0 = _mm_unpackhi_epi32(t0, t1); // a1 b1 c1 d1
-            t1 = _mm_unpacklo_epi32(t2, z);  // e0 0 f0 0
-            t2 = _mm_unpackhi_epi32(t2, z);  // e1 0 f1 0
-            r0 = _mm_add_epi32(_mm_add_epi32(_mm_unpacklo_epi64(v3, t1), _mm_unpackhi_epi64(v3,t1)), m3); // B6 G6 R6 0
-            r1 = _mm_add_epi32(_mm_add_epi32(_mm_unpacklo_epi64(t0, t2), _mm_unpackhi_epi64(t0,t2)), m3); // B7 G7 R7 0
-            r0 = _mm_srai_epi32(r0, BITS);
-            r1 = _mm_srai_epi32(r1, BITS);
-            v3 = _mm_packus_epi16(_mm_packs_epi32(_mm_slli_si128(r0, 4), r1), z); // 0 B6 G6 R6 B7 G7 R7 0
-
-            v0 = _mm_or_si128(_mm_srli_si128(v0, 1), _mm_slli_si128(v1, 5));
-            v1 = _mm_or_si128(_mm_srli_si128(v1, 3), _mm_slli_si128(v2, 3));
-            v2 = _mm_or_si128(_mm_srli_si128(v2, 5), _mm_slli_si128(v3, 1));
-            _mm_storel_epi64((__m128i*)(dst + x), v0);
-            _mm_storel_epi64((__m128i*)(dst + x + 8), v1);
-            _mm_storel_epi64((__m128i*)(dst + x + 16), v2);
-        }
-
-        for( ; x < len*3; x += 3 )
-        {
-            int v0 = src[x], v1 = src[x+1], v2 = src[x+2];
-            uchar t0 = saturate_cast<uchar>((m00*v0 + m01*v1 + m02*v2 + m03)>>BITS);
-            uchar t1 = saturate_cast<uchar>((m10*v0 + m11*v1 + m12*v2 + m13)>>BITS);
-            uchar t2 = saturate_cast<uchar>((m20*v0 + m21*v1 + m22*v2 + m23)>>BITS);
-            dst[x] = t0; dst[x+1] = t1; dst[x+2] = t2;
-        }
-        return;
-    }
-#endif
-
     transform_(src, dst, m, len, scn, dcn);
 }
 
 static void
 transform_16u( const ushort* src, ushort* dst, const float* m, int len, int scn, int dcn )
 {
-#if CV_SSE2
-    if( USE_SSE2 && scn == 3 && dcn == 3 )
-    {
-        __m128 m0, m1, m2, m3;
-        __m128i delta = _mm_setr_epi16(0,-32768,-32768,-32768,-32768,-32768,-32768,0);
-        load3x3Matrix(m, m0, m1, m2, m3);
-        m3 = _mm_sub_ps(m3, _mm_setr_ps(32768.f, 32768.f, 32768.f, 0.f));
-
-        int x = 0;
-        for( ; x <= (len - 4)*3; x += 4*3 )
-        {
-            __m128i z = _mm_setzero_si128();
-            __m128i v0 = _mm_loadu_si128((const __m128i*)(src + x)), v1;
-            __m128i v2 = _mm_loadl_epi64((const __m128i*)(src + x + 8)), v3;
-            v1 = _mm_unpacklo_epi16(_mm_srli_si128(v0, 6), z); // b1 g1 r1
-            v3 = _mm_unpacklo_epi16(_mm_srli_si128(v2, 2), z); // b3 g3 r3
-            v2 = _mm_or_si128(_mm_srli_si128(v0, 12), _mm_slli_si128(v2, 4));
-            v0 = _mm_unpacklo_epi16(v0, z); // b0 g0 r0
-            v2 = _mm_unpacklo_epi16(v2, z); // b2 g2 r2
-            __m128 x0 = _mm_cvtepi32_ps(v0), x1 = _mm_cvtepi32_ps(v1);
-            __m128 x2 = _mm_cvtepi32_ps(v2), x3 = _mm_cvtepi32_ps(v3);
-            __m128 y0 = _mm_add_ps(_mm_add_ps(_mm_add_ps(
-                        _mm_mul_ps(m0, _mm_shuffle_ps(x0,x0,_MM_SHUFFLE(0,0,0,0))),
-                        _mm_mul_ps(m1, _mm_shuffle_ps(x0,x0,_MM_SHUFFLE(1,1,1,1)))),
-                        _mm_mul_ps(m2, _mm_shuffle_ps(x0,x0,_MM_SHUFFLE(2,2,2,2)))), m3);
-            __m128 y1 = _mm_add_ps(_mm_add_ps(_mm_add_ps(
-                        _mm_mul_ps(m0, _mm_shuffle_ps(x1,x1,_MM_SHUFFLE(0,0,0,0))),
-                        _mm_mul_ps(m1, _mm_shuffle_ps(x1,x1,_MM_SHUFFLE(1,1,1,1)))),
-                        _mm_mul_ps(m2, _mm_shuffle_ps(x1,x1,_MM_SHUFFLE(2,2,2,2)))), m3);
-            __m128 y2 = _mm_add_ps(_mm_add_ps(_mm_add_ps(
-                        _mm_mul_ps(m0, _mm_shuffle_ps(x2,x2,_MM_SHUFFLE(0,0,0,0))),
-                        _mm_mul_ps(m1, _mm_shuffle_ps(x2,x2,_MM_SHUFFLE(1,1,1,1)))),
-                        _mm_mul_ps(m2, _mm_shuffle_ps(x2,x2,_MM_SHUFFLE(2,2,2,2)))), m3);
-            __m128 y3 = _mm_add_ps(_mm_add_ps(_mm_add_ps(
-                        _mm_mul_ps(m0, _mm_shuffle_ps(x3,x3,_MM_SHUFFLE(0,0,0,0))),
-                        _mm_mul_ps(m1, _mm_shuffle_ps(x3,x3,_MM_SHUFFLE(1,1,1,1)))),
-                        _mm_mul_ps(m2, _mm_shuffle_ps(x3,x3,_MM_SHUFFLE(2,2,2,2)))), m3);
-            v0 = _mm_cvtps_epi32(y0); v1 = _mm_cvtps_epi32(y1);
-            v2 = _mm_cvtps_epi32(y2); v3 = _mm_cvtps_epi32(y3);
-
-            v0 = _mm_add_epi16(_mm_packs_epi32(_mm_slli_si128(v0,4), v1), delta); // 0 b0 g0 r0 b1 g1 r1 0
-            v2 = _mm_add_epi16(_mm_packs_epi32(_mm_slli_si128(v2,4), v3), delta); // 0 b2 g2 r2 b3 g3 r3 0
-            v1 = _mm_or_si128(_mm_srli_si128(v0,2), _mm_slli_si128(v2,10)); // b0 g0 r0 b1 g1 r1 b2 g2
-            v2 = _mm_srli_si128(v2, 6); // r2 b3 g3 r3 0 0 0 0
-            _mm_storeu_si128((__m128i*)(dst + x), v1);
-            _mm_storel_epi64((__m128i*)(dst + x + 8), v2);
-        }
-
-        for( ; x < len*3; x += 3 )
-        {
-            float v0 = src[x], v1 = src[x+1], v2 = src[x+2];
-            ushort t0 = saturate_cast<ushort>(m[0]*v0 + m[1]*v1 + m[2]*v2 + m[3]);
-            ushort t1 = saturate_cast<ushort>(m[4]*v0 + m[5]*v1 + m[6]*v2 + m[7]);
-            ushort t2 = saturate_cast<ushort>(m[8]*v0 + m[9]*v1 + m[10]*v2 + m[11]);
-            dst[x] = t0; dst[x+1] = t1; dst[x+2] = t2;
-        }
-        return;
-    }
-#endif
-
     transform_(src, dst, m, len, scn, dcn);
 }
 
@@ -1561,57 +1359,6 @@ transform_16u( const ushort* src, ushort* dst, const float* m, int len, int scn,
 static void
 transform_32f( const float* src, float* dst, const float* m, int len, int scn, int dcn )
 {
-#if CV_SSE2
-    if( USE_SSE2 )
-    {
-        int x = 0;
-        if( scn == 3 && dcn == 3 )
-        {
-            __m128 m0, m1, m2, m3;
-            load3x3Matrix(m, m0, m1, m2, m3);
-
-            for( ; x < (len - 1)*3; x += 3 )
-            {
-                __m128 x0 = _mm_loadu_ps(src + x);
-                __m128 y0 = _mm_add_ps(_mm_add_ps(_mm_add_ps(
-                            _mm_mul_ps(m0, _mm_shuffle_ps(x0,x0,_MM_SHUFFLE(0,0,0,0))),
-                            _mm_mul_ps(m1, _mm_shuffle_ps(x0,x0,_MM_SHUFFLE(1,1,1,1)))),
-                            _mm_mul_ps(m2, _mm_shuffle_ps(x0,x0,_MM_SHUFFLE(2,2,2,2)))), m3);
-                _mm_storel_pi((__m64*)(dst + x), y0);
-                _mm_store_ss(dst + x + 2, _mm_movehl_ps(y0,y0));
-            }
-
-            for( ; x < len*3; x += 3 )
-            {
-                float v0 = src[x], v1 = src[x+1], v2 = src[x+2];
-                float t0 = saturate_cast<float>(m[0]*v0 + m[1]*v1 + m[2]*v2 + m[3]);
-                float t1 = saturate_cast<float>(m[4]*v0 + m[5]*v1 + m[6]*v2 + m[7]);
-                float t2 = saturate_cast<float>(m[8]*v0 + m[9]*v1 + m[10]*v2 + m[11]);
-                dst[x] = t0; dst[x+1] = t1; dst[x+2] = t2;
-            }
-            return;
-        }
-
-        if( scn == 4 && dcn == 4 )
-        {
-            __m128 m0, m1, m2, m3, m4;
-            load4x4Matrix(m, m0, m1, m2, m3, m4);
-
-            for( ; x < len*4; x += 4 )
-            {
-                __m128 x0 = _mm_loadu_ps(src + x);
-                __m128 y0 = _mm_add_ps(_mm_add_ps(_mm_add_ps(_mm_add_ps(
-                                    _mm_mul_ps(m0, _mm_shuffle_ps(x0,x0,_MM_SHUFFLE(0,0,0,0))),
-                                    _mm_mul_ps(m1, _mm_shuffle_ps(x0,x0,_MM_SHUFFLE(1,1,1,1)))),
-                                    _mm_mul_ps(m2, _mm_shuffle_ps(x0,x0,_MM_SHUFFLE(2,2,2,2)))),
-                                    _mm_mul_ps(m3, _mm_shuffle_ps(x0,x0,_MM_SHUFFLE(3,3,3,3)))), m4);
-                _mm_storeu_ps(dst + x, y0);
-            }
-            return;
-        }
-    }
-#endif
-
     transform_(src, dst, m, len, scn, dcn);
 }
 
@@ -1985,35 +1732,6 @@ static void scaleAdd_32f(const float* src1, const float* src2, float* dst,
 {
     float alpha = *_alpha;
     int i = 0;
-#if CV_SSE2
-    if( USE_SSE2 )
-    {
-        __m128 a4 = _mm_set1_ps(alpha);
-        if( (((size_t)src1|(size_t)src2|(size_t)dst) & 15) == 0 )
-            for( ; i <= len - 8; i += 8 )
-            {
-                __m128 x0, x1, y0, y1, t0, t1;
-                x0 = _mm_load_ps(src1 + i); x1 = _mm_load_ps(src1 + i + 4);
-                y0 = _mm_load_ps(src2 + i); y1 = _mm_load_ps(src2 + i + 4);
-                t0 = _mm_add_ps(_mm_mul_ps(x0, a4), y0);
-                t1 = _mm_add_ps(_mm_mul_ps(x1, a4), y1);
-                _mm_store_ps(dst + i, t0);
-                _mm_store_ps(dst + i + 4, t1);
-            }
-        else
-            for( ; i <= len - 8; i += 8 )
-            {
-                __m128 x0, x1, y0, y1, t0, t1;
-                x0 = _mm_loadu_ps(src1 + i); x1 = _mm_loadu_ps(src1 + i + 4);
-                y0 = _mm_loadu_ps(src2 + i); y1 = _mm_loadu_ps(src2 + i + 4);
-                t0 = _mm_add_ps(_mm_mul_ps(x0, a4), y0);
-                t1 = _mm_add_ps(_mm_mul_ps(x1, a4), y1);
-                _mm_storeu_ps(dst + i, t0);
-                _mm_storeu_ps(dst + i + 4, t1);
-            }
-    }
-    else
-#endif
     //vz why do we need unroll here?
     for( ; i <= len - 4; i += 4 )
     {
@@ -2035,23 +1753,6 @@ static void scaleAdd_64f(const double* src1, const double* src2, double* dst,
 {
     double alpha = *_alpha;
     int i = 0;
-#if CV_SSE2
-    if( USE_SSE2 && (((size_t)src1|(size_t)src2|(size_t)dst) & 15) == 0 )
-    {
-        __m128d a2 = _mm_set1_pd(alpha);
-        for( ; i <= len - 4; i += 4 )
-        {
-            __m128d x0, x1, y0, y1, t0, t1;
-            x0 = _mm_load_pd(src1 + i); x1 = _mm_load_pd(src1 + i + 2);
-            y0 = _mm_load_pd(src2 + i); y1 = _mm_load_pd(src2 + i + 2);
-            t0 = _mm_add_pd(_mm_mul_pd(x0, a2), y0);
-            t1 = _mm_add_pd(_mm_mul_pd(x1, a2), y1);
-            _mm_store_pd(dst + i, t0);
-            _mm_store_pd(dst + i + 2, t1);
-        }
-    }
-    else
-#endif
      //vz why do we need unroll here?
     for( ; i <= len - 4; i += 4 )
     {
@@ -2673,59 +2374,7 @@ dotProd_(const T* src1, const T* src2, int len)
 
 static double dotProd_8u(const uchar* src1, const uchar* src2, int len)
 {
-    double r = 0;
-#if ARITHM_USE_IPP
-    ippiDotProd_8u64f_C1R(src1, (int)(len*sizeof(src1[0])),
-                          src2, (int)(len*sizeof(src2[0])),
-                          ippiSize(len, 1), &r);
-    return r;
-#else
-    int i = 0;
-
-#if CV_SSE2
-    if( USE_SSE2 )
-    {
-        int j, len0 = len & -4, blockSize0 = (1 << 13), blockSize;
-        __m128i z = _mm_setzero_si128();
-        while( i < len0 )
-        {
-            blockSize = std::min(len0 - i, blockSize0);
-            __m128i s = _mm_setzero_si128();
-            j = 0;
-            for( ; j <= blockSize - 16; j += 16 )
-            {
-                __m128i b0 = _mm_loadu_si128((const __m128i*)(src1 + j));
-                __m128i b1 = _mm_loadu_si128((const __m128i*)(src2 + j));
-                __m128i s0, s1, s2, s3;
-                s0 = _mm_unpacklo_epi8(b0, z);
-                s2 = _mm_unpackhi_epi8(b0, z);
-                s1 = _mm_unpacklo_epi8(b1, z);
-                s3 = _mm_unpackhi_epi8(b1, z);
-                s0 = _mm_madd_epi16(s0, s1);
-                s2 = _mm_madd_epi16(s2, s3);
-                s = _mm_add_epi32(s, s0);
-                s = _mm_add_epi32(s, s2);
-            }
-
-            for( ; j < blockSize; j += 4 )
-            {
-                __m128i s0 = _mm_unpacklo_epi8(_mm_cvtsi32_si128(*(const int*)(src1 + j)), z);
-                __m128i s1 = _mm_unpacklo_epi8(_mm_cvtsi32_si128(*(const int*)(src2 + j)), z);
-                s0 = _mm_madd_epi16(s0, s1);
-                s = _mm_add_epi32(s, s0);
-            }
-            CV_DECL_ALIGNED(16) int buf[4];
-            _mm_store_si128((__m128i*)buf, s);
-            r += buf[0] + buf[1] + buf[2] + buf[3];
-
-            src1 += blockSize;
-            src2 += blockSize;
-            i += blockSize;
-        }
-    }
-#endif
-    return r + dotProd_(src1, src2, len - i);
-#endif
+    return dotProd_(src1, src2, len);
 }
 
 
@@ -2736,48 +2385,27 @@ static double dotProd_8s(const schar* src1, const schar* src2, int len)
 
 static double dotProd_16u(const ushort* src1, const ushort* src2, int len)
 {
-    double r = 0;
-    IF_IPP(ippiDotProd_16u64f_C1R(src1, (int)(len*sizeof(src1[0])),
-                                  src2, (int)(len*sizeof(src2[0])),
-                                  ippiSize(len, 1), &r),
-           r = dotProd_(src1, src2, len));
-    return r;
+    return dotProd_(src1, src2, len);
 }
 
 static double dotProd_16s(const short* src1, const short* src2, int len)
 {
-    double r = 0;
-    IF_IPP(ippiDotProd_16s64f_C1R(src1, (int)(len*sizeof(src1[0])),
-                                  src2, (int)(len*sizeof(src2[0])),
-                                  ippiSize(len, 1), &r),
-           r = dotProd_(src1, src2, len));
-    return r;
+    return dotProd_(src1, src2, len);
 }
 
 static double dotProd_32s(const int* src1, const int* src2, int len)
 {
-    double r = 0;
-    IF_IPP(ippiDotProd_32s64f_C1R(src1, (int)(len*sizeof(src1[0])),
-                                  src2, (int)(len*sizeof(src2[0])),
-                                  ippiSize(len, 1), &r),
-           r = dotProd_(src1, src2, len));
-    return r;
+    return dotProd_(src1, src2, len);
 }
 
 static double dotProd_32f(const float* src1, const float* src2, int len)
 {
-    double r = 0;
-    IF_IPP(ippsDotProd_32f64f(src1, src2, len, &r),
-           r = dotProd_(src1, src2, len));
-    return r;
+    return dotProd_(src1, src2, len);
 }
 
 static double dotProd_64f(const double* src1, const double* src2, int len)
 {
-    double r = 0;
-    IF_IPP(ippsDotProd_64f(src1, src2, len, &r),
-           r = dotProd_(src1, src2, len));
-    return r;
+    return dotProd_(src1, src2, len);
 }
 
 
@@ -2787,9 +2415,9 @@ static DotProdFunc getDotProdFunc(int depth)
 {
     static DotProdFunc dotProdTab[] =
     {
-        (DotProdFunc)GET_OPTIMIZED(dotProd_8u), (DotProdFunc)GET_OPTIMIZED(dotProd_8s),
+        (DotProdFunc)(dotProd_8u), (DotProdFunc)(dotProd_8s),
         (DotProdFunc)dotProd_16u, (DotProdFunc)dotProd_16s,
-        (DotProdFunc)dotProd_32s, (DotProdFunc)GET_OPTIMIZED(dotProd_32f),
+        (DotProdFunc)dotProd_32s, (DotProdFunc)(dotProd_32f),
         (DotProdFunc)dotProd_64f, 0
     };
 

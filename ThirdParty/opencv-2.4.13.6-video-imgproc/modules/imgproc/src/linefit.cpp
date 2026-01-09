@@ -706,13 +706,13 @@ cvFitLine( const CvArr* array, int dist, double param,
 
     if( CV_MAT_CN(type) == 2 )
     {
-        IPPI_CALL( icvFitLine2D( (CvPoint2D32f*)points, ptseq->total,
-                                 dist, (float)param, (float)reps, (float)aeps, line ));
+        icvFitLine2D( (CvPoint2D32f*)points, ptseq->total,
+                     dist, (float)param, (float)reps, (float)aeps, line );
     }
     else
     {
-        IPPI_CALL( icvFitLine3D( (CvPoint3D32f*)points, ptseq->total,
-                                 dist, (float)param, (float)reps, (float)aeps, line ));
+        icvFitLine3D( (CvPoint3D32f*)points, ptseq->total,
+                     dist, (float)param, (float)reps, (float)aeps, line );
     }
 }
 

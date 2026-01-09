@@ -35,7 +35,6 @@
 		21A328762578578600E5B80E /* affine.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 21A327F22578578600E5B80E /* affine.hpp */; };
 		21A328772578578600E5B80E /* mat.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 21A327F32578578600E5B80E /* mat.hpp */; };
 		21A328782578578600E5B80E /* devmem2d.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 21A327F42578578600E5B80E /* devmem2d.hpp */; };
-		21A328792578578600E5B80E /* version.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 21A327F52578578600E5B80E /* version.hpp */; };
 		21A3287A2578578600E5B80E /* operations.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 21A327F62578578600E5B80E /* operations.hpp */; };
 		21A3287B2578578600E5B80E /* types_c.h in Headers */ = {isa = PBXBuildFile; fileRef = 21A327F72578578600E5B80E /* types_c.h */; };
 		21A3287C2578578600E5B80E /* core_c.h in Headers */ = {isa = PBXBuildFile; fileRef = 21A327F82578578600E5B80E /* core_c.h */; };
@@ -205,7 +204,6 @@
 		21A327F22578578600E5B80E /* affine.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = affine.hpp; sourceTree = "<group>"; };
 		21A327F32578578600E5B80E /* mat.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = mat.hpp; sourceTree = "<group>"; };
 		21A327F42578578600E5B80E /* devmem2d.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = devmem2d.hpp; sourceTree = "<group>"; };
-		21A327F52578578600E5B80E /* version.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = version.hpp; sourceTree = "<group>"; };
 		21A327F62578578600E5B80E /* operations.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = operations.hpp; sourceTree = "<group>"; };
 		21A327F72578578600E5B80E /* types_c.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = types_c.h; sourceTree = "<group>"; };
 		21A327F82578578600E5B80E /* core_c.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = core_c.h; sourceTree = "<group>"; };
@@ -530,7 +528,6 @@
 				21A327F22578578600E5B80E /* affine.hpp */,
 				21A327F32578578600E5B80E /* mat.hpp */,
 				21A327F42578578600E5B80E /* devmem2d.hpp */,
-				21A327F52578578600E5B80E /* version.hpp */,
 				21A327F62578578600E5B80E /* operations.hpp */,
 				21A327F72578578600E5B80E /* types_c.h */,
 				21A327F82578578600E5B80E /* core_c.h */,
@@ -785,7 +782,6 @@
 				21A328AA2578578600E5B80E /* precomp.hpp in Headers */,
 				21A3286E2578578600E5B80E /* simpleflow.hpp in Headers */,
 				21A3287B2578578600E5B80E /* types_c.h in Headers */,
-				21A328792578578600E5B80E /* version.hpp in Headers */,
 				21A328612578578600E5B80E /* video.hpp in Headers */,
 				21A3287F2578578600E5B80E /* wimage.hpp in Headers */,
 				21A3287C2578578600E5B80E /* core_c.h in Headers */,

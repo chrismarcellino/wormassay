@@ -53,30 +53,6 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/core/types_c.h"
 
-#if defined WIN32 || defined _WIN32
-#  ifndef WIN32
-#    define WIN32
-#  endif
-#  ifndef _WIN32
-#    define _WIN32
-#  endif
-#endif
-
-#if !defined WIN32 && !defined WINCE
-#  include <pthread.h>
-#endif
-
-#ifdef __BORLANDC__
-#  ifndef WIN32
-#    define WIN32
-#  endif
-#  ifndef _WIN32
-#    define _WIN32
-#  endif
-#  define CV_DLL
-#  undef _CV_ALWAYS_PROFILE_
-#  define _CV_ALWAYS_NO_PROFILE_
-#endif
 
 #ifndef FALSE
 #  define FALSE 0
@@ -89,104 +65,12 @@
 #define __END__ __CV_END__
 #define EXIT __CV_EXIT__
 
-#ifdef HAVE_IPP
-#  include "ipp.h"
-
-CV_INLINE IppiSize ippiSize(int width, int height)
-{
-    IppiSize size = { width, height };
-    return size;
-}
-
-CV_INLINE IppiSize ippiSize(const cv::Size & _size)
-{
-    IppiSize size = { _size.width, _size.height };
-    return size;
-}
-
-#if IPP_VERSION_MAJOR >= 9 // IPP 9+ is not supported
-#undef HAVE_IPP
-#undef IPP_VERSION_MAJOR
-#endif
-#endif
-
-#ifndef IPPI_CALL
-#  define IPPI_CALL(func) CV_Assert((func) >= 0)
-#endif
-
-#if defined __SSE2__ || defined _M_X64  || (defined _M_IX86_FP && _M_IX86_FP >= 2)
-#  include "emmintrin.h"
-#  define CV_SSE 1
-#  define CV_SSE2 1
-#  if defined __SSE3__ || (defined _MSC_VER && _MSC_VER >= 1500)
-#    include "pmmintrin.h"
-#    define CV_SSE3 1
-#  endif
-#  if defined __SSSE3__  || (defined _MSC_VER && _MSC_VER >= 1500)
-#    include "tmmintrin.h"
-#    define CV_SSSE3 1
-#  endif
-#  if defined __SSE4_1__ || (defined _MSC_VER && _MSC_VER >= 1500)
-#    include <smmintrin.h>
-#    define CV_SSE4_1 1
-#  endif
-#  if defined __SSE4_2__ || (defined _MSC_VER && _MSC_VER >= 1500)
-#    include <nmmintrin.h>
-#    define CV_SSE4_2 1
-#  endif
-#  if defined __AVX__ || (defined _MSC_FULL_VER && _MSC_FULL_VER >= 160040219)
-// MS Visual Studio 2010 (2012?) has no macro pre-defined to identify the use of /arch:AVX
-// See: http://connect.microsoft.com/VisualStudio/feedback/details/605858/arch-avx-should-define-a-predefined-macro-in-x64-and-set-a-unique-value-for-m-ix86-fp-in-win32
-#    include <immintrin.h>
-#    define CV_AVX 1
-#    if defined(_XCR_XFEATURE_ENABLED_MASK)
-#      define __xgetbv() _xgetbv(_XCR_XFEATURE_ENABLED_MASK)
-#    else
-#      define __xgetbv() 0
-#    endif
-#  endif
-#  if defined __AVX2__
-#    include <immintrin.h>
-#    define CV_AVX2 1
-#  endif
-#endif
-
-
-#if (defined WIN32 || defined _WIN32) && defined(_M_ARM)
-# include <Intrin.h>
-# include "arm_neon.h"
-# define CV_NEON 1
-# define CPU_HAS_NEON_FEATURE (true)
-#elif defined(__ARM_NEON__) || defined(__ARM_NEON)
+#if defined(__ARM_NEON__) || defined(__ARM_NEON)
 #  include <arm_neon.h>
 #  define CV_NEON 1
 #  define CPU_HAS_NEON_FEATURE (true)
 #endif
 
-#ifndef CV_SSE
-#  define CV_SSE 0
-#endif
-#ifndef CV_SSE2
-#  define CV_SSE2 0
-#endif
-#ifndef CV_SSE3
-#  define CV_SSE3 0
-#endif
-#ifndef CV_SSSE3
-#  define CV_SSSE3 0
-#endif
-#ifndef CV_SSE4_1
-#  define CV_SSE4_1 0
-#endif
-#ifndef CV_SSE4_2
-#  define CV_SSE4_2 0
-#endif
-#ifndef CV_AVX
-#  define CV_AVX 0
-#endif
-#ifndef CV_AVX2
-#  define CV_AVX2 0
-#endif
 #ifndef CV_NEON
 #  define CV_NEON 0
 #endif

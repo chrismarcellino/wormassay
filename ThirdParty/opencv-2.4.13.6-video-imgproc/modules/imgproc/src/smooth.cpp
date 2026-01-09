@@ -215,11 +215,7 @@ template<> struct ColumnSum<int, uchar> : public BaseColumnFilter
         int* SUM;
         bool haveScale = scale != 1;
         double _scale = scale;
-
-        #if CV_SSE2
-            bool haveSSE2 = checkHardwareSupport(CV_CPU_SSE2);
-        #endif
-
+        
         if( width != (int)sum.size() )
         {
             sum.resize(width);
@@ -233,19 +229,7 @@ template<> struct ColumnSum<int, uchar> : public BaseColumnFilter
             for( ; sumCount < ksize - 1; sumCount++, src++ )
             {
                 const int* Sp = (const int*)src[0];
-                i = 0;
-                #if CV_SSE2
-                if(haveSSE2)
-                {
-                    for( ; i < width-4; i+=4 )
-                    {
-                        __m128i _sum = _mm_loadu_si128((const __m128i*)(SUM+i));
-                        __m128i _sp = _mm_loadu_si128((const __m128i*)(Sp+i));
-                        _mm_storeu_si128((__m128i*)(SUM+i),_mm_add_epi32(_sum, _sp));
-                    }
-                }
-                #endif
-                for( ; i < width; i++ )
+                for (i = 0; i < width; i++ )
                     SUM[i] += Sp[i];
             }
         }
@@ -262,34 +246,7 @@ template<> struct ColumnSum<int, uchar> : public BaseColumnFilter
             uchar* D = (uchar*)dst;
             if( haveScale )
             {
-                i = 0;
-                #if CV_SSE2
-                if(haveSSE2)
-                {
-                    const __m128 scale4 = _mm_set1_ps((float)_scale);
-                    for( ; i < width-8; i+=8 )
-                    {
-                        __m128i _sm  = _mm_loadu_si128((const __m128i*)(Sm+i));
-                        __m128i _sm1  = _mm_loadu_si128((const __m128i*)(Sm+i+4));
-
-                        __m128i _s0  = _mm_add_epi32(_mm_loadu_si128((const __m128i*)(SUM+i)),
-                                                     _mm_loadu_si128((const __m128i*)(Sp+i)));
-                        __m128i _s01  = _mm_add_epi32(_mm_loadu_si128((const __m128i*)(SUM+i+4)),
-                                                      _mm_loadu_si128((const __m128i*)(Sp+i+4)));
-
-                        __m128i _s0T = _mm_cvtps_epi32(_mm_mul_ps(scale4, _mm_cvtepi32_ps(_s0)));
-                        __m128i _s0T1 = _mm_cvtps_epi32(_mm_mul_ps(scale4, _mm_cvtepi32_ps(_s01)));
-
-                        _s0T = _mm_packs_epi32(_s0T, _s0T1);
-
-                        _mm_storel_epi64((__m128i*)(D+i), _mm_packus_epi16(_s0T, _s0T));
-
-                        _mm_storeu_si128((__m128i*)(SUM+i), _mm_sub_epi32(_s0,_sm));
-                        _mm_storeu_si128((__m128i*)(SUM+i+4),_mm_sub_epi32(_s01,_sm1));
-                    }
-                }
-                #endif
-                for( ; i < width; i++ )
+                for( i = 0; i < width; i++ )
                 {
                     int s0 = SUM[i] + Sp[i];
                     D[i] = saturate_cast<uchar>(s0*_scale);
@@ -298,31 +255,7 @@ template<> struct ColumnSum<int, uchar> : public BaseColumnFilter
             }
             else
             {
-                i = 0;
-                #if CV_SSE2
-                if(haveSSE2)
-                {
-                    for( ; i < width-8; i+=8 )
-                    {
-                        __m128i _sm  = _mm_loadu_si128((const __m128i*)(Sm+i));
-                        __m128i _sm1  = _mm_loadu_si128((const __m128i*)(Sm+i+4));
-
-                        __m128i _s0  = _mm_add_epi32(_mm_loadu_si128((const __m128i*)(SUM+i)),
-                                                     _mm_loadu_si128((const __m128i*)(Sp+i)));
-                        __m128i _s01  = _mm_add_epi32(_mm_loadu_si128((const __m128i*)(SUM+i+4)),
-                                                      _mm_loadu_si128((const __m128i*)(Sp+i+4)));
-
-                        __m128i _s0T = _mm_packs_epi32(_s0, _s01);
-
-                        _mm_storel_epi64((__m128i*)(D+i), _mm_packus_epi16(_s0T, _s0T));
-
-                        _mm_storeu_si128((__m128i*)(SUM+i), _mm_sub_epi32(_s0,_sm));
-                        _mm_storeu_si128((__m128i*)(SUM+i+4),_mm_sub_epi32(_s01,_sm1));
-                    }
-                }
-                #endif
-
-                for( ; i < width; i++ )
+                for( i = 0; i < width; i++ )
                 {
                     int s0 = SUM[i] + Sp[i];
                     D[i] = saturate_cast<uchar>(s0);
@@ -357,10 +290,6 @@ template<> struct ColumnSum<int, short> : public BaseColumnFilter
         bool haveScale = scale != 1;
         double _scale = scale;
 
-        #if CV_SSE2
-            bool haveSSE2 = checkHardwareSupport(CV_CPU_SSE2);
-        #endif
-
         if( width != (int)sum.size() )
         {
             sum.resize(width);
@@ -373,19 +302,7 @@ template<> struct ColumnSum<int, short> : public BaseColumnFilter
             for( ; sumCount < ksize - 1; sumCount++, src++ )
             {
                 const int* Sp = (const int*)src[0];
-                i = 0;
-                #if CV_SSE2
-                if(haveSSE2)
-                {
-                    for( ; i < width-4; i+=4 )
-                    {
-                        __m128i _sum = _mm_loadu_si128((const __m128i*)(SUM+i));
-                        __m128i _sp = _mm_loadu_si128((const __m128i*)(Sp+i));
-                        _mm_storeu_si128((__m128i*)(SUM+i),_mm_add_epi32(_sum, _sp));
-                    }
-                }
-                #endif
-                for( ; i < width; i++ )
+                for( i = 0; i < width; i++ )
                     SUM[i] += Sp[i];
             }
         }
@@ -402,32 +319,7 @@ template<> struct ColumnSum<int, short> : public BaseColumnFilter
             short* D = (short*)dst;
             if( haveScale )
             {
-                i = 0;
-                #if CV_SSE2
-                if(haveSSE2)
-                {
-                    const __m128 scale4 = _mm_set1_ps((float)_scale);
-                    for( ; i < width-8; i+=8 )
-                    {
-                        __m128i _sm   = _mm_loadu_si128((const __m128i*)(Sm+i));
-                        __m128i _sm1  = _mm_loadu_si128((const __m128i*)(Sm+i+4));
-
-                        __m128i _s0  = _mm_add_epi32(_mm_loadu_si128((const __m128i*)(SUM+i)),
-                                                     _mm_loadu_si128((const __m128i*)(Sp+i)));
-                        __m128i _s01  = _mm_add_epi32(_mm_loadu_si128((const __m128i*)(SUM+i+4)),
-                                                      _mm_loadu_si128((const __m128i*)(Sp+i+4)));
-
-                        __m128i _s0T  = _mm_cvtps_epi32(_mm_mul_ps(scale4, _mm_cvtepi32_ps(_s0)));
-                        __m128i _s0T1 = _mm_cvtps_epi32(_mm_mul_ps(scale4, _mm_cvtepi32_ps(_s01)));
-
-                        _mm_storeu_si128((__m128i*)(D+i), _mm_packs_epi32(_s0T, _s0T1));
-
-                        _mm_storeu_si128((__m128i*)(SUM+i),_mm_sub_epi32(_s0,_sm));
-                        _mm_storeu_si128((__m128i*)(SUM+i+4), _mm_sub_epi32(_s01,_sm1));
-                    }
-                }
-                #endif
-                for( ; i < width; i++ )
+                for( i = 0; i < width; i++ )
                 {
                     int s0 = SUM[i] + Sp[i];
                     D[i] = saturate_cast<short>(s0*_scale);
@@ -436,30 +328,7 @@ template<> struct ColumnSum<int, short> : public BaseColumnFilter
             }
             else
             {
-                i = 0;
-                #if CV_SSE2
-                if(haveSSE2)
-                {
-                    for( ; i < width-8; i+=8 )
-                    {
-
-                        __m128i _sm  = _mm_loadu_si128((const __m128i*)(Sm+i));
-                        __m128i _sm1  = _mm_loadu_si128((const __m128i*)(Sm+i+4));
-
-                        __m128i _s0  = _mm_add_epi32(_mm_loadu_si128((const __m128i*)(SUM+i)),
-                                                     _mm_loadu_si128((const __m128i*)(Sp+i)));
-                        __m128i _s01  = _mm_add_epi32(_mm_loadu_si128((const __m128i*)(SUM+i+4)),
-                                                      _mm_loadu_si128((const __m128i*)(Sp+i+4)));
-
-                        _mm_storeu_si128((__m128i*)(D+i), _mm_packs_epi32(_s0, _s01));
-
-                        _mm_storeu_si128((__m128i*)(SUM+i), _mm_sub_epi32(_s0,_sm));
-                        _mm_storeu_si128((__m128i*)(SUM+i+4),_mm_sub_epi32(_s01,_sm1));
-                    }
-                }
-                #endif
-
-                for( ; i < width; i++ )
+                for( i = 0; i < width; i++ )
                 {
                     int s0 = SUM[i] + Sp[i];
                     D[i] = saturate_cast<short>(s0);
@@ -494,10 +363,7 @@ template<> struct ColumnSum<int, ushort> : public BaseColumnFilter
         int* SUM;
         bool haveScale = scale != 1;
         double _scale = scale;
-        #if CV_SSE2
-                bool haveSSE2 =  checkHardwareSupport(CV_CPU_SSE2);
-        #endif
-
+        
         if( width != (int)sum.size() )
         {
             sum.resize(width);
@@ -510,19 +376,7 @@ template<> struct ColumnSum<int, ushort> : public BaseColumnFilter
             for( ; sumCount < ksize - 1; sumCount++, src++ )
             {
                 const int* Sp = (const int*)src[0];
-                i = 0;
-                #if CV_SSE2
-                if(haveSSE2)
-                {
-                    for( ; i < width-4; i+=4 )
-                    {
-                        __m128i _sum = _mm_loadu_si128((const __m128i*)(SUM+i));
-                        __m128i _sp = _mm_loadu_si128((const __m128i*)(Sp+i));
-                        _mm_storeu_si128((__m128i*)(SUM+i), _mm_add_epi32(_sum, _sp));
-                    }
-                }
-                #endif
-                for( ; i < width; i++ )
+                for( i = 0; i < width; i++ )
                     SUM[i] += Sp[i];
             }
         }
@@ -539,31 +393,7 @@ template<> struct ColumnSum<int, ushort> : public BaseColumnFilter
             ushort* D = (ushort*)dst;
             if( haveScale )
             {
-                i = 0;
-                #if CV_SSE2
-                if(haveSSE2)
-                {
-                    const __m128 scale4 = _mm_set1_ps((float)_scale);
-                    const __m128i delta0 = _mm_set1_epi32(0x8000);
-                    const __m128i delta1 = _mm_set1_epi32(0x80008000);
-
-                    for( ; i < width-4; i+=4)
-                    {
-                        __m128i _sm   = _mm_loadu_si128((const __m128i*)(Sm+i));
-                        __m128i _s0   = _mm_add_epi32(_mm_loadu_si128((const __m128i*)(SUM+i)),
-                                                      _mm_loadu_si128((const __m128i*)(Sp+i)));
-
-                        __m128i _res = _mm_cvtps_epi32(_mm_mul_ps(scale4, _mm_cvtepi32_ps(_s0)));
-
-                        _res = _mm_sub_epi32(_res, delta0);
-                        _res = _mm_add_epi16(_mm_packs_epi32(_res, _res), delta1);
-
-                        _mm_storel_epi64((__m128i*)(D+i), _res);
-                        _mm_storeu_si128((__m128i*)(SUM+i), _mm_sub_epi32(_s0,_sm));
-                    }
-                }
-                #endif
-                for( ; i < width; i++ )
+                for(i = 0 ; i < width; i++ )
                 {
                     int s0 = SUM[i] + Sp[i];
                     D[i] = saturate_cast<ushort>(s0*_scale);
@@ -572,29 +402,7 @@ template<> struct ColumnSum<int, ushort> : public BaseColumnFilter
             }
             else
             {
-                i = 0;
-                #if  CV_SSE2
-                if(haveSSE2)
-                {
-                    const __m128i delta0 = _mm_set1_epi32(0x8000);
-                    const __m128i delta1 = _mm_set1_epi32(0x80008000);
-
-                    for( ; i < width-4; i+=4 )
-                    {
-                        __m128i _sm   = _mm_loadu_si128((const __m128i*)(Sm+i));
-                        __m128i _s0   = _mm_add_epi32(_mm_loadu_si128((const __m128i*)(SUM+i)),
-                                                      _mm_loadu_si128((const __m128i*)(Sp+i)));
-
-                        __m128i _res = _mm_sub_epi32(_s0, delta0);
-                        _res = _mm_add_epi16(_mm_packs_epi32(_res, _res), delta1);
-
-                        _mm_storel_epi64((__m128i*)(D+i), _res);
-                        _mm_storeu_si128((__m128i*)(SUM+i), _mm_sub_epi32(_s0,_sm));
-                    }
-                }
-                #endif
-
-                for( ; i < width; i++ )
+                for( i = 0; i < width; i++ )
                 {
                     int s0 = SUM[i] + Sp[i];
                     D[i] = saturate_cast<ushort>(s0);
@@ -856,22 +664,6 @@ void cv::GaussianBlur( InputArray _src, OutputArray _dst, Size ksize,
         return;
 #endif
 
-#if defined HAVE_IPP && (IPP_VERSION_MAJOR >= 7)
-    if(src.type() == CV_32FC1 && sigma1 == sigma2 && ksize.width == ksize.height && sigma1 != 0.0 )
-    {
-        IppiSize roi = {src.cols, src.rows};
-        int bufSize = 0;
-        ippiFilterGaussGetBufferSize_32f_C1R(roi, ksize.width, &bufSize);
-        AutoBuffer<uchar> buf(bufSize+128);
-        if( ippiFilterGaussBorder_32f_C1R((const Ipp32f *)src.data, (int)src.step,
-                                          (Ipp32f *)dst.data, (int)dst.step,
-                                          roi, ksize.width, (Ipp32f)sigma1,
-                                          (IppiBorderType)borderType, 0.0,
-                                          alignPtr(&buf[0],32)) >= 0 )
-            return;
-    }
-#endif
-
     Ptr<FilterEngine> f = createGaussianFilter( src.type(), ksize, sigma1, sigma2, borderType );
     f->apply( src, dst );
 }
@@ -900,35 +692,6 @@ typedef struct
     HT coarse[16];
     HT fine[16][16];
 } Histogram;
-
-
-#if CV_SSE2
-#define MEDIAN_HAVE_SIMD 1
-
-static inline void histogram_add_simd( const HT x[16], HT y[16] )
-{
-    const __m128i* rx = (const __m128i*)x;
-    __m128i* ry = (__m128i*)y;
-    __m128i r0 = _mm_add_epi16(_mm_load_si128(ry+0),_mm_load_si128(rx+0));
-    __m128i r1 = _mm_add_epi16(_mm_load_si128(ry+1),_mm_load_si128(rx+1));
-    _mm_store_si128(ry+0, r0);
-    _mm_store_si128(ry+1, r1);
-}
-
-static inline void histogram_sub_simd( const HT x[16], HT y[16] )
-{
-    const __m128i* rx = (const __m128i*)x;
-    __m128i* ry = (__m128i*)y;
-    __m128i r0 = _mm_sub_epi16(_mm_load_si128(ry+0),_mm_load_si128(rx+0));
-    __m128i r1 = _mm_sub_epi16(_mm_load_si128(ry+1),_mm_load_si128(rx+1));
-    _mm_store_si128(ry+0, r0);
-    _mm_store_si128(ry+1, r1);
-}
-
-#else
-#define MEDIAN_HAVE_SIMD 0
-#endif
-
 
 static inline void histogram_add( const HT x[16], HT y[16] )
 {
@@ -977,10 +740,7 @@ medianBlur_8u_O1( const Mat& _src, Mat& _dst, int ksize )
     vector<HT> _h_fine(16 * 16 * (STRIPE_SIZE + 2*r) * cn + 16);
     HT* h_coarse = alignPtr(&_h_coarse[0], 16);
     HT* h_fine = alignPtr(&_h_fine[0], 16);
-#if MEDIAN_HAVE_SIMD
-    volatile bool useSIMD = checkHardwareSupport(CV_CPU_SSE2);
-#endif
-
+    
     for( int x = 0; x < _dst.cols; x += STRIPE_SIZE )
     {
         int i, j, k, c, n = std::min(_dst.cols - x, STRIPE_SIZE) + r*2;
@@ -1023,72 +783,7 @@ medianBlur_8u_O1( const Mat& _src, Mat& _dst, int ksize )
                 // First column initialization
                 for( k = 0; k < 16; ++k )
                     histogram_muladd( 2*r+1, &h_fine[16*n*(16*c+k)], &H[c].fine[k][0] );
-
-            #if MEDIAN_HAVE_SIMD
-                if( useSIMD )
-                {
-                    for( j = 0; j < 2*r; ++j )
-                        histogram_add_simd( &h_coarse[16*(n*c+j)], H[c].coarse );
-
-                    for( j = r; j < n-r; j++ )
-                    {
-                        int t = 2*r*r + 2*r, b, sum = 0;
-                        HT* segment;
-
-                        histogram_add_simd( &h_coarse[16*(n*c + std::min(j+r,n-1))], H[c].coarse );
-
-                        // Find median at coarse level
-                        for ( k = 0; k < 16 ; ++k )
-                        {
-                            sum += H[c].coarse[k];
-                            if ( sum > t )
-                            {
-                                sum -= H[c].coarse[k];
-                                break;
-                            }
-                        }
-                        assert( k < 16 );
-
-                        /* Update corresponding histogram segment */
-                        if ( luc[c][k] <= j-r )
-                        {
-                            memset( &H[c].fine[k], 0, 16 * sizeof(HT) );
-                            for ( luc[c][k] = cv::HT(j-r); luc[c][k] < MIN(j+r+1,n); ++luc[c][k] )
-                                histogram_add_simd( &h_fine[16*(n*(16*c+k)+luc[c][k])], H[c].fine[k] );
-
-                            if ( luc[c][k] < j+r+1 )
-                            {
-                                histogram_muladd( j+r+1 - n, &h_fine[16*(n*(16*c+k)+(n-1))], &H[c].fine[k][0] );
-                                luc[c][k] = (HT)(j+r+1);
-                            }
-                        }
-                        else
-                        {
-                            for ( ; luc[c][k] < j+r+1; ++luc[c][k] )
-                            {
-                                histogram_sub_simd( &h_fine[16*(n*(16*c+k)+MAX(luc[c][k]-2*r-1,0))], H[c].fine[k] );
-                                histogram_add_simd( &h_fine[16*(n*(16*c+k)+MIN(luc[c][k],n-1))], H[c].fine[k] );
-                            }
-                        }
-
-                        histogram_sub_simd( &h_coarse[16*(n*c+MAX(j-r,0))], H[c].coarse );
-
-                        /* Find median in segment */
-                        segment = H[c].fine[k];
-                        for ( b = 0; b < 16 ; b++ )
-                        {
-                            sum += segment[b];
-                            if ( sum > t )
-                            {
-                                dst[dstep*i+cn*j+c] = (uchar)(16*k + b);
-                                break;
-                            }
-                        }
-                        assert( b < 16 );
-                    }
-                }
-                else
-            #endif
+                
                 {
                     for( j = 0; j < 2*r; ++j )
                         histogram_add( &h_coarse[16*(n*c+j)], H[c].coarse );
@@ -1361,80 +1056,10 @@ struct MinMax32f
     }
 };
 
-#if CV_SSE2
-
-struct MinMaxVec8u
-{
-    typedef uchar value_type;
-    typedef __m128i arg_type;
-    enum { SIZE = 16 };
-    arg_type load(const uchar* ptr) { return _mm_loadu_si128((const __m128i*)ptr); }
-    void store(uchar* ptr, arg_type val) { _mm_storeu_si128((__m128i*)ptr, val); }
-    void operator()(arg_type& a, arg_type& b) const
-    {
-        arg_type t = a;
-        a = _mm_min_epu8(a, b);
-        b = _mm_max_epu8(b, t);
-    }
-};
-
-
-struct MinMaxVec16u
-{
-    typedef ushort value_type;
-    typedef __m128i arg_type;
-    enum { SIZE = 8 };
-    arg_type load(const ushort* ptr) { return _mm_loadu_si128((const __m128i*)ptr); }
-    void store(ushort* ptr, arg_type val) { _mm_storeu_si128((__m128i*)ptr, val); }
-    void operator()(arg_type& a, arg_type& b) const
-    {
-        arg_type t = _mm_subs_epu16(a, b);
-        a = _mm_subs_epu16(a, t);
-        b = _mm_adds_epu16(b, t);
-    }
-};
-
-
-struct MinMaxVec16s
-{
-    typedef short value_type;
-    typedef __m128i arg_type;
-    enum { SIZE = 8 };
-    arg_type load(const short* ptr) { return _mm_loadu_si128((const __m128i*)ptr); }
-    void store(short* ptr, arg_type val) { _mm_storeu_si128((__m128i*)ptr, val); }
-    void operator()(arg_type& a, arg_type& b) const
-    {
-        arg_type t = a;
-        a = _mm_min_epi16(a, b);
-        b = _mm_max_epi16(b, t);
-    }
-};
-
-
-struct MinMaxVec32f
-{
-    typedef float value_type;
-    typedef __m128 arg_type;
-    enum { SIZE = 4 };
-    arg_type load(const float* ptr) { return _mm_loadu_ps(ptr); }
-    void store(float* ptr, arg_type val) { _mm_storeu_ps(ptr, val); }
-    void operator()(arg_type& a, arg_type& b) const
-    {
-        arg_type t = a;
-        a = _mm_min_ps(a, b);
-        b = _mm_max_ps(b, t);
-    }
-};
-
-
-#else
-
 typedef MinMax8u MinMaxVec8u;
 typedef MinMax16u MinMaxVec16u;
 typedef MinMax16s MinMaxVec16s;
 typedef MinMax32f MinMaxVec32f;
-
-#endif
 
 template<class Op, class VecOp>
 static void
@@ -1452,7 +1077,7 @@ medianBlur_SortNet( const Mat& _src, Mat& _dst, int m )
     int i, j, k, cn = _src.channels();
     Op op;
     VecOp vop;
-    volatile bool useSIMD = checkHardwareSupport(CV_CPU_SSE2);
+    volatile bool useSIMD = false;
 
     if( m == 3 )
     {
@@ -1669,11 +1294,7 @@ void cv::medianBlur( InputArray _src0, OutputArray _dst, int ksize )
         return;
 #endif
 
-    bool useSortNet = ksize == 3 || (ksize == 5
-#if !CV_SSE2
-            && src0.depth() > CV_8U
-#endif
-        );
+    bool useSortNet = ksize == 3 || (ksize == 5 && src0.depth() > CV_8U);
 
     Mat src;
     if( useSortNet )
@@ -1704,7 +1325,7 @@ void cv::medianBlur( InputArray _src0, OutputArray _dst, int ksize )
         CV_Assert( src.depth() == CV_8U && (cn == 1 || cn == 3 || cn == 4) );
 
         double img_size_mp = (double)(src0.total())/(1 << 20);
-        if( ksize <= 3 + (img_size_mp < 1 ? 12 : img_size_mp < 4 ? 6 : 2)*(MEDIAN_HAVE_SIMD && checkHardwareSupport(CV_CPU_SSE2) ? 1 : 3))
+        if( ksize <= 3 + (img_size_mp < 1 ? 12 : img_size_mp < 4 ? 6 : 2)*3)
             medianBlur_8u_Om( src, dst, ksize );
         else
             medianBlur_8u_O1( src, dst, ksize );
@@ -1733,13 +1354,7 @@ public:
     {
         int i, j, cn = dest->channels(), k;
         Size size = dest->size();
-        #if CV_SSE3
-        int CV_DECL_ALIGNED(16) buf[4];
-        float CV_DECL_ALIGNED(16) bufSum[4];
-        static const unsigned int CV_DECL_ALIGNED(16) bufSignMask[] = { 0x80000000, 0x80000000, 0x80000000, 0x80000000 };
-        bool haveSSE3 = checkHardwareSupport(CV_CPU_SSE3);
-        #endif
-
+        
         for( i = range.start; i < range.end; i++ )
         {
             const uchar* sptr = temp->ptr(i+radius) + radius*cn;
@@ -1751,37 +1366,7 @@ public:
                 {
                     float sum = 0, wsum = 0;
                     int val0 = sptr[j];
-                    k = 0;
-                    #if CV_SSE3
-                    if( haveSSE3 )
-                    {
-                        __m128 _val0 = _mm_set1_ps(static_cast<float>(val0));
-                        const __m128 _signMask = _mm_load_ps((const float*)bufSignMask);
-
-                        for( ; k <= maxk - 4; k += 4 )
-                        {
-                            __m128 _valF = _mm_set_ps(sptr[j + space_ofs[k+3]], sptr[j + space_ofs[k+2]],
-                                                      sptr[j + space_ofs[k+1]], sptr[j + space_ofs[k]]);
-
-                            __m128 _val = _mm_andnot_ps(_signMask, _mm_sub_ps(_valF, _val0));
-                            _mm_store_si128((__m128i*)buf, _mm_cvtps_epi32(_val));
-
-                            __m128 _cw = _mm_set_ps(color_weight[buf[3]],color_weight[buf[2]],
-                                                    color_weight[buf[1]],color_weight[buf[0]]);
-                            __m128 _sw = _mm_loadu_ps(space_weight+k);
-                            __m128 _w = _mm_mul_ps(_cw, _sw);
-                             _cw = _mm_mul_ps(_w, _valF);
-
-                             _sw = _mm_hadd_ps(_w, _cw);
-                             _sw = _mm_hadd_ps(_sw, _sw);
-                             _mm_storel_pi((__m64*)bufSum, _sw);
-
-                             sum += bufSum[1];
-                             wsum += bufSum[0];
-                        }
-                    }
-                    #endif
-                    for( ; k < maxk; k++ )
+                    for( k = 0; k < maxk; k++ )
                     {
                         int val = sptr[j + space_ofs[k]];
                         float w = space_weight[k]*color_weight[std::abs(val - val0)];
@@ -1799,57 +1384,7 @@ public:
                 {
                     float sum_b = 0, sum_g = 0, sum_r = 0, wsum = 0;
                     int b0 = sptr[j], g0 = sptr[j+1], r0 = sptr[j+2];
-                    k = 0;
-                    #if CV_SSE3
-                    if( haveSSE3 )
-                    {
-                        const __m128 _b0 = _mm_set1_ps(static_cast<float>(b0));
-                        const __m128 _g0 = _mm_set1_ps(static_cast<float>(g0));
-                        const __m128 _r0 = _mm_set1_ps(static_cast<float>(r0));
-                        const __m128 _signMask = _mm_load_ps((const float*)bufSignMask);
-
-                        for( ; k <= maxk - 4; k += 4 )
-                        {
-                            const uchar* sptr_k  = sptr + j + space_ofs[k];
-                            const uchar* sptr_k1 = sptr + j + space_ofs[k+1];
-                            const uchar* sptr_k2 = sptr + j + space_ofs[k+2];
-                            const uchar* sptr_k3 = sptr + j + space_ofs[k+3];
-
-                            __m128 _b = _mm_set_ps(sptr_k3[0],sptr_k2[0],sptr_k1[0],sptr_k[0]);
-                            __m128 _g = _mm_set_ps(sptr_k3[1],sptr_k2[1],sptr_k1[1],sptr_k[1]);
-                            __m128 _r = _mm_set_ps(sptr_k3[2],sptr_k2[2],sptr_k1[2],sptr_k[2]);
-
-                            __m128 bt = _mm_andnot_ps(_signMask, _mm_sub_ps(_b,_b0));
-                            __m128 gt = _mm_andnot_ps(_signMask, _mm_sub_ps(_g,_g0));
-                            __m128 rt = _mm_andnot_ps(_signMask, _mm_sub_ps(_r,_r0));
-
-                            bt =_mm_add_ps(rt, _mm_add_ps(bt, gt));
-                            _mm_store_si128((__m128i*)buf, _mm_cvtps_epi32(bt));
-
-                            __m128 _w  = _mm_set_ps(color_weight[buf[3]],color_weight[buf[2]],
-                                                    color_weight[buf[1]],color_weight[buf[0]]);
-                            __m128 _sw = _mm_loadu_ps(space_weight+k);
-
-                            _w = _mm_mul_ps(_w,_sw);
-                            _b = _mm_mul_ps(_b, _w);
-                            _g = _mm_mul_ps(_g, _w);
-                            _r = _mm_mul_ps(_r, _w);
-
-                             _w = _mm_hadd_ps(_w, _b);
-                             _g = _mm_hadd_ps(_g, _r);
-
-                             _w = _mm_hadd_ps(_w, _g);
-                             _mm_store_ps(bufSum, _w);
-
-                             wsum  += bufSum[0];
-                             sum_b += bufSum[1];
-                             sum_g += bufSum[2];
-                             sum_r += bufSum[3];
-                         }
-                    }
-                    #endif
-
-                    for( ; k < maxk; k++ )
+                    for( k = 0; k < maxk; k++ )
                     {
                         const uchar* sptr_k = sptr + j + space_ofs[k];
                         int b = sptr_k[0], g = sptr_k[1], r = sptr_k[2];
@@ -1874,41 +1409,6 @@ private:
     int radius, maxk, *space_ofs;
     float *space_weight, *color_weight;
 };
-
-#if defined (HAVE_IPP) && (IPP_VERSION_MAJOR >= 7)
-class IPPBilateralFilter_8u_Invoker :
-    public ParallelLoopBody
-{
-public:
-    IPPBilateralFilter_8u_Invoker(Mat &_src, Mat &_dst, double _sigma_color, double _sigma_space, int _radius, bool *_ok) :
-      ParallelLoopBody(), src(_src), dst(_dst), sigma_color(_sigma_color), sigma_space(_sigma_space), radius(_radius), ok(_ok)
-      {
-          *ok = true;
-      }
-
-      virtual void operator() (const Range& range) const
-      {
-          int d = radius * 2 + 1;
-          IppiSize kernel = {d, d};
-          IppiSize roi={dst.cols, range.end - range.start};
-          int bufsize=0;
-          ippiFilterBilateralGetBufSize_8u_C1R( ippiFilterBilateralGauss, roi, kernel, &bufsize);
-          AutoBuffer<uchar> buf(bufsize);
-          IppiFilterBilateralSpec *pSpec = (IppiFilterBilateralSpec *)alignPtr(&buf[0], 32);
-          ippiFilterBilateralInit_8u_C1R( ippiFilterBilateralGauss, kernel, (Ipp32f)sigma_color, (Ipp32f)sigma_space, 1, pSpec );
-          if( ippiFilterBilateral_8u_C1R( src.ptr<uchar>(range.start) + radius * ((int)src.step[0] + 1), (int)src.step[0], dst.ptr<uchar>(range.start), (int)dst.step[0], roi, kernel, pSpec ) < 0)
-              *ok = false;
-      }
-private:
-    Mat &src;
-    Mat &dst;
-    double sigma_color;
-    double sigma_space;
-    int radius;
-    bool *ok;
-    const IPPBilateralFilter_8u_Invoker& operator= (const IPPBilateralFilter_8u_Invoker&);
-};
-#endif
 
 static void
 bilateralFilter_8u( const Mat& src, Mat& dst, int d,
@@ -1941,16 +1441,6 @@ bilateralFilter_8u( const Mat& src, Mat& dst, int d,
 
     Mat temp;
     copyMakeBorder( src, temp, radius, radius, radius, radius, borderType );
-
-#if defined HAVE_IPP && (IPP_VERSION_MAJOR >= 7)
-    if( cn == 1 )
-    {
-        bool ok;
-        IPPBilateralFilter_8u_Invoker body(temp, dst, sigma_color * sigma_color, sigma_space * sigma_space, radius, &ok );
-        parallel_for_(Range(0, dst.rows), body, dst.total()/(double)(1<<16));
-        if( ok ) return;
-    }
-#endif
 
     vector<float> _color_weight(cn*256);
     vector<float> _space_weight(d*d);
@@ -2000,13 +1490,7 @@ public:
     {
         int i, j, k;
         Size size = dest->size();
-        #if CV_SSE3
-        int CV_DECL_ALIGNED(16) idxBuf[4];
-        float CV_DECL_ALIGNED(16) bufSum32[4];
-        static const unsigned int CV_DECL_ALIGNED(16) bufSignMask[] = { 0x80000000, 0x80000000, 0x80000000, 0x80000000 };
-        bool haveSSE3 = checkHardwareSupport(CV_CPU_SSE3);
-        #endif
-
+        
         for( i = range.start; i < range.end; i++ )
         {
             const float* sptr = temp->ptr<float>(i+radius) + radius*cn;
@@ -2018,44 +1502,7 @@ public:
                 {
                     float sum = 0, wsum = 0;
                     float val0 = sptr[j];
-                    k = 0;
-                    #if CV_SSE3
-                    if( haveSSE3 )
-                    {
-                        const __m128 _val0 = _mm_set1_ps(sptr[j]);
-                        const __m128 _scale_index = _mm_set1_ps(scale_index);
-                        const __m128 _signMask = _mm_load_ps((const float*)bufSignMask);
-
-                        for( ; k <= maxk - 4 ; k += 4 )
-                        {
-                            __m128 _sw    = _mm_loadu_ps(space_weight + k);
-                            __m128 _val   = _mm_set_ps(sptr[j + space_ofs[k+3]], sptr[j + space_ofs[k+2]],
-                                                       sptr[j + space_ofs[k+1]], sptr[j + space_ofs[k]]);
-                            __m128 _alpha = _mm_mul_ps(_mm_andnot_ps( _signMask, _mm_sub_ps(_val,_val0)), _scale_index);
-
-                            __m128i _idx = _mm_cvtps_epi32(_alpha);
-                            _mm_store_si128((__m128i*)idxBuf, _idx);
-                            _alpha = _mm_sub_ps(_alpha, _mm_cvtepi32_ps(_idx));
-
-                            __m128 _explut  = _mm_set_ps(expLUT[idxBuf[3]], expLUT[idxBuf[2]],
-                                                         expLUT[idxBuf[1]], expLUT[idxBuf[0]]);
-                            __m128 _explut1 = _mm_set_ps(expLUT[idxBuf[3]+1], expLUT[idxBuf[2]+1],
-                                                         expLUT[idxBuf[1]+1], expLUT[idxBuf[0]+1]);
-
-                            __m128 _w = _mm_mul_ps(_sw, _mm_add_ps(_explut, _mm_mul_ps(_alpha, _mm_sub_ps(_explut1, _explut))));
-                            _val = _mm_mul_ps(_w, _val);
-
-                             _sw = _mm_hadd_ps(_w, _val);
-                             _sw = _mm_hadd_ps(_sw, _sw);
-                             _mm_storel_pi((__m64*)bufSum32, _sw);
-
-                             sum += bufSum32[1];
-                             wsum += bufSum32[0];
-                        }
-                    }
-                    #endif
-
-                    for( ; k < maxk; k++ )
+                    for( k = 0; k < maxk; k++ )
                     {
                         float val = sptr[j + space_ofs[k]];
                         float alpha = (float)(std::abs(val - val0)*scale_index);
@@ -2075,64 +1522,7 @@ public:
                 {
                     float sum_b = 0, sum_g = 0, sum_r = 0, wsum = 0;
                     float b0 = sptr[j], g0 = sptr[j+1], r0 = sptr[j+2];
-                    k = 0;
-                    #if  CV_SSE3
-                    if( haveSSE3 )
-                    {
-                        const __m128 _b0 = _mm_set1_ps(b0);
-                        const __m128 _g0 = _mm_set1_ps(g0);
-                        const __m128 _r0 = _mm_set1_ps(r0);
-                        const __m128 _scale_index = _mm_set1_ps(scale_index);
-                        const __m128 _signMask = _mm_load_ps((const float*)bufSignMask);
-
-                        for( ; k <= maxk-4; k += 4 )
-                        {
-                            __m128 _sw = _mm_loadu_ps(space_weight + k);
-
-                            const float* sptr_k  = sptr + j + space_ofs[k];
-                            const float* sptr_k1 = sptr + j + space_ofs[k+1];
-                            const float* sptr_k2 = sptr + j + space_ofs[k+2];
-                            const float* sptr_k3 = sptr + j + space_ofs[k+3];
-
-                            __m128 _b = _mm_set_ps(sptr_k3[0], sptr_k2[0], sptr_k1[0], sptr_k[0]);
-                            __m128 _g = _mm_set_ps(sptr_k3[1], sptr_k2[1], sptr_k1[1], sptr_k[1]);
-                            __m128 _r = _mm_set_ps(sptr_k3[2], sptr_k2[2], sptr_k1[2], sptr_k[2]);
-
-                            __m128 _bt = _mm_andnot_ps(_signMask,_mm_sub_ps(_b,_b0));
-                            __m128 _gt = _mm_andnot_ps(_signMask,_mm_sub_ps(_g,_g0));
-                            __m128 _rt = _mm_andnot_ps(_signMask,_mm_sub_ps(_r,_r0));
-
-                            __m128 _alpha = _mm_mul_ps(_scale_index, _mm_add_ps(_rt,_mm_add_ps(_bt, _gt)));
-
-                            __m128i _idx  = _mm_cvtps_epi32(_alpha);
-                            _mm_store_si128((__m128i*)idxBuf, _idx);
-                            _alpha = _mm_sub_ps(_alpha, _mm_cvtepi32_ps(_idx));
-
-                            __m128 _explut  = _mm_set_ps(expLUT[idxBuf[3]], expLUT[idxBuf[2]], expLUT[idxBuf[1]], expLUT[idxBuf[0]]);
-                            __m128 _explut1 = _mm_set_ps(expLUT[idxBuf[3]+1], expLUT[idxBuf[2]+1], expLUT[idxBuf[1]+1], expLUT[idxBuf[0]+1]);
-
-                            __m128 _w = _mm_mul_ps(_sw, _mm_add_ps(_explut, _mm_mul_ps(_alpha, _mm_sub_ps(_explut1, _explut))));
-
-                            _b = _mm_mul_ps(_b, _w);
-                            _g = _mm_mul_ps(_g, _w);
-                            _r = _mm_mul_ps(_r, _w);
-
-                             _w = _mm_hadd_ps(_w, _b);
-                             _g = _mm_hadd_ps(_g, _r);
-
-                             _w = _mm_hadd_ps(_w, _g);
-                             _mm_store_ps(bufSum32, _w);
-
-                             wsum  += bufSum32[0];
-                             sum_b += bufSum32[1];
-                             sum_g += bufSum32[2];
-                             sum_r += bufSum32[3];
-                        }
-
-                    }
-                    #endif
-
-                    for(; k < maxk; k++ )
+                    for( k = 0; k < maxk; k++ )
                     {
                         const float* sptr_k = sptr + j + space_ofs[k];
                         float b = sptr_k[0], g = sptr_k[1], r = sptr_k[2];

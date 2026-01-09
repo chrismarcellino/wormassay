@@ -88,42 +88,16 @@
 #  define CV_ENABLE_UNROLLED 1
 #endif
 
-#if (defined _M_X64 && defined _MSC_VER && _MSC_VER >= 1400) || (__GNUC__ >= 4 && defined __x86_64__)
-#  if defined WIN32
-#    include <intrin.h>
-#  endif
-#  if defined __SSE2__ || !defined __GNUC__
-#    include <emmintrin.h>
-#  endif
-#endif
-
 #if defined __BORLANDC__
 #  include <fastmath.h>
 #else
 #  include <math.h>
 #endif
 
-#ifdef HAVE_IPL
-#  ifndef __IPL_H__
-#    if defined WIN32 || defined _WIN32
-#      include <ipl.h>
-#    else
-#      include <ipl/ipl.h>
-#    endif
-#  endif
-#elif defined __IPL_H__
-#  define HAVE_IPL
-#endif
-
 #endif // SKIP_INCLUDES
 
-#if defined WIN32 || defined _WIN32
-#  define CV_CDECL __cdecl
-#  define CV_STDCALL __stdcall
-#else
 #  define CV_CDECL
 #  define CV_STDCALL
-#endif
 
 #ifndef CV_EXTERN_C
 #  ifdef __cplusplus
@@ -153,11 +127,7 @@
 #  endif
 #endif /* CV_INLINE */
 
-#if (defined WIN32 || defined _WIN32 || defined WINCE) && defined CVAPI_EXPORTS
-#  define CV_EXPORTS __declspec(dllexport)
-#else
 #  define CV_EXPORTS
-#endif
 
 #ifndef CVAPI
 #  define CVAPI(rettype) CV_EXTERN_C CV_EXPORTS rettype CV_CDECL
@@ -341,72 +311,27 @@ enum {
 
 CV_INLINE  int  cvRound( double value )
 {
-#if (defined _MSC_VER && defined _M_X64) || (defined __GNUC__ && defined __x86_64__ && defined __SSE2__ && !defined __APPLE__)
-    __m128d t = _mm_set_sd( value );
-    return _mm_cvtsd_si32(t);
-#elif defined _MSC_VER && defined _M_IX86
-    int t;
-    __asm
-    {
-        fld value;
-        fistp t;
-    }
-    return t;
-#elif defined _MSC_VER && defined _M_ARM && defined HAVE_TEGRA_OPTIMIZATION
-    TEGRA_ROUND(value);
-#elif defined CV_ICC || defined __GNUC__
-#  ifdef HAVE_TEGRA_OPTIMIZATION
-    TEGRA_ROUND(value);
-#  elif CV_VFP
-    ARM_ROUND_DBL(value)
-#  else
-    return (int)lrint(value);
-#  endif
-#else
     double intpart, fractpart;
     fractpart = modf(value, &intpart);
     if ((fabs(fractpart) != 0.5) || ((((int)intpart) % 2) != 0))
         return (int)(value + (value >= 0 ? 0.5 : -0.5));
     else
         return (int)intpart;
-#endif
 }
-
-#if defined __SSE2__ || (defined _M_IX86_FP && 2 == _M_IX86_FP)
-#  include "emmintrin.h"
-#endif
 
 CV_INLINE  int  cvFloor( double value )
 {
-#if defined _MSC_VER && defined _M_X64 || (defined __GNUC__ && defined __SSE2__ && !defined __APPLE__)
-    __m128d t = _mm_set_sd( value );
-    int i = _mm_cvtsd_si32(t);
-    return i - _mm_movemask_pd(_mm_cmplt_sd(t, _mm_cvtsi32_sd(t,i)));
-#elif defined __GNUC__
-    int i = (int)value;
-    return i - (i > value);
-#else
     int i = cvRound(value);
     float diff = (float)(value - i);
     return i - (diff < 0);
-#endif
 }
 
 
 CV_INLINE  int  cvCeil( double value )
 {
-#if defined _MSC_VER && defined _M_X64 || (defined __GNUC__ && defined __SSE2__&& !defined __APPLE__)
-    __m128d t = _mm_set_sd( value );
-    int i = _mm_cvtsd_si32(t);
-    return i + _mm_movemask_pd(_mm_cmplt_sd(_mm_cvtsi32_sd(t,i), t));
-#elif defined __GNUC__
-    int i = (int)value;
-    return i + (i < value);
-#else
     int i = cvRound(value);
     float diff = (float)(i - value);
     return i + (diff < 0);
-#endif
 }
 
 #define cvInvSqrt(value) ((float)(1./sqrt(value)))
