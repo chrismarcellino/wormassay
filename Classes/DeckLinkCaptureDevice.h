@@ -44,7 +44,6 @@ extern NSString *const DeckLinkCaptureDeviceWasConnectedOrDisconnectedNotificati
 - (void)setSampleBufferDelegate:(id<DeckLinkCaptureDeviceSampleBufferDelegate>)sampleBufferDelegate
                           queue:(NSOperationQueue *)sampleBufferCallbackQueue;
 
-- (BOOL)startCaptureWithCaptureMode:(DeckLinkCaptureMode *)captureMode error:(NSError **)outError;
 - (void)startCaptureWithSearchForModeWithModes:(NSArray *)captureModeSearchList;
 - (void)stopCapture;
 
@@ -60,7 +59,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 @end
 
 
-@interface DeckLinkCaptureMode : NSObject
+@interface DeckLinkCaptureMode : NSObject       // overrides isEqual: appropriately for set/array comparison, etc.
 
 @property(readonly) NSString *displayName;
 @property(readonly) NSSize frameSize;
