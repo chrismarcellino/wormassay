@@ -76,7 +76,7 @@ static NSString *const UseBlackmagicDeckLinkDriverDefaultsKey = @"UseBlackmagicD
         RunLog(@"Blackmagic DeckLink API version %@ installed.", [DeckLinkCaptureDevice deckLinkSystemVersion]);
     }
     
-    RunLog(@"Important: for best results set camera to 1080p and ≤30 fps, "
+    RunLog(@"Important: for best results set camera to 1080p and 30 fps (or less), "
            "with image stabilization OFF and Instant Autofocus OFF (normal AF/TTL is optional.)");
 }
 
