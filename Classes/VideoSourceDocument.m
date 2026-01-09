@@ -657,4 +657,9 @@ BOOL DeviceIsUVCDevice(AVCaptureDevice *device)
     }];
 }
 
+- (BOOL)autosavesInPlace
+{
+    return YES;
+}
+
 @end
