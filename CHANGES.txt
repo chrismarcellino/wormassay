@@ -1,6 +1,8 @@
 Version 1.7.4
 _____________
-Improve DeckLink support and avoid opening same DeckLink camera twice. 
+Improve BlackMagic DeckLink support with interlaced cameras.
+Avoid opening same DeckLink camera twice.
+Improve DeckLink camera resolution selection.
 
 Version 1.7.3
 -------------
