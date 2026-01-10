@@ -144,7 +144,6 @@ static bool findWellCirclesForWellCountsUsingImage(IplImage* image,
                                                    int expectedRadius)
 {
     __block bool success = false;
-    double minScore = *score;
     
     // Execute searches for different plate sizes in parallel
     [NSOperationQueue addOperationsInParallelWithInstances:wellCounts.size() onGlobalQueueForBlock:^(NSUInteger i, id criticalSection) {
@@ -152,13 +151,11 @@ static bool findWellCirclesForWellCountsUsingImage(IplImage* image,
         double currentScore = DBL_MIN;
         bool currentSuccess = findWellCirclesForWellCountUsingImage(image, wellCounts[i], currentCircles, currentScore, expectedRadius);
         
-        if (currentSuccess || currentScore >= minScore) {        // stricly an optimization to avoid the critical section in most cases
-            @synchronized(criticalSection) {
-                if (!success && (currentSuccess || currentScore > *score)) {
-                    success = currentSuccess;
-                    *score = currentScore;
-                    *circles = currentCircles;
-                }
+        @synchronized(criticalSection) {
+            if (!success && (currentSuccess || currentScore > *score)) {
+                success = currentSuccess;
+                *score = currentScore;
+                *circles = currentCircles;
             }
         }
     }];

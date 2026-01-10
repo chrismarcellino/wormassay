@@ -67,11 +67,6 @@ static inline void fastZeroImage(IplImage *image)
     memset(image->imageData, 0, image->imageSize);
 }
 
-static inline void fastFillImage(IplImage *image, uint8_t val)
-{
-    memset(image->imageData, val, image->imageSize);
-}
-
 // Returns a font with drawing size proportional to the image provided with respect to normalizedScale.
 static inline CvFont fontForNormalizedScale(double normalizedScale, IplImage* image)
 {

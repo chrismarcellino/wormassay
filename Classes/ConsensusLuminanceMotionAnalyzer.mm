@@ -166,7 +166,7 @@ static const char* WellOccupancyID = "Well Occupancy";
     int radius = cvGetSize(wellImage).width / 2;
     IplImage *insetCircleMask = NULL;
     if (well >= 0) {
-        insetCircleMask= cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
+        insetCircleMask = cvCreateImage(cvGetSize(wellImage), IPL_DEPTH_8U, 1);
         fastZeroImage(insetCircleMask);
         cvCircle(insetCircleMask, cvPoint(insetCircleMask->width / 2, insetCircleMask->height / 2), radius * WellEdgeFindingInsetProportion, cvRealScalar(255), CV_FILLED);
     }
