@@ -203,9 +203,6 @@ void Mat::create(int d, const int* _sizes, int _type)
 
     if( total() > 0 )
     {
-#ifdef HAVE_TGPU
-        if( !allocator || allocator == tegra::getAllocator() ) allocator = tegra::getAllocator(d, _sizes, _type);
-#endif
         if( !allocator )
         {
             size_t totalsize = alignSize(step.p[0]*size.p[0], (int)sizeof(*refcount));
@@ -215,23 +212,8 @@ void Mat::create(int d, const int* _sizes, int _type)
         }
         else
         {
-#ifdef HAVE_TGPU
-           try
-            {
-                allocator->allocate(dims, size, _type, refcount, datastart, data, step.p);
-                CV_Assert( step[dims-1] == (size_t)CV_ELEM_SIZE(flags) );
-            }catch(...)
-            {
-                allocator = 0;
-                size_t totalSize = alignSize(step.p[0]*size.p[0], (int)sizeof(*refcount));
-                data = datastart = (uchar*)fastMalloc(totalSize + (int)sizeof(*refcount));
-                refcount = (int*)(data + totalSize);
-                *refcount = 1;
-            }
-#else
             allocator->allocate(dims, size, _type, refcount, datastart, data, step.p);
             CV_Assert( step[dims-1] == (size_t)CV_ELEM_SIZE(flags) );
-#endif
         }
     }
 
