@@ -60,7 +60,6 @@
 		21A328942578578600E5B80E /* rand.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21A328112578578600E5B80E /* rand.cpp */; };
 		21A328952578578600E5B80E /* algorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21A328122578578600E5B80E /* algorithm.cpp */; };
 		21A328962578578600E5B80E /* system.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21A328132578578600E5B80E /* system.cpp */; };
-		21A328982578578600E5B80E /* cmdparser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21A328152578578600E5B80E /* cmdparser.cpp */; };
 		21A328992578578600E5B80E /* matrix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21A328162578578600E5B80E /* matrix.cpp */; };
 		21A3289A2578578600E5B80E /* glob.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21A328172578578600E5B80E /* glob.cpp */; };
 		21A3289C2578578600E5B80E /* datastructs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 21A328192578578600E5B80E /* datastructs.cpp */; };
@@ -229,7 +228,6 @@
 		21A328112578578600E5B80E /* rand.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rand.cpp; sourceTree = "<group>"; };
 		21A328122578578600E5B80E /* algorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = algorithm.cpp; sourceTree = "<group>"; };
 		21A328132578578600E5B80E /* system.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = system.cpp; sourceTree = "<group>"; };
-		21A328152578578600E5B80E /* cmdparser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cmdparser.cpp; sourceTree = "<group>"; };
 		21A328162578578600E5B80E /* matrix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = matrix.cpp; sourceTree = "<group>"; };
 		21A328172578578600E5B80E /* glob.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = glob.cpp; sourceTree = "<group>"; };
 		21A328192578578600E5B80E /* datastructs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = datastructs.cpp; sourceTree = "<group>"; };
@@ -559,7 +557,6 @@
 				21A328112578578600E5B80E /* rand.cpp */,
 				21A328122578578600E5B80E /* algorithm.cpp */,
 				21A328132578578600E5B80E /* system.cpp */,
-				21A328152578578600E5B80E /* cmdparser.cpp */,
 				21A328162578578600E5B80E /* matrix.cpp */,
 				21A328172578578600E5B80E /* glob.cpp */,
 				21A328192578578600E5B80E /* datastructs.cpp */,
@@ -953,7 +950,6 @@
 				21A328662578578600E5B80E /* bgfg_gmg.cpp in Sources */,
 				21A328C42578578600E5B80E /* accum.cpp in Sources */,
 				21A3288A2578578600E5B80E /* tables.cpp in Sources */,
-				21A328982578578600E5B80E /* cmdparser.cpp in Sources */,
 				21A3288D2578578600E5B80E /* lapack.cpp in Sources */,
 				21A328BD2578578600E5B80E /* tables.cpp in Sources */,
 				21A328892578578600E5B80E /* convert.cpp in Sources */,

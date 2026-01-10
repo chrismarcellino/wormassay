@@ -185,24 +185,11 @@ icvFitLine3D_wods( CvPoint3D32f * points, int count, float *weights, float *line
     det[8] = dy2 + dx2;
 
     /* Searching for a eigenvector of det corresponding to the minimal eigenvalue */
-#if 1
-    {
     CvMat _det = cvMat( 3, 3, CV_32F, det );
     CvMat _evc = cvMat( 3, 3, CV_32F, evc );
     CvMat _evl = cvMat( 3, 1, CV_32F, evl );
     cvEigenVV( &_det, &_evc, &_evl, 0 );
     i = evl[0] < evl[1] ? (evl[0] < evl[2] ? 0 : 2) : (evl[1] < evl[2] ? 1 : 2);
-    }
-#else
-    {
-        CvMat _det = cvMat( 3, 3, CV_32F, det );
-        CvMat _evc = cvMat( 3, 3, CV_32F, evc );
-        CvMat _evl = cvMat( 1, 3, CV_32F, evl );
-
-        cvSVD( &_det, &_evl, &_evc, 0, CV_SVD_MODIFY_A+CV_SVD_U_T );
-    }
-    i = 2;
-#endif
     v = &evc[i * 3];
     n = (float) sqrt( (double)v[0] * v[0] + (double)v[1] * v[1] + (double)v[2] * v[2] );
     n = (float)MAX(n, eps);

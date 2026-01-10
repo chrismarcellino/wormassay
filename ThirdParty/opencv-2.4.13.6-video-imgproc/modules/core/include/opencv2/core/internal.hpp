@@ -180,12 +180,6 @@ namespace cv
 /* max length of strings */
 #define  CV_MAX_STRLEN  1024
 
-#if 0 /*def  CV_CHECK_FOR_NANS*/
-#  define CV_CHECK_NANS( arr ) cvCheckArray((arr))
-#else
-#  define CV_CHECK_NANS( arr )
-#endif
-
 /****************************************************************************************\
 *                                  Common declarations                                   *
 \****************************************************************************************/

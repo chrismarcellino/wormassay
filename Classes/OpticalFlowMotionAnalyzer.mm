@@ -623,13 +623,6 @@ static CvStatus CV_STDCALL icvGetRectSubPix_8u32f_C1R_OpenCV2dot2
         // extracted rectangle is totally inside the image
         src += ip.y * src_step + ip.x;
         
-#if 0
-        if( icvCopySubpix_8u32f_C1R_p &&
-           icvCopySubpix_8u32f_C1R_p( src, src_step, dst,
-                                     dst_step*sizeof(dst[0]), win_size, a, b ) >= 0 )
-            return CV_OK;
-#endif
-        
         for( ; win_size.height--; src += src_step, dst += dst_step )
         {
             float prev = (1 - a)*(b1*CV_8TO32F(src[0]) + b2*CV_8TO32F(src[src_step]));

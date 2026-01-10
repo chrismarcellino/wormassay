@@ -98,7 +98,6 @@ cvCreateKalman( int DP, int MP, int CP )
     kalman->temp4 = cvCreateMat( MP, DP, CV_32FC1 );
     kalman->temp5 = cvCreateMat( MP, 1, CV_32FC1 );
 
-#if 1
     kalman->PosterState = kalman->state_pre->data.fl;
     kalman->PriorState = kalman->state_post->data.fl;
     kalman->DynamMatr = kalman->transition_matrix->data.fl;
@@ -108,7 +107,6 @@ cvCreateKalman( int DP, int MP, int CP )
     kalman->KalmGainMatr = kalman->gain->data.fl;
     kalman->PriorErrorCovariance = kalman->error_cov_pre->data.fl;
     kalman->PosterErrorCovariance = kalman->error_cov_post->data.fl;
-#endif
 
     return kalman;
 }

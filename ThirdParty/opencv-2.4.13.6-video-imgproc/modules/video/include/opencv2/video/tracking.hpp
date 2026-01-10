@@ -167,7 +167,6 @@ typedef struct CvKalman
     int CP;                     /* number of control vector dimensions */
 
     /* backward compatibility fields */
-#if 1
     float* PosterState;         /* =state_pre->data.fl */
     float* PriorState;          /* =state_post->data.fl */
     float* DynamMatr;           /* =transition_matrix->data.fl */
@@ -179,7 +178,6 @@ typedef struct CvKalman
     float* PosterErrorCovariance;/* =error_cov_post->data.fl */
     float* Temp1;               /* temp1->data.fl */
     float* Temp2;               /* temp2->data.fl */
-#endif
 
     CvMat* state_pre;           /* predicted state (x'(k)):
                                     x(k)=A*x(k-1)+B*u(k) */
